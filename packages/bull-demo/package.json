@@ -1,0 +1,40 @@
+{
+	"name": "@better-bull-board/bull-demo",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsdown",
+		"clean": "rm -rf dist",
+		"dev": "tsdown --watch",
+		"type-check": "tsc --noEmit",
+		"lint": "eslint .",
+		"lint:fix": "eslint --fix .",
+		"prettier": "prettier --check \"**/*.{js,jsx,ts,tsx}\"",
+		"prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx}\"",
+		"debug": "npx -y dotenv-cli -e .env -- tsx debug/index.ts",
+		"listen": "npx -y dotenv-cli -e .env -- tsx src/worker.ts",
+		"listen:dev": "npx -y dotenv-cli -e .env -- tsx --watch src/worker.ts"
+	},
+	"license": "ISC",
+	"dependencies": {
+		"@rharkor/logger": "^1.3.3",
+		"@t3-oss/env-core": "^0.13.4",
+		"dotenv": "^17.0.0",
+		"eslint": "^9",
+		"tsdown": "^0.15.2",
+		"typescript": "^5.9.2",
+		"zod": "^3.25.76"
+	},
+	"exports": {
+		"./": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"type": "module",
+	"devDependencies": {
+		"@types/node": "^24.5.2",
+		"tsx": "^4.20.5"
+	}
+}
