@@ -1,0 +1,33 @@
+{
+	// Use Biome as the default formatter
+	"editor.defaultFormatter": "biomejs.biome",
+
+	// Format on save
+	"editor.formatOnSave": true,
+
+	// Optional: format on paste & type
+	"editor.formatOnPaste": true,
+	"editor.formatOnType": false,
+
+	// Ensure Biome is used for specific languages
+	"[javascript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[markdown]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+
+	// Tabs -> spaces (2 spaces)
+	"editor.insertSpaces": true,
+	"editor.tabSize": 2,
+	"editor.detectIndentation": false
+}

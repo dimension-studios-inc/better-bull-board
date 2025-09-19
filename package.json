@@ -21,5 +21,9 @@
     "apps/*",
     "packages/*",
     "_template"
-  ]
+  ],
+  "dependencies": {
+    "bullmq": "^5.58.6",
+    "ioredis": "^5.7.0"
+  }
 }
