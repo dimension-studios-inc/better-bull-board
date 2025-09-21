@@ -1,5 +1,5 @@
 {
-  "name": "@better-bull-board/bull-demo",
+  "name": "@better-bull-board/ingest",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -7,9 +7,7 @@
     "clean": "rm -rf dist",
     "dev": "tsdown --watch",
     "type-check": "tsc --noEmit",
-    "debug": "npx -y dotenv-cli -e .env -- tsx debug/index.ts",
-    "listen": "npx -y dotenv-cli -e .env -- tsx src/worker.ts",
-    "listen:dev": "npx -y dotenv-cli -e .env -- tsx --watch src/worker.ts"
+    "debug": "npx -y dotenv-cli -e .env -- tsx debug/index.ts"
   },
   "license": "ISC",
   "dependencies": {
@@ -30,6 +28,6 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^24.5.2",
-    "tsx": "^4.20.5"
+    "tsx": "^4.19.3"
   }
 }
