@@ -6,7 +6,8 @@
     "dev": "turbo run dev",
     "lint": "biome check",
     "format": "biome format --write",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "setup": "turbo run build --filter='@better-bull-board/*'^..."
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
@@ -21,9 +22,5 @@
     "apps/*",
     "packages/*",
     "_template"
-  ],
-  "dependencies": {
-    "bullmq": "^5.58.6",
-    "ioredis": "^5.7.0"
-  }
+  ]
 }

@@ -16,10 +16,11 @@
     "dotenv": "^17.0.0",
     "tsdown": "^0.15.2",
     "typescript": "^5.9.2",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "bullmq": "^5.58.6"
   },
   "exports": {
-    "./": {
+    ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"

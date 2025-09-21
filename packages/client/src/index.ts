@@ -1,1 +1,5 @@
-export * from "./lib/hello-world";
+export * from "./bull/queue";
+
+export const test = () => {
+  console.log("test");
+};
