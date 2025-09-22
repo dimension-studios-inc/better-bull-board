@@ -4,8 +4,8 @@ import { redis } from "./lib/redis";
 new Worker(
   "demo-queue",
   async (job) => {
-    job.log(`Processing job ${job.id} with data`);
-    console.log(job.id);
+    console.log(`Processing job ${job.id}`);
+
     return { status: "done" };
   },
   {
