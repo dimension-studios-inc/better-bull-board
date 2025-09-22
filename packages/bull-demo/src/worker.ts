@@ -11,5 +11,14 @@ new Worker(
   {
     connection: redis,
     publish: redis.publish.bind(redis),
+    getJobTags(_job) {
+      // Random number between 0 and 3
+      const random = Math.floor(Math.random() * 4);
+      return Array.from({ length: random }, () => {
+        // Return a random words in the array
+        const words = ["tag1", "tag2", "tag3", "tag4"];
+        return words[Math.floor(Math.random() * words.length)];
+      });
+    },
   },
 );

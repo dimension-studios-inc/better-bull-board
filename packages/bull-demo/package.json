@@ -5,7 +5,6 @@
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
-    "dev": "tsdown --watch",
     "type-check": "tsc --noEmit",
     "debug": "npx -y dotenv-cli -e .env -- tsx debug/index.ts",
     "listen": "npx -y dotenv-cli -e .env -- tsx src/worker.ts",

@@ -10,10 +10,10 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
 import { jobStatusEnum, logLevelEnum } from "./enum";
 
-// One row per *run attempt* (a job may have several attempts)
-export const jobRuns = pgTable(
+export const jobRunsTable = pgTable(
   "job_runs",
   {
     id: uuid().primaryKey().notNull().default(sql`uuid_generate_v7()`),
@@ -37,7 +37,6 @@ export const jobRuns = pgTable(
     data: jsonb("data"), // trimmed payload (safe to store)
     result: jsonb("result"),
 
-    errorType: text("error_type"),
     errorMessage: text("error_message"),
     errorStack: text("error_stack"),
 
@@ -53,7 +52,7 @@ export const jobRuns = pgTable(
     ),
   },
   (t) => [
-    uniqueIndex("ux_job_runs_jobid_attempt").on(t.jobId, t.attempt),
+    uniqueIndex("ux_job_runs_jobid").on(t.jobId),
     index("ix_job_runs_queue_created_at").on(t.queue, t.createdAt),
     index("ix_job_runs_created_at").on(t.createdAt),
     index("ix_job_runs_job").on(t.jobId),
@@ -64,14 +63,16 @@ export const jobRuns = pgTable(
   ],
 );
 
+export const jobRunsInsertSchema = createInsertSchema(jobRunsTable);
+
 // Many rows per run (append-only)
-export const jobLogs = pgTable(
+export const jobLogsTable = pgTable(
   "job_logs",
   {
     id: uuid().primaryKey().notNull().default(sql`uuid_generate_v7()`),
     jobRunId: uuid("job_run_id")
       .notNull()
-      .references(() => jobRuns.id, { onDelete: "cascade" }),
+      .references(() => jobRunsTable.id, { onDelete: "cascade" }),
 
     level: logLevelEnum("level").notNull().default("info"),
     message: text("message").notNull(),
@@ -83,3 +84,5 @@ export const jobLogs = pgTable(
     index("ix_job_logs_ts_brin").using("brin", t.ts), // cheap time-range scans
   ],
 );
+
+export const jobLogsInsertSchema = createInsertSchema(jobLogsTable);

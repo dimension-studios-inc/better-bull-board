@@ -1,19 +1,23 @@
 import { logger } from "@rharkor/logger";
+import { handleJobChannel } from "./job";
+import { handleLogChannel } from "./log";
 
 const CHANNELS = {
-  "bbb:worker:liveness": (channel: string, message: string) => {},
-  "bbb:worker:job": (channel: string, message: string) => {},
-  "bbb:worker:job:log": (channel: string, message: string) => {},
+  "bbb:worker:liveness": async (_channel: string, _message: string) => {
+    // Do nothing for now
+  },
+  "bbb:worker:job": handleJobChannel,
+  "bbb:worker:job:log": handleLogChannel,
 };
 
-export const handleChannel = (
+export const handleChannel = async (
   _subscribed: string,
   channel: string,
   message: string,
 ) => {
   const handler = CHANNELS[channel as keyof typeof CHANNELS];
   if (handler) {
-    handler(channel, message);
+    await handler(channel, message);
   } else {
     logger.warn("Received message from unknown channel", { channel, message });
   }
