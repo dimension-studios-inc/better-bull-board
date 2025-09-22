@@ -5,11 +5,14 @@ import { redis } from "./lib/redis";
 const main = async () => {
   await logger.init();
 
-  await redis.psubscribe("bbb:worker:*", (error) => {
+  const subscriber = redis.duplicate();
+  await subscriber.connect().catch(() => {});
+
+  await subscriber.psubscribe("bbb:worker:*", (error) => {
     if (error) throw error;
     logger.info("Ingesting data from Redis");
 
-    redis.on("pmessage", handleChannel);
+    subscriber.on("pmessage", handleChannel);
   });
 };
 

@@ -17,6 +17,9 @@ export class Worker<
   NameType extends string = string,
 > extends BullMQWorker<DataType, ResultType, NameType> {
   private publish: (channel: string, message: string) => void;
+  private getJobTags?: (
+    job: Job<DataType, ResultType, NameType>,
+  ) => (string | undefined)[];
 
   constructor(
     name: string,
@@ -27,11 +30,18 @@ export class Worker<
        * example: redis.publish
        */
       publish: (channel: string, message: string) => void;
+      /**
+       * Should return the tags of the job
+       */
+      getJobTags?: (
+        job: Job<DataType, ResultType, NameType>,
+      ) => (string | undefined)[];
     },
     Connection?: typeof RedisConnection,
   ) {
     super(name, processor, opts, Connection);
     this.publish = opts.publish;
+    this.getJobTags = opts.getJobTags;
     this.startLivenessProbe();
   }
 
@@ -58,12 +68,16 @@ export class Worker<
     }>,
     // biome-ignore lint/suspicious/noConfusingVoidType: override
   ): Promise<void | Job<DataType, ResultType, NameType>> {
+    const tags = this.getJobTags?.(job).filter(Boolean);
+    const queueName = job.queueName;
     //* Register the job
     this.publish(
       "bbb:worker:job",
       JSON.stringify({
         id: this.id,
         job,
+        tags,
+        queueName,
       }),
     );
     //* Process
@@ -85,6 +99,8 @@ export class Worker<
       JSON.stringify({
         id: this.id,
         job,
+        tags,
+        queueName,
       }),
     );
     return result;

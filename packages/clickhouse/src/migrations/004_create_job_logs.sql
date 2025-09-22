@@ -9,5 +9,5 @@ CREATE TABLE job_logs_ch
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(ts)
 ORDER BY (job_run_id, ts, id)
-TTL ts + INTERVAL 15 DAY DELETE
+TTL ts + INTERVAL 30 DAY DELETE
 SETTINGS index_granularity = 8192;
