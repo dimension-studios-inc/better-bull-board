@@ -49,7 +49,7 @@ export const jobRuns = pgTable(
     finishedAt: timestamp("finished_at", { precision: 3, mode: "date" }),
 
     durationMs: integer("duration_ms").generatedAlwaysAs(
-      sql`EXTRACT(EPOCH FROM (finishedAt - startedAt)) * 1000`,
+      sql`EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000`,
     ),
   },
   (t) => [
@@ -59,8 +59,8 @@ export const jobRuns = pgTable(
     index("ix_job_runs_job").on(t.jobId),
     index("ix_job_runs_status_created_at").on(t.status, t.createdAt),
     index("ix_job_runs_repeat_key").on(t.repeatJobKey),
-    index("ix_job_runs_tags_gin").using("gin", t.tags.op("gin_trgm_ops")),
-    index("ix_job_runs_data_gin").using("gin", t.data.op("gin_trgm_ops")),
+    index("ix_job_runs_tags_gin").using("gin", t.tags),
+    index("ix_job_runs_data_gin").using("gin", t.data),
   ],
 );
 
