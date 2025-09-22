@@ -33,6 +33,10 @@ export const env = createEnv({
             : parseInt(value, 10)
           : value,
       ),
+    AUTO_DELETE_POSTGRES_DATA: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : undefined)),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

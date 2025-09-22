@@ -63,3 +63,19 @@ export const getJobFromBullId = async (jobId: string) => {
 
   return result;
 };
+
+export function getChangedKeys<T extends Record<string, unknown>>(
+  newObj: T,
+  oldObj: Partial<T>,
+): (keyof T)[] {
+  return Object.keys(newObj).filter((key) => {
+    const k = key as keyof T;
+    const newVal = newObj[k];
+    const oldVal = oldObj[k];
+
+    if (typeof newVal === "object" && newVal !== null) {
+      return JSON.stringify(newVal) !== JSON.stringify(oldVal);
+    }
+    return newVal !== oldVal;
+  }) as (keyof T)[];
+}
