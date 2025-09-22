@@ -1,7 +1,9 @@
 name: better-bull-board
 services:
   postgres:
-    image: postgres:17
+    build:
+      context: ./db
+      dockerfile: Dockerfile
     container_name: better-bull-board_postgres
     restart: unless-stopped
     environment:
@@ -18,6 +20,39 @@ services:
       timeout: 5s
       retries: 5
 
+  clickhouse:
+    image: bitnami/clickhouse:latest
+    container_name: better-bull-board_clickhouse
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_ADMIN_USER: default
+      CLICKHOUSE_ADMIN_PASSWORD: password
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse-data:/bitnami/clickhouse
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "clickhouse-client",
+          "--host",
+          "localhost",
+          "--port",
+          "9000",
+          "--user",
+          "default",
+          "--password",
+          "password",
+          "--query",
+          "SELECT 1",
+        ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   redis:
     image: redis:latest
     container_name: better-bull-board_redis
@@ -30,3 +65,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  clickhouse-data:

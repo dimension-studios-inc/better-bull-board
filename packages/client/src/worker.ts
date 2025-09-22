@@ -5,6 +5,9 @@ import {
   type RedisConnection,
   type WorkerOptions,
 } from "bullmq";
+import { installConsoleRelay, withJobConsole } from "./lib/logger";
+
+installConsoleRelay();
 
 export class Worker<
   // biome-ignore lint/suspicious/noExplicitAny: extends of bullmq
@@ -63,25 +66,16 @@ export class Worker<
         job,
       }),
     );
-    //* Monkey patch the job log
-    const originalLog = job.log.bind(job);
-    job.log = (message: string) => {
-      this.publish(
-        "bbb:worker:job:log",
-        JSON.stringify({
-          id: this.id,
-          jobId: job.id,
-          message,
-        }),
-      );
-      return originalLog(message);
-    };
     //* Process
-    const result = await super.processJob(
-      job,
-      token,
-      fetchNextCallback,
-      jobsInProgress,
+    const result = await withJobConsole(
+      {
+        id: this.id,
+        publish: this.publish,
+        autoEmitJobLogs: true,
+        autoEmitBBBLogs: true,
+        job,
+      },
+      () => super.processJob(job, token, fetchNextCallback, jobsInProgress),
     );
     //* Complete
     // When success: finishedOn is set and returnvalue is updated
