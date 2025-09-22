@@ -29,6 +29,20 @@
       "when": 1758545809264,
       "tag": "0003_far_shinko_yamashiro",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1758556811580,
+      "tag": "0004_elite_sugar_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1758557537959,
+      "tag": "0005_breezy_zzzax",
+      "breakpoints": true
     }
   ]
 }

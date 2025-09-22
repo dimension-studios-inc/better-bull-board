@@ -5,7 +5,6 @@
 - **Schedulers**: via polling
 - **Jobs**: via ingestion
 - **Jobs Logs**: via ingestion
-- **Workers**: via ingestion
 
 ## How does this work?
 There's two main notions in this project:
@@ -16,3 +15,11 @@ There's two main notions in this project:
 ### Why not use ingestion everywhere?
 Because we want to keep the use of this tool simple wrapping all your queues with the bbb client can be a pain.
 Also there's no way to know if the queue / scheduler still exists or not when you delete it if we use ingestion.
+
+## Data retention
+
+As for clickhouse we have a retention policy of 30 days. For postgres the ingester will setup a timeout that delete the data after 30 days.
+
+We are clearing the data from the following entities:
+- Job Runs
+- Job Logs

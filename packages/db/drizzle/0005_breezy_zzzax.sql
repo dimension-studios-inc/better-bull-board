@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "ix_job_schedulers_key" ON "job_schedulers" USING btree ("key");

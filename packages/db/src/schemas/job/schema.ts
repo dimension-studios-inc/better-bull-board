@@ -77,7 +77,9 @@ export const jobLogsTable = pgTable(
     level: logLevelEnum("level").notNull().default("info"),
     message: text("message").notNull(),
 
-    ts: timestamp("ts", { withTimezone: true }).notNull().default(sql`now()`),
+    ts: timestamp("ts", { precision: 3, mode: "date" })
+      .notNull()
+      .default(sql`now()`),
   },
   (t) => [
     index("ix_job_logs_job_run_ts").on(t.jobRunId, t.ts),
