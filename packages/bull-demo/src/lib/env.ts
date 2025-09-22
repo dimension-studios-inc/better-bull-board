@@ -38,10 +38,10 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
   onValidationError: (error) => {
     console.error(error);
-    throw "Invalid environment variables in template";
+    throw "Invalid environment variables in bull-demo";
   },
   onInvalidAccess(variable) {
     console.error(`Invalid access to ${variable}`);
-    throw "Invalid environment variables in template";
+    throw "Invalid environment variables in bull-demo";
   },
 });
