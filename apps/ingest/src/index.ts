@@ -8,12 +8,11 @@ const listenToEvents = async () => {
   const subscriber = redis.duplicate();
   await subscriber.connect().catch(() => {});
 
-  await subscriber.psubscribe("bbb:worker:*", (error) => {
+  subscriber.psubscribe("bbb:worker:*", (error) => {
     if (error) throw error;
-    logger.log("Ingesting data from Redis");
-
-    subscriber.on("pmessage", handleChannel);
+    logger.log("📥 Ingesting data from Redis");
   });
+  subscriber.on("pmessage", handleChannel);
 };
 
 const main = async () => {

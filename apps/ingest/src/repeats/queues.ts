@@ -62,7 +62,7 @@ export const autoIngestQueues = async () => {
   }, 60_000);
   ingestQueues();
 
-  logger.log("Queues ingestion started");
+  logger.log("🔄 Queues ingestion started");
 };
 
 const upsertQueue = async (queueName: string) => {
