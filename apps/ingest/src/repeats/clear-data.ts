@@ -24,6 +24,6 @@ export const clearData = async () => {
     1000 * 60 * 60,
   );
   logger.log(
-    `Clearing data every ${formatDistance(autoDeletePostgresData, 0)}`,
+    `🧹 Clearing data every ${formatDistance(autoDeletePostgresData, 0)}`,
   );
 };

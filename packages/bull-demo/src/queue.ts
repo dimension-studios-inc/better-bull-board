@@ -7,6 +7,6 @@ export const queue = new Queue("demo-queue", {
 
 export const registerScheduler = async () => {
   await queue.upsertJobScheduler("demo-queue", {
-    every: 5000,
+    every: 50_000,
   });
 };

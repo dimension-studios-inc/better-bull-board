@@ -1,14 +1,11 @@
 {
   "name": "@better-bull-board/bull-demo",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
     "type-check": "tsc --noEmit",
     "debug": "npx -y dotenv-cli -e .env -- tsx debug/index.ts",
-    "listen": "npx -y dotenv-cli -e .env -- tsx src/worker.ts",
-    "listen:dev": "npx -y dotenv-cli -e .env -- tsx --watch src/worker.ts"
+    "listen": "npm run build && npx -y dotenv-cli -e .env -- node dist/worker.cjs"
   },
   "license": "ISC",
   "dependencies": {
@@ -23,10 +20,10 @@
     "bullmq": "^5.58.6"
   },
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "require": "./dist/*.cjs"
     }
   },
   "type": "module",

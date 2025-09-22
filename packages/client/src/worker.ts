@@ -1,10 +1,10 @@
 import {
   Worker as BullMQWorker,
   type Job,
-  type Processor,
   type RedisConnection,
   type WorkerOptions,
 } from "bullmq";
+import type Redis from "ioredis";
 import { installConsoleRelay, withJobConsole } from "./lib/logger";
 
 installConsoleRelay();
@@ -16,20 +16,16 @@ export class Worker<
   ResultType = any,
   NameType extends string = string,
 > extends BullMQWorker<DataType, ResultType, NameType> {
-  private publish: (channel: string, message: string) => void;
+  private ioredis: Redis;
   private getJobTags?: (
     job: Job<DataType, ResultType, NameType>,
   ) => (string | undefined)[];
 
   constructor(
     name: string,
-    processor: string | URL | null | Processor<DataType, ResultType, NameType>,
+    processor: string | URL | null, // Do not allow processor, we need to use sandboxed processor in order to be able to cancel the job (see: https://docs.bullmq.io/guide/workers/sandboxed-processors)
     opts: WorkerOptions & {
-      /**
-       * Function to publish a message to the channel
-       * example: redis.publish
-       */
-      publish: (channel: string, message: string) => void;
+      ioredis: Redis;
       /**
        * Should return the tags of the job
        */
@@ -40,7 +36,7 @@ export class Worker<
     Connection?: typeof RedisConnection,
   ) {
     super(name, processor, opts, Connection);
-    this.publish = opts.publish;
+    this.ioredis = opts.ioredis;
     this.getJobTags = opts.getJobTags;
     this.startLivenessProbe();
   }
@@ -49,7 +45,7 @@ export class Worker<
     setInterval(() => {
       const workerId = this.id;
 
-      this.publish(
+      this.ioredis.publish(
         "bbb:worker:liveness",
         JSON.stringify({
           id: workerId,
@@ -68,10 +64,13 @@ export class Worker<
     }>,
     // biome-ignore lint/suspicious/noConfusingVoidType: override
   ): Promise<void | Job<DataType, ResultType, NameType>> {
+    if (!job.id) {
+      throw new Error("Job ID is required");
+    }
     const tags = this.getJobTags?.(job).filter(Boolean);
     const queueName = job.queueName;
     //* Register the job
-    this.publish(
+    this.ioredis.publish(
       "bbb:worker:job",
       JSON.stringify({
         id: this.id,
@@ -84,17 +83,18 @@ export class Worker<
     const result = await withJobConsole(
       {
         id: this.id,
-        publish: this.publish,
+        publish: this.ioredis.publish.bind(this.ioredis),
         autoEmitJobLogs: true,
         autoEmitBBBLogs: true,
         job,
       },
       () => super.processJob(job, token, fetchNextCallback, jobsInProgress),
     );
+
     //* Complete
     // When success: finishedOn is set and returnvalue is updated
     // When fail: failedReason, finishedOn and stacktrace are set
-    this.publish(
+    this.ioredis.publish(
       "bbb:worker:job",
       JSON.stringify({
         id: this.id,
