@@ -6,6 +6,7 @@ import {
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
 import type { z } from "zod/v4";
+import { redis } from "~/lib/redis";
 import { getJobFromBullId } from "~/utils";
 
 export const handleLogChannel = async (_channel: string, message: string) => {
@@ -56,6 +57,7 @@ export const handleLogChannel = async (_channel: string, message: string) => {
       ...insertedLog,
       job_run_id: insertedLog.jobRunId,
     });
+    redis.publish("bbb:ingest:events:job-refresh", jobId);
   } catch (e) {
     logger.error("Error saving log", { error: e, message });
   }

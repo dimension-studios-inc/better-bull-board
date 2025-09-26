@@ -8,6 +8,7 @@ import { logger } from "@rharkor/logger";
 import type { Job } from "bullmq";
 import { eq } from "drizzle-orm";
 import type { z } from "zod/v4";
+import { redis } from "~/lib/redis";
 import { redlock } from "~/lib/redlock";
 import { getJobFromBullId } from "~/utils";
 
@@ -77,6 +78,7 @@ export const handleJobChannel = async (_channel: string, message: string) => {
         });
       },
     );
+    redis.publish("bbb:ingest:events:job-refresh", job.id);
   } catch (e) {
     logger.error("Error saving job", { error: e, message });
   }

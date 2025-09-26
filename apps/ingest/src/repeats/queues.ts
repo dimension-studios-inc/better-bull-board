@@ -84,11 +84,10 @@ const upsertQueue = async (queueName: string) => {
     const needUpdate = getChangedKeys(params, existingQueue);
     if (needUpdate.length === 0) {
       return existingQueue;
-    } else {
-      logger.debug(
-        `Need to update queue ${queueName} with keys: ${needUpdate.join(", ")}`,
-      );
     }
+    logger.debug(
+      `Need to update queue ${queueName} with keys: ${needUpdate.join(", ")}`,
+    );
 
     const _updatedQueue = await db
       .update(queuesTable)
@@ -101,6 +100,7 @@ const upsertQueue = async (queueName: string) => {
       throw new Error("Failed to update queue");
     }
     updatedQueue = _updatedQueue;
+    redis.publish("bbb:ingest:events:queue-refresh", queueName);
   } else {
     const _createdQueue = await db
       .insert(queuesTable)
@@ -112,6 +112,7 @@ const upsertQueue = async (queueName: string) => {
       throw new Error("Failed to create queue");
     }
     updatedQueue = _createdQueue;
+    redis.publish("bbb:ingest:events:queue-refresh", queueName);
   }
   return updatedQueue;
 };
@@ -144,20 +145,21 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
         const needUpdate = getChangedKeys(param, existingJobScheduler);
         if (needUpdate.length === 0) {
           return;
-        } else {
-          logger.debug(
-            `Need to update job scheduler ${param.key} with keys: ${needUpdate.join(", ")}`,
-          );
         }
+        logger.debug(
+          `Need to update job scheduler ${param.key} with keys: ${needUpdate.join(", ")}`,
+        );
 
         await db
           .update(jobSchedulersTable)
           .set(param)
           .where(eq(jobSchedulersTable.key, param.key));
         logger.log(`Updated job scheduler ${param.key}`);
+        redis.publish("bbb:ingest:events:job-scheduler-refresh", param.key);
       } else {
         await db.insert(jobSchedulersTable).values(param);
         logger.log(`Created job scheduler ${param.key}`);
+        redis.publish("bbb:ingest:events:job-scheduler-refresh", param.key);
       }
     }),
   );
