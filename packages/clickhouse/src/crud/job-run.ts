@@ -88,7 +88,17 @@ export const searchJobRuns = async (filters: {
   offset?: number;
   search?: string;
   cursor?: string;
-}): Promise<JobRunData[]> => {
+}): Promise<
+  (Omit<
+    JobRunData,
+    "created_at" | "enqueued_at" | "started_at" | "finished_at"
+  > & {
+    created_at: number;
+    enqueued_at: number;
+    started_at: number;
+    finished_at: number;
+  })[]
+> => {
   const conditions: string[] = [];
   const params: Record<string, unknown> = {};
 
@@ -152,7 +162,13 @@ export const searchJobRuns = async (filters: {
   const offset = filters.offset || 0;
 
   const query = `
-    SELECT * FROM job_runs_ch 
+    SELECT  
+      toUnixTimestamp(created_at) * 1000 AS created_at,
+      toUnixTimestamp(enqueued_at) * 1000 AS enqueued_at,
+      toUnixTimestamp(started_at) * 1000 AS started_at,
+      toUnixTimestamp(finished_at) * 1000 AS finished_at,
+      *
+    FROM job_runs_ch 
     ${whereClause}
     ORDER BY created_at DESC
     LIMIT {limit:UInt32} OFFSET {offset:UInt32}
@@ -164,7 +180,14 @@ export const searchJobRuns = async (filters: {
     format: "JSONEachRow",
   });
 
-  return await result.json();
+  const data = (await result.json()) as JobRunData[];
+  return data.map((item) => ({
+    ...item,
+    created_at: Number(item.created_at),
+    enqueued_at: Number(item.enqueued_at),
+    started_at: Number(item.started_at),
+    finished_at: Number(item.finished_at),
+  }));
 };
 
 export const cancelJobRun = async (jobId: string) => {
