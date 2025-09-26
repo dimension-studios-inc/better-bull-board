@@ -1,6 +1,7 @@
 import { logger } from "@rharkor/logger";
 import { handleChannel } from "./channels";
 import { redis } from "./lib/redis";
+import { startWebSocketServer } from "./lib/websocket-server";
 import { clearData } from "./repeats/clear-data";
 import { autoIngestQueues } from "./repeats/queues";
 import { stopStalledRuns } from "./repeats/stalled";
@@ -24,6 +25,9 @@ const main = async () => {
   clearData();
   autoIngestQueues();
   stopStalledRuns();
+  
+  // Start WebSocket server
+  startWebSocketServer();
 };
 
 main();

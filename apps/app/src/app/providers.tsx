@@ -2,6 +2,7 @@
 
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { WebSocketProvider } from "~/hooks/use-websocket";
 import { AuthProvider } from "~/lib/auth/context";
 import { createQueryClient } from "~/lib/query-client";
 
@@ -34,7 +35,9 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <WebSocketProvider>{children}</WebSocketProvider>
+      </QueryClientProvider>
     </AuthProvider>
   );
 };

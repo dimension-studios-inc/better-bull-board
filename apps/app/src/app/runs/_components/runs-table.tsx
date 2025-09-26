@@ -23,10 +23,13 @@ type RunsTableProps = {
 };
 
 export function RunsTable({ searchParams }: RunsTableProps) {
-  const initialQueue = typeof searchParams?.queue === 'string' ? searchParams.queue : "all";
-  const initialStatus = typeof searchParams?.status === 'string' ? searchParams.status : "all";
-  const initialSearch = typeof searchParams?.search === 'string' ? searchParams.search : "";
-  
+  const initialQueue =
+    typeof searchParams?.queue === "string" ? searchParams.queue : "all";
+  const initialStatus =
+    typeof searchParams?.status === "string" ? searchParams.status : "all";
+  const initialSearch =
+    typeof searchParams?.search === "string" ? searchParams.search : "";
+
   const [filters, setFilters] = useState<TRunFilters>({
     queue: initialQueue,
     status: initialStatus,
@@ -69,7 +72,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
           <TableRow>
             <TableHead style={{ width: "260px" }}>Job ID</TableHead>
             <TableHead style={{ width: "120px" }}>Queue</TableHead>
-            <TableHead style={{ width: "120px" }}>Tags</TableHead>
+            <TableHead style={{ width: "180px" }}>Tags</TableHead>
             <TableHead style={{ width: "120px" }}>Status</TableHead>
             <TableHead style={{ width: "120px" }}>Duration</TableHead>
             <TableHead style={{ width: "140px" }}>Worker</TableHead>
@@ -85,7 +88,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
                 {run.job_id.length > 32 && "..."}
               </TableCell>
               <TableCell>{run.queue}</TableCell>
-              <TableCell>
+              <TableCell className="overflow-hidden">
                 {run.tags?.map((tag) => (
                   <Badge key={tag} variant="outline">
                     {tag}
@@ -102,7 +105,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
                   ? formatDistanceStrict(run.started_at, run.finished_at)
                   : "-"}
               </TableCell>
-              <TableCell className="font-mono">
+              <TableCell className="font-mono text-xs">
                 {run.worker_id
                   ? `${run.worker_id.slice(0, 12)}${
                       run.worker_id.length > 12 ? "..." : ""
