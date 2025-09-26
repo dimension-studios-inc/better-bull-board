@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@better-bull-board/ingest": "*",
     "@better-bull-board/clickhouse": "*",
     "@better-bull-board/db": "*",
     "@radix-ui/react-dialog": "^1.1.15",

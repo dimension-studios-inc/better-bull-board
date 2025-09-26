@@ -2,11 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { formatDuration } from "date-fns";
-import { Pause, Play, Search, Trash2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
   Table,
@@ -17,6 +16,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { apiFetch, cn } from "~/lib/utils";
+import { QueueActions } from "./queue-actions";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
 export function QueuesTable() {
@@ -117,22 +117,10 @@ export function QueuesTable() {
                 <span className="font-mono">{queue.workers}</span>
               </TableCell>
               <TableCell>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm">
-                    {queue.isPaused ? (
-                      <Play className="size-4" />
-                    ) : (
-                      <Pause className="size-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
+                <QueueActions
+                  queueName={queue.name}
+                  isPaused={queue.isPaused}
+                />
               </TableCell>
             </TableRow>
           ))}
