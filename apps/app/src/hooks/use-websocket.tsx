@@ -118,8 +118,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
             return;
           }
 
-          console.log("📨 WebSocket message received:", message);
-
           // Auto-invalidate queries based on message type
           invalidateQueries(message);
 
