@@ -3,8 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQueryStates, parseAsString } from "nuqs";
-import { useState, useMemo, useEffect } from "react";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { useEffect, useMemo, useState } from "react";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -28,13 +28,14 @@ export function RunsTable() {
     queue: parseAsString.withDefault("all"),
     status: parseAsString.withDefault("all"),
     search: parseAsString.withDefault(""),
+    cursor: parseAsInteger,
   });
 
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
 
   const filters: TRunFilters = {
     ...urlFilters,
-    cursor: null,
+    cursor: urlFilters.cursor ?? null,
     limit: 15,
   };
   const debouncedFilters = useDebounce(filters, 300);
@@ -48,19 +49,19 @@ export function RunsTable() {
   });
 
   const jobs = runs?.jobs || [];
-  
-  // Clear selection when filters change
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Clear selection when filters change
   useEffect(() => {
     setSelectedJobIds(new Set());
   }, [debouncedFilters]);
-  
+
   const selectedJobs = useMemo(() => {
-    return jobs.filter(job => selectedJobIds.has(job.job_id));
+    return jobs.filter((job) => selectedJobIds.has(job.job_id));
   }, [jobs, selectedJobIds]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedJobIds(new Set(jobs.map(job => job.job_id)));
+      setSelectedJobIds(new Set(jobs.map((job) => job.job_id)));
     } else {
       setSelectedJobIds(new Set());
     }
@@ -77,7 +78,8 @@ export function RunsTable() {
   };
 
   const isAllSelected = jobs.length > 0 && selectedJobIds.size === jobs.length;
-  const isPartiallySelected = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length;
+  const isPartiallySelected =
+    selectedJobIds.size > 0 && selectedJobIds.size < jobs.length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -98,15 +100,15 @@ export function RunsTable() {
 
   return (
     <div className="space-y-4">
-      <RunsFilters filters={filters} setFilters={setUrlFilters} />
-      
+      <RunsFilters filters={filters} setFilters={setUrlFilters} runs={runs} />
+
       {selectedJobs.length > 0 && (
-        <BulkActions 
-          selectedJobs={selectedJobs} 
+        <BulkActions
+          selectedJobs={selectedJobs}
           onClearSelection={() => setSelectedJobIds(new Set())}
         />
       )}
-      
+
       <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
@@ -136,7 +138,8 @@ export function RunsTable() {
                 key={run.id}
                 className={cn(
                   "group border-b transition-colors hover:bg-muted/50",
-                  selectedJobIds.has(run.job_id) && "bg-blue-50 dark:bg-blue-950"
+                  selectedJobIds.has(run.job_id) &&
+                    "bg-blue-50 dark:bg-blue-950",
                 )}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -147,7 +150,7 @@ export function RunsTable() {
                 <TableCell>
                   <Checkbox
                     checked={selectedJobIds.has(run.job_id)}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       handleSelectJob(run.job_id, checked as boolean)
                     }
                     aria-label={`Select job ${run.job_id}`}
@@ -177,12 +180,12 @@ export function RunsTable() {
                     ? formatDistanceStrict(run.started_at, run.finished_at)
                     : "-"}
                 </TableCell>
-                <TableCell className="text-xs truncate">
+                <TableCell className="truncate">
                   {formatDistanceToNow(new Date(run.created_at), {
                     addSuffix: true,
                   })}
                 </TableCell>
-                <TableCell className="text-xs truncate">
+                <TableCell className="truncate">
                   {run.finished_at
                     ? formatDistanceToNow(new Date(run.finished_at), {
                         addSuffix: true,
@@ -191,7 +194,8 @@ export function RunsTable() {
                 </TableCell>
                 <TableCell
                   className={cn("max-w-48 truncate text-xs", {
-                    "text-red-600": run.status === "failed" && run.error_message,
+                    "text-red-600":
+                      run.status === "failed" && run.error_message,
                   })}
                 >
                   {run.status === "failed" && run.error_message
