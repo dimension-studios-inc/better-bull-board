@@ -5,7 +5,7 @@ import { Activity, Clock, Server } from "lucide-react";
 import { getQueuesStatsApiRoute } from "~/app/api/queues/stats/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { apiFetch } from "~/lib/utils";
+import { apiFetch, cn } from "~/lib/utils";
 
 export function QueueStats() {
   const { data: queues, isLoading } = useQuery({
@@ -42,20 +42,18 @@ export function QueueStats() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {stats.map((stat) => (
         <Card key={stat.title}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {stat.title}
-            </CardTitle>
-            <stat.icon className={`h-4 w-4 ${stat.color}`} />
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>{stat.title}</CardTitle>
+            <stat.icon className={cn("size-4", stat.color)} />
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-1">
             {isLoading ? (
               <Skeleton />
             ) : (
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-2xl font-bold font-mono">{stat.value}</div>
             )}
             <p className="text-xs text-muted-foreground">{stat.description}</p>
           </CardContent>

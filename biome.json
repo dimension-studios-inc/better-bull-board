@@ -23,6 +23,14 @@
       },
       "correctness": {
         "noUnusedImports": "error"
+      },
+      "a11y": {
+        "noLabelWithoutControl": "off",
+        "noNoninteractiveTabindex": "off",
+        "noStaticElementInteractions": "off",
+        "noSvgWithoutTitle": "off",
+        "useKeyWithClickEvents": "off",
+        "useMediaCaption": "off"
       }
     }
   },

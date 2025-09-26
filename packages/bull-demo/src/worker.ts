@@ -12,6 +12,9 @@ new Worker("demo-queue", processorFile1, {
   ioredis: redis,
   useWorkerThreads: true,
   concurrency: 10,
+  getJobTags() {
+    return ["demo-queue", "test"];
+  },
 });
 
 new Worker("demo-queue-2", processorFile2, {
@@ -19,4 +22,7 @@ new Worker("demo-queue-2", processorFile2, {
   ioredis: redis,
   useWorkerThreads: true,
   concurrency: 10,
+  getJobTags() {
+    return ["demo-queue-2"];
+  },
 });

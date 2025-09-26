@@ -76,10 +76,14 @@ export function RunsTable() {
                 {run.job_id.slice(0, 32)}
                 {run.job_id.length > 32 && "..."}
               </TableCell>
+              <TableCell>{run.queue}</TableCell>
               <TableCell>
-                <Badge variant="outline">{run.queue}</Badge>
+                {run.tags?.map((tag) => (
+                  <Badge key={tag} variant="outline">
+                    {tag}
+                  </Badge>
+                ))}
               </TableCell>
-              <TableCell>{run.tags?.join(", ")}</TableCell>
               <TableCell>
                 <Badge className={getStatusColor(run.status)}>
                   {run.status}
@@ -90,7 +94,7 @@ export function RunsTable() {
                   ? formatDistanceStrict(run.started_at, run.finished_at)
                   : "-"}
               </TableCell>
-              <TableCell className="font-mono text-xs">
+              <TableCell className="font-mono">
                 {run.worker_id
                   ? `${run.worker_id.slice(0, 12)}${
                       run.worker_id.length > 12 ? "..." : ""

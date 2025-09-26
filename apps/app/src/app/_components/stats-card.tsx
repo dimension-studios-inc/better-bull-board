@@ -42,14 +42,14 @@ export function StatsCards() {
       {cards.map((card) => (
         <Card key={card.title}>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="">{card.title}</CardTitle>
+            <CardTitle>{card.title}</CardTitle>
             <card.icon className={cn("size-4", card.color)} />
           </CardHeader>
           <CardContent className="space-y-1">
             {isLoading ? (
               <Skeleton className="h-8 w-full" />
             ) : (
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold font-mono">
                 {card.value?.toLocaleString()}
               </div>
             )}
