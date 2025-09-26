@@ -23,7 +23,6 @@ export const POST = createApiRoute({
         activeJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'active' AND ${jobRunsTable.createdAt} > NOW() - INTERVAL '${sql.raw(timePeriod)} day')`,
         failedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed' AND ${jobRunsTable.createdAt} > NOW() - INTERVAL '${sql.raw(timePeriod)} day')`,
         completedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed' AND ${jobRunsTable.createdAt} > NOW() - INTERVAL '${sql.raw(timePeriod)} day')`,
-        workers: sql<number>`COUNT(DISTINCT ${jobRunsTable.workerId})`,
       })
       .from(queuesTable)
       .leftJoin(
@@ -61,7 +60,6 @@ export const POST = createApiRoute({
         activeJobs: Number(row.activeJobs ?? 0),
         failedJobs: Number(row.failedJobs ?? 0),
         completedJobs: Number(row.completedJobs ?? 0),
-        workers: Number(row.workers ?? 0),
       })),
       nextCursor: rows.length ? (rows[rows.length - 1]?.id ?? null) : null,
       total: Number(total?.count ?? 0),
