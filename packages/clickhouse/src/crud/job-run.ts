@@ -85,10 +85,9 @@ export const searchJobRuns = async (filters: {
   dateFrom?: Date;
   dateTo?: Date;
   limit?: number;
-  offset?: number;
   search?: string;
-  cursor?: string;
-  direction?: 'next' | 'prev';
+  cursor?: number | null;
+  direction?: "next" | "prev";
 }): Promise<
   (Omit<
     JobRunData,
@@ -153,22 +152,19 @@ export const searchJobRuns = async (filters: {
   }
 
   if (filters.cursor) {
-    if (filters.direction === 'prev') {
-      conditions.push("id < {cursor:String}");
+    if (filters.direction === "prev") {
+      conditions.push("created_at >= {cursor:UInt64}");
     } else {
-      conditions.push("id > {cursor:String}");
+      conditions.push("created_at <= {cursor:UInt64}");
     }
     params.cursor = filters.cursor;
   }
+  const limit = filters.limit || 100;
 
   const whereClause =
     conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-  const limit = filters.limit || 100;
-  const offset = filters.offset || 0;
 
-  // For cursor-based pagination, we don't use offset when cursor is provided
-  const shouldUseOffset = !filters.cursor;
-  const orderDirection = filters.direction === 'prev' ? 'ASC' : 'DESC';
+  const orderDirection = filters.direction === "prev" ? "ASC" : "DESC";
 
   const query = `
     SELECT  
@@ -180,17 +176,12 @@ export const searchJobRuns = async (filters: {
     FROM job_runs_ch 
     ${whereClause}
     ORDER BY created_at ${orderDirection}
-    LIMIT {limit:UInt32} ${shouldUseOffset ? 'OFFSET {offset:UInt32}' : ''}
+    LIMIT {limit:UInt32}
   `;
-
-  const queryParams = { ...params, limit };
-  if (shouldUseOffset) {
-    queryParams.offset = offset;
-  }
 
   const result = await clickhouseClient.query({
     query,
-    query_params: queryParams,
+    query_params: { ...params, limit },
     format: "JSONEachRow",
   });
 
@@ -204,7 +195,7 @@ export const searchJobRuns = async (filters: {
   }));
 
   // If we got results in reverse order (prev direction), reverse them back to normal order
-  return filters.direction === 'prev' ? processedData.reverse() : processedData;
+  return filters.direction === "prev" ? processedData.reverse() : processedData;
 };
 
 export const cancelJobRun = async (jobId: string) => {

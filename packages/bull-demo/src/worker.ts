@@ -26,3 +26,30 @@ new Worker("demo-queue-2", processorFile2, {
     return ["demo-queue-2"];
   },
 });
+
+new Worker("demo-queue-3", processorFile2, {
+  connection: redis,
+  ioredis: redis,
+  useWorkerThreads: true,
+  concurrency: 10,
+  getJobTags() {
+    return ["demo-queue-3"];
+  },
+});
+
+new Worker("demo-queue-4", processorFile2, {
+  connection: redis,
+  ioredis: redis,
+  useWorkerThreads: true,
+  concurrency: 10,
+  getJobTags() {
+    return ["demo-queue-4"];
+  },
+});
+
+new Worker("demo-queue-5", processorFile2, {
+  connection: redis,
+  ioredis: redis,
+  useWorkerThreads: true,
+  concurrency: 10,
+});

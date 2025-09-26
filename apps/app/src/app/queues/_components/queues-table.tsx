@@ -5,8 +5,7 @@ import { formatDuration } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useQueryStates, parseAsString } from "nuqs";
-import { useState } from "react";
+import { parseAsString, useQueryStates } from "nuqs";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -29,18 +28,13 @@ export function QueuesTable() {
   const [urlState, setUrlState] = useQueryStates({
     search: parseAsString.withDefault(""),
     timePeriod: parseAsString.withDefault("30"),
+    cursor: parseAsString.withDefault(""),
   });
 
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [direction, setDirection] = useState<'next' | 'prev'>('next');
-  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
-
   const options = {
-    cursor,
-    direction,
+    cursor: urlState.cursor || null,
     search: urlState.search,
     timePeriod: urlState.timePeriod as TimePeriod,
-    limit: 20,
   };
 
   const handleQueueClick = (queueName: string) => {
@@ -57,55 +51,63 @@ export function QueuesTable() {
 
   const handleNextPage = () => {
     if (data?.nextCursor) {
-      setCursorHistory(prev => cursor ? [...prev, cursor] : prev);
-      setCursor(data.nextCursor);
-      setDirection('next');
+      setUrlState({ cursor: data.nextCursor });
     }
   };
 
   const handlePrevPage = () => {
-    if (cursorHistory.length > 0) {
-      const previousCursor = cursorHistory[cursorHistory.length - 1];
-      setCursorHistory(prev => prev.slice(0, -1));
-      setCursor(previousCursor || null);
-      setDirection('next');
-    } else if (data?.prevCursor) {
-      setCursor(data.prevCursor);
-      setDirection('prev');
+    if (data?.prevCursor) {
+      setUrlState({ cursor: data.prevCursor });
     }
   };
 
   const handleSearchChange = (search: string) => {
     // Reset pagination when search changes
-    setCursor(null);
-    setDirection('next');
-    setCursorHistory([]);
-    setUrlState({ search });
+    setUrlState({ cursor: null, search });
   };
 
   const handleTimePeriodChange = (timePeriod: TimePeriod) => {
     // Reset pagination when time period changes
-    setCursor(null);
-    setDirection('next');
-    setCursorHistory([]);
-    setUrlState({ timePeriod });
+    setUrlState({ cursor: null, timePeriod });
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <TimePeriodSelector
-          value={options.timePeriod}
-          onChange={handleTimePeriodChange}
-        />
-        <div className="flex-1 relative max-w-[350px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by queue name..."
-            value={options.search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10"
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <TimePeriodSelector
+            value={options.timePeriod}
+            onChange={handleTimePeriodChange}
           />
+          <div className="flex-1 relative max-w-[350px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by queue name..."
+              value={options.search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={isLoading || !data?.prevCursor}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={isLoading || !data?.nextCursor}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
       <Table className="table-fixed w-full">
@@ -146,7 +148,7 @@ export function QueuesTable() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <span className="font-mono">
+                  <span className="font-mono truncate block">
                     {queue.pattern ||
                       (queue.every &&
                         `Every ${formatDuration({
@@ -183,35 +185,6 @@ export function QueuesTable() {
           </AnimatePresence>
         </TableBody>
       </Table>
-      
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevPage}
-            disabled={isLoading || (cursorHistory.length === 0 && !data?.prevCursor)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={isLoading || !data?.nextCursor}
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {data?.queues?.length && (
-            <span>Showing {data.queues.length} results {data.total ? `of ${data.total} total` : ''}</span>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

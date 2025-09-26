@@ -3,12 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useQueryStates, parseAsString } from "nuqs";
-import { useState } from "react";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
 import {
   Table,
   TableBody,
@@ -28,21 +25,17 @@ export function RunsTable() {
     queue: parseAsString.withDefault("all"),
     status: parseAsString.withDefault("all"),
     search: parseAsString.withDefault(""),
+    cursor: parseAsInteger,
   });
-
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [direction, setDirection] = useState<'next' | 'prev'>('next');
-  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
 
   const filters: TRunFilters = {
     ...urlFilters,
-    cursor,
-    direction,
-    limit: 15,
+    cursor: urlFilters.cursor ?? null,
+    limit: 1,
   };
   const debouncedFilters = useDebounce(filters, 300);
 
-  const { data: runs, isLoading } = useQuery({
+  const { data: runs } = useQuery({
     queryKey: ["jobs/table", debouncedFilters],
     queryFn: apiFetch({
       apiRoute: getJobsTableApiRoute,
@@ -50,31 +43,8 @@ export function RunsTable() {
     }),
   });
 
-  const handleNextPage = () => {
-    if (runs?.nextCursor) {
-      setCursorHistory(prev => cursor ? [...prev, cursor] : prev);
-      setCursor(runs.nextCursor);
-      setDirection('next');
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (cursorHistory.length > 0) {
-      const previousCursor = cursorHistory[cursorHistory.length - 1];
-      setCursorHistory(prev => prev.slice(0, -1));
-      setCursor(previousCursor || null);
-      setDirection('next');
-    } else if (runs?.prevCursor) {
-      setCursor(runs.prevCursor);
-      setDirection('prev');
-    }
-  };
-
-  const handleFiltersChange = (newFilters: any) => {
+  const handleFiltersChange = (newFilters: Partial<TRunFilters>) => {
     // Reset pagination when filters change
-    setCursor(null);
-    setDirection('next');
-    setCursorHistory([]);
     setUrlFilters(newFilters);
   };
 
@@ -97,7 +67,11 @@ export function RunsTable() {
 
   return (
     <div className="space-y-4">
-      <RunsFilters filters={filters} setFilters={handleFiltersChange} />
+      <RunsFilters
+        filters={filters}
+        setFilters={handleFiltersChange}
+        runs={runs}
+      />
       <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
@@ -148,12 +122,12 @@ export function RunsTable() {
                     ? formatDistanceStrict(run.started_at, run.finished_at)
                     : "-"}
                 </TableCell>
-                <TableCell className="text-xs truncate">
+                <TableCell className="truncate">
                   {formatDistanceToNow(new Date(run.created_at), {
                     addSuffix: true,
                   })}
                 </TableCell>
-                <TableCell className="text-xs truncate">
+                <TableCell className="truncate">
                   {run.finished_at
                     ? formatDistanceToNow(new Date(run.finished_at), {
                         addSuffix: true,
@@ -162,7 +136,8 @@ export function RunsTable() {
                 </TableCell>
                 <TableCell
                   className={cn("max-w-48 truncate text-xs", {
-                    "text-red-600": run.status === "failed" && run.error_message,
+                    "text-red-600":
+                      run.status === "failed" && run.error_message,
                   })}
                 >
                   {run.status === "failed" && run.error_message
@@ -183,35 +158,6 @@ export function RunsTable() {
           </AnimatePresence>
         </TableBody>
       </Table>
-      
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevPage}
-            disabled={isLoading || (cursorHistory.length === 0 && !runs?.prevCursor)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={isLoading || !runs?.nextCursor}
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {runs?.jobs?.length && (
-            <span>Showing {runs.jobs.length} results</span>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
