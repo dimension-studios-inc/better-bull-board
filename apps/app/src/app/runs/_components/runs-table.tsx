@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQueryStates, parseAsString } from "nuqs";
+import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import {
@@ -25,11 +25,12 @@ export function RunsTable() {
     queue: parseAsString.withDefault("all"),
     status: parseAsString.withDefault("all"),
     search: parseAsString.withDefault(""),
+    cursor: parseAsInteger,
   });
 
   const filters: TRunFilters = {
     ...urlFilters,
-    cursor: null,
+    cursor: urlFilters.cursor ?? null,
     limit: 15,
   };
   const debouncedFilters = useDebounce(filters, 300);
@@ -41,6 +42,11 @@ export function RunsTable() {
       body: debouncedFilters,
     }),
   });
+
+  const handleFiltersChange = (newFilters: Partial<TRunFilters>) => {
+    // Reset pagination when filters change
+    setUrlFilters(newFilters);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -61,7 +67,11 @@ export function RunsTable() {
 
   return (
     <div className="space-y-4">
-      <RunsFilters filters={filters} setFilters={setUrlFilters} />
+      <RunsFilters
+        filters={filters}
+        setFilters={handleFiltersChange}
+        runs={runs}
+      />
       <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
@@ -112,12 +122,12 @@ export function RunsTable() {
                     ? formatDistanceStrict(run.started_at, run.finished_at)
                     : "-"}
                 </TableCell>
-                <TableCell className="text-xs truncate">
+                <TableCell className="truncate">
                   {formatDistanceToNow(new Date(run.created_at), {
                     addSuffix: true,
                   })}
                 </TableCell>
-                <TableCell className="text-xs truncate">
+                <TableCell className="truncate">
                   {run.finished_at
                     ? formatDistanceToNow(new Date(run.finished_at), {
                         addSuffix: true,
@@ -126,7 +136,8 @@ export function RunsTable() {
                 </TableCell>
                 <TableCell
                   className={cn("max-w-48 truncate text-xs", {
-                    "text-red-600": run.status === "failed" && run.error_message,
+                    "text-red-600":
+                      run.status === "failed" && run.error_message,
                   })}
                 >
                   {run.status === "failed" && run.error_message
