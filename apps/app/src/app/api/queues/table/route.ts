@@ -1,9 +1,6 @@
-import {
-  jobSchedulersTable,
-  queuesTable,
-} from "@better-bull-board/db";
-import { db } from "@better-bull-board/db/server";
 import { getQueueStatsWithChart } from "@better-bull-board/clickhouse";
+import { jobSchedulersTable, queuesTable } from "@better-bull-board/db";
+import { db } from "@better-bull-board/db/server";
 import { and, eq, gt, ilike, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
@@ -44,7 +41,9 @@ export const POST = createAuthenticatedApiRoute({
     // Get job run stats from ClickHouse
     const queueNames = rows.map((row) => row.name);
     const timePeriodDays = Number(timePeriod);
-    const dateFrom = new Date(Date.now() - timePeriodDays * 24 * 60 * 60 * 1000);
+    const dateFrom = new Date(
+      Date.now() - timePeriodDays * 24 * 60 * 60 * 1000,
+    );
     const dateTo = new Date();
 
     const queueStats = await getQueueStatsWithChart({
@@ -66,7 +65,7 @@ export const POST = createAuthenticatedApiRoute({
           completedJobs: 0,
           chartData: [],
         };
-        
+
         return {
           name: row.name,
           isPaused: row.isPaused,

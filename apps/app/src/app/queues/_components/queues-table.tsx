@@ -30,7 +30,7 @@ export function QueuesTable() {
   }>({
     cursor: null,
     search: "",
-    timePeriod: "1",
+    timePeriod: "30",
   });
 
   const handleQueueClick = (queueName: string) => {
@@ -74,19 +74,19 @@ export function QueuesTable() {
       <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
-            <TableHead style={{ width: "260px" }}>Queue Name</TableHead>
+            <TableHead style={{ width: "200px" }}>Queue Name</TableHead>
             <TableHead style={{ width: "120px" }}>Status</TableHead>
             <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
             <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
             <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
             <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>
-            <TableHead style={{ width: "150px" }}>Trend</TableHead>
-            <TableHead style={{ width: "60px" }}></TableHead>
+            <TableHead style={{ width: "70px" }}>Trend</TableHead>
+            <TableHead style={{ width: "90px" }}></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data?.queues.map((queue) => (
-            <TableRow 
+            <TableRow
               key={queue.name}
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => handleQueueClick(queue.name)}
@@ -125,10 +125,7 @@ export function QueuesTable() {
                 </span>
               </TableCell>
               <TableCell onClick={(e) => e.stopPropagation()}>
-                <QueueMiniChart 
-                  data={queue.chartData} 
-                  timePeriod={options.timePeriod}
-                />
+                <QueueMiniChart data={queue.chartData} />
               </TableCell>
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <QueueActions

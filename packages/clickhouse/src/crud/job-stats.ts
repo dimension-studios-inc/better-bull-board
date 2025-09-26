@@ -1,3 +1,4 @@
+import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
 import { clickhouseClient } from "../lib/client";
 import type { JobStats, QueueStatsWithChart } from "./schemas";
 
@@ -64,6 +65,42 @@ export const getJobStats = async ({
   }
 };
 
+function fillChartData(
+  dateFrom: Date,
+  dateTo: Date,
+  stepKind: string,
+  chartData: { timestamp: string; completed: number; failed: number }[],
+) {
+  const filled: { timestamp: string; completed: number; failed: number }[] = [];
+  const map = new Map(
+    chartData.map((d) => [
+      new Date(d.timestamp).toISOString().slice(0, 19).replace("T", " "),
+      d,
+    ]),
+  );
+
+  for (
+    let d = new Date(dateFrom);
+    d <= dateTo;
+    // biome-ignore lint/suspicious/noAssignInExpressions: easier
+    stepKind === "hour" ? (d = addHours(d, 1)) : (d = addDays(d, 1))
+  ) {
+    const ts =
+      stepKind === "hour"
+        ? startOfHour(d).toISOString().slice(0, 19).replace("T", " ")
+        : startOfDay(d).toISOString().slice(0, 19).replace("T", " ");
+
+    if (map.has(ts)) {
+      filled.push(
+        map.get(ts) as { timestamp: string; completed: number; failed: number },
+      );
+    } else {
+      filled.push({ timestamp: ts, completed: 0, failed: 0 });
+    }
+  }
+  return filled;
+}
+
 export const getQueueStatsWithChart = async ({
   queueNames,
   dateFrom,
@@ -80,19 +117,20 @@ export const getQueueStatsWithChart = async ({
   }
 
   try {
-    // Determine interval based on time period
     let interval: string;
+    let stepKind: string;
     if (timePeriod <= 1) {
-      interval = "toStartOfHour(created_at)"; // hourly for 1 day
+      interval = "toStartOfHour(created_at)";
+      stepKind = "hour";
     } else if (timePeriod <= 7) {
-      interval = "toStartOfHour(created_at)"; // hourly for up to 7 days
+      interval = "toStartOfHour(created_at)";
+      stepKind = "hour";
     } else {
-      interval = "toStartOfDay(created_at)"; // daily for longer periods
+      interval = "toStartOfDay(created_at)";
+      stepKind = "day";
     }
 
-    // Get stats for each queue
     const statsPromises = queueNames.map(async (queueName) => {
-      // Get current counts
       const countQuery = `
         SELECT 
           countIf(status = 'active') as active_jobs,
@@ -102,7 +140,6 @@ export const getQueueStatsWithChart = async ({
         WHERE queue = {queue:String}
       `;
 
-      // Get chart data
       const chartQuery = `
         SELECT 
           ${interval} as timestamp,
@@ -118,34 +155,55 @@ export const getQueueStatsWithChart = async ({
       const [countResult, chartResult] = await Promise.all([
         clickhouseClient.query({
           query: countQuery,
-          query_params: { queue: queueName, date_from: dateFrom, date_to: dateTo },
+          query_params: {
+            queue: queueName,
+            date_from: dateFrom,
+            date_to: dateTo,
+          },
           format: "JSONEachRow",
         }),
         clickhouseClient.query({
           query: chartQuery,
-          query_params: { queue: queueName, date_from: dateFrom, date_to: dateTo },
+          query_params: {
+            queue: queueName,
+            date_from: dateFrom,
+            date_to: dateTo,
+          },
           format: "JSONEachRow",
         }),
       ]);
 
-      const [countData, chartData] = await Promise.all([
+      const [countData, chartDataRaw] = await Promise.all([
         countResult.json(),
         chartResult.json(),
       ]);
 
-      const counts = countData[0] as { active_jobs: string; failed_jobs: string; completed_jobs: string } || 
-        { active_jobs: "0", failed_jobs: "0", completed_jobs: "0" };
+      const counts =
+        (countData[0] as {
+          active_jobs: string;
+          failed_jobs: string;
+          completed_jobs: string;
+        }) ||
+        ({ active_jobs: "0", failed_jobs: "0", completed_jobs: "0" } as const);
+
+      const chartData = (
+        chartDataRaw as {
+          timestamp: string;
+          completed: string;
+          failed: string;
+        }[]
+      ).map((item) => ({
+        timestamp: item.timestamp,
+        completed: Number(item.completed),
+        failed: Number(item.failed),
+      }));
 
       return {
         queueName,
         activeJobs: Number(counts.active_jobs),
         failedJobs: Number(counts.failed_jobs),
         completedJobs: Number(counts.completed_jobs),
-        chartData: (chartData as { timestamp: string; completed: string; failed: string }[]).map((item) => ({
-          timestamp: item.timestamp,
-          completed: Number(item.completed),
-          failed: Number(item.failed),
-        })),
+        chartData: fillChartData(dateFrom, dateTo, stepKind, chartData),
       };
     });
 
