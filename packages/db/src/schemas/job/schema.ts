@@ -52,7 +52,7 @@ export const jobRunsTable = pgTable(
     ),
   },
   (t) => [
-    uniqueIndex("ux_job_runs_jobid").on(t.jobId),
+    uniqueIndex("ux_job_runs_jobid_enqueuedat").on(t.jobId, t.enqueuedAt), // Don't use jobId alone because if jobs are removed from bullmq it can overlap old ones
     index("ix_job_runs_queue_created_at").on(t.queue, t.createdAt),
     index("ix_job_runs_created_at").on(t.createdAt),
     index("ix_job_runs_job").on(t.jobId),

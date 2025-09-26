@@ -151,11 +151,16 @@ export function QueuesTable() {
                 </TableCell>
                 <TableCell>
                   <span className="font-mono truncate block">
-                    {queue.pattern ||
-                      (queue.every &&
-                        `Every ${formatDuration({
-                          seconds: queue.every / 1000,
-                        })}`)}
+                    {queue.patterns.length
+                      ? queue.patterns.join(", ")
+                      : queue.everys.length
+                        ? queue.everys.map(
+                            (every) =>
+                              `Every ${formatDuration({
+                                seconds: Number(every) / 1000,
+                              })}`,
+                          )
+                        : undefined}
                   </span>
                 </TableCell>
                 <TableCell>

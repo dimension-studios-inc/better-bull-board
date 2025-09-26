@@ -13,8 +13,8 @@ export const getQueuesTableOutput = z.object({
     z.object({
       name: z.string(),
       isPaused: z.boolean(),
-      pattern: z.string().nullable(),
-      every: z.number().nullable(),
+      patterns: z.array(z.string()),
+      everys: z.array(z.number()),
       activeJobs: z.number(),
       failedJobs: z.number(),
       completedJobs: z.number(),

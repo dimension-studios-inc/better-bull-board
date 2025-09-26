@@ -17,8 +17,12 @@ export const POST = createAuthenticatedApiRoute({
           id: queuesTable.id,
           name: queuesTable.name,
           isPaused: queuesTable.isPaused,
-          pattern: jobSchedulersTable.pattern,
-          every: jobSchedulersTable.every,
+          patterns: sql<
+            string[] | null | undefined
+          >`array_agg(${jobSchedulersTable.pattern})`.as("patterns"),
+          everys: sql<
+            number[] | null | undefined
+          >`array_agg(${jobSchedulersTable.every})`.as("everys"),
         })
         .from(queuesTable)
         .leftJoin(
@@ -35,6 +39,7 @@ export const POST = createAuthenticatedApiRoute({
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
           ),
         )
+        .groupBy(queuesTable.id) // ✅ ensures one row per queue
         .orderBy(
           direction === "prev" ? desc(queuesTable.name) : asc(queuesTable.name),
         )
@@ -85,8 +90,8 @@ export const POST = createAuthenticatedApiRoute({
         return {
           name: row.name,
           isPaused: row.isPaused,
-          pattern: row.pattern,
-          every: row.every,
+          patterns: row.patterns?.filter(Boolean) ?? [],
+          everys: row.everys?.filter(Boolean) ?? [],
           activeJobs: stats.activeJobs,
           failedJobs: stats.failedJobs,
           completedJobs: stats.completedJobs,

@@ -1,4 +1,3 @@
-import { logger } from "@rharkor/logger";
 import { Queue } from "bullmq";
 import { redis } from "~/lib/redis";
 
@@ -17,12 +16,15 @@ export const replayJobHandler = async (input: {
     }
 
     await job.retry();
-    logger.log("Job retried", { jobId, queueName });
   } catch {
     await queue.add(jobId, job?.data, {
       ...job?.opts,
+      delay: undefined,
+      jobId: undefined,
+      repeat: undefined,
+      repeatJobKey: undefined,
+      timestamp: undefined,
     });
-    logger.log("Job replayed", { jobId, queueName });
   }
 
   return {

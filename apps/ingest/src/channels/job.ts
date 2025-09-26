@@ -85,7 +85,10 @@ export const handleJobChannel = async (_channel: string, message: string) => {
 };
 
 const upsertJobRun = async (validated: z.infer<typeof jobRunsInsertSchema>) => {
-  const existingJobRun = await getJobFromBullId(validated.jobId);
+  const existingJobRun = await getJobFromBullId(
+    validated.jobId,
+    validated.enqueuedAt as Date,
+  );
   const [jobRun] = existingJobRun
     ? await db
         .update(jobRunsTable)
