@@ -197,7 +197,7 @@ export function RunsFilters({
             </div>
           </PopoverContent>
         </Popover>
-        <div className="flex-1 relative max-w-[350px]">
+        <div className="flex-1 relative w-[350px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by job ID, name, or error..."
