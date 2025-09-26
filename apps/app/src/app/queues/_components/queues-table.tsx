@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDuration } from "date-fns";
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useQueryStates, parseAsString } from "nuqs";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Input } from "~/components/ui/input";
@@ -23,15 +23,17 @@ import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
 export function QueuesTable() {
   const router = useRouter();
-  const [options, setOptions] = useState<{
-    cursor: string | null;
-    search: string;
-    timePeriod: TimePeriod;
-  }>({
-    cursor: null,
-    search: "",
-    timePeriod: "30",
+  const [urlState, setUrlState] = useQueryStates({
+    search: parseAsString.withDefault(""),
+    timePeriod: parseAsString.withDefault("30"),
   });
+
+  const options = {
+    cursor: null,
+    search: urlState.search,
+    timePeriod: urlState.timePeriod as TimePeriod,
+    limit: 20,
+  };
 
   const handleQueueClick = (queueName: string) => {
     router.push(`/runs?queue=${encodeURIComponent(queueName)}`);
@@ -41,12 +43,7 @@ export function QueuesTable() {
     queryKey: ["queues/table", options],
     queryFn: apiFetch({
       apiRoute: getQueuesTableApiRoute,
-      body: {
-        cursor: options.cursor,
-        search: options.search,
-        timePeriod: options.timePeriod,
-        limit: 20,
-      },
+      body: options,
     }),
   });
 
@@ -56,7 +53,7 @@ export function QueuesTable() {
         <TimePeriodSelector
           value={options.timePeriod}
           onChange={(timePeriod) =>
-            setOptions((prev) => ({ ...prev, timePeriod }))
+            setUrlState({ timePeriod })
           }
         />
         <div className="flex-1 relative max-w-[350px]">
@@ -65,7 +62,7 @@ export function QueuesTable() {
             placeholder="Search by queue name..."
             value={options.search}
             onChange={(e) =>
-              setOptions((prev) => ({ ...prev, search: e.target.value }))
+              setUrlState({ search: e.target.value })
             }
             className="pl-10"
           />

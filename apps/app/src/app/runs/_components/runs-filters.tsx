@@ -22,7 +22,7 @@ export function RunsFilters({
   setFilters,
 }: {
   filters: TRunFilters;
-  setFilters: React.Dispatch<React.SetStateAction<TRunFilters>>;
+  setFilters: (filters: Partial<Pick<TRunFilters, "queue" | "status" | "search">>) => void;
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
@@ -95,10 +95,9 @@ export function RunsFilters({
   };
 
   const removeFilter = (filterKey: string) => {
-    setFilters((prev) => ({
-      ...prev,
+    setFilters({
       [filterKey]: filterKey === "queue" || filterKey === "status" ? "all" : "",
-    }));
+    });
   };
 
   const activeFilters = getActiveFilters();
@@ -131,7 +130,7 @@ export function RunsFilters({
                 <Combobox
                   value={filters.queue}
                   onValueChange={(value) =>
-                    setFilters((prev) => ({ ...prev, queue: value }))
+                    setFilters({ queue: value })
                   }
                   options={queueOptions}
                   placeholder="All Queues"
@@ -152,7 +151,7 @@ export function RunsFilters({
                   <Combobox
                     value={filters.status}
                     onValueChange={(value) =>
-                      setFilters((prev) => ({ ...prev, status: value }))
+                      setFilters({ status: value })
                     }
                     options={statusOptions}
                     placeholder="All Statuses"
@@ -177,7 +176,7 @@ export function RunsFilters({
           placeholder="Search by job ID, name, or error..."
           value={filters.search}
           onChange={(e) =>
-            setFilters((prev) => ({ ...prev, search: e.target.value }))
+            setFilters({ search: e.target.value })
           }
           className="pl-10"
         />
