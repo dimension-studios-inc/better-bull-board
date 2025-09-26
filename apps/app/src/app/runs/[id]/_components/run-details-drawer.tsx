@@ -1,0 +1,330 @@
+"use client";
+
+import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
+import { CalendarClock, Clock, Database, Hash, PlayCircle, Settings, Tag, User, AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { Badge } from "~/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { Separator } from "~/components/ui/separator";
+import { cn } from "~/lib/utils/client";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
+import { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+
+interface RunData {
+  id: string;
+  job_id: string;
+  queue: string;
+  name: string | null;
+  status: string;
+  attempt: number;
+  max_attempts: number;
+  priority: number | null;
+  delay_ms: number;
+  backoff: unknown | null;
+  repeat_job_key: string | null;
+  parent_job_id: string | null;
+  worker_id: string | null;
+  tags: string[] | null;
+  data: unknown | null;
+  result: unknown | null;
+  error_message: string | null;
+  error_stack: string | null;
+  created_at: number;
+  enqueued_at: number | null;
+  started_at: number | null;
+  finished_at: number | null;
+}
+
+interface RunDetailsDrawerProps {
+  run: RunData;
+}
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case "completed":
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
+    case "failed":
+      return <AlertCircle className="h-4 w-4 text-red-500" />;
+    case "active":
+      return <Loader className="h-4 w-4 text-blue-500 animate-spin" />;
+    default:
+      return <Clock className="h-4 w-4 text-gray-500" />;
+  }
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "completed":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+    case "failed":
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+    case "active":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+  }
+};
+
+const DetailItem = ({ 
+  icon, 
+  label, 
+  value, 
+  className 
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  value: React.ReactNode; 
+  className?: string;
+}) => (
+  <div className={cn("flex items-center space-x-3", className)}>
+    <div className="flex-shrink-0">{icon}</div>
+    <div className="flex-1 min-w-0">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium">{value}</div>
+    </div>
+  </div>
+);
+
+const JsonCollapsible = ({ 
+  title, 
+  data, 
+  icon 
+}: { 
+  title: string; 
+  data: unknown; 
+  icon: React.ReactNode;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  if (!data) return null;
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left hover:bg-muted/50 p-2 rounded">
+        {isOpen ? (
+          <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )}
+        {icon}
+        <span className="text-sm font-medium">{title}</span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-2">
+        <div className="p-3 bg-muted/30 rounded border">
+          <pre className="text-xs font-mono whitespace-pre-wrap break-words max-h-48 overflow-y-auto">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
+export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
+  const duration = run.started_at && run.finished_at && (run.status === "completed" || run.status === "failed")
+    ? formatDistanceStrict(run.started_at, run.finished_at)
+    : null;
+
+  return (
+    <Card className="h-[calc(100vh-12rem)]">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          {getStatusIcon(run.status)}
+          <span>Run Details</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="h-full pb-6">
+        <ScrollArea className="h-full">
+          <div className="space-y-6">
+            {/* Status */}
+            <div>
+              <h3 className="text-sm font-medium mb-3">Status</h3>
+              <Badge className={getStatusColor(run.status)}>
+                {run.status.toUpperCase()}
+              </Badge>
+            </div>
+
+            <Separator />
+
+            {/* Basic Info */}
+            <div>
+              <h3 className="text-sm font-medium mb-3">Basic Information</h3>
+              <div className="space-y-3">
+                <DetailItem
+                  icon={<Hash className="h-4 w-4 text-muted-foreground" />}
+                  label="Job ID"
+                  value={
+                    <span className="font-mono text-xs break-all">
+                      {run.job_id}
+                    </span>
+                  }
+                />
+                <DetailItem
+                  icon={<Database className="h-4 w-4 text-muted-foreground" />}
+                  label="Queue"
+                  value={run.queue}
+                />
+                {run.name && (
+                  <DetailItem
+                    icon={<Tag className="h-4 w-4 text-muted-foreground" />}
+                    label="Name"
+                    value={run.name}
+                  />
+                )}
+                {run.worker_id && (
+                  <DetailItem
+                    icon={<User className="h-4 w-4 text-muted-foreground" />}
+                    label="Worker ID"
+                    value={
+                      <span className="font-mono text-xs">
+                        {run.worker_id}
+                      </span>
+                    }
+                  />
+                )}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Timing */}
+            <div>
+              <h3 className="text-sm font-medium mb-3">Timing</h3>
+              <div className="space-y-3">
+                <DetailItem
+                  icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
+                  label="Created"
+                  value={formatDistanceToNow(new Date(run.created_at), { addSuffix: true })}
+                />
+                {run.enqueued_at && (
+                  <DetailItem
+                    icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
+                    label="Enqueued"
+                    value={formatDistanceToNow(new Date(run.enqueued_at), { addSuffix: true })}
+                  />
+                )}
+                {run.started_at && (
+                  <DetailItem
+                    icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
+                    label="Started"
+                    value={formatDistanceToNow(new Date(run.started_at), { addSuffix: true })}
+                  />
+                )}
+                {run.finished_at && (
+                  <DetailItem
+                    icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
+                    label="Finished"
+                    value={formatDistanceToNow(new Date(run.finished_at), { addSuffix: true })}
+                  />
+                )}
+                {duration && (
+                  <DetailItem
+                    icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+                    label="Duration"
+                    value={duration}
+                  />
+                )}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Execution Details */}
+            <div>
+              <h3 className="text-sm font-medium mb-3">Execution</h3>
+              <div className="space-y-3">
+                <DetailItem
+                  icon={<Settings className="h-4 w-4 text-muted-foreground" />}
+                  label="Attempt"
+                  value={`${run.attempt} / ${run.max_attempts}`}
+                />
+                {run.priority !== null && (
+                  <DetailItem
+                    icon={<Settings className="h-4 w-4 text-muted-foreground" />}
+                    label="Priority"
+                    value={run.priority}
+                  />
+                )}
+                {run.delay_ms > 0 && (
+                  <DetailItem
+                    icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+                    label="Delay"
+                    value={`${run.delay_ms}ms`}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Tags */}
+            {run.tags && run.tags.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Tags</h3>
+                  <div className="flex flex-wrap gap-1">
+                    {run.tags.map((tag) => (
+                      <Badge key={tag} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Error Details */}
+            {run.status === "failed" && (run.error_message || run.error_stack) && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="text-sm font-medium mb-3 text-red-600">Error Details</h3>
+                  {run.error_message && (
+                    <div className="mb-3">
+                      <div className="text-xs text-muted-foreground mb-1">Message</div>
+                      <div className="p-2 bg-red-50 border border-red-200 rounded text-sm dark:bg-red-950/30 dark:border-red-800">
+                        {run.error_message}
+                      </div>
+                    </div>
+                  )}
+                  {run.error_stack && (
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Stack Trace</div>
+                      <div className="p-2 bg-red-50 border border-red-200 rounded text-xs font-mono dark:bg-red-950/30 dark:border-red-800 max-h-32 overflow-y-auto">
+                        <pre className="whitespace-pre-wrap break-words">
+                          {run.error_stack}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            <Separator />
+
+            {/* Data & Result */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Payloads</h3>
+              <JsonCollapsible
+                title="Input Data"
+                data={run.data}
+                icon={<Database className="h-4 w-4 text-muted-foreground" />}
+              />
+              <JsonCollapsible
+                title="Result"
+                data={run.result}
+                icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
+              />
+              <JsonCollapsible
+                title="Backoff Config"
+                data={run.backoff}
+                icon={<Settings className="h-4 w-4 text-muted-foreground" />}
+              />
+            </div>
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
+}

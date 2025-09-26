@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { useQueryStates, parseAsString } from "nuqs";
+import { useRouter } from "next/navigation";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import {
@@ -21,6 +22,7 @@ import { RunsFilters } from "./runs-filters";
 import type { TRunFilters } from "./types";
 
 export function RunsTable() {
+  const router = useRouter();
   const [urlFilters, setUrlFilters] = useQueryStates({
     queue: parseAsString.withDefault("all"),
     status: parseAsString.withDefault("all"),
@@ -59,6 +61,10 @@ export function RunsTable() {
     }
   };
 
+  const handleRowClick = (runId: string) => {
+    router.push(`/runs/${runId}`);
+  };
+
   return (
     <div className="space-y-4">
       <RunsFilters filters={filters} setFilters={setUrlFilters} />
@@ -81,12 +87,13 @@ export function RunsTable() {
             {runs?.jobs.map((run) => (
               <motion.tr
                 key={run.id}
-                className="group border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                className="group border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted cursor-pointer"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
                 layout
+                onClick={() => handleRowClick(run.id)}
               >
                 <TableCell className="font-mono text-xs">
                   {run.job_id.slice(0, 32)}

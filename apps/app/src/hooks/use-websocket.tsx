@@ -66,6 +66,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
           case "job-refresh":
             queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
             queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
+            queryClient.invalidateQueries({ queryKey: ["jobs/single"] });
             break;
           case "queue-refresh":
             queryClient.invalidateQueries({ queryKey: ["queues/table"] });
