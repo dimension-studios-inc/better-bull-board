@@ -64,7 +64,7 @@ class BullBoardWebSocketServer {
 
   private async setupRedisSubscriber() {
     try {
-      await this.subscriber.connect();
+      await this.subscriber.connect().catch(() => {});
 
       // Subscribe to the events we're emitting in the files
       await this.subscriber.psubscribe("bbb:ingest:events:*");

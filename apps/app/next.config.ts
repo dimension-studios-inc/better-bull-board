@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  logging: process.env.ENV === "development" ? false : undefined,
 };
 
 export default nextConfig;
