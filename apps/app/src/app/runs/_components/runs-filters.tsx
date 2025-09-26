@@ -125,6 +125,8 @@ export function RunsFilters({
   const handlePrevPage = () => {
     if (runs?.prevCursor) {
       setFilters({ cursor: runs.prevCursor });
+    } else {
+      setFilters({ cursor: null });
     }
   };
 
@@ -223,7 +225,7 @@ export function RunsFilters({
           variant="outline"
           size="sm"
           onClick={handlePrevPage}
-          disabled={isLoading || !runs?.prevCursor}
+          disabled={isLoading || (!runs?.prevCursor && !filters.cursor)}
         >
           <ChevronLeft className="h-4 w-4" />
           Previous

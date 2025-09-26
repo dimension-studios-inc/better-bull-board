@@ -58,6 +58,8 @@ export function QueuesTable() {
   const handlePrevPage = () => {
     if (data?.prevCursor) {
       setUrlState({ cursor: data.prevCursor });
+    } else {
+      setUrlState({ cursor: null });
     }
   };
 
@@ -94,7 +96,7 @@ export function QueuesTable() {
             variant="outline"
             size="sm"
             onClick={handlePrevPage}
-            disabled={isLoading || !data?.prevCursor}
+            disabled={isLoading || (!data?.prevCursor && !options.cursor)}
           >
             <ChevronLeft className="h-4 w-4" />
             Previous
