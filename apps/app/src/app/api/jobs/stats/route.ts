@@ -1,8 +1,8 @@
 import { getJobStats } from "@better-bull-board/clickhouse";
-import { createApiRoute } from "~/lib/utils";
+import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobsStatsApiRoute } from "./schemas";
 
-export const POST = createApiRoute({
+export const POST = createAuthenticatedApiRoute({
   apiRoute: getJobsStatsApiRoute,
   async handler(input) {
     const days = input?.days || 1;

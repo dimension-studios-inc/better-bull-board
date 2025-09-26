@@ -1,5 +1,5 @@
 import { LoaderIcon } from "lucide-react";
-import { cn } from "~/lib/utils";
+import { cn } from "~/lib/utils/client";
 
 export function Loader({ className }: { className?: string }) {
   return (

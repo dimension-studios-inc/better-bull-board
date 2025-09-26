@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "~/components/sidebar";
+import { headers } from "next/headers";
+import { AuthGuard } from "~/components/auth-guard";
 import { Toaster } from "~/components/ui/sonner";
 import { Providers } from "./providers";
 
@@ -20,21 +21,20 @@ export const metadata: Metadata = {
   description: "A board to monitor your bullmq jobs",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = (await headers()).get("x-pathname") as string;
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className="flex h-screen bg-background">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">{children}</main>
-          </div>
+          <AuthGuard pathname={pathname}>{children}</AuthGuard>
         </Providers>
         <Toaster />
       </body>

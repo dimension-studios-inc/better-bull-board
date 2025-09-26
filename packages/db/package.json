@@ -54,5 +54,8 @@
       "require": "./dist/utils/*.cjs"
     }
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@types/pg": "^8.15.5"
+  }
 }
