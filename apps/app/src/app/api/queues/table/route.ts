@@ -1,7 +1,7 @@
 import { getQueueStatsWithChart } from "@better-bull-board/clickhouse";
 import { jobSchedulersTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import { and, asc, desc, eq, gte, ilike, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, lt, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
 
@@ -33,7 +33,7 @@ export const POST = createAuthenticatedApiRoute({
           and(
             cursor
               ? direction === "prev"
-                ? lte(queuesTable.name, cursor)
+                ? lt(queuesTable.name, cursor)
                 : gte(queuesTable.name, cursor)
               : undefined,
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
@@ -75,7 +75,7 @@ export const POST = createAuthenticatedApiRoute({
 
     const nextCursor = rows.length > limit ? (rows.pop()?.name ?? null) : null;
     const prevCursor =
-      previousRows.length > limit ? (previousRows.pop()?.name ?? null) : null;
+      previousRows.length > limit ? (previousRows.at(-2)?.name ?? null) : null;
 
     return {
       queues: rows.map((row) => {
