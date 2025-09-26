@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/table";
 import useDebounce from "~/hooks/use-debounce";
 import { apiFetch, cn } from "~/lib/utils/client";
+import { RunActions } from "./run-actions";
 import { RunsFilters } from "./runs-filters";
 import type { TRunFilters } from "./types";
 
@@ -78,6 +79,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
             <TableHead style={{ width: "140px" }}>Worker</TableHead>
             <TableHead style={{ width: "160px" }}>Created</TableHead>
             <TableHead style={{ width: "140px" }}>Error</TableHead>
+            <TableHead style={{ width: "80px" }}>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -123,6 +125,13 @@ export function RunsTable({ searchParams }: RunsTableProps) {
                 })}
               >
                 {run.error_message || "-"}
+              </TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <RunActions
+                  jobId={run.job_id}
+                  queueName={run.queue}
+                  status={run.status}
+                />
               </TableCell>
             </TableRow>
           ))}
