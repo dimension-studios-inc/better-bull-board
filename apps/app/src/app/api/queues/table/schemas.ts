@@ -18,7 +18,6 @@ export const getQueuesTableOutput = z.object({
       activeJobs: z.number(),
       failedJobs: z.number(),
       completedJobs: z.number(),
-      workers: z.number(),
     }),
   ),
   nextCursor: z.string().nullable(),

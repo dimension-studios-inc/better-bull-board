@@ -64,17 +64,16 @@ export function QueuesTable() {
           />
         </div>
       </div>
-      <Table>
+      <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
-            <TableHead>Queue Name</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Scheduler</TableHead>
-            <TableHead>Active Jobs</TableHead>
-            <TableHead>Failed Jobs</TableHead>
-            <TableHead>Completed Jobs</TableHead>
-            <TableHead>Workers</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead style={{ width: "260px" }}>Queue Name</TableHead>
+            <TableHead style={{ width: "120px" }}>Status</TableHead>
+            <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
+            <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
+            <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
+            <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>
+            <TableHead style={{ width: "60px" }}></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -112,9 +111,6 @@ export function QueuesTable() {
                 <span className="font-mono text-green-600">
                   {queue.completedJobs}
                 </span>
-              </TableCell>
-              <TableCell>
-                <span className="font-mono">{queue.workers}</span>
               </TableCell>
               <TableCell>
                 <QueueActions
