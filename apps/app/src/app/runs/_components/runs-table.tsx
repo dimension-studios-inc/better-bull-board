@@ -18,11 +18,19 @@ import { apiFetch, cn } from "~/lib/utils";
 import { RunsFilters } from "./runs-filters";
 import type { TRunFilters } from "./types";
 
-export function RunsTable() {
+type RunsTableProps = {
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
+
+export function RunsTable({ searchParams }: RunsTableProps) {
+  const initialQueue = typeof searchParams?.queue === 'string' ? searchParams.queue : "all";
+  const initialStatus = typeof searchParams?.status === 'string' ? searchParams.status : "all";
+  const initialSearch = typeof searchParams?.search === 'string' ? searchParams.search : "";
+  
   const [filters, setFilters] = useState<TRunFilters>({
-    queue: "all",
-    status: "all",
-    search: "",
+    queue: initialQueue,
+    status: initialStatus,
+    search: initialSearch,
     cursor: null,
     limit: 20,
   });
