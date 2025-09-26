@@ -9,6 +9,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { COOKIE_NAME } from "./client";
 
 interface User {
   email: string;
@@ -93,7 +94,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Ignore errors
     } finally {
       // Delete the cookie on client side
-      deleteCookie("auth-token");
+      deleteCookie(COOKIE_NAME);
       setUser(null);
     }
   };

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/lib/auth/context";
-import { cn } from "~/lib/utils/server";
+import { cn } from "~/lib/utils/client";
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },

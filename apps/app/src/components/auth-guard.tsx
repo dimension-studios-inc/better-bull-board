@@ -1,47 +1,20 @@
-"use client";
-
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { Sidebar } from "~/components/sidebar";
-import { useAuth } from "~/lib/auth/context";
+import { getAuthenticatedUser } from "~/lib/auth/server";
 
 interface AuthGuardProps {
   children: React.ReactNode;
+  pathname: string;
 }
 
-export function AuthGuard({ children }: AuthGuardProps) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
+export async function AuthGuard({ children, pathname }: AuthGuardProps) {
+  const user = await getAuthenticatedUser();
 
-  useEffect(() => {
-    if (!loading && !user && pathname !== "/login") {
-      router.push("/login");
-    }
-  }, [user, loading, router, pathname]);
-
-  // Show loading spinner while checking auth
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  // If not authenticated and not on login page, don't render children
   if (!user && pathname !== "/login") {
     return null;
   }
 
-  // If authenticated and on login page, redirect to home
-  if (user && pathname === "/login") {
-    router.push("/");
-    return null;
-  }
-
-  // If on login page, render without sidebar
   if (pathname === "/login") {
+    // If on login page, render without sidebar
     return <>{children}</>;
   }
 

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Activity, AlertCircle, CheckCircle } from "lucide-react";
 import { getJobsStatsApiRoute } from "~/app/api/jobs/stats/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { apiFetch, cn } from "~/lib/utils/server";
+import { apiFetch, cn } from "~/lib/utils/client";
 import { Skeleton } from "../../components/ui/skeleton";
 
 export function StatsCards() {

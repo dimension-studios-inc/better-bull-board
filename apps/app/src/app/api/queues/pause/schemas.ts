@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { registerApiRoute } from "~/lib/utils/server";
+import { registerApiRoute } from "~/lib/utils/client";
 
 export const pauseQueueInput = z.object({
   queueName: z.string(),

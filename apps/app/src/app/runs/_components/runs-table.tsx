@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import useDebounce from "~/hooks/use-debounce";
-import { apiFetch, cn } from "~/lib/utils/server";
+import { apiFetch, cn } from "~/lib/utils/client";
 import { RunsFilters } from "./runs-filters";
 import type { TRunFilters } from "./types";
 

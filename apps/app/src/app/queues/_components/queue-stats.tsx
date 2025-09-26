@@ -5,7 +5,7 @@ import { Activity, Clock, Server } from "lucide-react";
 import { getQueuesStatsApiRoute } from "~/app/api/queues/stats/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { apiFetch, cn } from "~/lib/utils/server";
+import { apiFetch, cn } from "~/lib/utils/client";
 
 export function QueueStats() {
   const { data: queues, isLoading } = useQuery({
