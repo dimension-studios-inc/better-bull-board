@@ -19,7 +19,3 @@ redis.on("error", (err: Error) => {
     stack: err.stack,
   });
 });
-
-redis.on("connect", () => {
-  logger.log("Redis connected");
-});
