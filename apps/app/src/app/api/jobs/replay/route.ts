@@ -1,4 +1,3 @@
-import { logger } from "@rharkor/logger";
 import { Queue } from "bullmq";
 import { redis } from "~/lib/redis";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";

@@ -1,11 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next()
+  const response = NextResponse.next();
   // Inject the current pathname in the headers
-  response.headers.set("x-pathname", request.nextUrl.pathname)
+  response.headers.set("x-pathname", request.nextUrl.pathname);
 
-  return response
+  return response;
 }
 
 export const config = {
@@ -17,4 +17,4 @@ export const config = {
    * - favicon.ico (favicon file)
    */
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico|public).*)"],
-}
+};

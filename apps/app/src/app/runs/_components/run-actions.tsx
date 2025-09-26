@@ -54,7 +54,8 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
     replayMutation.mutate();
   };
 
-  const canCancel = status === "active" || status === "waiting" || status === "delayed";
+  const canCancel =
+    status === "active" || status === "waiting" || status === "delayed";
   const canReplay = status === "completed" || status === "failed";
 
   if (!canCancel && !canReplay) {
@@ -67,8 +68,8 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
       {canCancel && (
         <Popover open={cancelPopoverOpen} onOpenChange={setCancelPopoverOpen}>
           <PopoverTrigger asChild>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="text-red-600 hover:text-red-700"
             >
@@ -82,7 +83,8 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
                   Cancel Job
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  Are you sure you want to cancel this job? This action cannot be undone.
+                  Are you sure you want to cancel this job? This action cannot
+                  be undone.
                 </p>
               </div>
               <div className="flex justify-end gap-2">
@@ -118,11 +120,10 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
           <PopoverContent className="w-80">
             <div className="space-y-4">
               <div className="space-y-2">
-                <h4 className="font-medium leading-none">
-                  Replay Job
-                </h4>
+                <h4 className="font-medium leading-none">Replay Job</h4>
                 <p className="text-sm text-muted-foreground">
-                  Are you sure you want to replay this job? This will create a new job with the same data and configuration.
+                  Are you sure you want to replay this job? This will create a
+                  new job with the same data and configuration.
                 </p>
               </div>
               <div className="flex justify-end gap-2">
