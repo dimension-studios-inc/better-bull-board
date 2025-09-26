@@ -2,7 +2,6 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Filter, Search, X } from "lucide-react";
-import type React from "react";
 import { useMemo, useState } from "react";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
@@ -22,7 +21,9 @@ export function RunsFilters({
   setFilters,
 }: {
   filters: TRunFilters;
-  setFilters: (filters: Partial<Pick<TRunFilters, "queue" | "status" | "search">>) => void;
+  setFilters: (
+    filters: Partial<Pick<TRunFilters, "queue" | "status" | "search">>,
+  ) => void;
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
@@ -30,7 +31,7 @@ export function RunsFilters({
   const [queueSearch, setQueueSearch] = useState("");
   const [statusSearch, setStatusSearch] = useState("");
 
-  const { data: queues } = useInfiniteQuery({
+  const { data: queues, isLoading } = useInfiniteQuery({
     queryKey: ["queues/table", queueSearch],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
       apiFetch({
@@ -64,7 +65,7 @@ export function RunsFilters({
 
   const renderQueueValue = (value: string) => {
     const option = queueOptions?.find((opt) => opt.value === value);
-    return option ? option.label : "All Queues";
+    return option ? option.label : isLoading ? "Loading..." : "";
   };
 
   const renderStatusValue = (value: string) => {
@@ -129,9 +130,7 @@ export function RunsFilters({
                 <label className="text-sm font-medium mb-2 block">Queue</label>
                 <Combobox
                   value={filters.queue}
-                  onValueChange={(value) =>
-                    setFilters({ queue: value })
-                  }
+                  onValueChange={(value) => setFilters({ queue: value })}
                   options={queueOptions}
                   placeholder="All Queues"
                   noOptionsMessage="No queues found"
@@ -150,9 +149,7 @@ export function RunsFilters({
                   Status
                   <Combobox
                     value={filters.status}
-                    onValueChange={(value) =>
-                      setFilters({ status: value })
-                    }
+                    onValueChange={(value) => setFilters({ status: value })}
                     options={statusOptions}
                     placeholder="All Statuses"
                     noOptionsMessage="No statuses found"
@@ -175,9 +172,7 @@ export function RunsFilters({
         <Input
           placeholder="Search by job ID, name, or error..."
           value={filters.search}
-          onChange={(e) =>
-            setFilters({ search: e.target.value })
-          }
+          onChange={(e) => setFilters({ search: e.target.value })}
           className="pl-10"
         />
       </div>
