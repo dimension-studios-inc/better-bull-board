@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Sidebar } from "~/components/sidebar";
 import { getAuthenticatedUser } from "~/lib/auth/server";
 
@@ -10,7 +11,7 @@ export async function AuthGuard({ children, pathname }: AuthGuardProps) {
   const user = await getAuthenticatedUser();
 
   if (!user && pathname !== "/login") {
-    return null;
+    redirect("/login");
   }
 
   if (pathname === "/login") {
