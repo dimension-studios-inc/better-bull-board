@@ -15,8 +15,6 @@ export const POST = createAuthenticatedApiRoute({
       status: status === "all" ? undefined : status,
     });
 
-    console.log(jobs.at(-1));
-
     return {
       jobs,
       nextCursor: jobs.length ? (jobs[jobs.length - 1]?.id ?? null) : null,

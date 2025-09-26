@@ -36,7 +36,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
     status: initialStatus,
     search: initialSearch,
     cursor: null,
-    limit: 20,
+    limit: 15,
   });
   const debouncedFilters = useDebounce(filters, 300);
 
@@ -79,7 +79,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
             <TableHead style={{ width: "140px" }}>Worker</TableHead>
             <TableHead style={{ width: "160px" }}>Created</TableHead>
             <TableHead style={{ width: "140px" }}>Error</TableHead>
-            <TableHead style={{ width: "80px" }}>Actions</TableHead>
+            <TableHead style={{ width: "90px" }}>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

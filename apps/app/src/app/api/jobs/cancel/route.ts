@@ -1,5 +1,8 @@
+import { cancelJobRun } from "@better-bull-board/clickhouse";
 import { cancelJob } from "@better-bull-board/client/lib/cancellation";
-import { logger } from "@rharkor/logger";
+import { jobRunsTable } from "@better-bull-board/db";
+import { db } from "@better-bull-board/db/server";
+import { eq } from "drizzle-orm";
 import { redis } from "~/lib/redis";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { cancelJobApiRoute } from "./schemas";
@@ -9,29 +12,42 @@ export const POST = createAuthenticatedApiRoute({
   async handler(input) {
     const { jobId, queueName } = input;
 
-    try {
-      await cancelJob({
-        redis,
-        jobId,
-        queueName,
-      });
+    await cancelJob({
+      redis,
+      jobId,
+      queueName,
+    });
 
-      logger.debug(`Job ${jobId} in queue ${queueName} cancelled successfully`);
+    //* Sometimes the job doesnt exist anymore in redis so we need to ensure that it was really cancelled
+    // Postgres
 
-      return {
-        success: true,
-        message: `Job ${jobId} has been cancelled successfully`,
-      };
-    } catch (error) {
-      logger.error(`Failed to cancel job ${jobId}`, {
-        error: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+    await db.transaction(async (tx) => {
+      const [pgjob] = await db
+        .select()
+        .from(jobRunsTable)
+        .where(eq(jobRunsTable.jobId, jobId))
+        .limit(1);
+      if (!pgjob) {
+        throw new Error(`Job ${jobId} not found`);
+      }
 
-      return {
-        success: false,
-        message: `Failed to cancel job ${jobId}: ${error instanceof Error ? error.message : "Unknown error"}`,
-      };
-    }
+      if (pgjob.status !== "completed" && pgjob.status !== "failed") {
+        await tx
+          .update(jobRunsTable)
+          .set({
+            status: "failed",
+            errorMessage: "Job cancelled",
+          })
+          .where(eq(jobRunsTable.jobId, jobId));
+
+        // Clickhouse
+        await cancelJobRun(jobId);
+      }
+    });
+
+    return {
+      success: true,
+      message: `Job ${jobId} has been cancelled successfully`,
+    };
   },
 });

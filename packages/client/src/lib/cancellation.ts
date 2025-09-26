@@ -69,13 +69,18 @@ export const cancelJob = async ({
   //* Cancel if still in queue
   const queue = new Queue(queueName, { connection: redis });
   const job = await queue.getJob(jobId);
-  let removed = false;
-  if (job) {
-    removed = await job
-      .remove()
-      .then(() => true)
-      .catch(() => false);
+  if (!job) {
+    return;
   }
+  const status = await job.getState();
+  if (status === "completed" || status === "failed") {
+    return;
+  }
+  let removed = false;
+  removed = await job
+    .remove()
+    .then(() => true)
+    .catch(() => false);
   if (removed) {
     return;
   }

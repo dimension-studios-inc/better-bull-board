@@ -166,3 +166,10 @@ export const searchJobRuns = async (filters: {
 
   return await result.json();
 };
+
+export const cancelJobRun = async (jobId: string) => {
+  await clickhouseClient.command({
+    query: `ALTER TABLE job_runs_ch UPDATE status = 'failed', error_message = 'Job cancelled' WHERE job_id = {job_id:String}`,
+    query_params: { job_id: jobId },
+  });
+};
