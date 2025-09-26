@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { headers } from "next/headers";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthGuard } from "~/components/auth-guard";
 import { Toaster } from "~/components/ui/sonner";
 import { Providers } from "./providers";
@@ -33,10 +34,12 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>
-          <AuthGuard pathname={pathname}>{children}</AuthGuard>
-        </Providers>
-        <Toaster />
+        <NuqsAdapter>
+          <Providers>
+            <AuthGuard pathname={pathname}>{children}</AuthGuard>
+          </Providers>
+          <Toaster />
+        </NuqsAdapter>
       </body>
     </html>
   );

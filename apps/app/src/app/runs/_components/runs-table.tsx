@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
-import { useState } from "react";
+import { useQueryStates, parseAsString } from "nuqs";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import {
@@ -19,25 +19,18 @@ import { RunActions } from "./run-actions";
 import { RunsFilters } from "./runs-filters";
 import type { TRunFilters } from "./types";
 
-type RunsTableProps = {
-  searchParams?: { [key: string]: string | string[] | undefined };
-};
+export function RunsTable() {
+  const [urlFilters, setUrlFilters] = useQueryStates({
+    queue: parseAsString.withDefault("all"),
+    status: parseAsString.withDefault("all"),
+    search: parseAsString.withDefault(""),
+  });
 
-export function RunsTable({ searchParams }: RunsTableProps) {
-  const initialQueue =
-    typeof searchParams?.queue === "string" ? searchParams.queue : "all";
-  const initialStatus =
-    typeof searchParams?.status === "string" ? searchParams.status : "all";
-  const initialSearch =
-    typeof searchParams?.search === "string" ? searchParams.search : "";
-
-  const [filters, setFilters] = useState<TRunFilters>({
-    queue: initialQueue,
-    status: initialStatus,
-    search: initialSearch,
+  const filters: TRunFilters = {
+    ...urlFilters,
     cursor: null,
     limit: 15,
-  });
+  };
   const debouncedFilters = useDebounce(filters, 300);
 
   const { data: runs } = useQuery({
@@ -67,7 +60,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
 
   return (
     <div className="space-y-4">
-      <RunsFilters filters={filters} setFilters={setFilters} />
+      <RunsFilters filters={filters} setFilters={setUrlFilters} />
       <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
