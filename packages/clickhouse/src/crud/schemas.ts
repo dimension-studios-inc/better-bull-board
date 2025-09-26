@@ -42,3 +42,17 @@ export interface JobStats {
   failed: number;
   completed: number;
 }
+
+export interface QueueChartData {
+  timestamp: string;
+  completed: number;
+  failed: number;
+}
+
+export interface QueueStatsWithChart {
+  queueName: string;
+  activeJobs: number;
+  failedJobs: number;
+  completedJobs: number;
+  chartData: QueueChartData[];
+}
