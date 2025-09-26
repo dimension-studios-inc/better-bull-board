@@ -25,7 +25,7 @@ const main = async () => {
   clearData();
   autoIngestQueues();
   stopStalledRuns();
-  
+
   // Start WebSocket server
   startWebSocketServer();
 };

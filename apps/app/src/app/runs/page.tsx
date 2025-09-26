@@ -8,7 +8,7 @@ type RunsPageProps = {
 
 export default async function RunsPage({ searchParams }: RunsPageProps) {
   const resolvedSearchParams = await searchParams;
-  
+
   return (
     <PageContainer>
       <PageTitle
