@@ -5,10 +5,10 @@ import {
 } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { and, eq, gt, ilike, sql } from "drizzle-orm";
-import { createApiRoute } from "~/lib/utils";
+import { createAuthenticatedApiRoute } from "~/lib/utils";
 import { getQueuesTableApiRoute } from "./schemas";
 
-export const POST = createApiRoute({
+export const POST = createAuthenticatedApiRoute({
   apiRoute: getQueuesTableApiRoute,
   async handler(input) {
     const { cursor, search, timePeriod, limit } = input;

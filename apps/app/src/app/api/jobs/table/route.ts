@@ -1,8 +1,8 @@
 import { searchJobRuns } from "@better-bull-board/clickhouse";
-import { createApiRoute } from "~/lib/utils";
+import { createAuthenticatedApiRoute } from "~/lib/utils";
 import { getJobsTableApiRoute } from "./schemas";
 
-export const POST = createApiRoute({
+export const POST = createAuthenticatedApiRoute({
   apiRoute: getJobsTableApiRoute,
   async handler(input) {
     const { cursor, search, limit, queue, status } = input;
