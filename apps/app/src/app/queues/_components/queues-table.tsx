@@ -87,7 +87,7 @@ export function QueuesTable() {
             {data?.queues.map((queue) => (
               <motion.tr
                 key={queue.name}
-                className="border-b transition-colors cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
+                className="group border-b transition-colors cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
                 onClick={() => handleQueueClick(queue.name)}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -132,10 +132,12 @@ export function QueuesTable() {
                   <QueueMiniChart data={queue.chartData} />
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <QueueActions
-                    queueName={queue.name}
-                    isPaused={queue.isPaused}
-                  />
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <QueueActions
+                      queueName={queue.name}
+                      isPaused={queue.isPaused}
+                    />
+                  </div>
                 </TableCell>
               </motion.tr>
             ))}
