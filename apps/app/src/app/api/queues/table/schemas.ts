@@ -4,6 +4,7 @@ import { registerApiRoute } from "~/lib/utils";
 export const getQueuesTableInput = z.object({
   cursor: z.string().nullish(),
   search: z.string().optional(),
+  timePeriod: z.enum(["1", "3", "7", "30"]).optional().default("1"),
   limit: z.number().min(1).max(100).optional(),
 });
 

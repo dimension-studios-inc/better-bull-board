@@ -11,7 +11,7 @@ import { getQueuesTableApiRoute } from "./schemas";
 export const POST = createApiRoute({
   apiRoute: getQueuesTableApiRoute,
   async handler(input) {
-    const { cursor, search, limit } = input;
+    const { cursor, search, timePeriod, limit } = input;
 
     const rows = await db
       .select({
@@ -20,9 +20,9 @@ export const POST = createApiRoute({
         isPaused: queuesTable.isPaused,
         pattern: jobSchedulersTable.pattern,
         every: jobSchedulersTable.every,
-        activeJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'active')`,
-        failedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
-        completedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
+        activeJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'active' AND ${jobRunsTable.createdAt} > NOW() - INTERVAL '${sql.raw(timePeriod)} day')`,
+        failedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed' AND ${jobRunsTable.createdAt} > NOW() - INTERVAL '${sql.raw(timePeriod)} day')`,
+        completedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed' AND ${jobRunsTable.createdAt} > NOW() - INTERVAL '${sql.raw(timePeriod)} day')`,
         workers: sql<number>`COUNT(DISTINCT ${jobRunsTable.workerId})`,
       })
       .from(queuesTable)

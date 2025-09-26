@@ -2,12 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { formatDuration } from "date-fns";
-import { Pause, Play, RotateCcw, Trash2 } from "lucide-react";
+import { Pause, Play, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
 import {
   Table,
   TableBody,
@@ -16,112 +16,128 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { apiFetch } from "~/lib/utils";
+import { apiFetch, cn } from "~/lib/utils";
+import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
 export function QueuesTable() {
   const [options, setOptions] = useState<{
     cursor: string | null;
     search: string;
+    timePeriod: TimePeriod;
   }>({
     cursor: null,
     search: "",
+    timePeriod: "1",
   });
 
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ["queues/table", options],
     queryFn: apiFetch({
       apiRoute: getQueuesTableApiRoute,
       body: {
         cursor: options.cursor,
         search: options.search,
+        timePeriod: options.timePeriod,
         limit: 20,
       },
     }),
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Queue Overview</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Queue Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Scheduler</TableHead>
-              <TableHead>Active Jobs</TableHead>
-              <TableHead>Failed Jobs</TableHead>
-              <TableHead>Completed Jobs</TableHead>
-              <TableHead>Workers</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.queues.map((queue) => (
-              <TableRow key={queue.name}>
-                <TableCell className="font-medium">{queue.name}</TableCell>
-                <TableCell>
-                  <Badge variant={queue.isPaused ? "secondary" : "default"}>
-                    {queue.isPaused ? "Paused" : "Running"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      queue.pattern || queue.every ? "default" : "outline"
-                    }
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <TimePeriodSelector
+          value={options.timePeriod}
+          onChange={(timePeriod) =>
+            setOptions((prev) => ({ ...prev, timePeriod }))
+          }
+        />
+        <div className="flex-1 relative max-w-[350px]">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by queue name..."
+            value={options.search}
+            onChange={(e) =>
+              setOptions((prev) => ({ ...prev, search: e.target.value }))
+            }
+            className="pl-10"
+          />
+        </div>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Queue Name</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Scheduler</TableHead>
+            <TableHead>Active Jobs</TableHead>
+            <TableHead>Failed Jobs</TableHead>
+            <TableHead>Completed Jobs</TableHead>
+            <TableHead>Workers</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data?.queues.map((queue) => (
+            <TableRow key={queue.name}>
+              <TableCell className="font-medium">{queue.name}</TableCell>
+              <TableCell>
+                <Badge
+                  variant={"outline"}
+                  className={cn({
+                    "opacity-50": queue.isPaused,
+                  })}
+                >
+                  {queue.isPaused ? "Paused" : "Running"}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <span className="font-mono">
+                  {queue.pattern ||
+                    (queue.every &&
+                      `Every ${formatDuration({
+                        seconds: queue.every / 1000,
+                      })}`)}
+                </span>
+              </TableCell>
+              <TableCell>
+                <span className="font-mono">{queue.activeJobs}</span>
+              </TableCell>
+              <TableCell>
+                <span className="font-mono text-red-600">
+                  {queue.failedJobs}
+                </span>
+              </TableCell>
+              <TableCell>
+                <span className="font-mono text-green-600">
+                  {queue.completedJobs}
+                </span>
+              </TableCell>
+              <TableCell>
+                <span className="font-mono">{queue.workers}</span>
+              </TableCell>
+              <TableCell>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm">
+                    {queue.isPaused ? (
+                      <Play className="size-4" />
+                    ) : (
+                      <Pause className="size-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700"
                   >
-                    {queue.pattern ||
-                      (queue.every &&
-                        `Every ${formatDuration({
-                          seconds: queue.every / 1000,
-                        })}`)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className="font-mono">{queue.activeJobs}</span>
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className="font-mono text-red-600">
-                    {queue.failedJobs}
-                  </span>
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className="font-mono text-green-600">
-                    {queue.completedJobs}
-                  </span>
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className="font-mono">{queue.workers}</span>
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm">
-                      {queue.isPaused ? (
-                        <Play className="h-4 w-4" />
-                      ) : (
-                        <Pause className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
