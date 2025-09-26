@@ -100,14 +100,19 @@ export function RunsTable() {
 
   return (
     <div className="space-y-4">
-      <RunsFilters filters={filters} setFilters={setUrlFilters} runs={runs} />
-
-      {selectedJobs.length > 0 && (
-        <BulkActions
-          selectedJobs={selectedJobs}
-          onClearSelection={() => setSelectedJobIds(new Set())}
-        />
-      )}
+      <RunsFilters
+        filters={filters}
+        setFilters={setUrlFilters}
+        runs={runs}
+        startEndContent={
+          selectedJobs.length > 0 && (
+            <BulkActions
+              selectedJobs={selectedJobs}
+              onClearSelection={() => setSelectedJobIds(new Set())}
+            />
+          )
+        }
+      />
 
       <Table className="table-fixed w-full">
         <TableHeader>
@@ -148,13 +153,15 @@ export function RunsTable() {
                 layout
               >
                 <TableCell>
-                  <Checkbox
-                    checked={selectedJobIds.has(run.job_id)}
-                    onCheckedChange={(checked) =>
-                      handleSelectJob(run.job_id, checked as boolean)
-                    }
-                    aria-label={`Select job ${run.job_id}`}
-                  />
+                  <div className="flex items-center">
+                    <Checkbox
+                      checked={selectedJobIds.has(run.job_id)}
+                      onCheckedChange={(checked) =>
+                        handleSelectJob(run.job_id, checked as boolean)
+                      }
+                      aria-label={`Select job ${run.job_id}`}
+                    />
+                  </div>
                 </TableCell>
                 <TableCell className="font-mono text-xs">
                   {run.job_id.slice(0, 32)}

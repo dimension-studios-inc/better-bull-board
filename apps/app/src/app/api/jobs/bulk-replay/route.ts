@@ -1,13 +1,13 @@
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
-import { cancelJobHandler } from "../cancel/handler";
-import { bulkCancelJobsApiRoute } from "./schemas";
+import { replayJobHandler } from "../replay/handler";
+import { bulkReplayJobsApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({
-  apiRoute: bulkCancelJobsApiRoute,
+  apiRoute: bulkReplayJobsApiRoute,
   async handler(input) {
     const { jobs } = input;
 
-    await Promise.all(jobs.map((job) => cancelJobHandler(job)));
+    await Promise.all(jobs.map((job) => replayJobHandler(job)));
 
     return {
       success: true,
