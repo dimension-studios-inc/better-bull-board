@@ -1,4 +1,10 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { formatDuration } from "date-fns";
 import { Pause, Play, RotateCcw, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -10,23 +16,28 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { getQueueInfo } from "~/lib/queue-info";
+import { apiFetch } from "~/lib/utils";
 
-export async function QueuesTable() {
-  const queues = await getQueueInfo();
+export function QueuesTable() {
+  const [options, setOptions] = useState<{
+    cursor: string | null;
+    search: string;
+  }>({
+    cursor: null,
+    search: "",
+  });
 
-  const getHealthColor = (health: string) => {
-    switch (health) {
-      case "healthy":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "warning":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-      case "error":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
-    }
-  };
+  const { data, isLoading } = useQuery({
+    queryKey: ["queues/table", options],
+    queryFn: apiFetch({
+      apiRoute: getQueuesTableApiRoute,
+      body: {
+        cursor: options.cursor,
+        search: options.search,
+        limit: 20,
+      },
+    }),
+  });
 
   return (
     <Card>
@@ -39,10 +50,8 @@ export async function QueuesTable() {
             <TableRow>
               <TableHead>Queue Name</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Health</TableHead>
               <TableHead>Scheduler</TableHead>
               <TableHead>Active Jobs</TableHead>
-              <TableHead>Waiting Jobs</TableHead>
               <TableHead>Failed Jobs</TableHead>
               <TableHead>Completed Jobs</TableHead>
               <TableHead>Workers</TableHead>
@@ -50,7 +59,7 @@ export async function QueuesTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {queues.map((queue) => (
+            {data?.queues.map((queue) => (
               <TableRow key={queue.name}>
                 <TableCell className="font-medium">{queue.name}</TableCell>
                 <TableCell>
@@ -59,20 +68,20 @@ export async function QueuesTable() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge className={getHealthColor(queue.health)}>
-                    {queue.health}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={queue.hasScheduler ? "default" : "outline"}>
-                    {queue.hasScheduler ? "Yes" : "No"}
+                  <Badge
+                    variant={
+                      queue.pattern || queue.every ? "default" : "outline"
+                    }
+                  >
+                    {queue.pattern ||
+                      (queue.every &&
+                        `Every ${formatDuration({
+                          seconds: queue.every / 1000,
+                        })}`)}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
                   <span className="font-mono">{queue.activeJobs}</span>
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className="font-mono">{queue.waitingJobs}</span>
                 </TableCell>
                 <TableCell className="text-center">
                   <span className="font-mono text-red-600">

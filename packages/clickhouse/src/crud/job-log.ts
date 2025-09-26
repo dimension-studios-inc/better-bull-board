@@ -1,15 +1,5 @@
-import { z } from "zod/v4";
 import { clickhouseClient } from "../lib/client";
-
-export const jobLogDataSchema = z.object({
-  id: z.string(),
-  job_run_id: z.string(),
-  level: z.string(),
-  message: z.string(),
-  ts: z.date(),
-});
-
-export type JobLogData = z.infer<typeof jobLogDataSchema>;
+import { type JobLogData, jobLogDataSchema } from "./schemas";
 
 export const insertJobLog = async (_jobLog: JobLogData): Promise<void> => {
   const jobLog = jobLogDataSchema.parse(_jobLog);

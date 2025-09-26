@@ -5,11 +5,11 @@ import { Activity, AlertCircle, CheckCircle } from "lucide-react";
 import { getJobsStatsApiRoute } from "~/app/api/jobs/stats/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { apiFetch } from "~/lib/utils";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "../../components/ui/skeleton";
 
 export function StatsCards() {
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["job/stats"],
+    queryKey: ["jobs/stats"],
     queryFn: apiFetch({ apiRoute: getJobsStatsApiRoute, body: { days: 24 } }),
   });
 

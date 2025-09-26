@@ -9,6 +9,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { createSelectSchema } from "drizzle-zod";
 
 export const queuesTable = pgTable(
   "queues",
@@ -23,6 +24,8 @@ export const queuesTable = pgTable(
   },
   (t) => [uniqueIndex("ix_queues_name").on(t.name)],
 );
+
+export const queuesSelectSchema = createSelectSchema(queuesTable);
 
 export const jobSchedulersTable = pgTable(
   "job_schedulers",

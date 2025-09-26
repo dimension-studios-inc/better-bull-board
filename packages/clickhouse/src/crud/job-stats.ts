@@ -1,10 +1,5 @@
 import { clickhouseClient } from "../lib/client";
-
-export interface JobStats {
-  active: number;
-  failed: number;
-  completed: number;
-}
+import type { JobStats } from "./schemas";
 
 export const getJobStats = async ({
   dateFrom,

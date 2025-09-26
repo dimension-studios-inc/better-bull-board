@@ -1,14 +1,21 @@
-import { Activity, AlertTriangle, CheckCircle, Server } from "lucide-react";
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { Activity, Clock, Server } from "lucide-react";
+import { getQueuesStatsApiRoute } from "~/app/api/queues/stats/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { getQueueInfo } from "~/lib/queue-info";
+import { Skeleton } from "~/components/ui/skeleton";
+import { apiFetch } from "~/lib/utils";
 
-export async function QueueStats() {
-  const queues = await getQueueInfo();
+export function QueueStats() {
+  const { data: queues, isLoading } = useQuery({
+    queryKey: ["queues/stats"],
+    queryFn: apiFetch({ apiRoute: getQueuesStatsApiRoute, body: undefined }),
+  });
 
-  const totalQueues = queues.length;
-  const activeQueues = queues.filter((q) => !q.isPaused).length;
-  const healthyQueues = queues.filter((q) => q.health === "healthy").length;
-  const schedulerQueues = queues.filter((q) => q.hasScheduler).length;
+  const totalQueues = queues?.total;
+  const activeQueues = queues?.active;
+  const schedulerQueues = queues?.withScheduler;
 
   const stats = [
     {
@@ -26,16 +33,9 @@ export async function QueueStats() {
       color: "text-green-600",
     },
     {
-      title: "Healthy Queues",
-      value: healthyQueues,
-      icon: CheckCircle,
-      description: "Operating normally",
-      color: "text-green-600",
-    },
-    {
       title: "With Scheduler",
       value: schedulerQueues,
-      icon: AlertTriangle,
+      icon: Clock,
       description: "Have scheduled jobs",
       color: "text-purple-600",
     },
@@ -52,7 +52,11 @@ export async function QueueStats() {
             <stat.icon className={`h-4 w-4 ${stat.color}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
+            {isLoading ? (
+              <Skeleton />
+            ) : (
+              <div className="text-2xl font-bold">{stat.value}</div>
+            )}
             <p className="text-xs text-muted-foreground">{stat.description}</p>
           </CardContent>
         </Card>

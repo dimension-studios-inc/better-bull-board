@@ -1,5 +1,5 @@
-import { QueueStats } from "~/components/queue-stats";
-import { QueuesTable } from "~/components/queues-table";
+import { QueueStats } from "~/app/queues/_components/queue-stats";
+import { QueuesTable } from "~/app/queues/_components/queues-table";
 
 export default function QueuesPage() {
   return (

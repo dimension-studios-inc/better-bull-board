@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "~/lib/utils";
 
 const navigation = [
-  { name: "Home", href: "/dashboard", icon: Home },
-  { name: "Runs", href: "/dashboard/runs", icon: List },
-  { name: "Queues", href: "/dashboard/queues", icon: Server },
+  { name: "Home", href: "/", icon: Home },
+  { name: "Runs", href: "/runs", icon: List },
+  { name: "Queues", href: "/queues", icon: Server },
 ];
 
 export function Sidebar() {
