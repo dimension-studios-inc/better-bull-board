@@ -33,30 +33,30 @@ const scanForQueues = async (node: Redis | Cluster, startTime: number) => {
   return keys;
 };
 
+export const ingestQueues = async () => {
+  const allQueuesKeys = await scanForQueues(redis, Date.now());
+  // <namespace>:<queueName>:id
+  const allQueuesNames = allQueuesKeys
+    .map((key) => key.split(":")[1])
+    .filter((queueName) => queueName !== undefined);
+
+  //* Delete all missing queues from database
+  await db
+    .delete(queuesTable)
+    .where(notInArray(queuesTable.name, allQueuesNames));
+
+  //* Upserting queues in database
+  await Promise.all(
+    allQueuesNames.map(async (queueName) => {
+      // First upsert the queue
+      const queue = await upsertQueue(queueName);
+      // Then upsert the job schedulers
+      await upsertJobSchedulers(queueName, queue.id);
+    }),
+  );
+};
+
 export const autoIngestQueues = async () => {
-  const ingestQueues = async () => {
-    const allQueuesKeys = await scanForQueues(redis, Date.now());
-    // <namespace>:<queueName>:id
-    const allQueuesNames = allQueuesKeys
-      .map((key) => key.split(":")[1])
-      .filter((queueName) => queueName !== undefined);
-
-    //* Delete all missing queues from database
-    await db
-      .delete(queuesTable)
-      .where(notInArray(queuesTable.name, allQueuesNames));
-
-    //* Upserting queues in database
-    await Promise.all(
-      allQueuesNames.map(async (queueName) => {
-        // First upsert the queue
-        const queue = await upsertQueue(queueName);
-        // Then upsert the job schedulers
-        await upsertJobSchedulers(queueName, queue.id);
-      }),
-    );
-  };
-
   setInterval(() => {
     ingestQueues();
   }, 60_000);

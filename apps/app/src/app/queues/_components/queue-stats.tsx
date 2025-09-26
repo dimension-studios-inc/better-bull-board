@@ -51,7 +51,7 @@ export function QueueStats() {
           </CardHeader>
           <CardContent className="space-y-1">
             {isLoading ? (
-              <Skeleton />
+              <Skeleton className="h-8 w-full" />
             ) : (
               <div className="text-2xl font-bold font-mono">{stat.value}</div>
             )}
