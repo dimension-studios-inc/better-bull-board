@@ -81,7 +81,7 @@ export function RunsTable() {
             {runs?.jobs.map((run) => (
               <motion.tr
                 key={run.id}
-                className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                className="group border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -134,11 +134,13 @@ export function RunsTable() {
                     : "-"}
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <RunActions
-                    jobId={run.job_id}
-                    queueName={run.queue}
-                    status={run.status}
-                  />
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <RunActions
+                      jobId={run.job_id}
+                      queueName={run.queue}
+                      status={run.status}
+                    />
+                  </div>
                 </TableCell>
               </motion.tr>
             ))}
