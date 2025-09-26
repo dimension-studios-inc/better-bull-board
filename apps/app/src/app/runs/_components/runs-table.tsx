@@ -23,10 +23,13 @@ type RunsTableProps = {
 };
 
 export function RunsTable({ searchParams }: RunsTableProps) {
-  const initialQueue = typeof searchParams?.queue === 'string' ? searchParams.queue : "all";
-  const initialStatus = typeof searchParams?.status === 'string' ? searchParams.status : "all";
-  const initialSearch = typeof searchParams?.search === 'string' ? searchParams.search : "";
-  
+  const initialQueue =
+    typeof searchParams?.queue === "string" ? searchParams.queue : "all";
+  const initialStatus =
+    typeof searchParams?.status === "string" ? searchParams.status : "all";
+  const initialSearch =
+    typeof searchParams?.search === "string" ? searchParams.search : "";
+
   const [filters, setFilters] = useState<TRunFilters>({
     queue: initialQueue,
     status: initialStatus,

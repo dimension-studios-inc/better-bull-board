@@ -42,51 +42,50 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
+
   const websocketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
 
-  const throttles = new Map<string, NodeJS.Timeout>();
+  // actual counter for reconnects (avoids stale closure bugs)
+  const connectionAttemptsRef = useRef(0);
+
+  const throttles = useRef(new Map<string, NodeJS.Timeout>());
 
   const invalidateQueries = useCallback(
     (message: WebSocketMessage) => {
       const type = message.type;
 
-      // Clear existing timer if one exists
-      if (throttles.has(type)) {
-        clearTimeout(throttles.get(type));
+      const map = throttles.current;
+      if (map.has(type)) {
+        clearTimeout(map.get(type));
       }
 
-      // Schedule invalidate after short delay (e.g. 500ms)
       const timeout = setTimeout(() => {
         switch (type) {
           case "job-refresh":
             queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
             queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
             break;
-
           case "queue-refresh":
             queryClient.invalidateQueries({ queryKey: ["queues/table"] });
             queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
             break;
-
           case "job-scheduler-refresh":
             queryClient.invalidateQueries({ queryKey: ["queues/table"] });
             queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
             break;
-
           case "log-refresh":
-            // maybe logs refresh can also be throttled
             queryClient.invalidateQueries({ queryKey: ["jobs/logs"] });
             break;
         }
 
-        throttles.delete(type);
+        map.delete(type);
       }, 500);
 
-      throttles.set(type, timeout);
+      map.set(type, timeout);
     },
-    [queryClient, throttles],
+    [queryClient],
   );
 
   const connect = useCallback(() => {
@@ -102,6 +101,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
         if (!mountedRef.current) return;
 
         setIsConnected(true);
+        connectionAttemptsRef.current = 0;
         setConnectionAttempts(0);
         onConnect?.();
         console.log("🔗 WebSocket connected");
@@ -118,10 +118,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
             return;
           }
 
-          // Auto-invalidate queries based on message type
           invalidateQueries(message);
-
-          // Call custom message handler
           onMessage?.(message);
         } catch (error) {
           console.error("Failed to parse WebSocket message:", error);
@@ -133,13 +130,20 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
         setIsConnected(false);
         onDisconnect?.();
-        console.log("🔌 WebSocket disconnected");
+        console.log("🔌 WebSocket disconnected", {
+          attempts: connectionAttemptsRef.current,
+          maxReconnectAttempts,
+          autoReconnect,
+        });
 
-        // Auto-reconnect if enabled and we haven't exceeded max attempts
-        if (autoReconnect && connectionAttempts < maxReconnectAttempts) {
+        if (
+          autoReconnect &&
+          connectionAttemptsRef.current < maxReconnectAttempts
+        ) {
           reconnectTimeoutRef.current = setTimeout(() => {
             if (mountedRef.current) {
-              setConnectionAttempts((prev) => prev + 1);
+              connectionAttemptsRef.current += 1;
+              setConnectionAttempts(connectionAttemptsRef.current);
               connect();
             }
           }, reconnectDelay);
@@ -148,7 +152,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
       ws.onerror = (error) => {
         if (!mountedRef.current) return;
-
         console.error("WebSocket error:", error);
         onError?.(error);
       };
@@ -161,7 +164,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     onError,
     onMessage,
     autoReconnect,
-    connectionAttempts,
     maxReconnectAttempts,
     reconnectDelay,
     invalidateQueries,
@@ -189,7 +191,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     }
   }, []);
 
-  // Auto-connect on mount
   useEffect(() => {
     mountedRef.current = true;
     connect();
@@ -209,7 +210,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   };
 };
 
-// Provider component for easy WebSocket integration
 export const WebSocketProvider = ({
   children,
   options = {},

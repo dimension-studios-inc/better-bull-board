@@ -121,13 +121,11 @@ class BullBoardWebSocketServer {
 
   private broadcast(message: WebSocketMessage) {
     const messageStr = JSON.stringify(message);
-    let sentCount = 0;
 
     this.clients.forEach((client) => {
       if (client.readyState === client.OPEN) {
         try {
           client.send(messageStr);
-          sentCount++;
         } catch (error) {
           logger.error("Error sending message to WebSocket client", { error });
           this.clients.delete(client);
@@ -136,13 +134,6 @@ class BullBoardWebSocketServer {
         this.clients.delete(client);
       }
     });
-
-    if (sentCount > 0) {
-      logger.debug(
-        `Broadcasted ${message.type} to ${sentCount} clients`,
-        message.data,
-      );
-    }
   }
 
   private sendToClient(client: WebSocket, message: WebSocketMessage) {
