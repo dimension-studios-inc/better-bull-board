@@ -58,6 +58,7 @@ export const handleLogChannel = async (_channel: string, message: string) => {
       job_run_id: insertedLog.jobRunId,
     });
     redis.publish("bbb:ingest:events:job-refresh", jobId);
+    redis.publish("bbb:ingest:events:log-refresh", jobId);
   } catch (e) {
     logger.error("Error saving log", { error: e, message });
   }

@@ -3,6 +3,43 @@ import { omit } from "~/utils";
 import { clickhouseClient } from "../lib/client";
 import { type JobRunData, jobRunDataSchema } from "./schemas";
 
+const jobRunsUpdateTypes: Record<string, string> = {
+  // identifiers
+  job_id: "String",
+  queue: "String", // LowCardinality(String) → String
+  name: "Nullable(String)",
+
+  // status / attempts
+  status: "String", // LowCardinality(String) → String
+  attempt: "UInt16",
+  max_attempts: "UInt16",
+  priority: "Nullable(Int32)",
+  delay_ms: "UInt32",
+  backoff: "Nullable(JSON)",
+
+  // relationships
+  repeat_job_key: "Nullable(String)",
+  parent_job_id: "Nullable(String)",
+  worker_id: "Nullable(String)",
+
+  // arrays / tags
+  tags: "Array(String)", // LowCardinality(String) in array → Array(String)
+
+  // payloads
+  data: "Nullable(JSON)",
+  result: "Nullable(JSON)",
+
+  // errors
+  error_type: "Nullable(String)",
+  error_message: "Nullable(String)",
+  error_stack: "Nullable(String)",
+
+  // timing
+  enqueued_at: "Nullable(DateTime64(3, 'UTC'))",
+  started_at: "Nullable(DateTime64(3, 'UTC'))",
+  finished_at: "Nullable(DateTime64(3, 'UTC'))",
+};
+
 export const upsertJobRun = async (_jobRun: JobRunData): Promise<void> => {
   const jobRun = jobRunDataSchema.parse(_jobRun);
   const existingJobRun = await searchJobRuns({
@@ -26,10 +63,7 @@ export const upsertJobRun = async (_jobRun: JobRunData): Promise<void> => {
     };
     await clickhouseClient.command({
       query: `ALTER TABLE job_runs_ch UPDATE ${Object.entries(updateData)
-        .map(
-          ([key, value]) =>
-            `${key} = {${key}:${getClickHouseType(value as unknown)}}`,
-        )
+        .map(([key]) => `${key} = {${key}:${jobRunsUpdateTypes[key]}}`)
         .join(", ")} WHERE id = {id:UUID}`,
       query_params: { id: formattedRun.id, ...updateData },
     });
@@ -132,18 +166,3 @@ export const searchJobRuns = async (filters: {
 
   return await result.json();
 };
-
-// Helper function to determine ClickHouse type from value
-function getClickHouseType(value: unknown): string {
-  if (value === null || value === undefined) return "Nullable(String)";
-  if (typeof value === "string") return "String";
-  if (typeof value === "number") {
-    if (Number.isInteger(value)) return "Int32";
-    return "Float64";
-  }
-  if (typeof value === "boolean") return "UInt8";
-  if (value instanceof Date) return "DateTime64(3, 'UTC')";
-  if (Array.isArray(value)) return "Array(String)";
-  if (typeof value === "object") return "JSON";
-  return "String";
-}
