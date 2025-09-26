@@ -1,5 +1,5 @@
 import { searchJobRuns } from "@better-bull-board/clickhouse";
-import { createAuthenticatedApiRoute } from "~/lib/utils";
+import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobsTableApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({

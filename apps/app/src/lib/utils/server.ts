@@ -3,8 +3,8 @@ import { type ClassValue, clsx } from "clsx";
 import { type NextRequest, NextResponse } from "next/server";
 import { twMerge } from "tailwind-merge";
 import type { output, ZodType } from "zod";
-import { env } from "./env";
-import { getAuthenticatedUser } from "./auth";
+import { getAuthenticatedUser } from "../auth/server";
+import { env } from "../env";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -31,7 +31,7 @@ export function apiFetch<
       headers: {
         "Content-Type": "application/json",
       },
-      credentials: 'include', // Include cookies for authentication
+      credentials: "include", // Include cookies for authentication
     });
     const json = await data.json();
     return outputSchema.parse(json);
@@ -91,7 +91,10 @@ export const createApiRoute = <IS extends ZodType, OS extends ZodType>({
   };
 };
 
-export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodType>({
+export const createAuthenticatedApiRoute = <
+  IS extends ZodType,
+  OS extends ZodType,
+>({
   apiRoute,
   handler,
 }: {
@@ -108,11 +111,11 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
   const outputSchema = apiRoute.outputSchema as OS;
   return async (req: NextRequest) => {
     // Check authentication first
-    const user = await getAuthenticatedUser(req);
+    const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
+        { error: "Authentication required" },
+        { status: 401 },
       );
     }
 

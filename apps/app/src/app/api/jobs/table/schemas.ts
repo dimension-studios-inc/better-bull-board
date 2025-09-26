@@ -1,6 +1,6 @@
 import { jobRunDataSchema } from "@better-bull-board/clickhouse/schemas";
 import z from "zod";
-import { registerApiRoute } from "~/lib/utils";
+import { registerApiRoute } from "~/lib/utils/server";
 
 export const getJobsTableInput = z.object({
   cursor: z.string().nullish(),

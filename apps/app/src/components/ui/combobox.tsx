@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import { cn } from "~/lib/utils";
+import { cn } from "~/lib/utils/server";
 import { Loader } from "./loader";
 
 export type ComboboxOption = {

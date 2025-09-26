@@ -1,8 +1,7 @@
-import { NextResponse } from 'next/server';
-import { createLogoutCookie } from '~/lib/auth';
+import { NextResponse } from "next/server";
+import { createLogoutCookie } from "~/lib/auth/server";
 
 export async function POST() {
-  const response = NextResponse.json({ success: true });
-  response.headers.set('Set-Cookie', createLogoutCookie());
-  return response;
+  await createLogoutCookie();
+  return NextResponse.json({ success: true });
 }

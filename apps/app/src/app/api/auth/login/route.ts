@@ -1,6 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { verifyAdminCredentials, createToken, createAuthCookie } from '~/lib/auth';
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import {
+  createAuthCookie,
+  createToken,
+  verifyAdminCredentials,
+} from "~/lib/auth/server";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -16,8 +20,8 @@ export async function POST(request: NextRequest) {
     const isValid = await verifyAdminCredentials(email, password);
     if (!isValid) {
       return NextResponse.json(
-        { success: false, error: 'Invalid credentials' },
-        { status: 401 }
+        { success: false, error: "Invalid credentials" },
+        { status: 401 },
       );
     }
 
@@ -25,20 +29,17 @@ export async function POST(request: NextRequest) {
     const user = { email };
     const token = await createToken(user);
 
-    // Create response with cookie
-    const response = NextResponse.json({
+    await createAuthCookie(token);
+
+    return NextResponse.json({
       success: true,
       user,
     });
-
-    response.headers.set('Set-Cookie', createAuthCookie(token));
-
-    return response;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     return NextResponse.json(
-      { success: false, error: 'Invalid request' },
-      { status: 400 }
+      { success: false, error: "Invalid request" },
+      { status: 400 },
     );
   }
 }

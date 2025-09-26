@@ -2,8 +2,8 @@
 
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { AuthProvider } from "~/lib/auth/context";
 import { createQueryClient } from "~/lib/query-client";
-import { AuthProvider } from "~/lib/auth-context";
 
 let clientQueryClientSingleton: QueryClient | undefined;
 const getQueryClient = ({

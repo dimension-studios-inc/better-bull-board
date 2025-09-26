@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import { apiFetch } from "~/lib/utils";
+import { apiFetch } from "~/lib/utils/server";
 
 interface QueueActionsProps {
   queueName: string;

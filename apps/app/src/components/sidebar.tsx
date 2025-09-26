@@ -1,11 +1,11 @@
 "use client";
 
-import { Home, List, Server, LogOut } from "lucide-react";
+import { Home, List, LogOut, Server } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "~/lib/utils";
-import { useAuth } from "~/lib/auth-context";
 import { Button } from "~/components/ui/button";
+import { useAuth } from "~/lib/auth/context";
+import { cn } from "~/lib/utils/server";
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
@@ -44,7 +44,7 @@ export function Sidebar() {
           );
         })}
       </nav>
-      
+
       {/* User info and logout */}
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-sidebar-border">
         <div className="text-xs text-sidebar-foreground/70 mb-2">

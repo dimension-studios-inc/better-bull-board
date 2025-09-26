@@ -1,5 +1,5 @@
 export function isUniqueConstraintError(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: _
   error: any,
   constraint: string,
 ): error is { code: string; constraint_name: string } {

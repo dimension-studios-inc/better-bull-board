@@ -1,8 +1,6 @@
-import { cancelJob } from "@better-bull-board/client";
 import { logger } from "@rharkor/logger";
 import { queue, registerScheduler } from "../src/demo1/queue";
 import { registerScheduler as registerScheduler2 } from "../src/demo2/queue";
-import { redis } from "../src/lib/redis";
 
 const main = async () => {
   await logger.init();

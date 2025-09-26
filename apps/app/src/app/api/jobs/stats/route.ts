@@ -1,5 +1,5 @@
 import { getJobStats } from "@better-bull-board/clickhouse";
-import { createAuthenticatedApiRoute } from "~/lib/utils";
+import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobsStatsApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({

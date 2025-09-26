@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { registerApiRoute } from "~/lib/utils";
+import { registerApiRoute } from "~/lib/utils/server";
 
 export const resumeQueueInput = z.object({
   queueName: z.string(),

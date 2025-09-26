@@ -5,7 +5,7 @@ import {
 } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { and, eq, gt, ilike, sql } from "drizzle-orm";
-import { createAuthenticatedApiRoute } from "~/lib/utils";
+import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({

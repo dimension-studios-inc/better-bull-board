@@ -2,7 +2,7 @@ import { ingestQueues } from "@better-bull-board/ingest/repeats/queues";
 import { logger } from "@rharkor/logger";
 import { Queue } from "bullmq";
 import { redis } from "~/lib/redis";
-import { createAuthenticatedApiRoute } from "~/lib/utils";
+import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { resumeQueueApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({
