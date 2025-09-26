@@ -1,66 +1,69 @@
 /// <reference types="node" />
 declare module "redlock" {
-  import { EventEmitter } from "events"
-  import { Cluster as IORedisCluster, Redis as IORedisClient } from "ioredis"
-  declare type Client = IORedisClient | IORedisCluster
+  import { EventEmitter } from "events";
+  import { Cluster as IORedisCluster, Redis as IORedisClient } from "ioredis";
+  declare type Client = IORedisClient | IORedisCluster;
   export declare type ClientExecutionResult =
     | {
-        client: Client
-        vote: "for"
-        value: number
+        client: Client;
+        vote: "for";
+        value: number;
       }
     | {
-        client: Client
-        vote: "against"
-        error: Error
-      }
+        client: Client;
+        vote: "against";
+        error: Error;
+      };
   export declare type ExecutionStats = {
-    readonly membershipSize: number
-    readonly quorumSize: number
-    readonly votesFor: Set<Client>
-    readonly votesAgainst: Map<Client, Error>
-  }
+    readonly membershipSize: number;
+    readonly quorumSize: number;
+    readonly votesFor: Set<Client>;
+    readonly votesAgainst: Map<Client, Error>;
+  };
   export declare type ExecutionResult = {
-    attempts: ReadonlyArray<Promise<ExecutionStats>>
-  }
+    attempts: ReadonlyArray<Promise<ExecutionStats>>;
+  };
   /**
    *
    */
   export interface Settings {
-    readonly driftFactor: number
-    readonly retryCount: number
-    readonly retryDelay: number
-    readonly retryJitter: number
-    readonly automaticExtensionThreshold: number
+    readonly driftFactor: number;
+    readonly retryCount: number;
+    readonly retryDelay: number;
+    readonly retryJitter: number;
+    readonly automaticExtensionThreshold: number;
   }
   export declare class ResourceLockedError extends Error {
-    readonly message: string
-    constructor(message: string)
+    readonly message: string;
+    constructor(message: string);
   }
   export declare class ExecutionError extends Error {
-    readonly message: string
-    readonly attempts: ReadonlyArray<Promise<ExecutionStats>>
-    constructor(message: string, attempts: ReadonlyArray<Promise<ExecutionStats>>)
+    readonly message: string;
+    readonly attempts: ReadonlyArray<Promise<ExecutionStats>>;
+    constructor(
+      message: string,
+      attempts: ReadonlyArray<Promise<ExecutionStats>>,
+    );
   }
   export declare class Lock {
-    readonly redlock: Redlock
-    readonly resources: string[]
-    readonly value: string
-    readonly attempts: ReadonlyArray<Promise<ExecutionStats>>
-    expiration: number
+    readonly redlock: Redlock;
+    readonly resources: string[];
+    readonly value: string;
+    readonly attempts: ReadonlyArray<Promise<ExecutionStats>>;
+    expiration: number;
     constructor(
       redlock: Redlock,
       resources: string[],
       value: string,
       attempts: ReadonlyArray<Promise<ExecutionStats>>,
-      expiration: number
-    )
-    release(): Promise<ExecutionResult>
-    extend(duration: number): Promise<Lock>
+      expiration: number,
+    );
+    release(): Promise<ExecutionResult>;
+    extend(duration: number): Promise<Lock>;
   }
   export declare type RedlockAbortSignal = AbortSignal & {
-    error?: Error
-  }
+    error?: Error;
+  };
   /**
    * A redlock object is instantiated with an array of at least one redis client
    * and an optional `options` object. Properties of the Redlock object should NOT
@@ -68,48 +71,52 @@ declare module "redlock" {
    * consequences for live locks.
    */
   export default class Redlock extends EventEmitter {
-    readonly clients: Set<Client>
-    readonly settings: Settings
+    readonly clients: Set<Client>;
+    readonly settings: Settings;
     readonly scripts: {
       readonly acquireScript: {
-        value: string
-        hash: string
-      }
+        value: string;
+        hash: string;
+      };
       readonly extendScript: {
-        value: string
-        hash: string
-      }
+        value: string;
+        hash: string;
+      };
       readonly releaseScript: {
-        value: string
-        hash: string
-      }
-    }
+        value: string;
+        hash: string;
+      };
+    };
     constructor(
       clients: Iterable<Client>,
       settings?: Partial<Settings>,
       scripts?: {
-        readonly acquireScript?: string | ((script: string) => string)
-        readonly extendScript?: string | ((script: string) => string)
-        readonly releaseScript?: string | ((script: string) => string)
-      }
-    )
+        readonly acquireScript?: string | ((script: string) => string);
+        readonly extendScript?: string | ((script: string) => string);
+        readonly releaseScript?: string | ((script: string) => string);
+      },
+    );
     /**
      * Generate a sha1 hash compatible with redis evalsha.
      */
-    private _hash
+    private _hash;
     /**
      * Generate a cryptographically random string.
      */
-    private _random
+    private _random;
     /**
      * This method runs `.quit()` on all client connections.
      */
-    quit(): Promise<void>
+    quit(): Promise<void>;
     /**
      * This method acquires a locks on the resources for the duration specified by
      * the `duration`.
      */
-    acquire(resources: string[], duration: number, settings?: Partial<Settings>): Promise<Lock>
+    acquire(
+      resources: string[],
+      duration: number,
+      settings?: Partial<Settings>,
+    ): Promise<Lock>;
     /**
      * This method unlocks the provided lock from all servers still persisting it.
      * It will fail with an error if it is unable to release the lock on a quorum
@@ -117,19 +124,23 @@ declare module "redlock" {
      * failure to release. It is safe to re-attempt a release or to ignore the
      * error, as the lock will automatically expire after its timeout.
      */
-    release(lock: Lock, settings?: Partial<Settings>): Promise<ExecutionResult>
+    release(lock: Lock, settings?: Partial<Settings>): Promise<ExecutionResult>;
     /**
      * This method extends a valid lock by the provided `duration`.
      */
-    extend(existing: Lock, duration: number, settings?: Partial<Settings>): Promise<Lock>
+    extend(
+      existing: Lock,
+      duration: number,
+      settings?: Partial<Settings>,
+    ): Promise<Lock>;
     /**
      * Execute a script on all clients. The resulting promise is resolved or
      * rejected as soon as this quorum is reached; the resolution or rejection
      * will contains a `stats` property that is resolved once all votes are in.
      */
-    private _execute
-    private _attemptOperation
-    private _attemptOperationOnClient
+    private _execute;
+    private _attemptOperation;
+    private _attemptOperationOnClient;
     /**
      * Wrap and execute a routine in the context of an auto-extending lock,
      * returning a promise of the routine's value. In the case that auto-extension
@@ -167,9 +178,13 @@ declare module "redlock" {
       resources: string[],
       duration: number,
       settings: Partial<Settings>,
-      routine?: (signal: RedlockAbortSignal) => Promise<T>
-    ): Promise<T>
-    using<T>(resources: string[], duration: number, routine: (signal: RedlockAbortSignal) => Promise<T>): Promise<T>
+      routine?: (signal: RedlockAbortSignal) => Promise<T>,
+    ): Promise<T>;
+    using<T>(
+      resources: string[],
+      duration: number,
+      routine: (signal: RedlockAbortSignal) => Promise<T>,
+    ): Promise<T>;
   }
-  export {}
+  export {};
 }
