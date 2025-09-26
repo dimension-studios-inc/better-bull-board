@@ -33,11 +33,9 @@ class BullBoardWebSocketServer {
 
   private setupWebSocketServer() {
     this.wss.on("connection", (ws) => {
-      logger.debug("New WebSocket client connected");
       this.clients.add(ws);
 
       ws.on("close", () => {
-        logger.debug("WebSocket client disconnected");
         this.clients.delete(ws);
       });
 
