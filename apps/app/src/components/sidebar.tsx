@@ -1,6 +1,7 @@
 "use client";
 
 import { Home, List, LogOut, Server } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "~/components/ui/button";
@@ -20,8 +21,8 @@ export function Sidebar() {
   return (
     <div className="w-64 bg-sidebar border-r border-sidebar-border relative">
       <div className="p-6">
-        <h1 className="text-xl font-bold text-sidebar-foreground">
-          BullMQ Dashboard
+        <h1 className="text-xl font-bold text-sidebar-foreground leading-none">
+          Better Bull Board
         </h1>
       </div>
       <nav className="px-4 space-y-2">
