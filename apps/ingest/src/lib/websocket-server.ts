@@ -1,10 +1,14 @@
 import { logger } from "@rharkor/logger";
-import { WebSocketServer, type WebSocket } from "ws";
+import { type WebSocket, WebSocketServer } from "ws";
 import { env } from "./env";
 import { redis } from "./redis";
 
 export interface WebSocketMessage {
-  type: "job-refresh" | "queue-refresh" | "job-scheduler-refresh" | "log-refresh";
+  type:
+    | "job-refresh"
+    | "queue-refresh"
+    | "job-scheduler-refresh"
+    | "log-refresh";
   data: {
     id?: string;
     queueName?: string;
@@ -19,9 +23,9 @@ class BullBoardWebSocketServer {
   private subscriber = redis.duplicate();
 
   constructor() {
-    this.wss = new WebSocketServer({ 
+    this.wss = new WebSocketServer({
       port: env.WEBSOCKET_PORT,
-      perMessageDeflate: false 
+      perMessageDeflate: false,
     });
     this.setupWebSocketServer();
     this.setupRedisSubscriber();
@@ -45,7 +49,7 @@ class BullBoardWebSocketServer {
       // Send initial connection confirmation
       this.sendToClient(ws, {
         type: "job-refresh",
-        data: { id: "connected" }
+        data: { id: "connected" },
       });
     });
 
@@ -61,25 +65,15 @@ class BullBoardWebSocketServer {
   private async setupRedisSubscriber() {
     try {
       await this.subscriber.connect();
-      
+
       // Subscribe to the events we're emitting in the files
-      const channels = [
-        "bbb:ingest:events:job-refresh",
-        "bbb:ingest:events:queue-refresh", 
-        "bbb:ingest:events:job-scheduler-refresh",
-        "bbb:ingest:events:log-refresh"
-      ];
+      await this.subscriber.psubscribe("bbb:ingest:events:*");
 
-      for (const channel of channels) {
-        await this.subscriber.subscribe(channel);
-      }
+      logger.log(`📡 Subscribed to Redis channels: bbb:ingest:events:*`);
 
-      logger.log(`📡 Subscribed to Redis channels: ${channels.join(", ")}`);
-
-      this.subscriber.on("message", (channel, message) => {
+      this.subscriber.on("pmessage", (_subscription, channel, message) => {
         this.handleRedisMessage(channel, message);
       });
-
     } catch (error) {
       logger.error("Failed to setup Redis subscriber for WebSocket", { error });
     }
@@ -93,25 +87,25 @@ class BullBoardWebSocketServer {
         case "bbb:ingest:events:job-refresh":
           wsMessage = {
             type: "job-refresh",
-            data: { jobId: message }
+            data: { jobId: message },
           };
           break;
         case "bbb:ingest:events:queue-refresh":
           wsMessage = {
-            type: "queue-refresh", 
-            data: { queueName: message }
+            type: "queue-refresh",
+            data: { queueName: message },
           };
           break;
         case "bbb:ingest:events:job-scheduler-refresh":
           wsMessage = {
             type: "job-scheduler-refresh",
-            data: { schedulerKey: message }
+            data: { schedulerKey: message },
           };
           break;
         case "bbb:ingest:events:log-refresh":
           wsMessage = {
             type: "log-refresh",
-            data: { jobId: message }
+            data: { jobId: message },
           };
           break;
         default:
@@ -120,7 +114,6 @@ class BullBoardWebSocketServer {
       }
 
       this.broadcast(wsMessage);
-      
     } catch (error) {
       logger.error("Error handling Redis message", { error, channel, message });
     }
@@ -145,7 +138,10 @@ class BullBoardWebSocketServer {
     });
 
     if (sentCount > 0) {
-      logger.debug(`Broadcasted ${message.type} to ${sentCount} clients`, message.data);
+      logger.debug(
+        `Broadcasted ${message.type} to ${sentCount} clients`,
+        message.data,
+      );
     }
   }
 
@@ -154,7 +150,9 @@ class BullBoardWebSocketServer {
       try {
         client.send(JSON.stringify(message));
       } catch (error) {
-        logger.error("Error sending message to specific WebSocket client", { error });
+        logger.error("Error sending message to specific WebSocket client", {
+          error,
+        });
         this.clients.delete(client);
       }
     }
@@ -166,7 +164,7 @@ class BullBoardWebSocketServer {
 
   public async close() {
     logger.log("Closing WebSocket server...");
-    
+
     // Close all client connections
     this.clients.forEach((client) => {
       client.close();
@@ -175,9 +173,9 @@ class BullBoardWebSocketServer {
 
     // Close WebSocket server
     this.wss.close();
-    
+
     // Close Redis subscriber
-    await this.subscriber.disconnect();
+    await this.subscriber.quit();
   }
 }
 

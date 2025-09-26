@@ -4,15 +4,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { env } from "~/lib/env";
 
-export interface WebSocketMessage {
-  type: "job-refresh" | "queue-refresh" | "job-scheduler-refresh" | "log-refresh";
+export type WebSocketMessage = {
+  type:
+    | "job-refresh"
+    | "queue-refresh"
+    | "job-scheduler-refresh"
+    | "log-refresh";
   data: {
     id?: string;
     queueName?: string;
     jobId?: string;
     schedulerKey?: string;
   };
-}
+};
 
 export interface UseWebSocketOptions {
   onMessage?: (message: WebSocketMessage) => void;
@@ -50,27 +54,26 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
           queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
           queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
           break;
-        
+
         case "queue-refresh":
-          // Invalidate queue-related queries  
+          // Invalidate queue-related queries
           queryClient.invalidateQueries({ queryKey: ["queues/table"] });
           queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
           break;
-          
+
         case "job-scheduler-refresh":
           // Invalidate scheduler-related queries (affects queues since schedulers are part of queue data)
           queryClient.invalidateQueries({ queryKey: ["queues/table"] });
           queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
           break;
-          
+
         case "log-refresh":
           // Invalidate job-related queries since logs are part of job data
-          queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
-          queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
+
           break;
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   const connect = useCallback(() => {
@@ -84,7 +87,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
       ws.onopen = () => {
         if (!mountedRef.current) return;
-        
+
         setIsConnected(true);
         setConnectionAttempts(0);
         onConnect?.();
@@ -93,20 +96,20 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
       ws.onmessage = (event) => {
         if (!mountedRef.current) return;
-        
+
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
-          
+
           // Skip the initial connection confirmation
           if (message.data.id === "connected") {
             return;
           }
-          
+
           console.log("📨 WebSocket message received:", message);
-          
+
           // Auto-invalidate queries based on message type
           invalidateQueries(message);
-          
+
           // Call custom message handler
           onMessage?.(message);
         } catch (error) {
@@ -116,7 +119,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
       ws.onclose = () => {
         if (!mountedRef.current) return;
-        
+
         setIsConnected(false);
         onDisconnect?.();
         console.log("🔌 WebSocket disconnected");
@@ -125,7 +128,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
         if (autoReconnect && connectionAttempts < maxReconnectAttempts) {
           reconnectTimeoutRef.current = setTimeout(() => {
             if (mountedRef.current) {
-              setConnectionAttempts(prev => prev + 1);
+              setConnectionAttempts((prev) => prev + 1);
               connect();
             }
           }, reconnectDelay);
@@ -134,24 +137,23 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
       ws.onerror = (error) => {
         if (!mountedRef.current) return;
-        
+
         console.error("WebSocket error:", error);
         onError?.(error);
       };
-
     } catch (error) {
       console.error("Failed to create WebSocket connection:", error);
     }
   }, [
     onConnect,
-    onDisconnect, 
+    onDisconnect,
     onError,
     onMessage,
     autoReconnect,
     connectionAttempts,
     maxReconnectAttempts,
     reconnectDelay,
-    invalidateQueries
+    invalidateQueries,
   ]);
 
   const disconnect = useCallback(() => {
@@ -164,7 +166,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       websocketRef.current.close();
       websocketRef.current = null;
     }
-    
+
     setIsConnected(false);
   }, []);
 
@@ -197,10 +199,10 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 };
 
 // Provider component for easy WebSocket integration
-export const WebSocketProvider = ({ 
-  children, 
-  options = {} 
-}: { 
+export const WebSocketProvider = ({
+  children,
+  options = {},
+}: {
   children: React.ReactNode;
   options?: UseWebSocketOptions;
 }) => {
