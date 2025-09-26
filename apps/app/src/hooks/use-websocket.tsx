@@ -46,34 +46,47 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
 
+  const throttles = new Map<string, NodeJS.Timeout>();
+
   const invalidateQueries = useCallback(
     (message: WebSocketMessage) => {
-      switch (message.type) {
-        case "job-refresh":
-          // Invalidate job-related queries
-          queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
-          queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
-          break;
+      const type = message.type;
 
-        case "queue-refresh":
-          // Invalidate queue-related queries
-          queryClient.invalidateQueries({ queryKey: ["queues/table"] });
-          queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
-          break;
-
-        case "job-scheduler-refresh":
-          // Invalidate scheduler-related queries (affects queues since schedulers are part of queue data)
-          queryClient.invalidateQueries({ queryKey: ["queues/table"] });
-          queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
-          break;
-
-        case "log-refresh":
-          // Invalidate job-related queries since logs are part of job data
-
-          break;
+      // Clear existing timer if one exists
+      if (throttles.has(type)) {
+        clearTimeout(throttles.get(type));
       }
+
+      // Schedule invalidate after short delay (e.g. 500ms)
+      const timeout = setTimeout(() => {
+        switch (type) {
+          case "job-refresh":
+            queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
+            queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
+            break;
+
+          case "queue-refresh":
+            queryClient.invalidateQueries({ queryKey: ["queues/table"] });
+            queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
+            break;
+
+          case "job-scheduler-refresh":
+            queryClient.invalidateQueries({ queryKey: ["queues/table"] });
+            queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
+            break;
+
+          case "log-refresh":
+            // maybe logs refresh can also be throttled
+            queryClient.invalidateQueries({ queryKey: ["jobs/logs"] });
+            break;
+        }
+
+        throttles.delete(type);
+      }, 500);
+
+      throttles.set(type, timeout);
     },
-    [queryClient],
+    [queryClient, throttles],
   );
 
   const connect = useCallback(() => {
