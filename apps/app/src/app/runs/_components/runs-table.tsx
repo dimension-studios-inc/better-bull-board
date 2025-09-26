@@ -72,7 +72,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
           <TableRow>
             <TableHead style={{ width: "260px" }}>Job ID</TableHead>
             <TableHead style={{ width: "120px" }}>Queue</TableHead>
-            <TableHead style={{ width: "120px" }}>Tags</TableHead>
+            <TableHead style={{ width: "180px" }}>Tags</TableHead>
             <TableHead style={{ width: "120px" }}>Status</TableHead>
             <TableHead style={{ width: "120px" }}>Duration</TableHead>
             <TableHead style={{ width: "140px" }}>Worker</TableHead>
