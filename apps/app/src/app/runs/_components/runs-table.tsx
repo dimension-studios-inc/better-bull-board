@@ -88,7 +88,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
                 {run.job_id.length > 32 && "..."}
               </TableCell>
               <TableCell>{run.queue}</TableCell>
-              <TableCell>
+              <TableCell className="overflow-hidden">
                 {run.tags?.map((tag) => (
                   <Badge key={tag} variant="outline">
                     {tag}
@@ -105,7 +105,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
                   ? formatDistanceStrict(run.started_at, run.finished_at)
                   : "-"}
               </TableCell>
-              <TableCell className="font-mono">
+              <TableCell className="font-mono text-xs">
                 {run.worker_id
                   ? `${run.worker_id.slice(0, 12)}${
                       run.worker_id.length > 12 ? "..." : ""
