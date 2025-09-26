@@ -31,7 +31,7 @@ export function RunsTable() {
   const filters: TRunFilters = {
     ...urlFilters,
     cursor: urlFilters.cursor ?? null,
-    limit: 1,
+    limit: 15,
   };
   const debouncedFilters = useDebounce(filters, 300);
 
