@@ -22,6 +22,7 @@
     "redlock": "^5.0.0-beta.2",
     "tsdown": "^0.15.2",
     "typescript": "^5.9.2",
+    "ws": "^8.18.0",
     "zod": "^3.25.76"
   },
   "peerDependencies": {
@@ -37,6 +38,7 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^24.5.2",
+    "@types/ws": "^8.5.12",
     "tsx": "^4.19.3"
   }
 }

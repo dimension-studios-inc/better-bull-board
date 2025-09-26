@@ -37,6 +37,11 @@ export const env = createEnv({
       .string()
       .optional()
       .transform((value) => (value ? parseInt(value, 10) : undefined)),
+    WEBSOCKET_PORT: z
+      .string()
+      .optional()
+      .default("8081")
+      .transform((value) => parseInt(value, 10)),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
