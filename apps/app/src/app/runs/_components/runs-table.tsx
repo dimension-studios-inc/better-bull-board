@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/table";
 import useDebounce from "~/hooks/use-debounce";
 import { apiFetch, cn } from "~/lib/utils/client";
+import { RunActions } from "./run-actions";
 import { RunsFilters } from "./runs-filters";
 import type { TRunFilters } from "./types";
 
@@ -35,7 +36,7 @@ export function RunsTable({ searchParams }: RunsTableProps) {
     status: initialStatus,
     search: initialSearch,
     cursor: null,
-    limit: 20,
+    limit: 15,
   });
   const debouncedFilters = useDebounce(filters, 300);
 
@@ -75,9 +76,10 @@ export function RunsTable({ searchParams }: RunsTableProps) {
             <TableHead style={{ width: "180px" }}>Tags</TableHead>
             <TableHead style={{ width: "120px" }}>Status</TableHead>
             <TableHead style={{ width: "120px" }}>Duration</TableHead>
-            <TableHead style={{ width: "140px" }}>Worker</TableHead>
-            <TableHead style={{ width: "160px" }}>Created</TableHead>
+            <TableHead style={{ width: "140px" }}>Created</TableHead>
+            <TableHead style={{ width: "140px" }}>Finished</TableHead>
             <TableHead style={{ width: "140px" }}>Error</TableHead>
+            <TableHead style={{ width: "90px" }}>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -101,28 +103,39 @@ export function RunsTable({ searchParams }: RunsTableProps) {
                 </Badge>
               </TableCell>
               <TableCell>
-                {run.started_at && run.finished_at
+                {run.started_at &&
+                run.finished_at &&
+                (run.status === "completed" || run.status === "failed")
                   ? formatDistanceStrict(run.started_at, run.finished_at)
                   : "-"}
               </TableCell>
-              <TableCell className="font-mono text-xs">
-                {run.worker_id
-                  ? `${run.worker_id.slice(0, 12)}${
-                      run.worker_id.length > 12 ? "..." : ""
-                    }`
-                  : "-"}
-              </TableCell>
-              <TableCell>
+              <TableCell className="text-xs truncate">
                 {formatDistanceToNow(new Date(run.created_at), {
                   addSuffix: true,
                 })}
               </TableCell>
+              <TableCell className="text-xs truncate">
+                {run.finished_at
+                  ? formatDistanceToNow(new Date(run.finished_at), {
+                      addSuffix: true,
+                    })
+                  : "-"}
+              </TableCell>
               <TableCell
                 className={cn("max-w-48 truncate text-xs", {
-                  "text-red-600": run.error_message,
+                  "text-red-600": run.status === "failed" && run.error_message,
                 })}
               >
-                {run.error_message || "-"}
+                {run.status === "failed" && run.error_message
+                  ? run.error_message
+                  : "-"}
+              </TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <RunActions
+                  jobId={run.job_id}
+                  queueName={run.queue}
+                  status={run.status}
+                />
               </TableCell>
             </TableRow>
           ))}

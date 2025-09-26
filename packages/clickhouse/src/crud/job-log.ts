@@ -23,7 +23,7 @@ export const searchJobLogs = async (filters: {
   dateTo?: Date;
   limit?: number;
   offset?: number;
-}): Promise<JobLogData[]> => {
+}): Promise<(Omit<JobLogData, "ts"> & { ts: number })[]> => {
   const conditions: string[] = [];
   const params: Record<string, unknown> = {};
 
@@ -58,7 +58,7 @@ export const searchJobLogs = async (filters: {
   const offset = filters.offset || 0;
 
   const query = `
-    SELECT * FROM job_logs_ch 
+    SELECT toUnixTimestamp(ts) * 1000 AS ts, * FROM job_logs_ch 
     ${whereClause}
     ORDER BY ts DESC
     LIMIT {limit:UInt32} OFFSET {offset:UInt32}
@@ -70,5 +70,9 @@ export const searchJobLogs = async (filters: {
     format: "JSONEachRow",
   });
 
-  return await result.json();
+  const data = (await result.json()) as JobLogData[];
+  return data.map((item) => ({
+    ...item,
+    ts: Number(item.ts),
+  }));
 };
