@@ -1,4 +1,4 @@
-import { StatsCards } from "~/components/stats-card";
+import { StatsCards } from "~/app/_components/stats-card";
 
 export default function Home() {
   return (
@@ -11,7 +11,6 @@ export default function Home() {
       </div>
 
       <StatsCards />
-      {/* <StatsCharts /> */}
     </div>
   );
 }

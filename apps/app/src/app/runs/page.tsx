@@ -1,5 +1,4 @@
-import { RunsFilters } from "~/components/runs-filters";
-import { RunsTable } from "~/components/runs-table";
+import { RunsTable } from "./_components/runs-table";
 
 export default function RunsPage() {
   return (
@@ -10,8 +9,6 @@ export default function RunsPage() {
           View and manage all job executions
         </p>
       </div>
-
-      <RunsFilters />
       <RunsTable />
     </div>
   );

@@ -1,3 +1,4 @@
+import { logger } from "@rharkor/logger";
 import { type ClassValue, clsx } from "clsx";
 import { type NextRequest, NextResponse } from "next/server";
 import { twMerge } from "tailwind-merge";
@@ -53,22 +54,32 @@ export const createApiRoute = <IS extends ZodType, OS extends ZodType>({
     outputSchema: OS;
   };
   handler: (
-    input: output<IS> | undefined,
+    input: IS extends ZodType ? output<IS> : undefined,
     req: NextRequest,
   ) => Promise<output<OS>>;
 }) => {
   const inputSchema = apiRoute.inputSchema as IS;
   const outputSchema = apiRoute.outputSchema as OS;
   return async (req: NextRequest) => {
-    const json = req.method === "GET" ? undefined : await req.json();
+    const json =
+      req.method === "GET" || !apiRoute.inputSchema
+        ? undefined
+        : await req.json().catch((e) => {
+            logger.error(`Error parsing JSON in ${req.url}: ${e}`);
+            throw e;
+          });
     const parsed = await inputSchema?.parseAsync(json).catch((error) => {
       return NextResponse.json({ error: error.message }, { status: 400 });
     });
     if (parsed instanceof NextResponse) {
       return parsed;
     }
-    const data = await handler(parsed as output<IS>, req);
+    const data = await handler(
+      parsed as IS extends ZodType ? output<IS> : undefined,
+      req,
+    );
     const validated = await outputSchema.parseAsync(data).catch((error) => {
+      logger.error(error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     });
     if (validated instanceof NextResponse) {

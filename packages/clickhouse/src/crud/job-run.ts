@@ -1,33 +1,6 @@
-import { z } from "zod/v4";
 import { omit } from "~/utils";
 import { clickhouseClient } from "../lib/client";
-
-export const jobRunDataSchema = z.object({
-  id: z.string(),
-  job_id: z.string(),
-  queue: z.string(),
-  name: z.string().nullable(),
-  status: z.string(),
-  attempt: z.number(),
-  max_attempts: z.number(),
-  priority: z.number().nullable(),
-  delay_ms: z.number(),
-  backoff: z.unknown().nullable(),
-  repeat_job_key: z.string().nullable(),
-  parent_job_id: z.string().nullable(),
-  worker_id: z.string().nullable(),
-  tags: z.array(z.string()).nullable(),
-  data: z.unknown().nullable(),
-  result: z.unknown().nullable(),
-  error_message: z.string().nullable(),
-  error_stack: z.string().nullable(),
-  created_at: z.date(),
-  enqueued_at: z.date().nullable(),
-  started_at: z.date().nullable(),
-  finished_at: z.date().nullable(),
-});
-
-export type JobRunData = z.infer<typeof jobRunDataSchema>;
+import { type JobRunData, jobRunDataSchema } from "./schemas";
 
 export const upsertJobRun = async (_jobRun: JobRunData): Promise<void> => {
   const jobRun = jobRunDataSchema.parse(_jobRun);
@@ -78,6 +51,8 @@ export const searchJobRuns = async (filters: {
   dateTo?: Date;
   limit?: number;
   offset?: number;
+  search?: string;
+  cursor?: string;
 }): Promise<JobRunData[]> => {
   const conditions: string[] = [];
   const params: Record<string, unknown> = {};
@@ -115,6 +90,18 @@ export const searchJobRuns = async (filters: {
   if (filters.dateTo) {
     conditions.push("created_at <= {date_to:DateTime64(3, 'UTC')}");
     params.date_to = filters.dateTo;
+  }
+
+  if (filters.search) {
+    conditions.push(
+      "name ILIKE {search:String} OR queue ILIKE {search:String} OR job_id ILIKE {search:String} OR id ILIKE {search:String} OR error_message ILIKE {search:String}",
+    );
+    params.search = filters.search;
+  }
+
+  if (filters.cursor) {
+    conditions.push("id > {cursor:String}");
+    params.cursor = filters.cursor;
   }
 
   const whereClause =
