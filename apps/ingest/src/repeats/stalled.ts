@@ -1,0 +1,56 @@
+import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
+import { db } from "@better-bull-board/db/server";
+import { logger } from "@rharkor/logger";
+import { Queue } from "bullmq";
+import { and, eq, lte } from "drizzle-orm";
+import { redis } from "~/lib/redis";
+
+export const stopStalledRuns = async () => {
+  const refreshStalledRuns = async () => {
+    const now = new Date();
+    const canBeStalledBefore = new Date(now.getTime() - 1000 * 60 * 60 * 24); // 24 hours
+
+    //* Retrieve all jobs that are still running and have been running for more than 24 hours
+    const stalledRuns = await db
+      .select()
+      .from(jobRunsTable)
+      .where(
+        and(
+          eq(jobRunsTable.status, "active"),
+          lte(jobRunsTable.createdAt, canBeStalledBefore),
+        ),
+      );
+
+    //* Verify their status in redis directly
+    stalledRuns.length &&
+      logger.debug(
+        `Found ${stalledRuns.length} potential stalled runs (> 24h)`,
+      );
+    for (const _run of stalledRuns) {
+      const queue = new Queue(_run.queue);
+      const job = await queue.getJob(_run.id);
+      const jobStatus = await job?.getState();
+      if (jobStatus === "active") continue;
+      logger.warn(`Run ${_run.id} is stalled, updating status`);
+      await redis.publish(
+        "bbb:worker:job",
+        JSON.stringify({
+          id: job?.processedBy,
+          job,
+          tags: undefined,
+          queueName: job?.queueName,
+        }),
+      );
+    }
+  };
+
+  setInterval(
+    () => {
+      refreshStalledRuns();
+    },
+    1000 * 60 * 60, // every hour
+  );
+  refreshStalledRuns();
+
+  logger.log(`🛑 Stopping stalled runs`);
+};

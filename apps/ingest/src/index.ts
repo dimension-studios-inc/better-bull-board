@@ -3,6 +3,7 @@ import { handleChannel } from "./channels";
 import { redis } from "./lib/redis";
 import { clearData } from "./repeats/clear-data";
 import { autoIngestQueues } from "./repeats/queues";
+import { stopStalledRuns } from "./repeats/stalled";
 
 const listenToEvents = async () => {
   const subscriber = redis.duplicate();
@@ -22,6 +23,7 @@ const main = async () => {
   listenToEvents();
   clearData();
   autoIngestQueues();
+  stopStalledRuns();
 };
 
 main();

@@ -1,16 +1,15 @@
 import { StatsCards } from "~/app/_components/stats-card";
+import { PageContainer } from "~/components/page-container";
+import { PageTitle } from "~/components/page-title";
 
 export default function Home() {
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Monitor your BullMQ job statistics
-        </p>
-      </div>
-
+    <PageContainer>
+      <PageTitle
+        title="Dashboard"
+        description="Monitor your BullMQ job statistics"
+      />
       <StatsCards />
-    </div>
+    </PageContainer>
   );
 }

@@ -7,8 +7,8 @@ import { cn } from "~/lib/utils";
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
-  { name: "Runs", href: "/runs", icon: List },
   { name: "Queues", href: "/queues", icon: Server },
+  { name: "Runs", href: "/runs", icon: List },
 ];
 
 export function Sidebar() {
