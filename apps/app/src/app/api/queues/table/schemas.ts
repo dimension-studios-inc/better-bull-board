@@ -28,6 +28,7 @@ export const getQueuesTableOutput = z.object({
     }),
   ),
   nextCursor: z.string().nullable(),
+  prevCursor: z.string().nullable(),
   total: z.number(),
 });
 

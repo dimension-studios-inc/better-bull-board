@@ -1,37 +1,49 @@
 import { getQueueStatsWithChart } from "@better-bull-board/clickhouse";
 import { jobSchedulersTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import { and, eq, gt, ilike, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, lte, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getQueuesTableApiRoute,
   async handler(input) {
-    const { cursor, search, timePeriod, limit } = input;
+    const { cursor, search, timePeriod } = input;
+    const limit = input.limit ?? 20;
+
+    const getRows = async (direction: "next" | "prev") => {
+      return db
+        .select({
+          id: queuesTable.id,
+          name: queuesTable.name,
+          isPaused: queuesTable.isPaused,
+          pattern: jobSchedulersTable.pattern,
+          every: jobSchedulersTable.every,
+        })
+        .from(queuesTable)
+        .leftJoin(
+          jobSchedulersTable,
+          eq(jobSchedulersTable.queueId, queuesTable.id),
+        )
+        .where(
+          and(
+            cursor
+              ? direction === "prev"
+                ? lte(queuesTable.name, cursor)
+                : gte(queuesTable.name, cursor)
+              : undefined,
+            search ? ilike(queuesTable.name, `%${search}%`) : undefined,
+          ),
+        )
+        .orderBy(
+          direction === "prev" ? desc(queuesTable.name) : asc(queuesTable.name),
+        )
+        .limit(limit + 1);
+    };
 
     // Get queue info from Postgres (basic queue data)
-    const rows = await db
-      .select({
-        id: queuesTable.id,
-        name: queuesTable.name,
-        isPaused: queuesTable.isPaused,
-        pattern: jobSchedulersTable.pattern,
-        every: jobSchedulersTable.every,
-      })
-      .from(queuesTable)
-      .leftJoin(
-        jobSchedulersTable,
-        eq(jobSchedulersTable.queueId, queuesTable.id),
-      )
-      .where(
-        and(
-          cursor ? gt(queuesTable.id, cursor) : undefined,
-          search ? ilike(queuesTable.name, `%${search}%`) : undefined,
-        ),
-      )
-      .orderBy(queuesTable.id)
-      .limit(limit ?? 20);
+    const rows = await getRows("next");
+    const previousRows = cursor ? await getRows("prev") : [];
 
     const [total] = await db
       .select({ count: sql<number>`COUNT(*)` })
@@ -56,6 +68,10 @@ export const POST = createAuthenticatedApiRoute({
     // Create a map for quick lookup
     const statsMap = new Map(queueStats.map((stat) => [stat.queueName, stat]));
 
+    const nextCursor = rows.length > limit ? (rows.pop()?.name ?? null) : null;
+    const prevCursor =
+      previousRows.length > limit ? (previousRows.pop()?.name ?? null) : null;
+
     return {
       queues: rows.map((row) => {
         const stats = statsMap.get(row.name) ?? {
@@ -77,7 +93,8 @@ export const POST = createAuthenticatedApiRoute({
           chartData: stats.chartData,
         };
       }),
-      nextCursor: rows.length ? (rows[rows.length - 1]?.id ?? null) : null,
+      nextCursor,
+      prevCursor,
       total: Number(total?.count ?? 0),
     };
   },
