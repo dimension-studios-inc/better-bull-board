@@ -1,14 +1,14 @@
 import { getQueueStatsWithChart } from "@better-bull-board/clickhouse";
 import { jobSchedulersTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import { and, eq, gt, ilike, sql } from "drizzle-orm";
+import { and, eq, gt, lt, ilike, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getQueuesTableApiRoute,
   async handler(input) {
-    const { cursor, search, timePeriod, limit } = input;
+    const { cursor, direction, search, timePeriod, limit } = input;
 
     // Get queue info from Postgres (basic queue data)
     const rows = await db
@@ -26,11 +26,15 @@ export const POST = createAuthenticatedApiRoute({
       )
       .where(
         and(
-          cursor ? gt(queuesTable.id, cursor) : undefined,
+          cursor 
+            ? direction === 'prev' 
+              ? lt(queuesTable.id, cursor)
+              : gt(queuesTable.id, cursor)
+            : undefined,
           search ? ilike(queuesTable.name, `%${search}%`) : undefined,
         ),
       )
-      .orderBy(queuesTable.id)
+      .orderBy(direction === 'prev' ? sql`${queuesTable.id} DESC` : queuesTable.id)
       .limit(limit ?? 20);
 
     const [total] = await db
@@ -56,8 +60,11 @@ export const POST = createAuthenticatedApiRoute({
     // Create a map for quick lookup
     const statsMap = new Map(queueStats.map((stat) => [stat.queueName, stat]));
 
+    // If we got results in reverse order (prev direction), reverse them back to normal order
+    const orderedRows = direction === 'prev' ? rows.reverse() : rows;
+
     return {
-      queues: rows.map((row) => {
+      queues: orderedRows.map((row) => {
         const stats = statsMap.get(row.name) ?? {
           queueName: row.name,
           activeJobs: 0,
@@ -77,7 +84,8 @@ export const POST = createAuthenticatedApiRoute({
           chartData: stats.chartData,
         };
       }),
-      nextCursor: rows.length ? (rows[rows.length - 1]?.id ?? null) : null,
+      nextCursor: orderedRows.length ? (orderedRows[orderedRows.length - 1]?.id ?? null) : null,
+      prevCursor: orderedRows.length ? (orderedRows[0]?.id ?? null) : null,
       total: Number(total?.count ?? 0),
     };
   },

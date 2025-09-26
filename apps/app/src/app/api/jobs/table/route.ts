@@ -5,11 +5,12 @@ import { getJobsTableApiRoute } from "./schemas";
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getJobsTableApiRoute,
   async handler(input) {
-    const { cursor, search, limit, queue, status } = input;
+    const { cursor, direction, search, limit, queue, status } = input;
 
     const jobs = await searchJobRuns({
       limit,
-      offset: cursor ? Number(cursor) : 0,
+      cursor,
+      direction,
       search,
       queue: queue === "all" ? undefined : queue,
       status: status === "all" ? undefined : status,
@@ -18,6 +19,7 @@ export const POST = createAuthenticatedApiRoute({
     return {
       jobs,
       nextCursor: jobs.length ? (jobs[jobs.length - 1]?.id ?? null) : null,
+      prevCursor: jobs.length ? (jobs[0]?.id ?? null) : null,
     };
   },
 });

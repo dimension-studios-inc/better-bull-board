@@ -3,5 +3,6 @@ export type TRunFilters = {
   status: string;
   search: string;
   cursor: string | null;
+  direction?: 'next' | 'prev';
   limit: number;
 };

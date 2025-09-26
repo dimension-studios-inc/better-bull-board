@@ -3,9 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQueryStates, parseAsString } from "nuqs";
+import { useState } from "react";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 import {
   Table,
   TableBody,
@@ -27,20 +30,53 @@ export function RunsTable() {
     search: parseAsString.withDefault(""),
   });
 
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [direction, setDirection] = useState<'next' | 'prev'>('next');
+  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
+
   const filters: TRunFilters = {
     ...urlFilters,
-    cursor: null,
+    cursor,
+    direction,
     limit: 15,
   };
   const debouncedFilters = useDebounce(filters, 300);
 
-  const { data: runs } = useQuery({
+  const { data: runs, isLoading } = useQuery({
     queryKey: ["jobs/table", debouncedFilters],
     queryFn: apiFetch({
       apiRoute: getJobsTableApiRoute,
       body: debouncedFilters,
     }),
   });
+
+  const handleNextPage = () => {
+    if (runs?.nextCursor) {
+      setCursorHistory(prev => cursor ? [...prev, cursor] : prev);
+      setCursor(runs.nextCursor);
+      setDirection('next');
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (cursorHistory.length > 0) {
+      const previousCursor = cursorHistory[cursorHistory.length - 1];
+      setCursorHistory(prev => prev.slice(0, -1));
+      setCursor(previousCursor || null);
+      setDirection('next');
+    } else if (runs?.prevCursor) {
+      setCursor(runs.prevCursor);
+      setDirection('prev');
+    }
+  };
+
+  const handleFiltersChange = (newFilters: any) => {
+    // Reset pagination when filters change
+    setCursor(null);
+    setDirection('next');
+    setCursorHistory([]);
+    setUrlFilters(newFilters);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -61,7 +97,7 @@ export function RunsTable() {
 
   return (
     <div className="space-y-4">
-      <RunsFilters filters={filters} setFilters={setUrlFilters} />
+      <RunsFilters filters={filters} setFilters={handleFiltersChange} />
       <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
@@ -147,6 +183,35 @@ export function RunsTable() {
           </AnimatePresence>
         </TableBody>
       </Table>
+      
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={isLoading || (cursorHistory.length === 0 && !runs?.prevCursor)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={isLoading || !runs?.nextCursor}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {runs?.jobs?.length && (
+            <span>Showing {runs.jobs.length} results</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

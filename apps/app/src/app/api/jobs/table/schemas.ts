@@ -4,6 +4,7 @@ import { registerApiRoute } from "~/lib/utils/client";
 
 export const getJobsTableInput = z.object({
   cursor: z.string().nullish(),
+  direction: z.enum(['next', 'prev']).optional().default('next'),
   search: z.string().optional(),
   status: z.string().optional(),
   queue: z.string().optional(),
@@ -13,6 +14,7 @@ export const getJobsTableInput = z.object({
 export const getJobsTableOutput = z.object({
   jobs: z.array(jobRunDataSchema),
   nextCursor: z.string().nullable(),
+  prevCursor: z.string().nullable(),
 });
 
 export const getJobsTableApiRoute = registerApiRoute({

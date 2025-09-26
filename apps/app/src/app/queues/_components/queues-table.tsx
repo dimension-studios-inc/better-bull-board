@@ -3,11 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDuration } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useQueryStates, parseAsString } from "nuqs";
+import { useState } from "react";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
   Table,
@@ -29,8 +31,13 @@ export function QueuesTable() {
     timePeriod: parseAsString.withDefault("30"),
   });
 
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [direction, setDirection] = useState<'next' | 'prev'>('next');
+  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
+
   const options = {
-    cursor: null,
+    cursor,
+    direction,
     search: urlState.search,
     timePeriod: urlState.timePeriod as TimePeriod,
     limit: 20,
@@ -40,7 +47,7 @@ export function QueuesTable() {
     router.push(`/runs?queue=${encodeURIComponent(queueName)}`);
   };
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["queues/table", options],
     queryFn: apiFetch({
       apiRoute: getQueuesTableApiRoute,
@@ -48,23 +55,55 @@ export function QueuesTable() {
     }),
   });
 
+  const handleNextPage = () => {
+    if (data?.nextCursor) {
+      setCursorHistory(prev => cursor ? [...prev, cursor] : prev);
+      setCursor(data.nextCursor);
+      setDirection('next');
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (cursorHistory.length > 0) {
+      const previousCursor = cursorHistory[cursorHistory.length - 1];
+      setCursorHistory(prev => prev.slice(0, -1));
+      setCursor(previousCursor || null);
+      setDirection('next');
+    } else if (data?.prevCursor) {
+      setCursor(data.prevCursor);
+      setDirection('prev');
+    }
+  };
+
+  const handleSearchChange = (search: string) => {
+    // Reset pagination when search changes
+    setCursor(null);
+    setDirection('next');
+    setCursorHistory([]);
+    setUrlState({ search });
+  };
+
+  const handleTimePeriodChange = (timePeriod: TimePeriod) => {
+    // Reset pagination when time period changes
+    setCursor(null);
+    setDirection('next');
+    setCursorHistory([]);
+    setUrlState({ timePeriod });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <TimePeriodSelector
           value={options.timePeriod}
-          onChange={(timePeriod) =>
-            setUrlState({ timePeriod })
-          }
+          onChange={handleTimePeriodChange}
         />
         <div className="flex-1 relative max-w-[350px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by queue name..."
             value={options.search}
-            onChange={(e) =>
-              setUrlState({ search: e.target.value })
-            }
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -144,6 +183,35 @@ export function QueuesTable() {
           </AnimatePresence>
         </TableBody>
       </Table>
+      
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={isLoading || (cursorHistory.length === 0 && !data?.prevCursor)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={isLoading || !data?.nextCursor}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {data?.queues?.length && (
+            <span>Showing {data.queues.length} results {data.total ? `of ${data.total} total` : ''}</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
