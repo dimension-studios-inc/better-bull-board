@@ -2,10 +2,10 @@ import { ingestQueues } from "@better-bull-board/ingest/repeats/queues";
 import { logger } from "@rharkor/logger";
 import { Queue } from "bullmq";
 import { redis } from "~/lib/redis";
-import { createApiRoute } from "~/lib/utils";
+import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { deleteQueueApiRoute } from "./schemas";
 
-export const POST = createApiRoute({
+export const POST = createAuthenticatedApiRoute({
   apiRoute: deleteQueueApiRoute,
   async handler(input) {
     const { queueName } = input;

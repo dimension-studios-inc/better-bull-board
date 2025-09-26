@@ -1,5 +1,5 @@
 import { sql, Table } from "drizzle-orm";
-import { PgTable, PgTableWithColumns } from "drizzle-orm/pg-core";
+import type { PgTable, PgTableWithColumns } from "drizzle-orm/pg-core";
 
 /**
  * Omits specified properties from an object
@@ -27,20 +27,20 @@ export function omit<T extends Record<string, unknown>, K extends keyof T>(
   return result;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: _
 export const tableToJsonColumn = <T extends PgTableWithColumns<any>>(
   table: T,
 ) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns = table[
-    (Table as any)["Symbol"]["Columns"]
+    // biome-ignore lint/suspicious/noExplicitAny: _
+    (Table as any).Symbol.Columns
   ] as PgTable["_"]["columns"];
 
   const content = Object.entries(columns).reduce((acc, [key, column]) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     acc.push(
       `'${column.name}'`,
-      `"${table[(Table as any)["Symbol"]["BaseName"]]}"."${table[key].name}"`,
+      // biome-ignore lint/suspicious/noExplicitAny: _
+      `"${table[(Table as any).Symbol.BaseName]}"."${table[key].name}"`,
     );
     return acc;
   }, [] as string[]);

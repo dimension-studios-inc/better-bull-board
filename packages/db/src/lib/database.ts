@@ -1,8 +1,8 @@
 /* eslint-disable no-process-env */
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
 
 import { logger } from "@rharkor/logger";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 
 const unknownRelationErrorRegex = /relation ".*" does not exist/;
 
@@ -17,11 +17,11 @@ const pool = new Pool({
 });
 
 const origQuery = pool.query.bind(pool);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: _
 pool.query = async (...args: any[]) => {
   const start = Date.now();
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: _
     const result = await (origQuery as any)(...args);
     const elapsed = Date.now() - start;
 
@@ -48,7 +48,7 @@ pool.query = async (...args: any[]) => {
     // Only log if the error is specifically about SampleRequest relation not existing
     if (formattedError.match(unknownRelationErrorRegex)) {
       const client = await pool.connect();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: _
       const { host, port, database, user } = (client as any)
         .connectionParameters;
       client.release();

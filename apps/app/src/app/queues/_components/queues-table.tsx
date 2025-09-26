@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDuration } from "date-fns";
 import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
@@ -15,11 +16,12 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { apiFetch, cn } from "~/lib/utils";
+import { apiFetch, cn } from "~/lib/utils/client";
 import { QueueActions } from "./queue-actions";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
 export function QueuesTable() {
+  const router = useRouter();
   const [options, setOptions] = useState<{
     cursor: string | null;
     search: string;
@@ -29,6 +31,10 @@ export function QueuesTable() {
     search: "",
     timePeriod: "1",
   });
+
+  const handleQueueClick = (queueName: string) => {
+    router.push(`/runs?queue=${encodeURIComponent(queueName)}`);
+  };
 
   const { data } = useQuery({
     queryKey: ["queues/table", options],
@@ -78,7 +84,11 @@ export function QueuesTable() {
         </TableHeader>
         <TableBody>
           {data?.queues.map((queue) => (
-            <TableRow key={queue.name}>
+            <TableRow 
+              key={queue.name}
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleQueueClick(queue.name)}
+            >
               <TableCell className="font-medium">{queue.name}</TableCell>
               <TableCell>
                 <Badge
@@ -112,7 +122,7 @@ export function QueuesTable() {
                   {queue.completedJobs}
                 </span>
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <QueueActions
                   queueName={queue.name}
                   isPaused={queue.isPaused}

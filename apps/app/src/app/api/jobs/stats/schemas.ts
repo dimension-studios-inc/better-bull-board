@@ -1,5 +1,5 @@
 import z from "zod";
-import { registerApiRoute } from "~/lib/utils";
+import { registerApiRoute } from "~/lib/utils/client";
 
 export const getJobsStatsInput = z.object({
   days: z.number().min(1).max(30),
