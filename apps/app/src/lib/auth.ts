@@ -35,7 +35,7 @@ export async function createToken(user: User): Promise<string> {
   return await new SignJWT({ email: user.email })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('24h')
+    .setExpirationTime('1y')
     .sign(JWT_SECRET);
 }
 
@@ -61,7 +61,7 @@ export function getTokenFromRequest(request: Request): string | null {
     return authHeader.slice(7);
   }
 
-  // Try cookie
+  // Try cookie - fallback to manual parsing since cookies-next expects NextRequest
   const cookieHeader = request.headers.get('cookie');
   if (cookieHeader) {
     const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
@@ -80,14 +80,16 @@ export function getTokenFromRequest(request: Request): string | null {
  * Create auth cookie string
  */
 export function createAuthCookie(token: string): string {
-  return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; Max-Age=${24 * 60 * 60}; SameSite=Strict`;
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; Max-Age=${365 * 24 * 60 * 60}; SameSite=Strict${secure}`;
 }
 
 /**
  * Create logout cookie string
  */
 export function createLogoutCookie(): string {
-  return `${COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict`;
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  return `${COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict${secure}`;
 }
 
 /**

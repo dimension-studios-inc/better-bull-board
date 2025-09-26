@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getCookie, deleteCookie } from 'cookies-next';
 
 interface User {
   email: string;
@@ -81,6 +82,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch {
       // Ignore errors
     } finally {
+      // Delete the cookie on client side
+      deleteCookie('auth-token');
       setUser(null);
     }
   };
