@@ -2,7 +2,7 @@ import { jobSchedulersTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
 import { Queue } from "bullmq";
-import { eq, notInArray } from "drizzle-orm";
+import { and, eq, notInArray } from "drizzle-orm";
 import type Redis from "ioredis";
 import type { Cluster } from "ioredis";
 import { redis } from "~/lib/redis";
@@ -120,6 +120,7 @@ const upsertQueue = async (queueName: string) => {
 const upsertJobSchedulers = async (queueName: string, queueId: string) => {
   const queue = new Queue(queueName);
   const jobSchedulers = await queue.getJobSchedulers();
+
   const params: (typeof jobSchedulersTable.$inferInsert)[] = jobSchedulers.map(
     (jobScheduler) => ({
       queueId,
@@ -134,18 +135,30 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
     }),
   );
 
+  const newKeys = params.map((p) => p.key);
+
+  // 🔴 First remove old schedulers that are not in the new list
+  await db.delete(jobSchedulersTable).where(
+    and(
+      eq(jobSchedulersTable.queueId, queueId),
+      newKeys.length > 0
+        ? notInArray(jobSchedulersTable.key, newKeys)
+        : undefined, // prevent empty IN
+    ),
+  );
+
+  // 🟢 Then insert or update the new ones
   await Promise.all(
     params.map(async (param) => {
       const [existingJobScheduler] = await db
         .select()
         .from(jobSchedulersTable)
         .where(eq(jobSchedulersTable.key, param.key));
+
       if (existingJobScheduler) {
-        // Check if we need to update the job scheduler
         const needUpdate = getChangedKeys(param, existingJobScheduler);
-        if (needUpdate.length === 0) {
-          return;
-        }
+        if (needUpdate.length === 0) return;
+
         logger.debug(
           `Need to update job scheduler ${param.key} with keys: ${needUpdate.join(", ")}`,
         );
@@ -154,13 +167,14 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
           .update(jobSchedulersTable)
           .set(param)
           .where(eq(jobSchedulersTable.key, param.key));
+
         logger.log(`Updated job scheduler ${param.key}`);
-        redis.publish("bbb:ingest:events:job-scheduler-refresh", param.key);
       } else {
         await db.insert(jobSchedulersTable).values(param);
         logger.log(`Created job scheduler ${param.key}`);
-        redis.publish("bbb:ingest:events:job-scheduler-refresh", param.key);
       }
+
+      redis.publish("bbb:ingest:events:job-scheduler-refresh", param.key);
     }),
   );
 };
