@@ -1,15 +1,15 @@
+import { PageContainer } from "~/components/page-container";
+import { PageTitle } from "~/components/page-title";
 import { RunsTable } from "./_components/runs-table";
 
 export default function RunsPage() {
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Job Runs</h1>
-        <p className="text-muted-foreground">
-          View and manage all job executions
-        </p>
-      </div>
+    <PageContainer>
+      <PageTitle
+        title="Job Runs"
+        description="View and manage all job executions"
+      />
       <RunsTable />
-    </div>
+    </PageContainer>
   );
 }

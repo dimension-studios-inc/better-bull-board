@@ -1,0 +1,1 @@
+ALTER TABLE "job_schedulers" DROP COLUMN "offset";

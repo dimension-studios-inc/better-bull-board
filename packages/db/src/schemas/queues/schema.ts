@@ -36,14 +36,11 @@ export const jobSchedulersTable = pgTable(
       .references(() => queuesTable.id, { onDelete: "cascade" }),
     key: text("key").notNull(),
     name: text("name").notNull(),
-    iterationCount: integer("iteration_count"),
     limit: integer("limit"),
     endDate: timestamp("end_date"),
     tz: text("tz"),
     pattern: text("pattern"),
     every: integer("every"),
-    next: timestamp("next", { precision: 3, mode: "date" }),
-    offset: integer("offset"),
     template: jsonb("template"),
     createdAt: timestamp("created_at", { precision: 3, mode: "date" })
       .default(sql`CURRENT_TIMESTAMP`)

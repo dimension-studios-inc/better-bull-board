@@ -57,7 +57,7 @@ export const autoIngestQueues = async () => {
     );
   };
 
-  setInterval(async () => {
+  setInterval(() => {
     ingestQueues();
   }, 60_000);
   ingestQueues();
@@ -124,14 +124,11 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
       queueId,
       key: jobScheduler.key,
       name: jobScheduler.name,
-      iterationCount: jobScheduler.iterationCount ?? null,
       limit: jobScheduler.limit ?? null,
       endDate: jobScheduler.endDate ? new Date(jobScheduler.endDate) : null,
       tz: jobScheduler.tz ?? null,
       pattern: jobScheduler.pattern ?? null,
       every: jobScheduler.every ?? null,
-      next: jobScheduler.next ? new Date(jobScheduler.next) : null,
-      offset: jobScheduler.offset ?? null,
       template: jobScheduler.template ?? null,
     }),
   );

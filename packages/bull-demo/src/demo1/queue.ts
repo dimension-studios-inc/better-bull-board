@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { redis } from "./lib/redis";
+import { redis } from "../lib/redis";
 
 export const queue = new Queue("demo-queue", {
   connection: redis,
@@ -7,6 +7,6 @@ export const queue = new Queue("demo-queue", {
 
 export const registerScheduler = async () => {
   await queue.upsertJobScheduler("demo-queue", {
-    every: 50_000,
+    every: 30_000,
   });
 };

@@ -1,3 +1,4 @@
+import z from "zod";
 import { omit } from "~/utils";
 import { clickhouseClient } from "../lib/client";
 import { type JobRunData, jobRunDataSchema } from "./schemas";
@@ -93,10 +94,17 @@ export const searchJobRuns = async (filters: {
   }
 
   if (filters.search) {
-    conditions.push(
-      "name ILIKE {search:String} OR queue ILIKE {search:String} OR job_id ILIKE {search:String} OR id ILIKE {search:String} OR error_message ILIKE {search:String}",
-    );
-    params.search = filters.search;
+    const baseConditions = [
+      "name ILIKE {search:String}",
+      "queue ILIKE {search:String}",
+      "job_id ILIKE {search:String}",
+      "error_message ILIKE {search:String}",
+    ];
+    if (z.uuid().safeParse(filters.search).success) {
+      baseConditions.push("id = {search:UUID}");
+    }
+    conditions.push(baseConditions.join(" OR "));
+    params.search = `%${filters.search}%`;
   }
 
   if (filters.cursor) {

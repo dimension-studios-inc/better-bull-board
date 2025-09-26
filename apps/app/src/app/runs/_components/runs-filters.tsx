@@ -4,7 +4,6 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
-import { Card, CardContent } from "~/components/ui/card";
 import { Combobox, type ComboboxOption } from "~/components/ui/combobox";
 import { Input } from "~/components/ui/input";
 import { apiFetch } from "~/lib/utils";
@@ -64,58 +63,54 @@ export function RunsFilters({
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by job ID, name, or error..."
-                value={filters.search}
-                onChange={(e) =>
-                  setFilters((prev) => ({ ...prev, search: e.target.value }))
-                }
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          <Combobox
-            value={filters.queue}
-            onValueChange={(value) =>
-              setFilters((prev) => ({ ...prev, queue: value }))
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex-1">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by job ID, name, or error..."
+            value={filters.search}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, search: e.target.value }))
             }
-            options={queueOptions}
-            placeholder="All Queues"
-            noOptionsMessage="No queues found"
-            searchPlaceholder="Search queues..."
-            search={queueSearch}
-            setSearch={setQueueSearch}
-            open={queueOpen}
-            setOpen={setQueueOpen}
-            renderValue={renderQueueValue}
-            className="w-48"
-          />
-
-          <Combobox
-            value={filters.status}
-            onValueChange={(value) =>
-              setFilters((prev) => ({ ...prev, status: value }))
-            }
-            options={statusOptions}
-            placeholder="All Statuses"
-            noOptionsMessage="No statuses found"
-            searchPlaceholder="Search statuses..."
-            search={statusSearch}
-            setSearch={setStatusSearch}
-            open={statusOpen}
-            setOpen={setStatusOpen}
-            renderValue={renderStatusValue}
-            className="w-48"
+            className="pl-10"
           />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <Combobox
+        value={filters.queue}
+        onValueChange={(value) =>
+          setFilters((prev) => ({ ...prev, queue: value }))
+        }
+        options={queueOptions}
+        placeholder="All Queues"
+        noOptionsMessage="No queues found"
+        searchPlaceholder="Search queues..."
+        search={queueSearch}
+        setSearch={setQueueSearch}
+        open={queueOpen}
+        setOpen={setQueueOpen}
+        renderValue={renderQueueValue}
+        className="w-48"
+      />
+
+      <Combobox
+        value={filters.status}
+        onValueChange={(value) =>
+          setFilters((prev) => ({ ...prev, status: value }))
+        }
+        options={statusOptions}
+        placeholder="All Statuses"
+        noOptionsMessage="No statuses found"
+        searchPlaceholder="Search statuses..."
+        search={statusSearch}
+        setSearch={setStatusSearch}
+        open={statusOpen}
+        setOpen={setStatusOpen}
+        renderValue={renderStatusValue}
+        className="w-48"
+      />
+    </div>
   );
 }

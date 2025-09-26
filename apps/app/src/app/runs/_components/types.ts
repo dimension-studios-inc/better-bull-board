@@ -3,4 +3,5 @@ export type TRunFilters = {
   status: string;
   search: string;
   cursor: string | null;
+  limit: number;
 };

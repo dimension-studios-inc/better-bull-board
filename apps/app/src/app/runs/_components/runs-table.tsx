@@ -5,7 +5,6 @@ import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Table,
   TableBody,
@@ -14,7 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { apiFetch } from "~/lib/utils";
+import useDebounce from "~/hooks/use-debounce";
+import { apiFetch, cn } from "~/lib/utils";
 import { RunsFilters } from "./runs-filters";
 import type { TRunFilters } from "./types";
 
@@ -24,13 +24,15 @@ export function RunsTable() {
     status: "all",
     search: "",
     cursor: null,
+    limit: 20,
   });
+  const debouncedFilters = useDebounce(filters, 300);
 
   const { data: runs } = useQuery({
-    queryKey: ["jobs/table", filters],
+    queryKey: ["jobs/table", debouncedFilters],
     queryFn: apiFetch({
       apiRoute: getJobsTableApiRoute,
-      body: filters,
+      body: debouncedFilters,
     }),
   });
 
@@ -54,74 +56,63 @@ export function RunsTable() {
   return (
     <div className="space-y-4">
       <RunsFilters filters={filters} setFilters={setFilters} />
-      <Card>
-        <CardHeader>
-          <CardTitle>Latest Runs</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Job ID</TableHead>
-                <TableHead>Queue</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Attempt</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Worker</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Error</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {runs?.jobs.map((run) => (
-                <TableRow key={run.id}>
-                  <TableCell className="font-mono text-xs">
-                    {run.job_id.slice(0, 8)}
-                    {run.job_id.length > 8 && "..."}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{run.queue}</Badge>
-                  </TableCell>
-                  <TableCell className="max-w-32 truncate">
-                    {run.name || "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(run.status)}>
-                      {run.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {run.attempt}/{run.max_attempts}
-                  </TableCell>
-                  <TableCell>{run.priority || "-"}</TableCell>
-                  <TableCell>
-                    {run.started_at && run.finished_at
-                      ? formatDistanceStrict(run.started_at, run.finished_at)
-                      : "-"}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {run.worker_id
-                      ? `${run.worker_id.slice(0, 8)}${
-                          run.worker_id.length > 8 ? "..." : ""
-                        }`
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    {formatDistanceToNow(new Date(run.created_at), {
-                      addSuffix: true,
-                    })}
-                  </TableCell>
-                  <TableCell className="max-w-48 truncate text-xs text-red-600">
-                    {run.error_message || "-"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <Table className="table-fixed w-full">
+        <TableHeader>
+          <TableRow>
+            <TableHead style={{ width: "260px" }}>Job ID</TableHead>
+            <TableHead style={{ width: "120px" }}>Queue</TableHead>
+            <TableHead style={{ width: "120px" }}>Tags</TableHead>
+            <TableHead style={{ width: "120px" }}>Status</TableHead>
+            <TableHead style={{ width: "120px" }}>Duration</TableHead>
+            <TableHead style={{ width: "140px" }}>Worker</TableHead>
+            <TableHead style={{ width: "160px" }}>Created</TableHead>
+            <TableHead style={{ width: "140px" }}>Error</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {runs?.jobs.map((run) => (
+            <TableRow key={run.id}>
+              <TableCell className="font-mono text-xs">
+                {run.job_id.slice(0, 32)}
+                {run.job_id.length > 32 && "..."}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline">{run.queue}</Badge>
+              </TableCell>
+              <TableCell>{run.tags?.join(", ")}</TableCell>
+              <TableCell>
+                <Badge className={getStatusColor(run.status)}>
+                  {run.status}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                {run.started_at && run.finished_at
+                  ? formatDistanceStrict(run.started_at, run.finished_at)
+                  : "-"}
+              </TableCell>
+              <TableCell className="font-mono text-xs">
+                {run.worker_id
+                  ? `${run.worker_id.slice(0, 12)}${
+                      run.worker_id.length > 12 ? "..." : ""
+                    }`
+                  : "-"}
+              </TableCell>
+              <TableCell>
+                {formatDistanceToNow(new Date(run.created_at), {
+                  addSuffix: true,
+                })}
+              </TableCell>
+              <TableCell
+                className={cn("max-w-48 truncate text-xs", {
+                  "text-red-600": run.error_message,
+                })}
+              >
+                {run.error_message || "-"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

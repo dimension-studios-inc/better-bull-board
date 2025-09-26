@@ -10,19 +10,23 @@ export const clearData = async () => {
   const autoDeletePostgresData = env.AUTO_DELETE_POSTGRES_DATA;
   if (!autoDeletePostgresData) return;
 
-  setInterval(
-    async () => {
-      const now = new Date();
-      const deleteDate = new Date(now.getTime() - autoDeletePostgresData);
+  const deleteData = async () => {
+    const now = new Date();
+    const deleteDate = new Date(now.getTime() - autoDeletePostgresData);
 
-      // Delete job runs
-      //? This will delete logs too
-      await db
-        .delete(jobRunsTable)
-        .where(lt(jobRunsTable.createdAt, deleteDate));
+    // Delete job runs
+    //? This will delete logs too
+    await db.delete(jobRunsTable).where(lt(jobRunsTable.createdAt, deleteDate));
+  };
+
+  setInterval(
+    () => {
+      deleteData();
     },
     1000 * 60 * 60,
   );
+  deleteData();
+
   logger.log(
     `🧹 Clearing data every ${formatDistance(autoDeletePostgresData, 0)}`,
   );

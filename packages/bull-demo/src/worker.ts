@@ -5,8 +5,16 @@ import { redis } from "./lib/redis";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const processorFile = path.join(__dirname, "processor.cjs");
-new Worker("demo-queue", processorFile, {
+const processorFile1 = path.join(__dirname, "demo1/processor.cjs");
+const processorFile2 = path.join(__dirname, "demo2/processor.cjs");
+new Worker("demo-queue", processorFile1, {
+  connection: redis,
+  ioredis: redis,
+  useWorkerThreads: true,
+  concurrency: 10,
+});
+
+new Worker("demo-queue-2", processorFile2, {
   connection: redis,
   ioredis: redis,
   useWorkerThreads: true,
