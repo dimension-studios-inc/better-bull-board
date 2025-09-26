@@ -2,6 +2,7 @@
 
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { AuthProvider } from "~/lib/auth/context";
 import { createQueryClient } from "~/lib/query-client";
 
 let clientQueryClientSingleton: QueryClient | undefined;
@@ -32,6 +33,8 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
   });
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </AuthProvider>
   );
 };

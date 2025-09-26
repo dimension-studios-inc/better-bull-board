@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { apiFetch, cn } from "~/lib/utils";
+import { apiFetch, cn } from "~/lib/utils/client";
 import { QueueActions } from "./queue-actions";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
