@@ -94,9 +94,9 @@ export const searchJobRuns = async (filters: {
     "created_at" | "enqueued_at" | "started_at" | "finished_at"
   > & {
     created_at: number;
-    enqueued_at: number;
-    started_at: number;
-    finished_at: number;
+    enqueued_at: number | null;
+    started_at: number | null;
+    finished_at: number | null;
   })[]
 > => {
   const conditions: string[] = [];
@@ -184,9 +184,9 @@ export const searchJobRuns = async (filters: {
   return data.map((item) => ({
     ...item,
     created_at: Number(item.created_at),
-    enqueued_at: Number(item.enqueued_at),
-    started_at: Number(item.started_at),
-    finished_at: Number(item.finished_at),
+    enqueued_at: item.enqueued_at ? Number(item.enqueued_at) : null,
+    started_at: item.started_at ? Number(item.started_at) : null,
+    finished_at: item.finished_at ? Number(item.finished_at) : null,
   }));
 };
 
