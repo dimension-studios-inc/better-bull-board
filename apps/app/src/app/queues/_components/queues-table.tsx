@@ -18,6 +18,7 @@ import {
 } from "~/components/ui/table";
 import { apiFetch, cn } from "~/lib/utils/client";
 import { QueueActions } from "./queue-actions";
+import { QueueMiniChart } from "./queue-mini-chart";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
 export function QueuesTable() {
@@ -79,6 +80,7 @@ export function QueuesTable() {
             <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
             <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
             <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>
+            <TableHead style={{ width: "150px" }}>Trend</TableHead>
             <TableHead style={{ width: "60px" }}></TableHead>
           </TableRow>
         </TableHeader>
@@ -121,6 +123,12 @@ export function QueuesTable() {
                 <span className="font-mono text-green-600">
                   {queue.completedJobs}
                 </span>
+              </TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <QueueMiniChart 
+                  data={queue.chartData} 
+                  timePeriod={options.timePeriod}
+                />
               </TableCell>
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <QueueActions
