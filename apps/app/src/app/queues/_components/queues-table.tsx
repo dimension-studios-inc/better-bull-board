@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { formatDuration } from "date-fns";
+import { AnimatePresence, motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useQueryStates, parseAsString } from "nuqs";
@@ -82,56 +83,63 @@ export function QueuesTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data?.queues.map((queue) => (
-            <TableRow
-              key={queue.name}
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => handleQueueClick(queue.name)}
-            >
-              <TableCell className="font-medium">{queue.name}</TableCell>
-              <TableCell>
-                <Badge
-                  variant={"outline"}
-                  className={cn({
-                    "opacity-50": queue.isPaused,
-                  })}
-                >
-                  {queue.isPaused ? "Paused" : "Running"}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <span className="font-mono">
-                  {queue.pattern ||
-                    (queue.every &&
-                      `Every ${formatDuration({
-                        seconds: queue.every / 1000,
-                      })}`)}
-                </span>
-              </TableCell>
-              <TableCell>
-                <span className="font-mono">{queue.activeJobs}</span>
-              </TableCell>
-              <TableCell>
-                <span className="font-mono text-red-600">
-                  {queue.failedJobs}
-                </span>
-              </TableCell>
-              <TableCell>
-                <span className="font-mono text-green-600">
-                  {queue.completedJobs}
-                </span>
-              </TableCell>
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                <QueueMiniChart data={queue.chartData} />
-              </TableCell>
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                <QueueActions
-                  queueName={queue.name}
-                  isPaused={queue.isPaused}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+          <AnimatePresence mode="popLayout">
+            {data?.queues.map((queue) => (
+              <motion.tr
+                key={queue.name}
+                className="border-b transition-colors cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
+                onClick={() => handleQueueClick(queue.name)}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                layout
+              >
+                <TableCell className="font-medium">{queue.name}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={"outline"}
+                    className={cn({
+                      "opacity-50": queue.isPaused,
+                    })}
+                  >
+                    {queue.isPaused ? "Paused" : "Running"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <span className="font-mono">
+                    {queue.pattern ||
+                      (queue.every &&
+                        `Every ${formatDuration({
+                          seconds: queue.every / 1000,
+                        })}`)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="font-mono">{queue.activeJobs}</span>
+                </TableCell>
+                <TableCell>
+                  <span className="font-mono text-red-600">
+                    {queue.failedJobs}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="font-mono text-green-600">
+                    {queue.completedJobs}
+                  </span>
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <QueueMiniChart data={queue.chartData} />
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <QueueActions
+                    queueName={queue.name}
+                    isPaused={queue.isPaused}
+                  />
+                </TableCell>
+              </motion.tr>
+            ))}
+          </AnimatePresence>
         </TableBody>
       </Table>
     </div>

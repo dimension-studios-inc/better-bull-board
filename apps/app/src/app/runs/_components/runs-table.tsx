@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
+import { AnimatePresence, motion } from "framer-motion";
 import { useQueryStates, parseAsString } from "nuqs";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
@@ -76,62 +77,72 @@ export function RunsTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {runs?.jobs.map((run) => (
-            <TableRow key={run.id}>
-              <TableCell className="font-mono text-xs">
-                {run.job_id.slice(0, 32)}
-                {run.job_id.length > 32 && "..."}
-              </TableCell>
-              <TableCell>{run.queue}</TableCell>
-              <TableCell className="overflow-hidden">
-                {run.tags?.map((tag) => (
-                  <Badge key={tag} variant="outline">
-                    {tag}
-                  </Badge>
-                ))}
-              </TableCell>
-              <TableCell>
-                <Badge className={getStatusColor(run.status)}>
-                  {run.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {run.started_at &&
-                run.finished_at &&
-                (run.status === "completed" || run.status === "failed")
-                  ? formatDistanceStrict(run.started_at, run.finished_at)
-                  : "-"}
-              </TableCell>
-              <TableCell className="text-xs truncate">
-                {formatDistanceToNow(new Date(run.created_at), {
-                  addSuffix: true,
-                })}
-              </TableCell>
-              <TableCell className="text-xs truncate">
-                {run.finished_at
-                  ? formatDistanceToNow(new Date(run.finished_at), {
-                      addSuffix: true,
-                    })
-                  : "-"}
-              </TableCell>
-              <TableCell
-                className={cn("max-w-48 truncate text-xs", {
-                  "text-red-600": run.status === "failed" && run.error_message,
-                })}
+          <AnimatePresence mode="popLayout">
+            {runs?.jobs.map((run) => (
+              <motion.tr
+                key={run.id}
+                className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                layout
               >
-                {run.status === "failed" && run.error_message
-                  ? run.error_message
-                  : "-"}
-              </TableCell>
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                <RunActions
-                  jobId={run.job_id}
-                  queueName={run.queue}
-                  status={run.status}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+                <TableCell className="font-mono text-xs">
+                  {run.job_id.slice(0, 32)}
+                  {run.job_id.length > 32 && "..."}
+                </TableCell>
+                <TableCell>{run.queue}</TableCell>
+                <TableCell className="overflow-hidden">
+                  {run.tags?.map((tag) => (
+                    <Badge key={tag} variant="outline">
+                      {tag}
+                    </Badge>
+                  ))}
+                </TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(run.status)}>
+                    {run.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {run.started_at &&
+                  run.finished_at &&
+                  (run.status === "completed" || run.status === "failed")
+                    ? formatDistanceStrict(run.started_at, run.finished_at)
+                    : "-"}
+                </TableCell>
+                <TableCell className="text-xs truncate">
+                  {formatDistanceToNow(new Date(run.created_at), {
+                    addSuffix: true,
+                  })}
+                </TableCell>
+                <TableCell className="text-xs truncate">
+                  {run.finished_at
+                    ? formatDistanceToNow(new Date(run.finished_at), {
+                        addSuffix: true,
+                      })
+                    : "-"}
+                </TableCell>
+                <TableCell
+                  className={cn("max-w-48 truncate text-xs", {
+                    "text-red-600": run.status === "failed" && run.error_message,
+                  })}
+                >
+                  {run.status === "failed" && run.error_message
+                    ? run.error_message
+                    : "-"}
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <RunActions
+                    jobId={run.job_id}
+                    queueName={run.queue}
+                    status={run.status}
+                  />
+                </TableCell>
+              </motion.tr>
+            ))}
+          </AnimatePresence>
         </TableBody>
       </Table>
     </div>
