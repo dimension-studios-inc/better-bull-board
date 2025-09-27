@@ -1,15 +1,18 @@
 import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { redis } from "./lib/redis";
 
 const CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
 const CACHE_KEY_PREFIX = "bbb:job-run-id:";
 
-const getCachedValue = async (jobId: string): Promise<string | null> => {
+const getCachedValue = async (
+  jobId: string,
+  enqueuedAt: Date,
+): Promise<string | null> => {
   try {
-    const key = `${CACHE_KEY_PREFIX}${jobId}`;
+    const key = `${CACHE_KEY_PREFIX}${jobId}:${enqueuedAt.getTime()}`;
     const cached = await redis.get(key);
 
     if (cached === null) {
@@ -23,18 +26,27 @@ const getCachedValue = async (jobId: string): Promise<string | null> => {
   }
 };
 
-const setCachedValue = async (jobId: string, value: string): Promise<void> => {
+const setCachedValue = async (
+  jobId: string,
+  enqueuedAt: Date,
+  value: string,
+): Promise<void> => {
   try {
-    const key = `${CACHE_KEY_PREFIX}${jobId}`;
+    const key = `${CACHE_KEY_PREFIX}${jobId}:${enqueuedAt.getTime()}`;
     await redis.setex(key, CACHE_TTL_SECONDS, value);
   } catch (error) {
-    logger.warn("Failed to set cached value in Redis", { jobId, value, error });
+    logger.warn("Failed to set cached value in Redis", {
+      jobId,
+      enqueuedAt,
+      value,
+      error,
+    });
   }
 };
 
-export const getJobFromBullId = async (jobId: string) => {
+export const getJobFromBullId = async (jobId: string, enqueuedAt: Date) => {
   // Check cache first
-  const cachedResult = await getCachedValue(jobId);
+  const cachedResult = await getCachedValue(jobId, enqueuedAt);
   if (cachedResult !== null) {
     return cachedResult;
   }
@@ -42,7 +54,12 @@ export const getJobFromBullId = async (jobId: string) => {
   const [jobRun] = await db
     .select({ id: jobRunsTable.id })
     .from(jobRunsTable)
-    .where(eq(jobRunsTable.jobId, jobId))
+    .where(
+      and(
+        eq(jobRunsTable.jobId, jobId),
+        eq(jobRunsTable.enqueuedAt, enqueuedAt),
+      ),
+    )
     .limit(1);
 
   let result: string | undefined;
@@ -52,14 +69,14 @@ export const getJobFromBullId = async (jobId: string) => {
   } else {
     const jobRunId = jobRun.id;
     if (!jobRunId) {
-      logger.warn("Invalid job run data", { jobId });
+      logger.warn("Invalid job run data", { jobId, enqueuedAt });
       result = undefined;
     } else {
       result = jobRunId;
     }
   }
 
-  if (result) await setCachedValue(jobId, result);
+  if (result) await setCachedValue(jobId, enqueuedAt, result);
 
   return result;
 };

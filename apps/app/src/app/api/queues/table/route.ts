@@ -1,7 +1,7 @@
 import { getQueueStatsWithChart } from "@better-bull-board/clickhouse";
 import { jobSchedulersTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import { and, asc, desc, eq, gte, ilike, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, lt, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
 
@@ -17,8 +17,12 @@ export const POST = createAuthenticatedApiRoute({
           id: queuesTable.id,
           name: queuesTable.name,
           isPaused: queuesTable.isPaused,
-          pattern: jobSchedulersTable.pattern,
-          every: jobSchedulersTable.every,
+          patterns: sql<
+            string[] | null | undefined
+          >`array_agg(${jobSchedulersTable.pattern})`.as("patterns"),
+          everys: sql<
+            number[] | null | undefined
+          >`array_agg(${jobSchedulersTable.every})`.as("everys"),
         })
         .from(queuesTable)
         .leftJoin(
@@ -29,12 +33,13 @@ export const POST = createAuthenticatedApiRoute({
           and(
             cursor
               ? direction === "prev"
-                ? lte(queuesTable.name, cursor)
+                ? lt(queuesTable.name, cursor)
                 : gte(queuesTable.name, cursor)
               : undefined,
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
           ),
         )
+        .groupBy(queuesTable.id) // ✅ ensures one row per queue
         .orderBy(
           direction === "prev" ? desc(queuesTable.name) : asc(queuesTable.name),
         )
@@ -70,7 +75,7 @@ export const POST = createAuthenticatedApiRoute({
 
     const nextCursor = rows.length > limit ? (rows.pop()?.name ?? null) : null;
     const prevCursor =
-      previousRows.length > limit ? (previousRows.pop()?.name ?? null) : null;
+      previousRows.length > limit ? (previousRows.at(-2)?.name ?? null) : null;
 
     return {
       queues: rows.map((row) => {
@@ -85,8 +90,8 @@ export const POST = createAuthenticatedApiRoute({
         return {
           name: row.name,
           isPaused: row.isPaused,
-          pattern: row.pattern,
-          every: row.every,
+          patterns: row.patterns?.filter(Boolean) ?? [],
+          everys: row.everys?.filter(Boolean) ?? [],
           activeJobs: stats.activeJobs,
           failedJobs: stats.failedJobs,
           completedJobs: stats.completedJobs,

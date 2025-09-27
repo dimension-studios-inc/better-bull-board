@@ -33,7 +33,7 @@ export const POST = createAuthenticatedApiRoute({
     const prevCursor =
       previousJobs.length > limit
         ? // Since we are in desc order we need to shift not pop
-          (previousJobs.shift()?.created_at ?? null)
+          (previousJobs.at(2)?.created_at ?? null)
         : null;
 
     return {

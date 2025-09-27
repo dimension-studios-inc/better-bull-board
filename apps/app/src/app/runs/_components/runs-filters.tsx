@@ -20,6 +20,7 @@ export function RunsFilters({
   filters,
   setFilters,
   runs,
+  startEndContent,
 }: {
   filters: TRunFilters;
   setFilters: (
@@ -31,6 +32,7 @@ export function RunsFilters({
     nextCursor: number | null;
     prevCursor: number | null;
   };
+  startEndContent?: React.ReactNode;
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
@@ -219,6 +221,7 @@ export function RunsFilters({
             </Button>
           </Badge>
         ))}
+        {startEndContent}
       </div>
       <div className="flex items-center gap-2">
         <Button

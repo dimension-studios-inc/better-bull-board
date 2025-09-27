@@ -153,7 +153,7 @@ export const searchJobRuns = async (filters: {
 
   if (filters.cursor) {
     if (filters.direction === "prev") {
-      conditions.push("created_at >= {cursor:UInt64}");
+      conditions.push("created_at > {cursor:UInt64}");
     } else {
       conditions.push("created_at <= {cursor:UInt64}");
     }

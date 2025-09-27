@@ -16,9 +16,3 @@ export const queue4 = new Queue("demo-queue-4", {
 export const queue5 = new Queue("demo-queue-5", {
   connection: redis,
 });
-
-export const registerScheduler = async () => {
-  await queue.upsertJobScheduler("demo-queue-2", {
-    every: 20_000,
-  });
-};
