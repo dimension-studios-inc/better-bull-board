@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Filter, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -40,7 +40,13 @@ export function RunsFilters({
   const [queueSearch, setQueueSearch] = useState("");
   const [statusSearch, setStatusSearch] = useState("");
 
-  const { data: queues, isLoading } = useInfiniteQuery({
+  const { 
+    data: queues, 
+    isLoading, 
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage 
+  } = useInfiniteQuery({
     queryKey: ["queues/table", queueSearch],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
       apiFetch({
@@ -54,6 +60,38 @@ export function RunsFilters({
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
   });
+
+  // Intersection observer ref for infinite scroll
+  const loaderRef = useRef<HTMLDivElement>(null);
+
+  // Intersection observer callback
+  const handleIntersection = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
+      if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage]
+  );
+
+  // Set up intersection observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleIntersection, {
+      threshold: 0.1,
+    });
+
+    const currentLoaderRef = loaderRef.current;
+    if (currentLoaderRef) {
+      observer.observe(currentLoaderRef);
+    }
+
+    return () => {
+      if (currentLoaderRef) {
+        observer.unobserve(currentLoaderRef);
+      }
+    };
+  }, [handleIntersection]);
 
   const queueOptions: ComboboxOption[] = useMemo(() => {
     const options = [{ value: "all", label: "All Queues" }];
@@ -173,6 +211,14 @@ export function RunsFilters({
                     setOpen={setQueueOpen}
                     renderValue={renderQueueValue}
                     className="w-full"
+                    isLoading={isLoading}
+                    isFetching={isFetchingNextPage}
+                    infiniteLoadingProps={{
+                      hasNextPage: hasNextPage || false,
+                      isFetchingNextPage,
+                      fetchNextPage,
+                      loaderRef,
+                    }}
                   />
                 </div>
 
