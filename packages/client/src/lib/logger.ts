@@ -1,11 +1,25 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import type { Job } from "bullmq";
+import type { Job, SandboxedJob } from "bullmq";
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: we don't want to colorize the logs
 const ansiRegex = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
 
 export function decolorize(input: string): string {
   return input.replace(ansiRegex, "");
+}
+
+let lastTs = 0;
+let counter = 0;
+
+function nextLogTimestamp() {
+  const now = Date.now();
+  if (now === lastTs) {
+    counter++;
+  } else {
+    lastTs = now;
+    counter = 0;
+  }
+  return { ts: now, seq: counter };
 }
 
 export function formatForLogger(data: unknown): string {
@@ -41,8 +55,8 @@ function safeStringify(obj: unknown): string {
 }
 
 type Ctx = {
-  job: Job;
-  publish: (channel: string, message: string) => void;
+  job: Job | SandboxedJob;
+  publish: (channel: string, message: string) => Promise<number>;
   autoEmitJobLogs?: boolean;
   autoEmitBBBLogs?: boolean;
   id: string;
@@ -55,7 +69,15 @@ let patched = false;
  * Patch console once. It will forward logs to the *current* job
  * if one is set in AsyncLocalStorage, otherwise just logs normally.
  */
-export function installConsoleRelay() {
+export function installConsoleRelay({
+  addPendingPublish,
+  removePendingPublish,
+}: {
+  // biome-ignore lint/suspicious/noConfusingVoidType: _
+  addPendingPublish: (publish: Promise<number | void>) => void;
+  // biome-ignore lint/suspicious/noConfusingVoidType: _
+  removePendingPublish: (publish: Promise<number | void>) => void;
+}) {
   if (patched) return;
   patched = true;
 
@@ -79,18 +101,32 @@ export function installConsoleRelay() {
           .join(" ");
         // Fire-and-forget so console stays sync; swallow errors.
         if (ctx.autoEmitBBBLogs) {
-          ctx.publish(
-            "bbb:worker:job:log",
-            JSON.stringify({
-              id: ctx.id,
-              jobId: ctx.job.id,
-              message,
-              level,
-            }),
-          );
+          const { ts, seq } = nextLogTimestamp();
+          const p = ctx
+            .publish(
+              "bbb:worker:job:log",
+              JSON.stringify({
+                id: ctx.id,
+                jobId: ctx.job.id,
+                logTimestamp: ts,
+                logSeq: seq,
+                jobTimestamp: ctx.job.timestamp,
+                message,
+                level,
+              }),
+            )
+            .catch((err) =>
+              original.error("🔍 Error publishing to redis", err),
+            );
+          addPendingPublish(p);
+          p.finally(() => removePendingPublish(p));
         }
         if (ctx.autoEmitJobLogs) {
-          void ctx.job.log(message).catch(() => {});
+          try {
+            void ctx.job.log(message);
+          } catch (e) {
+            original.error("🔍 Error forwarding log to job", e);
+          }
         }
       }
       original[level](...(params as []));

@@ -1,11 +1,12 @@
 import { logger } from "@rharkor/logger";
+import { queue } from "../src/demo2/queue";
 import { deleteAllSchedulers, registerScheduler } from "../src/utils";
 
 const main = async () => {
   await logger.init();
   await deleteAllSchedulers();
-  await registerScheduler();
-  logger.log("Scheduler registered");
+  // await registerScheduler();
+  // logger.log("Scheduler registered");
 
   // const singleJob = async (i: number) => {
   //   const job = await queue.add("test-job-name", {});
@@ -15,6 +16,10 @@ const main = async () => {
   //     await cancelJob({ redis, jobId: job.id, queueName: "demo-queue" });
   //   }
   // };
+
+  await queue.add("test-job-name", {
+    hello: "world",
+  });
 
   // const bulkJobs = async () => {
   //   await Promise.all(Array.from({ length: 1000 }).map((_, i) => singleJob(i)));

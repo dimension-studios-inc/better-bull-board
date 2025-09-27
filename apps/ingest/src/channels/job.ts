@@ -55,12 +55,14 @@ export const handleJobChannel = async (_channel: string, message: string) => {
       tags,
     };
     const validated = jobRunsInsertSchema.parse(formatted);
+    let dbId: string | undefined;
     await redlock.using(
       [`bbb:job-run:upsert:${validated.jobId}`],
       1_000,
       async (signal) => {
         signal.throwIfAborted();
         const jobRun = await upsertJobRun(validated);
+        dbId = jobRun.id;
         await upsertJobRunCH({
           ...jobRun,
           job_id: jobRun.jobId,
@@ -78,7 +80,7 @@ export const handleJobChannel = async (_channel: string, message: string) => {
         });
       },
     );
-    redis.publish("bbb:ingest:events:job-refresh", job.id);
+    dbId && redis.publish("bbb:ingest:events:job-refresh", dbId);
   } catch (e) {
     logger.error("Error saving job", { error: e, message });
   }

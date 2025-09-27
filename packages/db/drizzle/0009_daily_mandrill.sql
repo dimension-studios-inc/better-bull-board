@@ -1,0 +1,1 @@
+ALTER TABLE "job_logs" ADD COLUMN "log_seq" integer DEFAULT 0 NOT NULL;

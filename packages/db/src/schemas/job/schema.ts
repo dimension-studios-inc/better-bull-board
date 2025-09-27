@@ -10,7 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { jobStatusEnum, logLevelEnum } from "./enum";
 
 export const jobRunsTable = pgTable(
@@ -64,6 +64,7 @@ export const jobRunsTable = pgTable(
 );
 
 export const jobRunsInsertSchema = createInsertSchema(jobRunsTable);
+export const jobRunsSelectSchema = createSelectSchema(jobRunsTable);
 
 // Many rows per run (append-only)
 export const jobLogsTable = pgTable(
@@ -80,6 +81,7 @@ export const jobLogsTable = pgTable(
     ts: timestamp("ts", { precision: 3, mode: "date" })
       .notNull()
       .default(sql`now()`),
+    logSeq: integer("log_seq").notNull().default(0),
   },
   (t) => [
     index("ix_job_logs_job_run_ts").on(t.jobRunId, t.ts),

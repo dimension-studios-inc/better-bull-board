@@ -6,6 +6,7 @@ export const jobLogDataSchema = z.object({
   level: z.string(),
   message: z.string(),
   ts: z.coerce.date(),
+  log_seq: z.number(),
 });
 
 export type JobLogData = z.infer<typeof jobLogDataSchema>;

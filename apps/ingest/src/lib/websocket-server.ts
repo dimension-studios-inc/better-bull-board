@@ -22,6 +22,12 @@ class BullBoardWebSocketServer {
   private clients: Set<WebSocket> = new Set();
   private subscriber = redis.duplicate();
 
+  // keep track of last sent events for throttling
+  private lastSent = new Map<string, number>();
+  private pending = new Map<string, WebSocketMessage>();
+  private timers = new Map<string, NodeJS.Timeout>();
+  private throttleMs = 1000; // 1s window
+
   constructor() {
     this.wss = new WebSocketServer({
       port: env.WEBSOCKET_PORT,
@@ -63,8 +69,6 @@ class BullBoardWebSocketServer {
   private async setupRedisSubscriber() {
     try {
       await this.subscriber.connect().catch(() => {});
-
-      // Subscribe to the events we're emitting in the files
       await this.subscriber.psubscribe("bbb:ingest:events:*");
 
       logger.log(`📡 Subscribed to Redis channels: bbb:ingest:events:*`);
@@ -83,16 +87,10 @@ class BullBoardWebSocketServer {
 
       switch (channel) {
         case "bbb:ingest:events:job-refresh":
-          wsMessage = {
-            type: "job-refresh",
-            data: { jobId: message },
-          };
+          wsMessage = { type: "job-refresh", data: { jobId: message } };
           break;
         case "bbb:ingest:events:queue-refresh":
-          wsMessage = {
-            type: "queue-refresh",
-            data: { queueName: message },
-          };
+          wsMessage = { type: "queue-refresh", data: { queueName: message } };
           break;
         case "bbb:ingest:events:job-scheduler-refresh":
           wsMessage = {
@@ -101,10 +99,7 @@ class BullBoardWebSocketServer {
           };
           break;
         case "bbb:ingest:events:log-refresh":
-          wsMessage = {
-            type: "log-refresh",
-            data: { jobId: message },
-          };
+          wsMessage = { type: "log-refresh", data: { jobId: message } };
           break;
         default:
           logger.warn("Unknown Redis channel", { channel });
@@ -118,6 +113,37 @@ class BullBoardWebSocketServer {
   }
 
   private broadcast(message: WebSocketMessage) {
+    const key = `${message.type}:${JSON.stringify(message.data)}`;
+    const now = Date.now();
+    const last = this.lastSent.get(key) ?? 0;
+
+    if (now - last >= this.throttleMs) {
+      // enough time passed → send immediately
+      this.sendToAll(message);
+      this.lastSent.set(key, now);
+    } else {
+      // inside throttle window → queue as pending
+      this.pending.set(key, message);
+
+      if (!this.timers.has(key)) {
+        const wait = this.throttleMs - (now - last);
+        this.timers.set(
+          key,
+          setTimeout(() => {
+            const pendingMsg = this.pending.get(key);
+            if (pendingMsg) {
+              this.sendToAll(pendingMsg);
+              this.lastSent.set(key, Date.now());
+              this.pending.delete(key);
+            }
+            this.timers.delete(key);
+          }, wait),
+        );
+      }
+    }
+  }
+
+  private sendToAll(message: WebSocketMessage) {
     const messageStr = JSON.stringify(message);
 
     this.clients.forEach((client) => {
@@ -153,17 +179,12 @@ class BullBoardWebSocketServer {
 
   public async close() {
     logger.log("Closing WebSocket server...");
-
     // Close all client connections
     this.clients.forEach((client) => {
       client.close();
     });
     this.clients.clear();
-
-    // Close WebSocket server
     this.wss.close();
-
-    // Close Redis subscriber
     await this.subscriber.quit();
   }
 }
