@@ -1,6 +1,8 @@
+import { logger } from "@rharkor/logger";
 import {
   Worker as BullMQWorker,
   type Job,
+  Queue,
   type RedisConnection,
   type WorkerOptions,
 } from "bullmq";
@@ -36,6 +38,7 @@ export class Worker<
     this.ioredis = opts.ioredis;
     this.getJobTags = opts.getJobTags;
     this.startLivenessProbe();
+    this.waitingJobsEvent(name);
   }
 
   private startLivenessProbe() {
@@ -49,6 +52,46 @@ export class Worker<
         }),
       );
     }, 5000);
+  }
+
+  private async waitingJobsEvent(queueName: string) {
+    const listener = this.ioredis.duplicate();
+    await listener.connect().catch(() => {});
+    const queue = new Queue(queueName, { connection: this.ioredis });
+    listener.subscribe(`bbb:queue:${queueName}:job:waiting`, (err) => {
+      if (err) {
+        logger.error(`Error subscribing to waiting jobs: ${err}`);
+        return;
+      }
+    });
+    listener.on("message", async (_channel, message) => {
+      const { jobId } = JSON.parse(message) as { jobId: string };
+      const job = await queue.getJob(jobId);
+      if (!job) {
+        logger.error(`Job not found: ${jobId}`);
+        return;
+      }
+      const tags = this.getJobTags?.(
+        job as Job<DataType, ResultType, NameType>,
+      ).filter(Boolean);
+      this.ioredis.publish(
+        "bbb:worker:job",
+        JSON.stringify({
+          id: this.id,
+          job,
+          tags,
+          queueName,
+          isWaiting: true,
+        }),
+      );
+      // Answer the ingester
+      this.ioredis.publish(
+        `bbb:queue:${queueName}:job:waiting:${jobId}`,
+        JSON.stringify({
+          id: this.id,
+        }),
+      );
+    });
   }
 
   override async processJob(

@@ -91,10 +91,8 @@ export function RunsTable() {
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
       case "active":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      // case "waiting":
-      //   return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-      // case "delayed":
-      //   return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+      case "waiting":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     }
@@ -166,6 +164,9 @@ export function RunsTable() {
                       onCheckedChange={(checked) =>
                         handleSelectJob(run.job_id, checked as boolean)
                       }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
                       aria-label={`Select job ${run.job_id}`}
                     />
                   </div>
