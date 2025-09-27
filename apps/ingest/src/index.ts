@@ -5,6 +5,7 @@ import { startWebSocketServer } from "./lib/websocket-server";
 import { clearData } from "./repeats/clear-data";
 import { autoIngestQueues } from "./repeats/queues";
 import { stopStalledRuns } from "./repeats/stalled";
+import { autoIngestWaitingJobs } from "./repeats/waiting";
 
 const listenToEvents = async () => {
   const subscriber = redis.duplicate();
@@ -25,6 +26,7 @@ const main = async () => {
   clearData();
   autoIngestQueues();
   stopStalledRuns();
+  autoIngestWaitingJobs();
 
   // Start WebSocket server
   startWebSocketServer();

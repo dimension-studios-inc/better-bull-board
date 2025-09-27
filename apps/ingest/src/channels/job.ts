@@ -17,26 +17,31 @@ export const handleJobChannel = async (_channel: string, message: string) => {
     const {
       id,
       job,
+      isWaiting,
       tags,
       queueName: queue,
     } = JSON.parse(message) as {
       id: string;
       job: ReturnType<Job["toJSON"]>;
+      isWaiting?: boolean;
       tags?: string[];
       queueName: string;
     };
     if (!job.id) {
       throw new Error("Job ID is required");
     }
+    const status = job.finishedOn
+      ? job.failedReason
+        ? "failed"
+        : "completed"
+      : isWaiting
+        ? "waiting"
+        : "active";
     const formatted: z.infer<typeof jobRunsInsertSchema> = {
       workerId: id,
       jobId: job.id,
       queue,
-      status: job.finishedOn
-        ? job.failedReason
-          ? "failed"
-          : "completed"
-        : "active",
+      status,
       attempt: job.attemptsMade,
       maxAttempts: job.opts.attempts,
       priority: job.opts.priority,

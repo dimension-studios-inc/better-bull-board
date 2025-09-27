@@ -7,6 +7,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronRight,
+  CircleQuestionMarkIcon,
   Clock,
   Database,
   Hash,
@@ -41,8 +42,10 @@ const getStatusIcon = (status: string) => {
       return <AlertCircle className="h-4 w-4 text-red-500" />;
     case "active":
       return <Loader className="h-4 w-4 text-blue-500 animate-spin" />;
+    case "waiting":
+      return <Clock className="h-4 w-4 text-yellow-500" />;
     default:
-      return <Clock className="h-4 w-4 text-gray-500" />;
+      return <CircleQuestionMarkIcon className="h-4 w-4 text-gray-500" />;
   }
 };
 
@@ -54,6 +57,8 @@ const getStatusColor = (status: string) => {
       return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
     case "active":
       return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+    case "waiting":
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
     default:
       return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
   }
