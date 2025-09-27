@@ -1,7 +1,6 @@
 "use client";
 
 import type { jobRunsTable } from "@better-bull-board/db";
-import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import {
   AlertCircle,
   CalendarClock,
@@ -28,7 +27,7 @@ import {
 } from "~/components/ui/collapsible";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
-import { cn } from "~/lib/utils/client";
+import { cn, smartFormatDuration } from "~/lib/utils/client";
 
 interface RunDetailsDrawerProps {
   run: typeof jobRunsTable.$inferSelect;
@@ -138,7 +137,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
     run.startedAt &&
     run.finishedAt &&
     (run.status === "completed" || run.status === "failed")
-      ? formatDistanceStrict(run.startedAt, run.finishedAt)
+      ? smartFormatDuration(run.finishedAt.getTime() - run.startedAt.getTime())
       : null;
 
   return (
@@ -210,9 +209,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                     <CalendarClock className="h-4 w-4 text-muted-foreground" />
                   }
                   label="Created"
-                  value={formatDistanceToNow(new Date(run.createdAt), {
-                    addSuffix: true,
-                  })}
+                  value={new Date(run.createdAt).toISOString()}
                 />
                 {run.enqueuedAt && (
                   <DetailItem
@@ -220,9 +217,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                       <PlayCircle className="h-4 w-4 text-muted-foreground" />
                     }
                     label="Enqueued"
-                    value={formatDistanceToNow(new Date(run.enqueuedAt), {
-                      addSuffix: true,
-                    })}
+                    value={new Date(run.enqueuedAt).toISOString()}
                   />
                 )}
                 {run.startedAt && (
@@ -231,9 +226,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                       <PlayCircle className="h-4 w-4 text-muted-foreground" />
                     }
                     label="Started"
-                    value={formatDistanceToNow(new Date(run.startedAt), {
-                      addSuffix: true,
-                    })}
+                    value={new Date(run.startedAt).toISOString()}
                   />
                 )}
                 {run.finishedAt && (
@@ -242,9 +235,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                       <CheckCircle className="h-4 w-4 text-muted-foreground" />
                     }
                     label="Finished"
-                    value={formatDistanceToNow(new Date(run.finishedAt), {
-                      addSuffix: true,
-                    })}
+                    value={new Date(run.finishedAt).toISOString()}
                   />
                 )}
                 {duration && (

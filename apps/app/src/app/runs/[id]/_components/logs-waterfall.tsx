@@ -1,7 +1,6 @@
 "use client";
 
 import type { jobRunsTable } from "@better-bull-board/db";
-import { formatDuration } from "date-fns";
 import { AlertCircle, AlertTriangle, Bug, Info } from "lucide-react";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
@@ -12,7 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { cn } from "~/lib/utils/client";
+import { cn, smartFormatDuration } from "~/lib/utils/client";
 
 interface LogEntry {
   id: string;
@@ -28,26 +27,6 @@ interface LogsWaterfallProps {
   error: Error | null;
   run: typeof jobRunsTable.$inferSelect;
   onLogClick?: (log: LogEntry) => void;
-}
-
-function smartFormatDuration(ms: number): string {
-  const totalSeconds = Math.round(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return formatDuration(
-    { hours, minutes, seconds },
-    {
-      // You can control which units to include, whether zeros show, etc.
-      // e.g. skip zero units
-      zero: false,
-      // For example: ["hours", "minutes", "seconds"] means only those units
-      format: ["hours", "minutes", "seconds"],
-      // delimiter between units
-      delimiter: ", ",
-    },
-  );
 }
 
 const getLevelIcon = (level: string) => {

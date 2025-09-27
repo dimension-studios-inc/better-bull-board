@@ -1,4 +1,5 @@
 import clsx, { type ClassValue } from "clsx";
+import { formatDuration } from "date-fns";
 import { twMerge } from "tailwind-merge";
 import type { output, ZodType } from "zod";
 import { env } from "../env";
@@ -68,3 +69,27 @@ export const registerApiRoute = <
   urlSchema?: U;
   outputSchema: O;
 }) => params;
+
+export function smartFormatDuration(ms: number): string {
+  if (ms < 1000) {
+    return `${ms}ms`;
+  }
+
+  const totalSeconds = Math.round(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return formatDuration(
+    { hours, minutes, seconds },
+    {
+      // You can control which units to include, whether zeros show, etc.
+      // e.g. skip zero units
+      zero: false,
+      // For example: ["hours", "minutes", "seconds"] means only those units
+      format: ["hours", "minutes", "seconds"],
+      // delimiter between units
+      delimiter: ", ",
+    },
+  );
+}
