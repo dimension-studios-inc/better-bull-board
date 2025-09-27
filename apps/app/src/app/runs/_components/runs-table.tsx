@@ -4,8 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { useEffect, useMemo, useState } from "react";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
+import { Checkbox } from "~/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -16,6 +18,7 @@ import {
 } from "~/components/ui/table";
 import useDebounce from "~/hooks/use-debounce";
 import { apiFetch, cn } from "~/lib/utils/client";
+import { BulkActions } from "./bulk-actions";
 import { RunActions } from "./run-actions";
 import { RunsFilters } from "./runs-filters";
 import type { TRunFilters } from "./types";
@@ -27,6 +30,8 @@ export function RunsTable() {
     search: parseAsString.withDefault(""),
     cursor: parseAsInteger,
   });
+
+  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
 
   const filters: TRunFilters = {
     ...urlFilters,
@@ -43,10 +48,38 @@ export function RunsTable() {
     }),
   });
 
-  const handleFiltersChange = (newFilters: Partial<TRunFilters>) => {
-    // Reset pagination when filters change
-    setUrlFilters(newFilters);
+  const jobs = runs?.jobs || [];
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Clear selection when filters change
+  useEffect(() => {
+    setSelectedJobIds(new Set());
+  }, [debouncedFilters]);
+
+  const selectedJobs = useMemo(() => {
+    return jobs.filter((job) => selectedJobIds.has(job.job_id));
+  }, [jobs, selectedJobIds]);
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedJobIds(new Set(jobs.map((job) => job.job_id)));
+    } else {
+      setSelectedJobIds(new Set());
+    }
   };
+
+  const handleSelectJob = (jobId: string, checked: boolean) => {
+    const newSelection = new Set(selectedJobIds);
+    if (checked) {
+      newSelection.add(jobId);
+    } else {
+      newSelection.delete(jobId);
+    }
+    setSelectedJobIds(newSelection);
+  };
+
+  const isAllSelected = jobs.length > 0 && selectedJobIds.size === jobs.length;
+  const isPartiallySelected =
+    selectedJobIds.size > 0 && selectedJobIds.size < jobs.length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -69,12 +102,29 @@ export function RunsTable() {
     <div className="space-y-4">
       <RunsFilters
         filters={filters}
-        setFilters={handleFiltersChange}
+        setFilters={setUrlFilters}
         runs={runs}
+        startEndContent={
+          selectedJobs.length > 0 && (
+            <BulkActions
+              selectedJobs={selectedJobs}
+              onClearSelection={() => setSelectedJobIds(new Set())}
+            />
+          )
+        }
       />
+
       <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
+            <TableHead style={{ width: "50px" }}>
+              <Checkbox
+                checked={isAllSelected}
+                indeterminate={isPartiallySelected}
+                onCheckedChange={handleSelectAll}
+                aria-label="Select all jobs"
+              />
+            </TableHead>
             <TableHead style={{ width: "260px" }}>Job ID</TableHead>
             <TableHead style={{ width: "120px" }}>Queue</TableHead>
             <TableHead style={{ width: "180px" }}>Tags</TableHead>
@@ -88,16 +138,31 @@ export function RunsTable() {
         </TableHeader>
         <TableBody>
           <AnimatePresence mode="popLayout">
-            {runs?.jobs.map((run) => (
+            {jobs.map((run) => (
               <motion.tr
                 key={run.id}
-                className="group border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                className={cn(
+                  "group border-b transition-colors hover:bg-muted/50",
+                  selectedJobIds.has(run.job_id) &&
+                    "bg-blue-50 dark:bg-blue-950",
+                )}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
                 layout
               >
+                <TableCell>
+                  <div className="flex items-center">
+                    <Checkbox
+                      checked={selectedJobIds.has(run.job_id)}
+                      onCheckedChange={(checked) =>
+                        handleSelectJob(run.job_id, checked as boolean)
+                      }
+                      aria-label={`Select job ${run.job_id}`}
+                    />
+                  </div>
+                </TableCell>
                 <TableCell className="font-mono text-xs">
                   {run.job_id.slice(0, 32)}
                   {run.job_id.length > 32 && "..."}
