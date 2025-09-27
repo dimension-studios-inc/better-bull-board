@@ -14,10 +14,23 @@ export const patch = (
   run: (job: SandboxedJob) => Promise<unknown>,
   redis: Redis,
 ) => {
-  return (job: SandboxedJob) => {
-    installConsoleRelay();
+  return async (job: SandboxedJob) => {
+    // biome-ignore lint/suspicious/noConfusingVoidType: _
+    const pendingPublishes = new Set<Promise<number | void>>();
+    installConsoleRelay({
+      addPendingPublish: (publish) => {
+        pendingPublishes.add(publish);
+      },
+      removePendingPublish: (publish) => {
+        pendingPublishes.delete(publish);
+      },
+    });
 
-    return withJobConsole(
+    async function flushConsoleRelay() {
+      await Promise.all([...pendingPublishes]);
+    }
+
+    const result = await withJobConsole(
       {
         id: job.id,
         publish: redis.publish.bind(redis),
@@ -27,5 +40,7 @@ export const patch = (
       },
       () => cancelable(run, redis)(job),
     );
+    await flushConsoleRelay();
+    return result;
   };
 };

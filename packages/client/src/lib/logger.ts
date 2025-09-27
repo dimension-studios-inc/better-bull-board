@@ -42,7 +42,7 @@ function safeStringify(obj: unknown): string {
 
 type Ctx = {
   job: Job | SandboxedJob;
-  publish: (channel: string, message: string) => void;
+  publish: (channel: string, message: string) => Promise<number>;
   autoEmitJobLogs?: boolean;
   autoEmitBBBLogs?: boolean;
   id: string;
@@ -55,7 +55,15 @@ let patched = false;
  * Patch console once. It will forward logs to the *current* job
  * if one is set in AsyncLocalStorage, otherwise just logs normally.
  */
-export function installConsoleRelay() {
+export function installConsoleRelay({
+  addPendingPublish,
+  removePendingPublish,
+}: {
+  // biome-ignore lint/suspicious/noConfusingVoidType: _
+  addPendingPublish: (publish: Promise<number | void>) => void;
+  // biome-ignore lint/suspicious/noConfusingVoidType: _
+  removePendingPublish: (publish: Promise<number | void>) => void;
+}) {
   if (patched) return;
   patched = true;
 
@@ -79,16 +87,22 @@ export function installConsoleRelay() {
           .join(" ");
         // Fire-and-forget so console stays sync; swallow errors.
         if (ctx.autoEmitBBBLogs) {
-          ctx.publish(
-            "bbb:worker:job:log",
-            JSON.stringify({
-              id: ctx.id,
-              jobId: ctx.job.id,
-              timestamp: ctx.job.timestamp,
-              message,
-              level,
-            }),
-          );
+          const p = ctx
+            .publish(
+              "bbb:worker:job:log",
+              JSON.stringify({
+                id: ctx.id,
+                jobId: ctx.job.id,
+                timestamp: ctx.job.timestamp,
+                message,
+                level,
+              }),
+            )
+            .catch((err) =>
+              original.error("🔍 Error publishing to redis", err),
+            );
+          addPendingPublish(p);
+          p.finally(() => removePendingPublish(p));
         }
         if (ctx.autoEmitJobLogs) {
           try {

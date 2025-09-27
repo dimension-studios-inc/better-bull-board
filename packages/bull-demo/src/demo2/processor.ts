@@ -5,7 +5,13 @@ import { redis } from "../lib/redis";
 export default patch(async (job: SandboxedJob) => {
   console.log(`Processing job ${job.id}`);
 
-  await new Promise((resolve) => setTimeout(resolve, 10_000));
+  // Print random log level 2k times
+  // for (let i = 0; i < 2000; i++) {
+  //   const levels = ["debug", "info", "warn", "error", "log"] as const;
+  //   // biome-ignore lint/style/noNonNullAssertion: _
+  //   const level = levels[Math.floor(Math.random() * levels.length)]!;
+  //   console[level](`Emitting log ${i}`);
+  // }
 
   console.log(`Job ${job.id} processed`);
 

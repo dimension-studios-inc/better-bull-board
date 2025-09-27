@@ -83,15 +83,15 @@ export default function RunViewPage() {
         description={`${run.job.queue} • ${run.job.status}`}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
+      <div className="flex flex-row gap-4">
+        <div className="flex-1">
           <LogsWaterfall
             logs={logsData?.logs || []}
             isLoading={isLoadingLogs}
             error={logsError}
           />
         </div>
-        <div className="lg:col-span-1">
+        <div className="w-96">
           <RunDetailsDrawer run={run.job} />
         </div>
       </div>
