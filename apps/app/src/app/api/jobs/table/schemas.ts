@@ -7,6 +7,7 @@ export const getJobsTableInput = z.object({
   search: z.string().optional(),
   status: z.string().optional(),
   queue: z.string().optional(),
+  tags: z.array(z.string()).optional(),
   limit: z.number().min(1).max(100).optional(),
 });
 
