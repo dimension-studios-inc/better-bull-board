@@ -168,10 +168,6 @@ export const searchJobRuns = async (filters: {
 
   const query = `
     SELECT  
-      toUnixTimestamp(created_at) * 1000 AS created_at,
-      toUnixTimestamp(enqueued_at) * 1000 AS enqueued_at,
-      toUnixTimestamp(started_at) * 1000 AS started_at,
-      toUnixTimestamp(finished_at) * 1000 AS finished_at,
       *
     FROM job_runs_ch 
     ${whereClause}
@@ -188,10 +184,16 @@ export const searchJobRuns = async (filters: {
   const data = (await result.json()) as JobRunData[];
   const processedData = data.map((item) => ({
     ...item,
-    created_at: Number(item.created_at),
-    enqueued_at: item.enqueued_at ? Number(item.enqueued_at) : null,
-    started_at: item.started_at ? Number(item.started_at) : null,
-    finished_at: item.finished_at ? Number(item.finished_at) : null,
+    created_at: new Date(`${item.created_at}Z`).getTime(),
+    enqueued_at: item.enqueued_at
+      ? new Date(`${item.enqueued_at}Z`).getTime()
+      : null,
+    started_at: item.started_at
+      ? new Date(`${item.started_at}Z`).getTime()
+      : null,
+    finished_at: item.finished_at
+      ? new Date(`${item.finished_at}Z`).getTime()
+      : null,
   }));
 
   // If we got results in reverse order (prev direction), reverse them back to normal order

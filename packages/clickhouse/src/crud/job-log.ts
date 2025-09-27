@@ -17,19 +17,29 @@ export const insertJobLog = async (_jobLog: JobLogData): Promise<void> => {
 
 export const searchJobLogs = async (filters: {
   jobRunId?: string;
+  id?: string;
   level?: string;
   messageContains?: string;
   dateFrom?: Date;
   dateTo?: Date;
   limit?: number;
   offset?: number;
-}): Promise<(Omit<JobLogData, "ts"> & { ts: number })[]> => {
+  direction?: "asc" | "desc";
+}): Promise<{
+  logs: (Omit<JobLogData, "ts"> & { ts: number })[];
+  total: number;
+}> => {
   const conditions: string[] = [];
   const params: Record<string, unknown> = {};
 
   if (filters.jobRunId) {
     conditions.push("job_run_id = {job_run_id:UUID}");
     params.job_run_id = filters.jobRunId;
+  }
+
+  if (filters.id) {
+    conditions.push("job_run_id = {id:UUID}");
+    params.id = filters.id;
   }
 
   if (filters.level) {
@@ -57,10 +67,14 @@ export const searchJobLogs = async (filters: {
   const limit = filters.limit || 100;
   const offset = filters.offset || 0;
 
+  const orderByClause = `ORDER BY ts ${filters.direction === "asc" ? "ASC" : "DESC"}, log_seq ${
+    filters.direction === "asc" ? "ASC" : "DESC"
+  }`;
+
   const query = `
-    SELECT toUnixTimestamp(ts) * 1000 AS ts, * FROM job_logs_ch 
+    SELECT * FROM job_logs_ch 
     ${whereClause}
-    ORDER BY ts DESC
+    ${orderByClause}
     LIMIT {limit:UInt32} OFFSET {offset:UInt32}
   `;
 
@@ -71,8 +85,21 @@ export const searchJobLogs = async (filters: {
   });
 
   const data = (await result.json()) as JobLogData[];
-  return data.map((item) => ({
+  const logs = data.map((item) => ({
     ...item,
-    ts: Number(item.ts),
+    ts: new Date(`${item.ts}Z`).getTime(),
   }));
+
+  const [total] = (await (
+    await clickhouseClient.query({
+      query: `SELECT COUNT(*) AS count FROM job_logs_ch ${whereClause}`,
+      query_params: { ...params },
+      format: "JSONEachRow",
+    })
+  ).json()) as { count: string }[];
+
+  return {
+    logs,
+    total: Number(total?.count ?? 0),
+  };
 };

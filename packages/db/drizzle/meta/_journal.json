@@ -64,6 +64,13 @@
       "when": 1758926022618,
       "tag": "0008_good_magik",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1758981352088,
+      "tag": "0009_daily_mandrill",
+      "breakpoints": true
     }
   ]
 }

@@ -1,8 +1,8 @@
-import { cancelable } from "@better-bull-board/client";
+import { patch } from "@better-bull-board/client";
 import type { SandboxedJob } from "bullmq";
 import { redis } from "../lib/redis";
 
-export default cancelable(async (job: SandboxedJob) => {
+export default patch(async (job: SandboxedJob) => {
   console.log(`Processing job ${job.id}`);
 
   await new Promise((resolve) => setTimeout(resolve, 10_000));

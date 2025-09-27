@@ -5,9 +5,6 @@ import {
   type WorkerOptions,
 } from "bullmq";
 import type Redis from "ioredis";
-import { installConsoleRelay, withJobConsole } from "./lib/logger";
-
-installConsoleRelay();
 
 export class Worker<
   // biome-ignore lint/suspicious/noExplicitAny: extends of bullmq
@@ -80,15 +77,11 @@ export class Worker<
       }),
     );
     //* Process
-    const result = await withJobConsole(
-      {
-        id: this.id,
-        publish: this.ioredis.publish.bind(this.ioredis),
-        autoEmitJobLogs: true,
-        autoEmitBBBLogs: true,
-        job,
-      },
-      () => super.processJob(job, token, fetchNextCallback, jobsInProgress),
+    const result = await super.processJob(
+      job,
+      token,
+      fetchNextCallback,
+      jobsInProgress,
     );
 
     //* Complete

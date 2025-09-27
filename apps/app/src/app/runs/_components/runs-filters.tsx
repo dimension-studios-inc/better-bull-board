@@ -13,6 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
+import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
 import { apiFetch } from "~/lib/utils/client";
 import type { TRunFilters } from "./types";
 
@@ -40,7 +41,13 @@ export function RunsFilters({
   const [queueSearch, setQueueSearch] = useState("");
   const [statusSearch, setStatusSearch] = useState("");
 
-  const { data: queues, isLoading } = useInfiniteQuery({
+  const {
+    data: queues,
+    isLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["queues/table", queueSearch],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
       apiFetch({
@@ -53,6 +60,14 @@ export function RunsFilters({
       })(),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
+  });
+
+  const { loaderRef } = useInfiniteScroll({
+    fetchNextPage: fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    watchState: [queueOpen],
+    enabled: queueOpen,
   });
 
   const queueOptions: ComboboxOption[] = useMemo(() => {
@@ -173,6 +188,12 @@ export function RunsFilters({
                     setOpen={setQueueOpen}
                     renderValue={renderQueueValue}
                     className="w-full"
+                    infiniteLoadingProps={{
+                      hasNextPage,
+                      fetchNextPage,
+                      isFetchingNextPage,
+                      loaderRef: loaderRef as React.RefObject<HTMLDivElement>,
+                    }}
                   />
                 </div>
 

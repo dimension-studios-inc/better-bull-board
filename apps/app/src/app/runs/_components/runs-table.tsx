@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
@@ -24,6 +25,7 @@ import { RunsFilters } from "./runs-filters";
 import type { TRunFilters } from "./types";
 
 export function RunsTable() {
+  const router = useRouter();
   const [urlFilters, setUrlFilters] = useQueryStates({
     queue: parseAsString.withDefault("all"),
     status: parseAsString.withDefault("all"),
@@ -98,6 +100,10 @@ export function RunsTable() {
     }
   };
 
+  const handleRowClick = (runId: string) => {
+    router.push(`/runs/${runId}`);
+  };
+
   return (
     <div className="space-y-4">
       <RunsFilters
@@ -142,7 +148,7 @@ export function RunsTable() {
               <motion.tr
                 key={run.id}
                 className={cn(
-                  "group border-b transition-colors hover:bg-muted/50",
+                  "group border-b transition-colors hover:bg-muted/50 cursor-pointer",
                   selectedJobIds.has(run.job_id) &&
                     "bg-blue-50 dark:bg-blue-950",
                 )}
@@ -151,6 +157,7 @@ export function RunsTable() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
                 layout
+                onClick={() => handleRowClick(run.id)}
               >
                 <TableCell>
                   <div className="flex items-center">
