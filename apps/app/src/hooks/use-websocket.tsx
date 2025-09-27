@@ -46,52 +46,35 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const websocketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
-
-  // actual counter for reconnects (avoids stale closure bugs)
   const connectionAttemptsRef = useRef(0);
-
-  const throttles = useRef(new Map<string, NodeJS.Timeout>());
 
   const invalidateQueries = useCallback(
     (message: WebSocketMessage) => {
-      const type = message.type;
-
-      const map = throttles.current;
-      if (map.has(type)) {
-        clearTimeout(map.get(type));
+      switch (message.type) {
+        case "job-refresh":
+          queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
+          queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
+          queryClient.invalidateQueries({
+            queryKey: ["jobs/single", message.data.jobId],
+          });
+          break;
+        case "queue-refresh":
+          queryClient.invalidateQueries({ queryKey: ["queues/table"] });
+          queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
+          break;
+        case "job-scheduler-refresh":
+          queryClient.invalidateQueries({ queryKey: ["queues/table"] });
+          queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
+          break;
+        case "log-refresh":
+          console.log("🔍 Invalidating log queries", {
+            id: message.data.jobId,
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["jobs/logs", message.data.jobId],
+          });
+          break;
       }
-
-      const timeout = setTimeout(() => {
-        switch (type) {
-          case "job-refresh":
-            queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
-            queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
-            queryClient.invalidateQueries({
-              queryKey: ["jobs/single", message.data.jobId],
-            });
-            break;
-          case "queue-refresh":
-            queryClient.invalidateQueries({ queryKey: ["queues/table"] });
-            queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
-            break;
-          case "job-scheduler-refresh":
-            queryClient.invalidateQueries({ queryKey: ["queues/table"] });
-            queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
-            break;
-          case "log-refresh":
-            console.log("🔍 Invalidating log queries", {
-              id: message.data.jobId,
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["jobs/logs", message.data.jobId],
-            });
-            break;
-        }
-
-        map.delete(type);
-      }, 500);
-
-      map.set(type, timeout);
     },
     [queryClient],
   );
@@ -107,7 +90,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
       ws.onopen = () => {
         if (!mountedRef.current) return;
-
         setIsConnected(true);
         connectionAttemptsRef.current = 0;
         setConnectionAttempts(0);
@@ -120,11 +102,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
-
-          // Skip the initial connection confirmation
-          if (message.data.id === "connected") {
-            return;
-          }
+          if (message.data.id === "connected") return;
 
           invalidateQueries(message);
           onMessage?.(message);
@@ -135,7 +113,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
       ws.onclose = () => {
         if (!mountedRef.current) return;
-
         setIsConnected(false);
         onDisconnect?.();
         console.log("🔌 WebSocket disconnected", {
@@ -202,7 +179,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   useEffect(() => {
     mountedRef.current = true;
     connect();
-
     return () => {
       mountedRef.current = false;
       disconnect();
