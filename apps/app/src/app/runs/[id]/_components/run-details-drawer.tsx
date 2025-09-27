@@ -238,35 +238,46 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
               </div>
             </div>
 
-            <Separator />
-
             {/* Execution Details */}
-            <div>
-              <h3 className="text-sm font-medium mb-3">Execution</h3>
-              <div className="space-y-3">
-                <DetailItem
-                  icon={<Settings className="h-4 w-4 text-muted-foreground" />}
-                  label="Attempt"
-                  value={`${run.attempt} / ${run.maxAttempts}`}
-                />
-                {run.priority !== null && (
-                  <DetailItem
-                    icon={
-                      <Settings className="h-4 w-4 text-muted-foreground" />
-                    }
-                    label="Priority"
-                    value={run.priority}
-                  />
-                )}
-                {run.delayMs > 0 && (
-                  <DetailItem
-                    icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-                    label="Delay"
-                    value={`${run.delayMs}ms`}
-                  />
-                )}
-              </div>
-            </div>
+            {(run.maxAttempts !== 0 ||
+              run.priority !== null ||
+              run.delayMs > 0) && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Execution</h3>
+                  <div className="space-y-3">
+                    {run.maxAttempts !== 0 && (
+                      <DetailItem
+                        icon={
+                          <Settings className="h-4 w-4 text-muted-foreground" />
+                        }
+                        label="Attempt"
+                        value={`${run.attempt} / ${run.maxAttempts}`}
+                      />
+                    )}
+                    {run.priority !== null && (
+                      <DetailItem
+                        icon={
+                          <Settings className="h-4 w-4 text-muted-foreground" />
+                        }
+                        label="Priority"
+                        value={run.priority}
+                      />
+                    )}
+                    {run.delayMs > 0 && (
+                      <DetailItem
+                        icon={
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                        }
+                        label="Delay"
+                        value={`${run.delayMs}ms`}
+                      />
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Tags */}
             {run.tags && run.tags.length > 0 && (

@@ -76,6 +76,14 @@ export default function RunViewPage() {
     );
   }
 
+  const job = {
+    ...run.job,
+    createdAt: new Date(run.job.createdAt),
+    enqueuedAt: run.job.enqueuedAt ? new Date(run.job.enqueuedAt) : null,
+    startedAt: run.job.startedAt ? new Date(run.job.startedAt) : null,
+    finishedAt: run.job.finishedAt ? new Date(run.job.finishedAt) : null,
+  };
+
   return (
     <PageContainer>
       <PageTitle
@@ -83,16 +91,17 @@ export default function RunViewPage() {
         description={`${run.job.queue} • ${run.job.status}`}
       />
 
-      <div className="flex flex-row gap-4">
+      <div className="flex flex-row gap-2">
         <div className="flex-1">
           <LogsWaterfall
             logs={logsData?.logs || []}
             isLoading={isLoadingLogs}
             error={logsError}
+            run={job}
           />
         </div>
         <div className="w-96">
-          <RunDetailsDrawer run={run.job} />
+          <RunDetailsDrawer run={job} />
         </div>
       </div>
     </PageContainer>

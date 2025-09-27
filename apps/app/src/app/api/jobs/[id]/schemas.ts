@@ -21,10 +21,10 @@ export const getJobByIdOutput = z.object({
       backoff: z.unknown(),
       data: z.unknown(),
       result: z.unknown(),
-      createdAt: z.coerce.date(),
-      enqueuedAt: z.coerce.date(),
-      startedAt: z.coerce.date(),
-      finishedAt: z.coerce.date(),
+      createdAt: z.number(),
+      enqueuedAt: z.number().nullable(),
+      startedAt: z.number().nullable(),
+      finishedAt: z.number().nullable(),
     }),
 });
 

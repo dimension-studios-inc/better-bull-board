@@ -93,7 +93,8 @@ export function installConsoleRelay({
               JSON.stringify({
                 id: ctx.id,
                 jobId: ctx.job.id,
-                timestamp: ctx.job.timestamp,
+                logTimestamp: Date.now(),
+                jobTimestamp: ctx.job.timestamp,
                 message,
                 level,
               }),

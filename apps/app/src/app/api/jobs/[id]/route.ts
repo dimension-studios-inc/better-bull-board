@@ -16,6 +16,14 @@ export const GET = createAuthenticatedApiRoute({
     if (!jobRun) {
       throw new Error("Job run not found");
     }
-    return { job: jobRun };
+    return {
+      job: {
+        ...jobRun,
+        createdAt: jobRun.createdAt.getTime(),
+        enqueuedAt: jobRun.enqueuedAt?.getTime() ?? null,
+        startedAt: jobRun.startedAt?.getTime() ?? null,
+        finishedAt: jobRun.finishedAt?.getTime() ?? null,
+      },
+    };
   },
 });

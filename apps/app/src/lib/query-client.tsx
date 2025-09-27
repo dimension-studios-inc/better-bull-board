@@ -13,8 +13,8 @@ export const createQueryClient = (_redirect?: (path: string) => void) =>
       },
     },
     queryCache: new QueryCache({
-      onError: (error) => {
-        logger.error("Query error", error);
+      onError: (error, query) => {
+        logger.error("Query error", error, query.queryKey);
         toast.error("Unknown error");
       },
     }),
