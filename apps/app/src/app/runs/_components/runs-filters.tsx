@@ -47,6 +47,7 @@ export function RunsFilters({
   const {
     data: queues,
     isLoading,
+    isFetching: isQueuesFetching,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
@@ -73,7 +74,7 @@ export function RunsFilters({
     enabled: queueOpen,
   });
 
-  const { data: tagsData } = useQuery({
+  const { data: tagsData, isFetching: isTagsFetching } = useQuery({
     queryKey: ["tags", tagsSearch],
     queryFn: apiFetch({
       apiRoute: getTagsApiRoute,
@@ -118,7 +119,6 @@ export function RunsFilters({
     return option ? option.label : "All Statuses";
   };
 
-
   const getActiveFilters = () => {
     const activeFilters = [];
 
@@ -161,7 +161,12 @@ export function RunsFilters({
     } else {
       setFilters({
         cursor: null,
-        [filterKey]: filterKey === "queue" || filterKey === "status" ? "all" : filterKey === "tags" ? [] : "",
+        [filterKey]:
+          filterKey === "queue" || filterKey === "status"
+            ? "all"
+            : filterKey === "tags"
+              ? []
+              : "",
       });
     }
   };
@@ -224,6 +229,7 @@ export function RunsFilters({
                     setOpen={setQueueOpen}
                     renderValue={renderQueueValue}
                     className="w-full"
+                    isFetching={isQueuesFetching}
                     infiniteLoadingProps={{
                       hasNextPage,
                       fetchNextPage,
@@ -254,21 +260,25 @@ export function RunsFilters({
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Tags
-                  </label>
+                  <label className="text-sm font-medium mb-2 block">Tags</label>
                   <div className="space-y-2">
                     {filters.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {filters.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="text-xs"
+                          >
                             {tag}
                             <Button
                               variant="ghost"
                               size="sm"
                               className="size-3 p-0 ml-1 hover:bg-transparent"
                               onClick={() => {
-                                const newTags = filters.tags.filter((t) => t !== tag);
+                                const newTags = filters.tags.filter(
+                                  (t) => t !== tag,
+                                );
                                 setFilters({ tags: newTags });
                               }}
                             >
@@ -286,7 +296,9 @@ export function RunsFilters({
                         }
                         setTagsSearch("");
                       }}
-                      options={tagsOptions.filter((option) => !filters.tags.includes(option.value))}
+                      options={tagsOptions.filter(
+                        (option) => !filters.tags.includes(option.value),
+                      )}
                       placeholder="Add tags..."
                       noOptionsMessage="No tags found"
                       searchPlaceholder="Search tags..."
@@ -296,6 +308,7 @@ export function RunsFilters({
                       setOpen={setTagsOpen}
                       renderValue={() => ""}
                       className="w-full"
+                      isFetching={isTagsFetching}
                     />
                   </div>
                 </div>
@@ -313,7 +326,11 @@ export function RunsFilters({
           />
         </div>
         {activeFilters.map((filter, index) => (
-          <Badge key={`${filter.key}-${index}`} variant="secondary" className="h-9 px-2">
+          <Badge
+            key={`${filter.key}-${index}`}
+            variant="secondary"
+            className="h-9 px-2"
+          >
             {filter.label}
             <Button
               variant="ghost"

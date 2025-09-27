@@ -1,4 +1,4 @@
-import { clickhouseClient } from "@better-bull-board/clickhouse/lib/client";
+import { clickhouseClient } from "@better-bull-board/clickhouse/client";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getTagsApiRoute } from "./schemas";
 
@@ -10,7 +10,7 @@ export const POST = createAuthenticatedApiRoute({
     // Query to get distinct tags from job runs
     const query = `
       SELECT DISTINCT arrayJoin(tags) as tag
-      FROM job_runs 
+      FROM job_runs_ch 
       WHERE tag != ''
       ${search ? "AND tag ILIKE {search:String}" : ""}
       ORDER BY tag
@@ -18,17 +18,17 @@ export const POST = createAuthenticatedApiRoute({
     `;
 
     const params = search ? { search: `%${search}%` } : {};
-    
+
     const result = await clickhouseClient.query({
       query,
       query_params: params,
       format: "JSONEachRow",
     });
 
-    const tags = await result.json<{ tag: string }[]>();
-    
+    const tags = await result.json<{ tag: string }>();
+
     return {
-      tags: tags.map(row => row.tag),
+      tags: tags.map((row) => row.tag),
     };
   },
 });
