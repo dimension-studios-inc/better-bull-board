@@ -7,7 +7,10 @@ export const POST = createAuthenticatedApiRoute({
   async handler(input) {
     const { jobs } = input;
 
-    await Promise.all(jobs.map((job) => replayJobHandler(job)));
+    // Don't use promise.all to avoid race conditions
+    for (const job of jobs) {
+      await replayJobHandler(job);
+    }
 
     return {
       success: true,
