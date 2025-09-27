@@ -3,11 +3,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDuration } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useQueryStates, parseAsString } from "nuqs";
+import { parseAsString, useQueryStates } from "nuqs";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
   Table,
@@ -27,20 +28,20 @@ export function QueuesTable() {
   const [urlState, setUrlState] = useQueryStates({
     search: parseAsString.withDefault(""),
     timePeriod: parseAsString.withDefault("30"),
+    cursor: parseAsString.withDefault(""),
   });
 
   const options = {
-    cursor: null,
+    cursor: urlState.cursor || null,
     search: urlState.search,
     timePeriod: urlState.timePeriod as TimePeriod,
-    limit: 20,
   };
 
   const handleQueueClick = (queueName: string) => {
     router.push(`/runs?queue=${encodeURIComponent(queueName)}`);
   };
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["queues/table", options],
     queryFn: apiFetch({
       apiRoute: getQueuesTableApiRoute,
@@ -48,25 +49,67 @@ export function QueuesTable() {
     }),
   });
 
+  const handleNextPage = () => {
+    if (data?.nextCursor) {
+      setUrlState({ cursor: data.nextCursor });
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (data?.prevCursor) {
+      setUrlState({ cursor: data.prevCursor });
+    } else {
+      setUrlState({ cursor: null });
+    }
+  };
+
+  const handleSearchChange = (search: string) => {
+    // Reset pagination when search changes
+    setUrlState({ cursor: null, search });
+  };
+
+  const handleTimePeriodChange = (timePeriod: TimePeriod) => {
+    // Reset pagination when time period changes
+    setUrlState({ cursor: null, timePeriod });
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <TimePeriodSelector
-          value={options.timePeriod}
-          onChange={(timePeriod) =>
-            setUrlState({ timePeriod })
-          }
-        />
-        <div className="flex-1 relative max-w-[350px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by queue name..."
-            value={options.search}
-            onChange={(e) =>
-              setUrlState({ search: e.target.value })
-            }
-            className="pl-10"
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <TimePeriodSelector
+            value={options.timePeriod}
+            onChange={handleTimePeriodChange}
           />
+          <div className="flex-1 relative max-w-[350px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by queue name..."
+              value={options.search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={isLoading || (!data?.prevCursor && !options.cursor)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={isLoading || !data?.nextCursor}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
       <Table className="table-fixed w-full">
@@ -107,12 +150,17 @@ export function QueuesTable() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <span className="font-mono">
-                    {queue.pattern ||
-                      (queue.every &&
-                        `Every ${formatDuration({
-                          seconds: queue.every / 1000,
-                        })}`)}
+                  <span className="font-mono truncate block">
+                    {queue.patterns.length
+                      ? queue.patterns.join(", ")
+                      : queue.everys.length
+                        ? queue.everys.map(
+                            (every) =>
+                              `Every ${formatDuration({
+                                seconds: Number(every) / 1000,
+                              })}`,
+                          )
+                        : undefined}
                   </span>
                 </TableCell>
                 <TableCell>
