@@ -61,15 +61,14 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
         clearTimeout(map.get(type));
       }
 
-      console.log("🔄 Invalidating queries for", type, message.data);
-
       const timeout = setTimeout(() => {
         switch (type) {
           case "job-refresh":
             queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
             queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
-            // queryClient.invalidateQueries({ queryKey: ["jobs/single"] });
-            // TODO Invalidate only the job with the id in the message.data
+            queryClient.invalidateQueries({
+              queryKey: ["jobs/single", message.data.jobId],
+            });
             break;
           case "queue-refresh":
             queryClient.invalidateQueries({ queryKey: ["queues/table"] });
@@ -80,8 +79,12 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
             queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
             break;
           case "log-refresh":
-            // queryClient.invalidateQueries({ queryKey: ["jobs/logs"] });
-            // TODO Invalidate only the job with the id in the message.data
+            console.log("🔍 Invalidating log queries", {
+              id: message.data.jobId,
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["jobs/logs", message.data.jobId],
+            });
             break;
         }
 

@@ -14,19 +14,20 @@ export const handleLogChannel = async (_channel: string, message: string) => {
     const {
       jobId,
       message: logMessage,
+      timestamp,
       level,
     } = JSON.parse(message) as {
       id: string;
       jobId: string;
+      timestamp: number;
       message: string;
       level: string;
     };
-
-    let jobRunId = await getJobFromBullId(jobId);
+    let jobRunId = await getJobFromBullId(jobId, new Date(timestamp));
     if (!jobRunId) {
       // Retry in 1 second
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      jobRunId = await getJobFromBullId(jobId);
+      jobRunId = await getJobFromBullId(jobId, new Date(timestamp));
       if (!jobRunId) {
         logger.warn("No job run found for job ID", { jobId });
         return;
@@ -57,8 +58,8 @@ export const handleLogChannel = async (_channel: string, message: string) => {
       ...insertedLog,
       job_run_id: insertedLog.jobRunId,
     });
-    redis.publish("bbb:ingest:events:job-refresh", jobId);
-    redis.publish("bbb:ingest:events:log-refresh", jobId);
+    redis.publish("bbb:ingest:events:job-refresh", jobRunId);
+    redis.publish("bbb:ingest:events:log-refresh", jobRunId);
   } catch (e) {
     logger.error("Error saving log", { error: e, message });
   }

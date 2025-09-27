@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import type { Job } from "bullmq";
+import type { Job, SandboxedJob } from "bullmq";
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: we don't want to colorize the logs
 const ansiRegex = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
@@ -41,7 +41,7 @@ function safeStringify(obj: unknown): string {
 }
 
 type Ctx = {
-  job: Job;
+  job: Job | SandboxedJob;
   publish: (channel: string, message: string) => void;
   autoEmitJobLogs?: boolean;
   autoEmitBBBLogs?: boolean;
@@ -84,13 +84,18 @@ export function installConsoleRelay() {
             JSON.stringify({
               id: ctx.id,
               jobId: ctx.job.id,
+              timestamp: ctx.job.timestamp,
               message,
               level,
             }),
           );
         }
         if (ctx.autoEmitJobLogs) {
-          void ctx.job.log(message).catch(() => {});
+          try {
+            void ctx.job.log(message);
+          } catch (e) {
+            original.error("🔍 Error forwarding log to job", e);
+          }
         }
       }
       original[level](...(params as []));
