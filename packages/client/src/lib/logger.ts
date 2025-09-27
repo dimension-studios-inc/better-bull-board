@@ -8,6 +8,20 @@ export function decolorize(input: string): string {
   return input.replace(ansiRegex, "");
 }
 
+let lastTs = 0;
+let counter = 0;
+
+function nextLogTimestamp() {
+  const now = Date.now();
+  if (now === lastTs) {
+    counter++;
+  } else {
+    lastTs = now;
+    counter = 0;
+  }
+  return { ts: now, seq: counter };
+}
+
 export function formatForLogger(data: unknown): string {
   if (data instanceof Error)
     return data.stack
@@ -87,13 +101,15 @@ export function installConsoleRelay({
           .join(" ");
         // Fire-and-forget so console stays sync; swallow errors.
         if (ctx.autoEmitBBBLogs) {
+          const { ts, seq } = nextLogTimestamp();
           const p = ctx
             .publish(
               "bbb:worker:job:log",
               JSON.stringify({
                 id: ctx.id,
                 jobId: ctx.job.id,
-                logTimestamp: Date.now(),
+                logTimestamp: ts,
+                logSeq: seq,
                 jobTimestamp: ctx.job.timestamp,
                 message,
                 level,

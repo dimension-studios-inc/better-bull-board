@@ -17,7 +17,8 @@ import {
   Tag,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { codeToHtml } from "shiki";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -89,6 +90,24 @@ const JsonCollapsible = ({
   icon: React.ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [formattedData, setFormattedData] = useState<string>("");
+
+  useEffect(() => {
+    const formatMessage = async () => {
+      try {
+        const html = await codeToHtml(JSON.stringify(data, null, 2), {
+          lang: "json",
+          theme: "vitesse-light",
+        });
+        setFormattedData(html);
+      } catch (error) {
+        console.error("Failed to format message:", error);
+        setFormattedData(JSON.stringify(data, null, 2));
+      }
+    };
+
+    formatMessage();
+  }, [data]);
 
   if (!data) return null;
 
@@ -104,11 +123,11 @@ const JsonCollapsible = ({
         <span className="text-sm font-medium">{title}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2">
-        <div className="p-3 bg-muted/30 rounded border">
-          <pre className="text-xs font-mono whitespace-pre-wrap break-words max-h-48 overflow-y-auto">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        </div>
+        <div
+          className="text-xs p-3 rounded border"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki generates safe HTML
+          dangerouslySetInnerHTML={{ __html: formattedData }}
+        />
       </CollapsibleContent>
     </Collapsible>
   );

@@ -81,6 +81,7 @@ export const jobLogsTable = pgTable(
     ts: timestamp("ts", { precision: 3, mode: "date" })
       .notNull()
       .default(sql`now()`),
+    logSeq: integer("log_seq").notNull().default(0),
   },
   (t) => [
     index("ix_job_logs_job_run_ts").on(t.jobRunId, t.ts),

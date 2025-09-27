@@ -67,9 +67,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
           queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
           break;
         case "log-refresh":
-          console.log("🔍 Invalidating log queries", {
-            id: message.data.jobId,
-          });
           queryClient.invalidateQueries({
             queryKey: ["jobs/logs", message.data.jobId],
           });

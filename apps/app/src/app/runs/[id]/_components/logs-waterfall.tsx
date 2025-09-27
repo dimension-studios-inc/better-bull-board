@@ -27,6 +27,7 @@ interface LogsWaterfallProps {
   isLoading: boolean;
   error: Error | null;
   run: typeof jobRunsTable.$inferSelect;
+  onLogClick?: (log: LogEntry) => void;
 }
 
 function smartFormatDuration(ms: number): string {
@@ -102,6 +103,7 @@ export function LogsWaterfall({
   isLoading,
   error,
   run,
+  onLogClick,
 }: LogsWaterfallProps) {
   if (error) {
     return (
@@ -168,7 +170,6 @@ export function LogsWaterfall({
       <div className="">
         {sortedLogs.map((log) => {
           const relativeTime = log.ts - startTime;
-          console.log(log.ts, startTime);
           const position =
             totalDuration > 0 ? (relativeTime / totalDuration) * 100 : 0;
 
@@ -178,6 +179,7 @@ export function LogsWaterfall({
               className={cn(
                 "grid grid-cols-12 items-start",
                 "hover:bg-gray-50 hover:dark:bg-gray-950/30",
+                onLogClick && "cursor-pointer",
                 {
                   "hover:bg-red-50 hover:dark:bg-red-950/30":
                     log.level.toLowerCase() === "error",
@@ -189,6 +191,7 @@ export function LogsWaterfall({
                     log.level.toLowerCase() === "info",
                 },
               )}
+              onClick={() => onLogClick?.(log)}
             >
               <div
                 className={cn(
@@ -214,9 +217,7 @@ export function LogsWaterfall({
 
                 {/* Log content */}
                 <div className="flex-1 min-w-0">
-                  <pre className="whitespace-pre-wrap break-words text-xs">
-                    {log.message}
-                  </pre>
+                  <pre className="truncate text-xs">{log.message}</pre>
                 </div>
               </div>
               <div className="col-span-6 flex items-center h-full border-l border-muted-foreground/20">

@@ -15,12 +15,14 @@ export const handleLogChannel = async (_channel: string, message: string) => {
       jobId,
       message: logMessage,
       logTimestamp,
+      logSeq,
       jobTimestamp,
       level,
     } = JSON.parse(message) as {
       id: string;
       jobId: string;
       logTimestamp: number;
+      logSeq: number;
       jobTimestamp: number;
       message: string;
       level: string;
@@ -42,6 +44,7 @@ export const handleLogChannel = async (_channel: string, message: string) => {
       level: level as "log" | "debug" | "info" | "warn" | "error",
       message: logMessage,
       ts: new Date(logTimestamp),
+      logSeq,
     };
 
     const validated = jobLogsInsertSchema.parse(formatted);
@@ -60,6 +63,7 @@ export const handleLogChannel = async (_channel: string, message: string) => {
     await insertJobLogCH({
       ...insertedLog,
       job_run_id: insertedLog.jobRunId,
+      log_seq: insertedLog.logSeq,
     });
     redis.publish("bbb:ingest:events:job-refresh", jobRunId);
     redis.publish("bbb:ingest:events:log-refresh", jobRunId);

@@ -64,9 +64,9 @@ export const searchJobLogs = async (filters: {
   const offset = filters.offset || 0;
 
   const query = `
-    SELECT toUnixTimestamp(ts) * 1000 AS ts, * FROM job_logs_ch 
+    SELECT * FROM job_logs_ch 
     ${whereClause}
-    ORDER BY ts DESC
+    ORDER BY ts DESC, log_seq ASC
     LIMIT {limit:UInt32} OFFSET {offset:UInt32}
   `;
 
@@ -79,6 +79,6 @@ export const searchJobLogs = async (filters: {
   const data = (await result.json()) as JobLogData[];
   return data.map((item) => ({
     ...item,
-    ts: Number(item.ts),
+    ts: new Date(`${item.ts}Z`).getTime(),
   }));
 };

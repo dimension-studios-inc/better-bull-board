@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle } from "lucide-react";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { getJobByIdApiRoute } from "~/app/api/jobs/[id]/schemas";
 import { getJobLogsApiRoute } from "~/app/api/jobs/logs/schemas";
 import { PageContainer } from "~/components/page-container";
@@ -10,12 +11,22 @@ import { PageTitle } from "~/components/page-title";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Skeleton } from "~/components/ui/skeleton";
 import { apiFetch } from "~/lib/utils/client";
+import { LogDetailsDrawer } from "./_components/log-details-drawer";
 import { LogsWaterfall } from "./_components/logs-waterfall";
 import { RunDetailsDrawer } from "./_components/run-details-drawer";
+
+interface LogEntry {
+  id: string;
+  job_run_id: string;
+  level: string;
+  message: string;
+  ts: number;
+}
 
 export default function RunViewPage() {
   const params = useParams();
   const runId = params.id as string;
+  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
   const {
     data: run,
@@ -98,10 +109,19 @@ export default function RunViewPage() {
             isLoading={isLoadingLogs}
             error={logsError}
             run={job}
+            onLogClick={setSelectedLog}
           />
         </div>
         <div className="w-96">
-          <RunDetailsDrawer run={job} />
+          {selectedLog ? (
+            <LogDetailsDrawer
+              log={selectedLog}
+              run={job}
+              onBack={() => setSelectedLog(null)}
+            />
+          ) : (
+            <RunDetailsDrawer run={job} />
+          )}
         </div>
       </div>
     </PageContainer>
