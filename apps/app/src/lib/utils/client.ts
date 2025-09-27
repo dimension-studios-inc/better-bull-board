@@ -4,7 +4,7 @@ import type { output, ZodType } from "zod";
 import { env } from "../env";
 
 export type TApiRoute = {
-  route: `/${string}`;
+  route: `/${string}` | ((input: output<ZodType>) => `/${string}`);
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
   inputSchema?: ZodType | undefined;
   outputSchema: ZodType;
@@ -29,21 +29,24 @@ export function apiFetch<
   const outputSchema = apiRoute.outputSchema as OS;
   return async () => {
     const parsedBody = inputSchema?.parse(body);
-    const data = await fetch(`${env.NEXT_PUBLIC_API_URL}${apiRoute.route}`, {
-      method: apiRoute.method,
-      body: JSON.stringify(parsedBody),
-      headers: {
-        "Content-Type": "application/json",
+    const data = await fetch(
+      `${env.NEXT_PUBLIC_API_URL}${typeof apiRoute.route === "function" ? apiRoute.route(parsedBody as IS) : apiRoute.route}`,
+      {
+        method: apiRoute.method,
+        body: JSON.stringify(parsedBody),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Include cookies for authentication
       },
-      credentials: "include", // Include cookies for authentication
-    });
+    );
     const json = await data.json();
     return outputSchema.parse(json);
   };
 }
 
 export const registerApiRoute = <I extends ZodType, O extends ZodType>(params: {
-  route: `/${string}`;
+  route: `/${string}` | ((input: output<I>) => `/${string}`);
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
   inputSchema?: I;
   outputSchema: O;

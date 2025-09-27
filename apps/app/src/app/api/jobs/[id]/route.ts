@@ -1,32 +1,19 @@
-import { searchJobRuns } from "@better-bull-board/clickhouse";
-import { type NextRequest, NextResponse } from "next/server";
+import { jobRunsTable } from "@better-bull-board/db";
+import { db } from "@better-bull-board/db/server";
+import { eq } from "drizzle-orm";
+import { createAuthenticatedApiRoute } from "~/lib/utils/server";
+import { getJobByIdApiRoute } from "./schemas";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
-  try {
-    const { id } = params;
-
-    if (!id) {
-      return NextResponse.json(
-        { error: "Job ID is required" },
-        { status: 400 },
-      );
+export const GET = createAuthenticatedApiRoute({
+  apiRoute: getJobByIdApiRoute,
+  async handler(input) {
+    const [jobRun] = await db
+      .select()
+      .from(jobRunsTable)
+      .where(eq(jobRunsTable.id, input.id));
+    if (!jobRun) {
+      throw new Error("Job run not found");
     }
-
-    const jobRuns = await searchJobRuns({ id });
-
-    if (!jobRuns || jobRuns.length === 0) {
-      return NextResponse.json({ error: "Job run not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(jobRuns[0]);
-  } catch (error) {
-    console.error("Error fetching job run:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch job run" },
-      { status: 500 },
-    );
-  }
-}
+    return { job: jobRun };
+  },
+});
