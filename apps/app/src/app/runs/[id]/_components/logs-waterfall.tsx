@@ -4,6 +4,7 @@ import type { jobRunsTable } from "@better-bull-board/db";
 import { AlertCircle, AlertTriangle, Bug, Info } from "lucide-react";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
+import { Loader } from "~/components/ui/loader";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Skeleton } from "~/components/ui/skeleton";
 import {
@@ -11,6 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
 import { cn, smartFormatDuration } from "~/lib/utils/client";
 
 interface LogEntry {
@@ -27,6 +29,8 @@ interface LogsWaterfallProps {
   error: Error | null;
   run: typeof jobRunsTable.$inferSelect;
   onLogClick?: (log: LogEntry) => void;
+  hasMore: boolean;
+  onLoadMore: () => void;
 }
 
 const getLevelIcon = (level: string) => {
@@ -83,7 +87,15 @@ export function LogsWaterfall({
   error,
   run,
   onLogClick,
+  hasMore,
+  onLoadMore,
 }: LogsWaterfallProps) {
+  const { loaderRef: logsLoaderRef } = useInfiniteScroll({
+    fetchNextPage: onLoadMore,
+    hasNextPage: hasMore,
+    isFetchingNextPage: isLoading,
+  });
+
   if (error) {
     return (
       <Alert variant="destructive">
@@ -217,6 +229,14 @@ export function LogsWaterfall({
           );
         })}
       </div>
+      {hasMore && (
+        <div
+          className="flex items-center justify-center"
+          ref={logsLoaderRef as React.Ref<HTMLDivElement>}
+        >
+          <Loader />
+        </div>
+      )}
     </ScrollArea>
   );
 }

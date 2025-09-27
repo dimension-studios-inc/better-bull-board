@@ -7,17 +7,14 @@ export const POST = createAuthenticatedApiRoute({
   async handler(input) {
     const { id, level, messageContains, limit = 100, offset = 0 } = input;
 
-    const logs = await searchJobLogs({
+    const { logs, total } = await searchJobLogs({
       id,
       level,
       messageContains,
       limit,
       offset,
+      direction: "asc",
     });
-
-    // For now, we'll return the count of logs as total
-    // In a real scenario, you might want to do a separate count query
-    const total = logs.length;
 
     return {
       logs,

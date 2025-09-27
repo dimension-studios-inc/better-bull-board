@@ -6,7 +6,7 @@ export default patch(async (job: SandboxedJob) => {
   console.log(`Processing job ${job.id}`);
 
   // Print random log level 2k times
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 2000; i++) {
     const levels = ["debug", "info", "warn", "error", "log"] as const;
     const loremSamples = [
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit sed.",
@@ -20,6 +20,7 @@ export default patch(async (job: SandboxedJob) => {
     const lorem = loremSamples[Math.floor(Math.random() * loremSamples.length)];
 
     console[level](`[${i}] ${lorem}`);
+    await new Promise((resolve) => setTimeout(resolve, 30));
   }
 
   console.log(`Job ${job.id} processed`);

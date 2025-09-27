@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { AlertCircle } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -43,17 +43,29 @@ export default function RunViewPage() {
   });
 
   const {
-    data: logsData,
+    data: logsDataPages,
     isLoading: isLoadingLogs,
+    hasNextPage,
+    fetchNextPage,
     error: logsError,
-  } = useQuery({
+  } = useInfiniteQuery({
     queryKey: ["jobs/logs", runId],
-    queryFn: apiFetch({
-      apiRoute: getJobLogsApiRoute,
-      body: { id: runId, limit: 100 },
-    }),
+    queryFn: ({ pageParam }: { pageParam: number | null }) =>
+      apiFetch({
+        apiRoute: getJobLogsApiRoute,
+        body: { id: runId, limit: 100, offset: pageParam ?? 0 },
+      })(),
     enabled: !!runId,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _all, lastPageParam) => {
+      if (lastPage.total > lastPageParam + 100) {
+        return lastPageParam + 100;
+      }
+      return undefined;
+    },
   });
+
+  const logsData = logsDataPages?.pages.flatMap((page) => page.logs) || [];
 
   if (isLoadingRun) {
     return (
@@ -94,7 +106,6 @@ export default function RunViewPage() {
     startedAt: run.job.startedAt ? new Date(run.job.startedAt) : null,
     finishedAt: run.job.finishedAt ? new Date(run.job.finishedAt) : null,
   };
-
   return (
     <PageContainer>
       <PageTitle
@@ -105,11 +116,13 @@ export default function RunViewPage() {
       <div className="flex flex-row gap-2">
         <div className="flex-1">
           <LogsWaterfall
-            logs={logsData?.logs || []}
+            logs={logsData}
             isLoading={isLoadingLogs}
             error={logsError}
             run={job}
             onLogClick={setSelectedLog}
+            hasMore={hasNextPage}
+            onLoadMore={() => fetchNextPage()}
           />
         </div>
         <div className="w-96">

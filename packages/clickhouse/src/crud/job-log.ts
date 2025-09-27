@@ -24,7 +24,11 @@ export const searchJobLogs = async (filters: {
   dateTo?: Date;
   limit?: number;
   offset?: number;
-}): Promise<(Omit<JobLogData, "ts"> & { ts: number })[]> => {
+  direction?: "asc" | "desc";
+}): Promise<{
+  logs: (Omit<JobLogData, "ts"> & { ts: number })[];
+  total: number;
+}> => {
   const conditions: string[] = [];
   const params: Record<string, unknown> = {};
 
@@ -63,10 +67,14 @@ export const searchJobLogs = async (filters: {
   const limit = filters.limit || 100;
   const offset = filters.offset || 0;
 
+  const orderByClause = `ORDER BY ts ${filters.direction === "asc" ? "ASC" : "DESC"}, log_seq ${
+    filters.direction === "asc" ? "ASC" : "DESC"
+  }`;
+
   const query = `
     SELECT * FROM job_logs_ch 
     ${whereClause}
-    ORDER BY ts DESC, log_seq ASC
+    ${orderByClause}
     LIMIT {limit:UInt32} OFFSET {offset:UInt32}
   `;
 
@@ -77,8 +85,21 @@ export const searchJobLogs = async (filters: {
   });
 
   const data = (await result.json()) as JobLogData[];
-  return data.map((item) => ({
+  const logs = data.map((item) => ({
     ...item,
     ts: new Date(`${item.ts}Z`).getTime(),
   }));
+
+  const [total] = (await (
+    await clickhouseClient.query({
+      query: `SELECT COUNT(*) AS count FROM job_logs_ch ${whereClause}`,
+      query_params: { ...params },
+      format: "JSONEachRow",
+    })
+  ).json()) as { count: string }[];
+
+  return {
+    logs,
+    total: Number(total?.count ?? 0),
+  };
 };
