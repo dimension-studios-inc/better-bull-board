@@ -1,11 +1,11 @@
-import { searchJobLogs } from "@better-bull-board/clickhouse/crud";
-import { NextRequest, NextResponse } from "next/server";
-import { getJobLogsInput } from "./schemas";
+import { searchJobLogs } from "@better-bull-board/clickhouse";
+import { createAuthenticatedApiRoute } from "~/lib/utils/server";
+import { getJobLogsApiRoute } from "./schemas";
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { jobRunId, level, messageContains, limit = 100, offset = 0 } = getJobLogsInput.parse(body);
+export const GET = createAuthenticatedApiRoute({
+  apiRoute: getJobLogsApiRoute,
+  async handler(input) {
+    const { jobRunId, level, messageContains, limit = 100, offset = 0 } = input;
 
     const logs = await searchJobLogs({
       jobRunId,
@@ -19,15 +19,9 @@ export async function POST(request: NextRequest) {
     // In a real scenario, you might want to do a separate count query
     const total = logs.length;
 
-    return NextResponse.json({
+    return {
       logs,
       total,
-    });
-  } catch (error) {
-    console.error("Error fetching job logs:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch job logs" },
-      { status: 500 }
-    );
-  }
-}
+    };
+  },
+});
