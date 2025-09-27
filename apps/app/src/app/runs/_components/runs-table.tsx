@@ -30,6 +30,7 @@ export function RunsTable() {
     queue: parseAsString.withDefault("all"),
     status: parseAsString.withDefault("all"),
     search: parseAsString.withDefault(""),
+    tags: parseAsString.withDefault(""),
     cursor: parseAsInteger,
   });
 
@@ -37,6 +38,7 @@ export function RunsTable() {
 
   const filters: TRunFilters = {
     ...urlFilters,
+    tags: urlFilters.tags ? urlFilters.tags.split(",").filter(Boolean) : [],
     cursor: urlFilters.cursor ?? null,
     limit: 15,
   };
@@ -49,6 +51,24 @@ export function RunsTable() {
       body: debouncedFilters,
     }),
   });
+
+  const handleFiltersChange = (
+    newFilters: Partial<
+      Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "cursor">
+    >,
+  ) => {
+    const urlUpdate: Record<string, any> = {};
+    
+    for (const [key, value] of Object.entries(newFilters)) {
+      if (key === "tags" && Array.isArray(value)) {
+        urlUpdate[key] = value.length > 0 ? value.join(",") : "";
+      } else {
+        urlUpdate[key] = value;
+      }
+    }
+    
+    setUrlFilters(urlUpdate);
+  };
 
   const jobs = runs?.jobs || [];
 
@@ -108,7 +128,7 @@ export function RunsTable() {
     <div className="space-y-4">
       <RunsFilters
         filters={filters}
-        setFilters={setUrlFilters}
+        setFilters={handleFiltersChange}
         runs={runs}
         startEndContent={
           selectedJobs.length > 0 && (

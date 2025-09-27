@@ -1,9 +1,10 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Filter, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
+import { getTagsApiRoute } from "~/app/api/tags/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Combobox, type ComboboxOption } from "~/components/ui/combobox";
@@ -26,7 +27,7 @@ export function RunsFilters({
   filters: TRunFilters;
   setFilters: (
     filters: Partial<
-      Pick<TRunFilters, "queue" | "status" | "search" | "cursor">
+      Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "cursor">
     >,
   ) => void;
   runs?: {
@@ -38,8 +39,10 @@ export function RunsFilters({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
   const [queueSearch, setQueueSearch] = useState("");
   const [statusSearch, setStatusSearch] = useState("");
+  const [tagsSearch, setTagsSearch] = useState("");
 
   const {
     data: queues,
@@ -70,6 +73,15 @@ export function RunsFilters({
     enabled: queueOpen,
   });
 
+  const { data: tagsData } = useQuery({
+    queryKey: ["tags", tagsSearch],
+    queryFn: apiFetch({
+      apiRoute: getTagsApiRoute,
+      body: { search: tagsSearch },
+    }),
+    enabled: tagsOpen || tagsSearch.length > 0,
+  });
+
   const queueOptions: ComboboxOption[] = useMemo(() => {
     const options = [{ value: "all", label: "All Queues" }];
     if (queues?.pages) {
@@ -91,6 +103,11 @@ export function RunsFilters({
     { value: "active", label: "Active" },
   ];
 
+  const tagsOptions: ComboboxOption[] = useMemo(() => {
+    if (!tagsData?.tags) return [];
+    return tagsData.tags.map((tag) => ({ value: tag, label: tag }));
+  }, [tagsData]);
+
   const renderQueueValue = (value: string) => {
     const option = queueOptions?.find((opt) => opt.value === value);
     return option ? option.label : isLoading ? "Loading..." : "";
@@ -100,6 +117,7 @@ export function RunsFilters({
     const option = statusOptions?.find((opt) => opt.value === value);
     return option ? option.label : "All Statuses";
   };
+
 
   const getActiveFilters = () => {
     const activeFilters = [];
@@ -120,14 +138,32 @@ export function RunsFilters({
       });
     }
 
+    if (filters.tags && filters.tags.length > 0) {
+      filters.tags.forEach((tag) => {
+        activeFilters.push({
+          key: "tags",
+          label: tag,
+          value: tag,
+        });
+      });
+    }
+
     return activeFilters;
   };
 
-  const removeFilter = (filterKey: string) => {
-    setFilters({
-      cursor: null,
-      [filterKey]: filterKey === "queue" || filterKey === "status" ? "all" : "",
-    });
+  const removeFilter = (filterKey: string, filterValue?: string) => {
+    if (filterKey === "tags" && filterValue) {
+      const newTags = filters.tags.filter((tag) => tag !== filterValue);
+      setFilters({
+        cursor: null,
+        tags: newTags,
+      });
+    } else {
+      setFilters({
+        cursor: null,
+        [filterKey]: filterKey === "queue" || filterKey === "status" ? "all" : filterKey === "tags" ? [] : "",
+      });
+    }
   };
 
   const activeFilters = getActiveFilters();
@@ -200,21 +236,68 @@ export function RunsFilters({
                 <div>
                   <label className="text-sm font-medium mb-2 block">
                     Status
+                  </label>
+                  <Combobox
+                    value={filters.status}
+                    onValueChange={(value) => setFilters({ status: value })}
+                    options={statusOptions}
+                    placeholder="All Statuses"
+                    noOptionsMessage="No statuses found"
+                    searchPlaceholder="Search statuses..."
+                    search={statusSearch}
+                    setSearch={setStatusSearch}
+                    open={statusOpen}
+                    setOpen={setStatusOpen}
+                    renderValue={renderStatusValue}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Tags
+                  </label>
+                  <div className="space-y-2">
+                    {filters.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {filters.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="size-3 p-0 ml-1 hover:bg-transparent"
+                              onClick={() => {
+                                const newTags = filters.tags.filter((t) => t !== tag);
+                                setFilters({ tags: newTags });
+                              }}
+                            >
+                              <X className="size-2" />
+                            </Button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     <Combobox
-                      value={filters.status}
-                      onValueChange={(value) => setFilters({ status: value })}
-                      options={statusOptions}
-                      placeholder="All Statuses"
-                      noOptionsMessage="No statuses found"
-                      searchPlaceholder="Search statuses..."
-                      search={statusSearch}
-                      setSearch={setStatusSearch}
-                      open={statusOpen}
-                      setOpen={setStatusOpen}
-                      renderValue={renderStatusValue}
+                      value=""
+                      onValueChange={(value) => {
+                        if (value && !filters.tags.includes(value)) {
+                          setFilters({ tags: [...filters.tags, value] });
+                        }
+                        setTagsSearch("");
+                      }}
+                      options={tagsOptions.filter((option) => !filters.tags.includes(option.value))}
+                      placeholder="Add tags..."
+                      noOptionsMessage="No tags found"
+                      searchPlaceholder="Search tags..."
+                      search={tagsSearch}
+                      setSearch={setTagsSearch}
+                      open={tagsOpen}
+                      setOpen={setTagsOpen}
+                      renderValue={() => ""}
                       className="w-full"
                     />
-                  </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -229,14 +312,14 @@ export function RunsFilters({
             className="pl-10"
           />
         </div>
-        {activeFilters.map((filter) => (
-          <Badge key={filter.key} variant="secondary" className="h-9 px-2">
+        {activeFilters.map((filter, index) => (
+          <Badge key={`${filter.key}-${index}`} variant="secondary" className="h-9 px-2">
             {filter.label}
             <Button
               variant="ghost"
               size="sm"
               className="size-4 p-0 hover:bg-transparent"
-              onClick={() => removeFilter(filter.key)}
+              onClick={() => removeFilter(filter.key, filter.value)}
             >
               <X className="size-3" />
             </Button>
