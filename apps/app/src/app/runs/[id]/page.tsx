@@ -1,36 +1,45 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
 import { useParams } from "next/navigation";
-import { PageContainer } from "~/components/page-container";
-import { PageTitle } from "~/components/page-title";
-import { apiFetch } from "~/lib/utils/client";
 import { getJobByIdApiRoute } from "~/app/api/jobs/[id]/schemas";
 import { getJobLogsApiRoute } from "~/app/api/jobs/logs/schemas";
-import { RunDetailsDrawer } from "./_components/run-details-drawer";
-import { LogsWaterfall } from "./_components/logs-waterfall";
-import { Skeleton } from "~/components/ui/skeleton";
+import { PageContainer } from "~/components/page-container";
+import { PageTitle } from "~/components/page-title";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { Skeleton } from "~/components/ui/skeleton";
+import { apiFetch } from "~/lib/utils/client";
+import { LogsWaterfall } from "./_components/logs-waterfall";
+import { RunDetailsDrawer } from "./_components/run-details-drawer";
 
 export default function RunViewPage() {
   const params = useParams();
   const runId = params.id as string;
 
-  const { data: run, isLoading: isLoadingRun, error: runError } = useQuery({
+  const {
+    data: run,
+    isLoading: isLoadingRun,
+    error: runError,
+  } = useQuery({
     queryKey: ["jobs/single", runId],
     queryFn: apiFetch({
       apiRoute: getJobByIdApiRoute,
-      routeParams: { id: runId },
+      urlParams: { id: runId },
+      body: undefined,
     }),
     enabled: !!runId,
   });
 
-  const { data: logsData, isLoading: isLoadingLogs, error: logsError } = useQuery({
+  const {
+    data: logsData,
+    isLoading: isLoadingLogs,
+    error: logsError,
+  } = useQuery({
     queryKey: ["jobs/logs", runId],
     queryFn: apiFetch({
       apiRoute: getJobLogsApiRoute,
-      body: { jobRunId: runId, limit: 1000 },
+      body: { id: runId, limit: 100 },
     }),
     enabled: !!runId,
   });
@@ -57,9 +66,10 @@ export default function RunViewPage() {
     return (
       <PageContainer>
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="size-4" />
           <AlertDescription>
-            Failed to load run details. The run might not exist or there was an error loading it.
+            Failed to load run details. The run might not exist or there was an
+            error loading it.
           </AlertDescription>
         </Alert>
       </PageContainer>
@@ -69,20 +79,20 @@ export default function RunViewPage() {
   return (
     <PageContainer>
       <PageTitle
-        title={`Run ${run.job_id}`}
-        description={`${run.queue} • ${run.status}`}
+        title={`Run ${run.job.jobId}`}
+        description={`${run.job.queue} • ${run.job.status}`}
       />
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
-          <LogsWaterfall 
-            logs={logsData?.logs || []} 
+          <LogsWaterfall
+            logs={logsData?.logs || []}
             isLoading={isLoadingLogs}
             error={logsError}
           />
         </div>
         <div className="lg:col-span-1">
-          <RunDetailsDrawer run={run} />
+          <RunDetailsDrawer run={run.job} />
         </div>
       </div>
     </PageContainer>

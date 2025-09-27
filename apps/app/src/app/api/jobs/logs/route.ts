@@ -2,13 +2,13 @@ import { searchJobLogs } from "@better-bull-board/clickhouse";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobLogsApiRoute } from "./schemas";
 
-export const GET = createAuthenticatedApiRoute({
+export const POST = createAuthenticatedApiRoute({
   apiRoute: getJobLogsApiRoute,
   async handler(input) {
-    const { jobRunId, level, messageContains, limit = 100, offset = 0 } = input;
+    const { id, level, messageContains, limit = 100, offset = 0 } = input;
 
     const logs = await searchJobLogs({
-      jobRunId,
+      id,
       level,
       messageContains,
       limit,

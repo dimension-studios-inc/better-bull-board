@@ -61,11 +61,14 @@ export const createAuthenticatedApiRoute = <
   handler: (
     input: IS extends ZodType ? output<IS> : undefined,
     req: NextRequest,
+    // biome-ignore lint/suspicious/noExplicitAny: hard to type
+    ctx: RouteContext<any>,
   ) => Promise<output<OS>>;
 }) => {
   const inputSchema = apiRoute.inputSchema as IS;
   const outputSchema = apiRoute.outputSchema as OS;
-  return async (req: NextRequest) => {
+  // biome-ignore lint/suspicious/noExplicitAny: hard to type
+  return async (req: NextRequest, ctx: RouteContext<any>) => {
     // Check authentication first
     const user = await getAuthenticatedUser();
     if (!user) {
@@ -91,6 +94,7 @@ export const createAuthenticatedApiRoute = <
     const data = await handler(
       parsed as IS extends ZodType ? output<IS> : undefined,
       req,
+      ctx,
     );
     const validated = await outputSchema.parseAsync(data).catch((error) => {
       logger.error(error);

@@ -148,7 +148,7 @@ export function RunsTable() {
               <motion.tr
                 key={run.id}
                 className={cn(
-                  "group border-b transition-colors hover:bg-muted/50",
+                  "group border-b transition-colors hover:bg-muted/50 cursor-pointer",
                   selectedJobIds.has(run.job_id) &&
                     "bg-blue-50 dark:bg-blue-950",
                 )}

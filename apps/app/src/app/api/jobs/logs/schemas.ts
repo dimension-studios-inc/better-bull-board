@@ -4,7 +4,7 @@ import z from "zod";
 import { registerApiRoute } from "~/lib/utils/client";
 
 export const getJobLogsInput = z.object({
-  jobRunId: z.string(),
+  id: z.string(),
   level: z.enum(logLevelEnum.enumValues).optional(),
   messageContains: z.string().optional(),
   limit: z.number().min(1).max(1000).optional(),

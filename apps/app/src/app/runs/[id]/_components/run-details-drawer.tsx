@@ -1,43 +1,36 @@
 "use client";
 
+import type { jobRunsTable } from "@better-bull-board/db";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
-import { CalendarClock, Clock, Database, Hash, PlayCircle, Settings, Tag, User, AlertCircle, CheckCircle, Loader } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarClock,
+  CheckCircle,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Database,
+  Hash,
+  Loader,
+  PlayCircle,
+  Settings,
+  Tag,
+  User,
+} from "lucide-react";
+import { useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
 import { cn } from "~/lib/utils/client";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
-import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
-
-interface RunData {
-  id: string;
-  job_id: string;
-  queue: string;
-  name: string | null;
-  status: string;
-  attempt: number;
-  max_attempts: number;
-  priority: number | null;
-  delay_ms: number;
-  backoff: unknown | null;
-  repeat_job_key: string | null;
-  parent_job_id: string | null;
-  worker_id: string | null;
-  tags: string[] | null;
-  data: unknown | null;
-  result: unknown | null;
-  error_message: string | null;
-  error_stack: string | null;
-  created_at: number;
-  enqueued_at: number | null;
-  started_at: number | null;
-  finished_at: number | null;
-}
 
 interface RunDetailsDrawerProps {
-  run: RunData;
+  run: typeof jobRunsTable.$inferSelect;
 }
 
 const getStatusIcon = (status: string) => {
@@ -66,15 +59,15 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const DetailItem = ({ 
-  icon, 
-  label, 
-  value, 
-  className 
-}: { 
-  icon: React.ReactNode; 
-  label: string; 
-  value: React.ReactNode; 
+const DetailItem = ({
+  icon,
+  label,
+  value,
+  className,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
   className?: string;
 }) => (
   <div className={cn("flex items-center space-x-3", className)}>
@@ -86,17 +79,17 @@ const DetailItem = ({
   </div>
 );
 
-const JsonCollapsible = ({ 
-  title, 
-  data, 
-  icon 
-}: { 
-  title: string; 
-  data: unknown; 
+const JsonCollapsible = ({
+  title,
+  data,
+  icon,
+}: {
+  title: string;
+  data: unknown;
   icon: React.ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   if (!data) return null;
 
   return (
@@ -122,9 +115,12 @@ const JsonCollapsible = ({
 };
 
 export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
-  const duration = run.started_at && run.finished_at && (run.status === "completed" || run.status === "failed")
-    ? formatDistanceStrict(run.started_at, run.finished_at)
-    : null;
+  const duration =
+    run.startedAt &&
+    run.finishedAt &&
+    (run.status === "completed" || run.status === "failed")
+      ? formatDistanceStrict(run.startedAt, run.finishedAt)
+      : null;
 
   return (
     <Card className="h-[calc(100vh-12rem)]">
@@ -156,7 +152,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                   label="Job ID"
                   value={
                     <span className="font-mono text-xs break-all">
-                      {run.job_id}
+                      {run.jobId}
                     </span>
                   }
                 />
@@ -172,14 +168,12 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                     value={run.name}
                   />
                 )}
-                {run.worker_id && (
+                {run.workerId && (
                   <DetailItem
                     icon={<User className="h-4 w-4 text-muted-foreground" />}
                     label="Worker ID"
                     value={
-                      <span className="font-mono text-xs">
-                        {run.worker_id}
-                      </span>
+                      <span className="font-mono text-xs">{run.workerId}</span>
                     }
                   />
                 )}
@@ -193,29 +187,45 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
               <h3 className="text-sm font-medium mb-3">Timing</h3>
               <div className="space-y-3">
                 <DetailItem
-                  icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
+                  icon={
+                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                  }
                   label="Created"
-                  value={formatDistanceToNow(new Date(run.created_at), { addSuffix: true })}
+                  value={formatDistanceToNow(new Date(run.createdAt), {
+                    addSuffix: true,
+                  })}
                 />
-                {run.enqueued_at && (
+                {run.enqueuedAt && (
                   <DetailItem
-                    icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
+                    icon={
+                      <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                    }
                     label="Enqueued"
-                    value={formatDistanceToNow(new Date(run.enqueued_at), { addSuffix: true })}
+                    value={formatDistanceToNow(new Date(run.enqueuedAt), {
+                      addSuffix: true,
+                    })}
                   />
                 )}
-                {run.started_at && (
+                {run.startedAt && (
                   <DetailItem
-                    icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
+                    icon={
+                      <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                    }
                     label="Started"
-                    value={formatDistanceToNow(new Date(run.started_at), { addSuffix: true })}
+                    value={formatDistanceToNow(new Date(run.startedAt), {
+                      addSuffix: true,
+                    })}
                   />
                 )}
-                {run.finished_at && (
+                {run.finishedAt && (
                   <DetailItem
-                    icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
+                    icon={
+                      <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                    }
                     label="Finished"
-                    value={formatDistanceToNow(new Date(run.finished_at), { addSuffix: true })}
+                    value={formatDistanceToNow(new Date(run.finishedAt), {
+                      addSuffix: true,
+                    })}
                   />
                 )}
                 {duration && (
@@ -237,20 +247,22 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                 <DetailItem
                   icon={<Settings className="h-4 w-4 text-muted-foreground" />}
                   label="Attempt"
-                  value={`${run.attempt} / ${run.max_attempts}`}
+                  value={`${run.attempt} / ${run.maxAttempts}`}
                 />
                 {run.priority !== null && (
                   <DetailItem
-                    icon={<Settings className="h-4 w-4 text-muted-foreground" />}
+                    icon={
+                      <Settings className="h-4 w-4 text-muted-foreground" />
+                    }
                     label="Priority"
                     value={run.priority}
                   />
                 )}
-                {run.delay_ms > 0 && (
+                {run.delayMs > 0 && (
                   <DetailItem
                     icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                     label="Delay"
-                    value={`${run.delay_ms}ms`}
+                    value={`${run.delayMs}ms`}
                   />
                 )}
               </div>
@@ -274,32 +286,39 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
             )}
 
             {/* Error Details */}
-            {run.status === "failed" && (run.error_message || run.error_stack) && (
-              <>
-                <Separator />
-                <div>
-                  <h3 className="text-sm font-medium mb-3 text-red-600">Error Details</h3>
-                  {run.error_message && (
-                    <div className="mb-3">
-                      <div className="text-xs text-muted-foreground mb-1">Message</div>
-                      <div className="p-2 bg-red-50 border border-red-200 rounded text-sm dark:bg-red-950/30 dark:border-red-800">
-                        {run.error_message}
+            {run.status === "failed" &&
+              (run.errorMessage || run.errorStack) && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="text-sm font-medium mb-3 text-red-600">
+                      Error Details
+                    </h3>
+                    {run.errorMessage && (
+                      <div className="mb-3">
+                        <div className="text-xs text-muted-foreground mb-1">
+                          Message
+                        </div>
+                        <div className="p-2 bg-red-50 border border-red-200 rounded text-sm dark:bg-red-950/30 dark:border-red-800">
+                          {run.errorMessage}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {run.error_stack && (
-                    <div>
-                      <div className="text-xs text-muted-foreground mb-1">Stack Trace</div>
-                      <div className="p-2 bg-red-50 border border-red-200 rounded text-xs font-mono dark:bg-red-950/30 dark:border-red-800 max-h-32 overflow-y-auto">
-                        <pre className="whitespace-pre-wrap break-words">
-                          {run.error_stack}
-                        </pre>
+                    )}
+                    {run.errorStack && (
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">
+                          Stack Trace
+                        </div>
+                        <div className="p-2 bg-red-50 border border-red-200 rounded text-xs font-mono dark:bg-red-950/30 dark:border-red-800 max-h-32 overflow-y-auto">
+                          <pre className="whitespace-pre-wrap break-words">
+                            {run.errorStack}
+                          </pre>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
+                    )}
+                  </div>
+                </>
+              )}
 
             <Separator />
 

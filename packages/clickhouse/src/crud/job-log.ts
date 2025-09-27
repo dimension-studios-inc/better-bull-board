@@ -17,6 +17,7 @@ export const insertJobLog = async (_jobLog: JobLogData): Promise<void> => {
 
 export const searchJobLogs = async (filters: {
   jobRunId?: string;
+  id?: string;
   level?: string;
   messageContains?: string;
   dateFrom?: Date;
@@ -30,6 +31,11 @@ export const searchJobLogs = async (filters: {
   if (filters.jobRunId) {
     conditions.push("job_run_id = {job_run_id:UUID}");
     params.job_run_id = filters.jobRunId;
+  }
+
+  if (filters.id) {
+    conditions.push("job_run_id = {id:UUID}");
+    params.id = filters.id;
   }
 
   if (filters.level) {

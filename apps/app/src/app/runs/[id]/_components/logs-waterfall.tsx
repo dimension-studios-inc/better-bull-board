@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { AlertCircle, Info, AlertTriangle, Bug } from "lucide-react";
+import { AlertCircle, AlertTriangle, Bug, Info } from "lucide-react";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -26,15 +26,16 @@ interface LogsWaterfallProps {
 const getLevelIcon = (level: string) => {
   switch (level.toLowerCase()) {
     case "error":
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
+      return <AlertCircle className="size-4 text-red-500" />;
     case "warn":
     case "warning":
-      return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      return <AlertTriangle className="size-4 text-yellow-500" />;
     case "debug":
-      return <Bug className="h-4 w-4 text-purple-500" />;
+      return <Bug className="size-4 text-purple-500" />;
     case "info":
+      return <Info className="size-4 text-blue-500" />;
     default:
-      return <Info className="h-4 w-4 text-blue-500" />;
+      return <div className="size-4" />;
   }
 };
 
@@ -48,8 +49,9 @@ const getLevelColor = (level: string) => {
     case "debug":
       return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
     case "info":
-    default:
       return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
   }
 };
 
@@ -81,6 +83,7 @@ export function LogsWaterfall({ logs, isLoading, error }: LogsWaterfallProps) {
         <CardContent>
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: this is a loading state
               <div key={i} className="flex items-start space-x-3">
                 <Skeleton className="h-4 w-4 rounded-full" />
                 <div className="flex-1 space-y-2">
@@ -126,44 +129,52 @@ export function LogsWaterfall({ logs, isLoading, error }: LogsWaterfallProps) {
         <ScrollArea className="h-full">
           <div className="space-y-4">
             {sortedLogs.map((log, index) => {
-              const isFirst = index === 0;
               const isLast = index === sortedLogs.length - 1;
-              
+
               return (
                 <div key={log.id} className="relative">
                   {/* Timeline line */}
                   {!isLast && (
                     <div className="absolute left-2 top-8 w-px h-8 bg-border" />
                   )}
-                  
+
                   <div className="flex items-start space-x-3">
                     {/* Timeline dot */}
                     <div className="flex-shrink-0 mt-1">
                       {getLevelIcon(log.level)}
                     </div>
-                    
+
                     {/* Log content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-1">
-                        <Badge className={getLevelColor(log.level)} variant="outline">
+                        <Badge
+                          className={getLevelColor(log.level)}
+                          variant="outline"
+                        >
                           {log.level.toUpperCase()}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(log.ts), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(log.ts), {
+                            addSuffix: true,
+                          })}
                         </span>
                       </div>
-                      
-                      <div className={cn(
-                        "p-3 rounded-lg border bg-card text-sm font-mono",
-                        log.level.toLowerCase() === "error" && "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30",
-                        log.level.toLowerCase() === "warn" && "border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30"
-                      )}>
+
+                      <div
+                        className={cn(
+                          "p-3 rounded-lg border bg-card text-sm font-mono",
+                          log.level.toLowerCase() === "error" &&
+                            "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30",
+                          log.level.toLowerCase() === "warn" &&
+                            "border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30",
+                        )}
+                      >
                         <pre className="whitespace-pre-wrap break-words">
                           {log.message}
                         </pre>
                       </div>
                     </div>
-                    
+
                     {/* Timestamp */}
                     <div className="flex-shrink-0 text-xs text-muted-foreground mt-1">
                       {new Date(log.ts).toLocaleTimeString()}

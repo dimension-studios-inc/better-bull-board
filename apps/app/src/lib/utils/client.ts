@@ -4,9 +4,13 @@ import type { output, ZodType } from "zod";
 import { env } from "../env";
 
 export type TApiRoute = {
-  route: `/${string}` | ((input: output<ZodType>) => `/${string}`);
+  route:
+    | `/${string}`
+    // biome-ignore lint/suspicious/noExplicitAny: hard to type
+    | ((input: any) => `/${string}`);
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
   inputSchema?: ZodType | undefined;
+  urlSchema?: ZodType | undefined;
   outputSchema: ZodType;
 };
 
@@ -18,24 +22,32 @@ export function apiFetch<
   R extends TApiRoute,
   IS extends R["inputSchema"],
   OS extends R["outputSchema"],
+  US extends R["urlSchema"],
 >({
   apiRoute,
   body,
+  urlParams,
 }: {
   apiRoute: R;
   body: IS extends ZodType ? output<IS> : never;
+  urlParams?: US extends ZodType ? output<US> : never;
 }): () => Promise<output<OS>> {
   const inputSchema = apiRoute.inputSchema as IS;
   const outputSchema = apiRoute.outputSchema as OS;
+  const urlSchema = apiRoute.urlSchema as US;
   return async () => {
     const parsedBody = inputSchema?.parse(body);
+    const parsedUrlParams = urlSchema?.parse(urlParams);
     const data = await fetch(
-      `${env.NEXT_PUBLIC_API_URL}${typeof apiRoute.route === "function" ? apiRoute.route(parsedBody as IS) : apiRoute.route}`,
+      `${env.NEXT_PUBLIC_API_URL}${typeof apiRoute.route === "function" ? apiRoute.route(parsedUrlParams as US) : apiRoute.route}`,
       {
         method: apiRoute.method,
-        body: JSON.stringify(parsedBody),
+        body:
+          apiRoute.method === "GET" ? undefined : JSON.stringify(parsedBody),
         headers: {
-          "Content-Type": "application/json",
+          ...(apiRoute.method === "GET"
+            ? {}
+            : { "Content-Type": "application/json" }),
         },
         credentials: "include", // Include cookies for authentication
       },
@@ -45,9 +57,14 @@ export function apiFetch<
   };
 }
 
-export const registerApiRoute = <I extends ZodType, O extends ZodType>(params: {
-  route: `/${string}` | ((input: output<I>) => `/${string}`);
+export const registerApiRoute = <
+  I extends ZodType,
+  O extends ZodType,
+  U extends ZodType,
+>(params: {
+  route: `/${string}` | ((input: output<U>) => `/${string}`);
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
   inputSchema?: I;
+  urlSchema?: U;
   outputSchema: O;
 }) => params;
