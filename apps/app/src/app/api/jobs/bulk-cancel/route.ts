@@ -7,7 +7,10 @@ export const POST = createAuthenticatedApiRoute({
   async handler(input) {
     const { jobs } = input;
 
-    await Promise.all(jobs.map((job) => cancelJobHandler(job)));
+    // Don't use promise.all to avoid race conditions
+    for (const job of jobs) {
+      await cancelJobHandler(job);
+    }
 
     return {
       success: true,

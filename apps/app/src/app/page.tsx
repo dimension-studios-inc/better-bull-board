@@ -1,4 +1,4 @@
-import { StatsCards } from "~/app/_components/stats-card";
+import { EnhancedDashboard } from "~/app/_components/enhanced-dashboard";
 import { PageContainer } from "~/components/page-container";
 import { PageTitle } from "~/components/page-title";
 
@@ -9,7 +9,7 @@ export default function Home() {
         title="Dashboard"
         description="Monitor your BullMQ job statistics"
       />
-      <StatsCards />
+      <EnhancedDashboard />
     </PageContainer>
   );
 }
