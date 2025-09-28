@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bbb-clickhouse
+  namespace: better-bull-board
+  labels:
+    app: bbb-clickhouse
+spec:
+  serviceName: bbb-clickhouse-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bbb-clickhouse
+  template:
+    metadata:
+      labels:
+        app: bbb-clickhouse
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: bbb-clickhouse
+        image: public.ecr.aws/n5q7l0s4/better-bull-board-clickhouse:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8123
+          name: http
+        - containerPort: 9000
+          name: native
+        envFrom:
+        - configMapRef:
+            name: bbb-clickhouse-config
+        - secretRef:
+            name: bbb-clickhouse-secret
+        volumeMounts:
+        - name: data
+          mountPath: /bitnami/clickhouse
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8123
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8123
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 6
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+        securityContext:
+          runAsUser: 1001
+          runAsGroup: 1001
+          fsGroup: 1001
+  volumeClaimTemplates:
+  - metadata:
+      name: bbb-clickhouse-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 50Gi  # bigger default for analytics workloads
+      storageClassName: standard   # or gp2/gp3, premium, etc.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bbb-clickhouse-headless
+  namespace: better-bull-board
+  labels:
+    app: bbb-clickhouse
+spec:
+  clusterIP: None
+  ports:
+  - port: 8123
+    name: http
+  - port: 9000
+    name: native
+  selector:
+    app: bbb-clickhouse
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bbb-clickhouse-service
+  namespace: better-bull-board
+  labels:
+    app: bbb-clickhouse
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8123
+    targetPort: 8123
+    protocol: TCP
+    name: http
+  - port: 9000
+    targetPort: 9000
+    protocol: TCP
+    name: native
+  selector:
+    app: bbb-clickhouse

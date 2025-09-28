@@ -23,16 +23,20 @@ Before deploying, ensure you have:
 
 ## Quick Start
 
-### 3. Deploy the Application
+### 1. Deploy the Application
+
+Make sure to have your .env file ready.
 
 Deploy the components in order:
 
 ```bash
 # Create namespace and configure secrets/configmaps
+set -a && source k8s/.env && set +a
+envsubst < k8s/02-secrets-configmap.yaml.template > k8s/02-secrets-configmap.yaml
 kubectl apply -f k8s/
 ```
 
-### 4. Verify Deployment
+### 2. Verify Deployment
 
 Check the status of all components:
 
