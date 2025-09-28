@@ -1,9 +1,11 @@
 #!/bin/bash
 
 # Configuration
-export AWS_ACCOUNT_ID=123456789  # Replace with your AWS account ID
-export AWS_REGION=us-west-2      # Replace with your preferred region
-export ECR_REGISTRY=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+export AWS_REGION=us-east-1
+# Replace with your alias
+export MY_ALIAS=n5q7l0s4
+export ECR_REGISTRY=public.ecr.aws/${MY_ALIAS}
 
 # Colors for output
 RED='\033[0;31m'
@@ -28,7 +30,7 @@ fi
 
 # Authenticate with ECR
 echo -e "${YELLOW}Authenticating with ECR...${NC}"
-aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+aws ecr-public get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin public.ecr.aws
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Failed to authenticate with ECR${NC}"

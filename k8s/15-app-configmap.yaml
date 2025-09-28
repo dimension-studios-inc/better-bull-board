@@ -7,5 +7,4 @@ data:
   REDIS_HOST: "redis-service"
   REDIS_PORT: "6379"
   REDIS_USE_TLS: "false"
-  NEXT_PUBLIC_API_URL: "http://better-bull-board.local"  # Update with your actual domain
-  NEXT_PUBLIC_WEBSOCKET_URL: "ws://better-bull-board.local/ws"  # Update with your actual domain
+  WEBSOCKET_URL: "ws://better-bull-board.local/ws"  # Update with your actual domain

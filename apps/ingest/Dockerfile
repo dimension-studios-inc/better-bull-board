@@ -1,46 +1,60 @@
-# Use the official Node.js image as base
-FROM node:20-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+#* ---- Base stage ----
+FROM node:22-bookworm AS base
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY apps/ingest/package*.json ./apps/ingest/
-COPY packages/*/package*.json ./packages/*/
-COPY _template/package*.json ./_template/
+ARG TURBO_TEAM
+ARG TURBO_TOKEN
+ARG TURBO_API
 
-# Install dependencies
-RUN npm ci
+ENV TURBO_TEAM=$TURBO_TEAM
+ENV TURBO_TOKEN=$TURBO_TOKEN
+ENV TURBO_API=$TURBO_API
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV API_HOSTNAME=0.0.0.0
+ENV PORT=8080
+ENV NODE_OPTIONS="--max-old-space-size=6144"
 
-# Build the source code
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+#* ---- Turbo stage ----
+FROM base AS turbo
+RUN npm install turbo --global
+
+
+#* ---- Prepare stage ----
+FROM turbo AS prepare
 COPY . .
+RUN turbo prune @better-bull-board/ingest --docker
 
-# Build all dependencies and the ingest service
-RUN npm run setup
-RUN npm run build --filter=@better-bull-board/ingest
 
-# Production image
+#* ---- Installer stage ----
+FROM base AS installer
+COPY --from=prepare /app/out/json/ .
+RUN npm ci --omit=dev
+COPY --from=prepare /app/out/full/ .
+
+
+#* ---- Builder stage ----
+FROM turbo AS builder
+COPY --from=installer /app .
+RUN npm run build:ingest
+
+
+
+#* ---- Runtime stage ----
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser --system --uid 1001 --home /home/nodeapp nodeapp
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nodejs
+ENV HOME=/home/nodeapp
 
-# Copy the built application and dependencies
-COPY --from=builder --chown=nodejs:nodejs /app/apps/ingest/dist ./apps/ingest/dist
-COPY --from=builder --chown=nodejs:nodejs /app/packages/*/dist ./packages/*/
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+# Copy app
+COPY --from=builder /app /app
 
-USER nodejs
+RUN chown -R nodeapp:nodejs /app /home/nodeapp
+USER nodeapp
 
-# Start the ingest service
 CMD ["node", "apps/ingest/dist/index.js"]

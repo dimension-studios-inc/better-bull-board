@@ -55,7 +55,7 @@ Replace `your-registry` with your actual registry (e.g., `123456789.dkr.ecr.us-w
 
 #### Domain Configuration
 Update the domain in these files:
-- `k8s/15-app-configmap.yaml`: Update `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_WEBSOCKET_URL`
+- `k8s/15-app-configmap.yaml`: Update `WEBSOCKET_URL`
 - `k8s/23-ingress.yaml`: Update the host field
 
 #### Secrets

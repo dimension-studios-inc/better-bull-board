@@ -27,13 +27,9 @@ export const env = createEnv({
     ADMIN_EMAIL: z.email(),
     ADMIN_PASSWORD: z.string().min(1),
     JWT_SECRET: z.string().min(1),
+    WEBSOCKET_URL: z.url(), // Not in public otherwise it will be bring in the built app
   },
-  client: {
-    NEXT_PUBLIC_API_URL: z.url(),
-    NEXT_PUBLIC_WEBSOCKET_URL: z.string(),
-  },
-  experimental__runtimeEnv: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_WEBSOCKET_URL: process.env.NEXT_PUBLIC_WEBSOCKET_URL,
-  },
+  // Leave client empty because we don't want to include any var in the built app for public use
+  client: {},
+  experimental__runtimeEnv: {},
 });
