@@ -1,13 +1,21 @@
 FROM postgres:17
 
-RUN apt-get update && \ 
+# Install PostGIS, pgvector, build deps, and pg_uuidv7 build deps
+RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y curl build-essential git postgresql-server-dev-all libpq-dev
+    apt-get install -y \
+      postgis \
+      curl \
+      git \
+      build-essential \
+      libpq-dev \
+      postgresql-17-pgvector \
+      postgresql-server-dev-17 && \
+    rm -rf /var/lib/apt/lists/*
 
-# pg_uuidv7 - build from source
+# Build and install pg_uuidv7 from source
 RUN cd "$(mktemp -d)" && \
     git clone https://github.com/fboulnois/pg_uuidv7.git && \
     cd pg_uuidv7 && \
     make && \
     make install
-

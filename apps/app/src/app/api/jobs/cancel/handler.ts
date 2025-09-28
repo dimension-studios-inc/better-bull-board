@@ -21,7 +21,7 @@ export const cancelJobHandler = async (input: {
   // Postgres
 
   await db.transaction(async (tx) => {
-    const [pgjob] = await db
+    const [pgjob] = await tx
       .select()
       .from(jobRunsTable)
       .where(eq(jobRunsTable.jobId, jobId))
