@@ -18,6 +18,7 @@ spec:
       containers:
       - name: app
         image: public.ecr.aws/n5q7l0s4/better-bull-board-app:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
         envFrom:
@@ -59,7 +60,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 3000
+  - port: 80
     targetPort: 3000
     protocol: TCP
   selector:

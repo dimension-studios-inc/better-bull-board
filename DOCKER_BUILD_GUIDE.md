@@ -89,44 +89,4 @@ docker push ${ECR_PUBLIC_REGISTRY}/better-bull-board-ingest:latest
 
 ## Complete Build Script
 
-```bash
-#!/bin/bash
-
-# Configuration
-export AWS_REGION=us-east-1
-export ECR_PUBLIC_REGISTRY=public.ecr.aws/abcd1234   # Replace with your alias
-
-# Authenticate
-echo "Authenticating with Public ECR..."
-aws ecr-public get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin public.ecr.aws
-if [ $? -ne 0 ]; then
-    echo "Failed to authenticate with Public ECR"
-    exit 1
-fi
-
-# PostgreSQL
-cd docker/db
-docker build -t better-bull-board-postgres .
-docker tag better-bull-board-postgres:latest ${ECR_PUBLIC_REGISTRY}/better-bull-board-postgres:latest
-docker push ${ECR_PUBLIC_REGISTRY}/better-bull-board-postgres:latest
-cd ../..
-
-# ClickHouse
-cd docker/clickhouse
-docker build -t better-bull-board-clickhouse .
-docker tag better-bull-board-clickhouse:latest ${ECR_PUBLIC_REGISTRY}/better-bull-board-clickhouse:latest
-docker push ${ECR_PUBLIC_REGISTRY}/better-bull-board-clickhouse:latest
-cd ../..
-
-# App
-docker build -f apps/app/Dockerfile -t better-bull-board-app .
-docker tag better-bull-board-app:latest ${ECR_PUBLIC_REGISTRY}/better-bull-board-app:latest
-docker push ${ECR_PUBLIC_REGISTRY}/better-bull-board-app:latest
-
-# Ingest
-docker build -f apps/ingest/Dockerfile -t better-bull-board-ingest .
-docker tag better-bull-board-ingest:latest ${ECR_PUBLIC_REGISTRY}/better-bull-board-ingest:latest
-docker push ${ECR_PUBLIC_REGISTRY}/better-bull-board-ingest:latest
-
-echo "✅ All images published to Public ECR!"
-```
+The script is located in the root of the project and is called `build-and-push.sh`.

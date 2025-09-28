@@ -20,7 +20,7 @@ spec:
       containers:
       - name: bbb-clickhouse
         image: public.ecr.aws/n5q7l0s4/better-bull-board-clickhouse:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 8123
           name: http
@@ -32,7 +32,7 @@ spec:
         - secretRef:
             name: bbb-clickhouse-secret
         volumeMounts:
-        - name: data
+        - name: bbb-clickhouse-data
           mountPath: /bitnami/clickhouse
         livenessProbe:
           httpGet:
@@ -57,10 +57,9 @@ spec:
           limits:
             cpu: "1000m"
             memory: "2Gi"
-        securityContext:
-          runAsUser: 1001
-          runAsGroup: 1001
-          fsGroup: 1001
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: "OnRootMismatch"
   volumeClaimTemplates:
   - metadata:
       name: bbb-clickhouse-data
@@ -69,7 +68,6 @@ spec:
       resources:
         requests:
           storage: 50Gi  # bigger default for analytics workloads
-      storageClassName: standard   # or gp2/gp3, premium, etc.
 ---
 apiVersion: v1
 kind: Service

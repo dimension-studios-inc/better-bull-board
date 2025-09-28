@@ -20,7 +20,7 @@ spec:
       containers:
       - name: bbb-postgres
         image: public.ecr.aws/n5q7l0s4/better-bull-board-postgres:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 5432
           name: bbb-postgres
@@ -30,7 +30,7 @@ spec:
         - secretRef:
             name: bbb-postgres-secret
         volumeMounts:
-        - name: data
+        - name: bbb-postgres-data
           mountPath: /var/lib/postgresql/data
           subPath: bbb-postgres  # ensures clean separation in PVC
         livenessProbe:
@@ -60,10 +60,9 @@ spec:
           limits:
             cpu: "500m"
             memory: "1Gi"
-        securityContext:
-          runAsUser: 999
-          runAsGroup: 999
-          fsGroup: 999
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: "OnRootMismatch"
   volumeClaimTemplates:
   - metadata:
       name: bbb-postgres-data

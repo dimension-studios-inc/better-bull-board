@@ -20,11 +20,14 @@ spec:
       containers:
       - name: bbb-ingest
         image: public.ecr.aws/n5q7l0s4/better-bull-board-ingest:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         envFrom:
         - configMapRef:
             name: bbb-ingest-config
+        - secretRef:
+            name: bbb-ingest-secret
         livenessProbe:
           tcpSocket:
             port: 8080
