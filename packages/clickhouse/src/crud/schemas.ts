@@ -57,3 +57,34 @@ export interface QueueStatsWithChart {
   completedJobs: number;
   chartData: QueueChartData[];
 }
+
+export interface EnhancedJobStats {
+  runningTasks: number;
+  waitingInQueue: number;
+  successes: number;
+  failures: number;
+}
+
+export interface QueuePerformanceData {
+  queue: string;
+  totalRuns: number;
+  successes: number;
+  failures: number;
+  errorRate: number;
+  avgDuration: number;
+}
+
+export interface QueueDurationData {
+  queue: string;
+  totalDuration: number;
+}
+
+export interface QueueCountData {
+  queue: string;
+  runCount: number;
+}
+
+export interface RunGraphData {
+  timestamp: string;
+  runCount: number;
+}
