@@ -1,3 +1,4 @@
+import { clickhouseClient } from "@better-bull-board/clickhouse/client";
 import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
@@ -29,7 +30,19 @@ export const stopStalledRuns = async () => {
     for (const _run of stalledRuns) {
       const queue = new Queue(_run.queue);
       const job = await queue.getJob(_run.id);
-      const jobStatus = await job?.getState();
+      if (!job) {
+        logger.warn(`Run ${_run.id} is stalled, updating status`);
+        await db
+          .update(jobRunsTable)
+          .set({ status: "failed" })
+          .where(eq(jobRunsTable.id, _run.id));
+        await clickhouseClient.command({
+          query: `ALTER TABLE job_runs_ch UPDATE status = 'failed' WHERE id = {id:UUID}`,
+          query_params: { id: _run.id },
+        });
+        continue;
+      }
+      const jobStatus = await job.getState();
       if (jobStatus === "active") continue;
       logger.warn(`Run ${_run.id} is stalled, updating status`);
       await redis.publish(

@@ -20,28 +20,27 @@ interface RunGraphChartProps {
   days: number;
 }
 
-export function RunGraphChart({ days }: RunGraphChartProps) {
-  const { data: runGraphData, isLoading } = useQuery({
-    queryKey: ["dashboard/run-graph", days],
-    queryFn: apiFetch({
-      apiRoute: getRunGraphApiRoute,
-      body: { days },
-    }),
-  });
-
-  const chartData = runGraphData?.map((item) => ({
-    timestamp: item.timestamp,
-    runCount: item.runCount,
-    formattedTime: format(new Date(item.timestamp), days <= 1 ? "HH:mm" : "MMM dd"),
-  })) || [];
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip =
+  ({ days }: { days: number }) =>
+  ({
+    active,
+    payload,
+  }: {
+    active: boolean;
+    // biome-ignore lint/suspicious/noExplicitAny: _
+    payload: any;
+    label?: string | number;
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-background border rounded-lg p-3 shadow-lg">
+        <div className="bg-background border rounded p-1 shadow-sm">
           <p className="font-medium">
-            {format(new Date(label), days <= 1 ? "HH:mm" : "MMM dd, yyyy")}
+            {data.timestamp &&
+              format(
+                new Date(data.timestamp),
+                days <= 7 ? "EEEEEE HH:mm" : "MMM dd, yyyy",
+              )}
           </p>
           <p className="text-sm text-blue-600">
             Runs: {data.runCount.toLocaleString()}
@@ -51,6 +50,25 @@ export function RunGraphChart({ days }: RunGraphChartProps) {
     }
     return null;
   };
+
+export function RunGraphChart({ days }: RunGraphChartProps) {
+  const { data: runGraphData, isLoading } = useQuery({
+    queryKey: ["dashboard/run-graph", days],
+    queryFn: apiFetch({
+      apiRoute: getRunGraphApiRoute,
+      body: { days },
+    }),
+  });
+
+  const chartData =
+    runGraphData?.map((item) => ({
+      timestamp: item.timestamp,
+      runCount: item.runCount,
+      formattedTime: format(
+        new Date(item.timestamp),
+        days <= 7 ? "EEEEEE HH:mm" : "MMM dd",
+      ),
+    })) || [];
 
   return (
     <Card>
@@ -73,13 +91,13 @@ export function RunGraphChart({ days }: RunGraphChartProps) {
                   interval="preserveStartEnd"
                 />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={CustomTooltip({ days })} />
                 <Line
                   type="monotone"
                   dataKey="runCount"
                   stroke="#3b82f6"
                   strokeWidth={2}
-                  dot={{ r: 4 }}
+                  dot={false}
                   activeDot={{ r: 6 }}
                   name="Run Count"
                 />

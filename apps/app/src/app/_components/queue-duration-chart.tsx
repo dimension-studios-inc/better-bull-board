@@ -6,23 +6,31 @@ import { getTopQueuesDurationApiRoute } from "~/app/api/dashboard/top-queues-dur
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { apiFetch } from "~/lib/utils/client";
+import { COLORS } from "./colors";
 
 interface QueueDurationChartProps {
   days: number;
 }
 
-const COLORS = [
-  "#0088FE",
-  "#00C49F",
-  "#FFBB28",
-  "#FF8042",
-  "#8884D8",
-  "#82CA9D",
-  "#FFC658",
-  "#FF6B6B",
-  "#4ECDC4",
-  "#45B7D1",
-];
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: _
+  payload: any;
+}) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-background border rounded p-2 shadow-sm text-sm">
+        <p className="font-medium">{data.name}</p>
+        <p className="text-muted-foreground">{data.formattedValue}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function QueueDurationChart({ days }: QueueDurationChartProps) {
   const { data: queueDuration, isLoading } = useQuery({
@@ -39,26 +47,12 @@ export function QueueDurationChart({ days }: QueueDurationChartProps) {
     return `${(seconds / 3600).toFixed(1)}h`;
   };
 
-  const chartData = queueDuration?.map((item) => ({
-    name: item.queue,
-    value: item.totalDuration,
-    formattedValue: formatDuration(item.totalDuration),
-  })) || [];
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-background border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{data.name}</p>
-          <p className="text-sm text-muted-foreground">
-            Total Duration: {data.formattedValue}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+  const chartData =
+    queueDuration?.map((item) => ({
+      name: item.queue,
+      value: item.totalDuration,
+      formattedValue: formatDuration(item.totalDuration),
+    })) || [];
 
   return (
     <Card>
@@ -78,35 +72,26 @@ export function QueueDurationChart({ days }: QueueDurationChartProps) {
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={(props: any) =>
-                    `${props.name} (${(props.percent * 100).toFixed(0)}%)`
-                  }
-                  outerRadius={80}
-                  fill="#8884d8"
+                  innerRadius={50}
+                  outerRadius={100}
+                  paddingAngle={2}
                   dataKey="value"
+                  label={({ name, percent }) =>
+                    `${name} (${((percent as number) * 100).toFixed(0)}%)`
+                  }
+                  labelLine={false}
                 >
                   {chartData.map((_, index) => (
                     <Cell
+                      // biome-ignore lint/suspicious/noArrayIndexKey: _
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={CustomTooltip} />
               </PieChart>
             </ResponsiveContainer>
-            <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-              {chartData.slice(0, 6).map((item, index) => (
-                <div key={item.name} className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
-                  <span className="truncate">{item.name}</span>
-                </div>
-              ))}
-            </div>
           </div>
         ) : (
           <div className="h-80 flex items-center justify-center">
