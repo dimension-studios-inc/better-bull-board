@@ -108,7 +108,6 @@ async function migrateClickHouse(): Promise<void> {
         };
         await loadMigrations();
         if ((migrations as string[] | null)?.includes(file)) {
-          logger.log(`✅ Skipping migration: ${file}`);
           continue;
         }
       }

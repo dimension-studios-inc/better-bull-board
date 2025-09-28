@@ -118,7 +118,7 @@ const upsertQueue = async (queueName: string) => {
 };
 
 const upsertJobSchedulers = async (queueName: string, queueId: string) => {
-  const queue = new Queue(queueName);
+  const queue = new Queue(queueName, { connection: redis });
   const jobSchedulers = await queue.getJobSchedulers();
 
   const params: (typeof jobSchedulersTable.$inferInsert)[] = jobSchedulers.map(

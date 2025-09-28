@@ -279,37 +279,41 @@ export const getEnhancedJobStats = async ({
   `;
 
   try {
-    const [runningResult, waitingResult, successResult, failureResult] = await Promise.all([
-      clickhouseClient.query({
-        query: runningTasksQuery,
-        format: "JSONEachRow",
-      }),
-      clickhouseClient.query({
-        query: waitingInQueueQuery,
-        format: "JSONEachRow",
-      }),
-      clickhouseClient.query({
-        query: successesQuery,
-        query_params: { date_from: dateFrom, date_to: dateTo },
-        format: "JSONEachRow",
-      }),
-      clickhouseClient.query({
-        query: failuresQuery,
-        query_params: { date_from: dateFrom, date_to: dateTo },
-        format: "JSONEachRow",
-      }),
-    ]);
+    const [runningResult, waitingResult, successResult, failureResult] =
+      await Promise.all([
+        clickhouseClient.query({
+          query: runningTasksQuery,
+          format: "JSONEachRow",
+        }),
+        clickhouseClient.query({
+          query: waitingInQueueQuery,
+          format: "JSONEachRow",
+        }),
+        clickhouseClient.query({
+          query: successesQuery,
+          query_params: { date_from: dateFrom, date_to: dateTo },
+          format: "JSONEachRow",
+        }),
+        clickhouseClient.query({
+          query: failuresQuery,
+          query_params: { date_from: dateFrom, date_to: dateTo },
+          format: "JSONEachRow",
+        }),
+      ]);
 
-    const [runningData, waitingData, successData, failureData] = await Promise.all([
-      runningResult.json(),
-      waitingResult.json(),
-      successResult.json(),
-      failureResult.json(),
-    ]);
+    const [runningData, waitingData, successData, failureData] =
+      await Promise.all([
+        runningResult.json(),
+        waitingResult.json(),
+        successResult.json(),
+        failureResult.json(),
+      ]);
 
     return {
       runningTasks: Number((runningData[0] as { count: string })?.count || "0"),
-      waitingInQueue: Number((waitingData[0] as { count: string })?.count || "0"),
+      waitingInQueue: Number(
+        (waitingData[0] as { count: string })?.count || "0",
+      ),
       successes: Number((successData[0] as { count: string })?.count || "0"),
       failures: Number((failureData[0] as { count: string })?.count || "0"),
     };
@@ -475,7 +479,7 @@ export const getRunGraphData = async ({
 }): Promise<RunGraphData[]> => {
   let interval: string;
   let stepKind: string;
-  
+
   if (timePeriod <= 1) {
     interval = "toStartOfHour(created_at)";
     stepKind = "hour";
@@ -547,9 +551,7 @@ function fillRunGraphData(
         : startOfDay(d).toISOString().slice(0, 19).replace("T", " ");
 
     if (map.has(ts)) {
-      filled.push(
-        map.get(ts) as { timestamp: string; runCount: number },
-      );
+      filled.push(map.get(ts) as { timestamp: string; runCount: number });
     } else {
       filled.push({ timestamp: ts, runCount: 0 });
     }
