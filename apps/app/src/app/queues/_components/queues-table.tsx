@@ -112,31 +112,32 @@ export function QueuesTable() {
           </Button>
         </div>
       </div>
-      <Table className="table-fixed w-full">
-        <TableHeader>
-          <TableRow>
-            <TableHead style={{ width: "200px" }}>Queue Name</TableHead>
-            <TableHead style={{ width: "120px" }}>Status</TableHead>
-            <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
-            <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
-            <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
-            <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>
-            <TableHead style={{ width: "70px" }}>Trend</TableHead>
-            <TableHead style={{ width: "90px" }}></TableHead>
-          </TableRow>
-        </TableHeader>
+      <div className="relative overflow-hidden rounded-lg border">
+        <Table className="table-fixed w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead style={{ width: "200px" }}>Queue Name</TableHead>
+              <TableHead style={{ width: "120px" }}>Status</TableHead>
+              <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
+              <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
+              <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
+              <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>
+              <TableHead style={{ width: "70px" }}>Trend</TableHead>
+              <TableHead style={{ width: "90px" }}></TableHead>
+            </TableRow>
+          </TableHeader>
         <TableBody>
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode="wait">
             {data?.queues.map((queue) => (
               <motion.tr
                 key={queue.name}
                 className="group border-b transition-colors cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
                 onClick={() => handleQueueClick(queue.name)}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                layoutId={queue.name}
               >
                 <TableCell className="font-medium">{queue.name}</TableCell>
                 <TableCell>
@@ -191,7 +192,8 @@ export function QueuesTable() {
             ))}
           </AnimatePresence>
         </TableBody>
-      </Table>
+        </Table>
+      </div>
     </div>
   );
 }
