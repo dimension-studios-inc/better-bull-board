@@ -33,7 +33,7 @@ We are clearing the data from the following entities:
 This project is designed to be easily deployable on Kubernetes. All necessary configuration files are provided in the `k8s/` directory.
 
 **Quick Start:**
-1. Build and push Docker images to your registry (see [Docker Build Guide](DOCKER_BUILD_GUIDE.md))
+1. Build and push Docker images to your registry or use the existing images (see [Docker Build Guide](DOCKER_BUILD_GUIDE.md))
 2. Update configuration files with your registry URLs and domain
 3. Deploy to Kubernetes using the provided manifests
 
