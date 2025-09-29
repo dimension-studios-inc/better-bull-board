@@ -6,7 +6,7 @@ export const getLastRunDataInput = z.object({
 });
 
 export const getLastRunDataOutput = z.object({
-  data: z.record(z.unknown()).nullable(),
+  data: z.record(z.string(), z.unknown()).nullable(),
   jobName: z.string().nullable(),
 });
 

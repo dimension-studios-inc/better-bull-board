@@ -1,11 +1,18 @@
 "use client";
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
+import { useMemo, useState } from "react";
 import { getTagsApiRoute } from "~/app/api/tags/schemas";
+import { QueueSelector } from "~/components/queue-selector";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Combobox, type ComboboxOption } from "~/components/ui/combobox";
@@ -15,7 +22,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
 import { apiFetch } from "~/lib/utils/client";
 import type { TRunFilters } from "./types";
 
@@ -46,36 +52,6 @@ export function RunsFilters({
   const [statusSearch, setStatusSearch] = useState("");
   const [tagsSearch, setTagsSearch] = useState("");
 
-  const {
-    data: queues,
-    isLoading,
-    isFetching: isQueuesFetching,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["queues/table", queueSearch],
-    queryFn: ({ pageParam }: { pageParam: string | null }) =>
-      apiFetch({
-        apiRoute: getQueuesTableApiRoute,
-        body: {
-          search: queueSearch,
-          cursor: pageParam,
-          timePeriod: "1",
-        },
-      })(),
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
-    initialPageParam: null,
-  });
-
-  const { loaderRef } = useInfiniteScroll({
-    fetchNextPage: fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    watchState: [queueOpen],
-    enabled: queueOpen,
-  });
-
   const { data: tagsData, isFetching: isTagsFetching } = useQuery({
     queryKey: ["tags", tagsSearch],
     queryFn: apiFetch({
@@ -84,20 +60,6 @@ export function RunsFilters({
     }),
     enabled: tagsOpen || tagsSearch.length > 0,
   });
-
-  const queueOptions: ComboboxOption[] = useMemo(() => {
-    const options = [{ value: "all", label: "All Queues" }];
-    if (queues?.pages) {
-      queues.pages.forEach((page) => {
-        if (page?.queues) {
-          page.queues.forEach((queue) => {
-            options.push({ value: queue.name, label: queue.name });
-          });
-        }
-      });
-    }
-    return options;
-  }, [queues]);
 
   const statusOptions: ComboboxOption[] = [
     { value: "all", label: "All Statuses" },
@@ -111,11 +73,6 @@ export function RunsFilters({
     return tagsData.tags.map((tag) => ({ value: tag, label: tag }));
   }, [tagsData]);
 
-  const renderQueueValue = (value: string) => {
-    const option = queueOptions?.find((opt) => opt.value === value);
-    return option ? option.label : isLoading ? "Loading..." : "";
-  };
-
   const renderStatusValue = (value: string) => {
     const option = statusOptions?.find((opt) => opt.value === value);
     return option ? option.label : "All Statuses";
@@ -127,7 +84,7 @@ export function RunsFilters({
     if (filters.queue && filters.queue !== "all") {
       activeFilters.push({
         key: "queue",
-        label: renderQueueValue(filters.queue),
+        label: filters.queue,
         value: filters.queue,
       });
     }
@@ -209,8 +166,8 @@ export function RunsFilters({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-4" align="end">
-            <div className="space-y-4">
+          <PopoverContent className="p-4 w-max" align="start">
+            <div className="space-y-4 w-80">
               <div className="font-medium text-sm">Filter Options</div>
 
               <div className="space-y-3">
@@ -218,26 +175,18 @@ export function RunsFilters({
                   <label className="text-sm font-medium mb-2 block">
                     Queue
                   </label>
-                  <Combobox
+                  <QueueSelector
                     value={filters.queue}
                     onValueChange={(value) => setFilters({ queue: value })}
-                    options={queueOptions}
-                    placeholder="All Queues"
-                    noOptionsMessage="No queues found"
-                    searchPlaceholder="Search queues..."
                     search={queueSearch}
                     setSearch={setQueueSearch}
                     open={queueOpen}
                     setOpen={setQueueOpen}
-                    renderValue={renderQueueValue}
+                    placeholder="All Queues"
                     className="w-full"
-                    isFetching={isQueuesFetching}
-                    infiniteLoadingProps={{
-                      hasNextPage,
-                      fetchNextPage,
-                      isFetchingNextPage,
-                      loaderRef: loaderRef as React.RefObject<HTMLDivElement>,
-                    }}
+                    popoverContentClassName="w-80"
+                    includeAllOption={true}
+                    allOptionLabel="All Queues"
                   />
                 </div>
 
@@ -258,6 +207,7 @@ export function RunsFilters({
                     setOpen={setStatusOpen}
                     renderValue={renderStatusValue}
                     className="w-full"
+                    popoverContentClassName="w-80"
                   />
                 </div>
 
@@ -311,6 +261,7 @@ export function RunsFilters({
                       renderValue={() => ""}
                       className="w-full"
                       isFetching={isTagsFetching}
+                      popoverContentClassName="w-80"
                     />
                   </div>
                 </div>
@@ -359,7 +310,7 @@ export function RunsFilters({
           variant="outline"
           size="sm"
           onClick={handlePrevPage}
-          disabled={isLoading || (!runs?.prevCursor && !filters.cursor)}
+          disabled={!runs?.prevCursor && !filters.cursor}
         >
           <ChevronLeft className="h-4 w-4" />
           Previous
@@ -368,7 +319,7 @@ export function RunsFilters({
           variant="outline"
           size="sm"
           onClick={handleNextPage}
-          disabled={isLoading || !runs?.nextCursor}
+          disabled={!runs?.nextCursor}
         >
           Next
           <ChevronRight className="h-4 w-4" />
