@@ -28,7 +28,7 @@ export const stopStalledRuns = async () => {
         `Found ${stalledRuns.length} potential stalled runs (> 24h)`,
       );
     for (const _run of stalledRuns) {
-      const queue = new Queue(_run.queue);
+      const queue = new Queue(_run.queue, { connection: redis });
       const job = await queue.getJob(_run.id);
       if (!job) {
         logger.warn(`Run ${_run.id} is stalled, updating status`);

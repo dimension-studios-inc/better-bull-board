@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthGuard } from "~/components/auth-guard";
 import { Toaster } from "~/components/ui/sonner";
+import { env } from "~/lib/env";
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -35,7 +36,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NuqsAdapter>
-          <Providers>
+          <Providers WEBSOCKET_URL={env.WEBSOCKET_URL}>
             <AuthGuard pathname={pathname}>{children}</AuthGuard>
           </Providers>
           <Toaster />

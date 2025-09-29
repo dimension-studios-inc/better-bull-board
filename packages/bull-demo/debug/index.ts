@@ -1,6 +1,6 @@
 import { logger } from "@rharkor/logger";
 import { queue } from "../src/demo2/queue";
-import { deleteAllSchedulers, registerScheduler } from "../src/utils";
+import { deleteAllSchedulers } from "../src/utils";
 
 const main = async () => {
   await logger.init();

@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bbb-ingest
+  namespace: better-bull-board
+  labels:
+    app: bbb-ingest
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: bbb-ingest
+  template:
+    metadata:
+      labels:
+        app: bbb-ingest
+    spec:
+      containers:
+      - name: bbb-ingest
+        image: public.ecr.aws/n5q7l0s4/better-bull-board-ingest:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: bbb-ingest-config
+        - secretRef:
+            name: bbb-ingest-secret
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1024Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bbb-ingest-service
+  namespace: better-bull-board
+  labels:
+    app: bbb-ingest
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: bbb-ingest
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bbb-ingest-ingress
+  namespace: better-bull-board
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-nginx
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - "wss.bbb.k3s.dimensionstudios.co"
+      secretName: k3s-letsencrypt-tls
+  rules:
+    - host: "wss.bbb.k3s.dimensionstudios.co"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bbb-ingest-service
+                port:
+                  number: 8080

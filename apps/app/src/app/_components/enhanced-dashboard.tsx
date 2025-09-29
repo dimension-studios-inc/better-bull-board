@@ -1,16 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { TimePeriodSelector, type TimePeriod } from "~/components/time-period-selector";
+import {
+  type TimePeriod,
+  TimePeriodSelector,
+} from "~/components/time-period-selector";
 import { EnhancedStatsCards } from "./enhanced-stats-cards";
-import { QueuePerformanceTable } from "./queue-performance-table";
-import { QueueDurationChart } from "./queue-duration-chart";
 import { QueueCountChart } from "./queue-count-chart";
+import { QueueDurationChart } from "./queue-duration-chart";
+import { QueuePerformanceTable } from "./queue-performance-table";
 import { RunGraphChart } from "./run-graph-chart";
 
 export function EnhancedDashboard() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("7");
-  const days = parseInt(timePeriod);
+  const days = parseInt(timePeriod, 10);
 
   return (
     <div className="space-y-6">

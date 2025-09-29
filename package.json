@@ -7,7 +7,9 @@
     "lint": "biome check",
     "format": "biome format --write",
     "type-check": "turbo run type-check",
-    "setup": "turbo run build --filter='@better-bull-board/*'^..."
+    "setup": "turbo run build --filter='@better-bull-board/*'^...",
+    "build:app": "turbo run build --filter=@better-bull-board/app --env-mode=loose",
+    "build:ingest": "turbo run build --filter=@better-bull-board/ingest --env-mode=loose"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",

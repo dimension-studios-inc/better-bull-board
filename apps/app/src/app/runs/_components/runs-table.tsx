@@ -57,8 +57,8 @@ export function RunsTable() {
       Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "cursor">
     >,
   ) => {
-    const urlUpdate: Record<string, any> = {};
-    
+    const urlUpdate: Record<string, unknown> = {};
+
     for (const [key, value] of Object.entries(newFilters)) {
       if (key === "tags" && Array.isArray(value)) {
         urlUpdate[key] = value.length > 0 ? value.join(",") : "";
@@ -66,7 +66,7 @@ export function RunsTable() {
         urlUpdate[key] = value;
       }
     }
-    
+
     setUrlFilters(urlUpdate);
   };
 

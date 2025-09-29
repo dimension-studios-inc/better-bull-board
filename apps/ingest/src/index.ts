@@ -2,6 +2,7 @@ import { logger } from "@rharkor/logger";
 import { handleChannel } from "./channels";
 import { redis } from "./lib/redis";
 import { startWebSocketServer } from "./lib/websocket-server";
+import { migrateDatabases } from "./migration";
 import { clearData } from "./repeats/clear-data";
 import { autoIngestQueues } from "./repeats/queues";
 import { stopStalledRuns } from "./repeats/stalled";
@@ -11,7 +12,7 @@ const listenToEvents = async () => {
   const subscriber = redis.duplicate();
   await subscriber.connect().catch(() => {});
 
-  subscriber.psubscribe("bbb:worker:*", (error) => {
+  await subscriber.psubscribe("bbb:worker:*", (error) => {
     if (error) throw error;
     logger.log("📥 Ingesting data from Redis");
   });
@@ -20,6 +21,9 @@ const listenToEvents = async () => {
 
 const main = async () => {
   await logger.init();
+
+  // Run database migrations first (only in production)
+  await migrateDatabases();
 
   //! Do not await
   listenToEvents();

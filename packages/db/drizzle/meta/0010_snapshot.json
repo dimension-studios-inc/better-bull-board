@@ -93,12 +93,8 @@
           "name": "job_logs_job_run_id_job_runs_id_fk",
           "tableFrom": "job_logs",
           "tableTo": "job_runs",
-          "columnsFrom": [
-            "job_run_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_run_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -505,12 +501,8 @@
           "name": "job_schedulers_queue_id_queues_id_fk",
           "tableFrom": "job_schedulers",
           "tableTo": "queues",
-          "columnsFrom": [
-            "queue_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["queue_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -589,23 +581,12 @@
     "public.job_status": {
       "name": "job_status",
       "schema": "public",
-      "values": [
-        "active",
-        "completed",
-        "failed",
-        "waiting"
-      ]
+      "values": ["active", "completed", "failed", "waiting"]
     },
     "public.log_level": {
       "name": "log_level",
       "schema": "public",
-      "values": [
-        "log",
-        "debug",
-        "info",
-        "warn",
-        "error"
-      ]
+      "values": ["log", "debug", "info", "warn", "error"]
     }
   },
   "schemas": {},
