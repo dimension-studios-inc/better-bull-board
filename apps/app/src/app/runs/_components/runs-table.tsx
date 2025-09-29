@@ -138,30 +138,31 @@ export function RunsTable() {
         }
       />
 
-      <Table className="table-fixed w-full">
-        <TableHeader>
-          <TableRow>
-            <TableHead style={{ width: "50px" }}>
-              <Checkbox
-                checked={isAllSelected}
-                indeterminate={isPartiallySelected}
-                onCheckedChange={handleSelectAll}
-                aria-label="Select all jobs"
-              />
-            </TableHead>
-            <TableHead style={{ width: "260px" }}>Job ID</TableHead>
-            <TableHead style={{ width: "120px" }}>Queue</TableHead>
-            <TableHead style={{ width: "180px" }}>Tags</TableHead>
-            <TableHead style={{ width: "120px" }}>Status</TableHead>
-            <TableHead style={{ width: "120px" }}>Duration</TableHead>
-            <TableHead style={{ width: "140px" }}>Created</TableHead>
-            <TableHead style={{ width: "140px" }}>Finished</TableHead>
-            <TableHead style={{ width: "140px" }}>Error</TableHead>
-            <TableHead style={{ width: "90px" }}>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
+      <div className="relative overflow-hidden rounded-lg border">
+        <Table className="table-fixed w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead style={{ width: "50px" }}>
+                <Checkbox
+                  checked={isAllSelected}
+                  indeterminate={isPartiallySelected}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all jobs"
+                />
+              </TableHead>
+              <TableHead style={{ width: "260px" }}>Job ID</TableHead>
+              <TableHead style={{ width: "120px" }}>Queue</TableHead>
+              <TableHead style={{ width: "180px" }}>Tags</TableHead>
+              <TableHead style={{ width: "120px" }}>Status</TableHead>
+              <TableHead style={{ width: "120px" }}>Duration</TableHead>
+              <TableHead style={{ width: "140px" }}>Created</TableHead>
+              <TableHead style={{ width: "140px" }}>Finished</TableHead>
+              <TableHead style={{ width: "140px" }}>Error</TableHead>
+              <TableHead style={{ width: "90px" }}>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
         <TableBody>
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode="wait">
             {jobs.map((run) => (
               <motion.tr
                 key={run.id}
@@ -170,11 +171,11 @@ export function RunsTable() {
                   selectedJobIds.has(run.job_id) &&
                     "bg-blue-50 dark:bg-blue-950",
                 )}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                layoutId={run.id}
                 onClick={() => handleRowClick(run.id)}
               >
                 <TableCell>
@@ -250,7 +251,8 @@ export function RunsTable() {
             ))}
           </AnimatePresence>
         </TableBody>
-      </Table>
+        </Table>
+      </div>
     </div>
   );
 }
