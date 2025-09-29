@@ -37,22 +37,22 @@ export class Worker<
     super(name, processor, opts, Connection);
     this.ioredis = opts.ioredis;
     this.getJobTags = opts.getJobTags;
-    this.startLivenessProbe();
+    // this.startLivenessProbe();
     this.waitingJobsEvent(name);
   }
 
-  private startLivenessProbe() {
-    setInterval(() => {
-      const workerId = this.id;
+  // private startLivenessProbe() {
+  //   setInterval(() => {
+  //     const workerId = this.id;
 
-      this.ioredis.publish(
-        "bbb:worker:liveness",
-        JSON.stringify({
-          id: workerId,
-        }),
-      );
-    }, 5000);
-  }
+  //     this.ioredis.publish(
+  //       "bbb:worker:liveness",
+  //       JSON.stringify({
+  //         id: workerId,
+  //       }),
+  //     );
+  //   }, 5000);
+  // }
 
   private async waitingJobsEvent(queueName: string) {
     const listener = this.ioredis.duplicate();
