@@ -48,6 +48,7 @@ export interface ComboboxProps {
   setOpen: (open: boolean) => void;
   renderOption?: (option: ComboboxOption) => React.ReactNode;
   hideCheckIcon?: boolean;
+  popoverContentClassName?: string;
 }
 
 export function Combobox({
@@ -69,6 +70,7 @@ export function Combobox({
   setOpen,
   renderOption,
   hideCheckIcon,
+  popoverContentClassName,
 }: ComboboxProps) {
   return (
     <Popover onOpenChange={setOpen} open={open}>
@@ -85,7 +87,7 @@ export function Combobox({
           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className={cn("w-[200px] p-0", popoverContentClassName)}>
         <Command shouldFilter={false}>
           <CommandInput
             onValueChange={setSearch}
