@@ -1,8 +1,9 @@
 "use client";
 
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Filter, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { getTagsApiRoute } from "~/app/api/tags/schemas";
 import { Badge } from "~/components/ui/badge";
@@ -36,6 +37,7 @@ export function RunsFilters({
   };
   startEndContent?: React.ReactNode;
 }) {
+  const router = useRouter();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -345,6 +347,14 @@ export function RunsFilters({
         {startEndContent}
       </div>
       <div className="flex items-center gap-2">
+        <Button
+          onClick={() => router.push("/runs/create")}
+          size="sm"
+          className="gap-1"
+        >
+          <Plus className="h-4 w-4" />
+          Create Run
+        </Button>
         <Button
           variant="outline"
           size="sm"
