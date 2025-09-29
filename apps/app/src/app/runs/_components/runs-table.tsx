@@ -137,18 +137,19 @@ export function RunsTable() {
           )
         }
       />
-
       <div className="relative overflow-hidden rounded-lg border">
         <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow>
               <TableHead style={{ width: "50px" }}>
-                <Checkbox
-                  checked={isAllSelected}
-                  indeterminate={isPartiallySelected}
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all jobs"
-                />
+                <div className="flex items-center">
+                  <Checkbox
+                    checked={isAllSelected}
+                    indeterminate={isPartiallySelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all jobs"
+                  />
+                </div>
               </TableHead>
               <TableHead style={{ width: "260px" }}>Job ID</TableHead>
               <TableHead style={{ width: "120px" }}>Queue</TableHead>
