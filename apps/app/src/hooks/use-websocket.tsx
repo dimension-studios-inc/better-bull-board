@@ -2,7 +2,6 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { env } from "~/lib/env";
 
 export type WebSocketMessage = {
   type:
@@ -19,6 +18,7 @@ export type WebSocketMessage = {
 };
 
 export interface UseWebSocketOptions {
+  WEBSOCKET_URL: string;
   onMessage?: (message: WebSocketMessage) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -28,8 +28,9 @@ export interface UseWebSocketOptions {
   autoReconnect?: boolean;
 }
 
-export const useWebSocket = (options: UseWebSocketOptions = {}) => {
+export const useWebSocket = (options: UseWebSocketOptions) => {
   const {
+    WEBSOCKET_URL,
     onMessage,
     onConnect,
     onDisconnect,
@@ -82,7 +83,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     }
 
     try {
-      const ws = new WebSocket(env.NEXT_PUBLIC_WEBSOCKET_URL);
+      const ws = new WebSocket(WEBSOCKET_URL);
       websocketRef.current = ws;
 
       ws.onopen = () => {
@@ -149,6 +150,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     maxReconnectAttempts,
     reconnectDelay,
     invalidateQueries,
+    WEBSOCKET_URL,
   ]);
 
   const disconnect = useCallback(() => {
@@ -193,10 +195,10 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
 export const WebSocketProvider = ({
   children,
-  options = {},
+  options,
 }: {
   children: React.ReactNode;
-  options?: UseWebSocketOptions;
+  options: UseWebSocketOptions;
 }) => {
   useWebSocket(options);
   return <>{children}</>;

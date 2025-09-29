@@ -25,7 +25,13 @@ const getQueryClient = ({
   return clientQueryClientSingleton;
 };
 
-export const Providers = ({ children }: { children: React.ReactNode }) => {
+export const Providers = ({
+  children,
+  WEBSOCKET_URL,
+}: {
+  children: React.ReactNode;
+  WEBSOCKET_URL: string;
+}) => {
   const router = useRouter();
   const queryClient = getQueryClient({
     onRedirect: (path) => {
@@ -36,7 +42,13 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
-        <WebSocketProvider>{children}</WebSocketProvider>
+        <WebSocketProvider
+          options={{
+            WEBSOCKET_URL,
+          }}
+        >
+          {children}
+        </WebSocketProvider>
       </QueryClientProvider>
     </AuthProvider>
   );

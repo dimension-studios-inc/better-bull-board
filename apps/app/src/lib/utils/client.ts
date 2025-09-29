@@ -2,7 +2,6 @@ import clsx, { type ClassValue } from "clsx";
 import { formatDuration } from "date-fns";
 import { twMerge } from "tailwind-merge";
 import type { output, ZodType } from "zod";
-import { env } from "../env";
 
 export type TApiRoute = {
   route:
@@ -40,7 +39,7 @@ export function apiFetch<
     const parsedBody = inputSchema?.parse(body);
     const parsedUrlParams = urlSchema?.parse(urlParams);
     const data = await fetch(
-      `${env.NEXT_PUBLIC_API_URL}${typeof apiRoute.route === "function" ? apiRoute.route(parsedUrlParams as US) : apiRoute.route}`,
+      `${typeof apiRoute.route === "function" ? apiRoute.route(parsedUrlParams as US) : apiRoute.route}`,
       {
         method: apiRoute.method,
         body:

@@ -23,3 +23,35 @@ As for clickhouse we have a retention policy of 30 days. For postgres the ingest
 We are clearing the data from the following entities:
 - Job Runs
 - Job Logs
+
+## Deployment
+
+### Kubernetes Deployment
+
+This project is designed to be easily deployable on Kubernetes. All necessary configuration files are provided in the `k8s/` directory.
+
+**Quick Start:**
+1. Build and push Docker images to your registry (see [Docker Build Guide](DOCKER_BUILD_GUIDE.md))
+2. Update configuration files with your registry URLs and domain
+3. Deploy to Kubernetes using the provided manifests
+
+For detailed deployment instructions, see [Kubernetes Deployment Guide](KUBERNETES_DEPLOYMENT.md).
+
+**Architecture:**
+- **PostgreSQL**: Database with custom extensions (pgvector, PostGIS, pg_uuidv7)
+- **ClickHouse**: Analytics database for storing job metrics and logs
+- **Redis**: Queue management and caching
+- **App**: Next.js frontend application (horizontally scalable)
+- **Ingest**: Background service for data ingestion
+
+### Local Development
+
+For local development, use the Docker Compose setup:
+
+```bash
+# Start the local development environment
+docker-compose -f docker/compose.local.yaml up -d
+
+# Run the development servers
+npm run dev
+```

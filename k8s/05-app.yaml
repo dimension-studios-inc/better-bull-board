@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bbb-app
+  namespace: better-bull-board
+  labels:
+    app: better-bull-board-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bbb-app
+  template:
+    metadata:
+      labels:
+        app: bbb-app
+    spec:
+      containers:
+      - name: app
+        image: public.ecr.aws/n5q7l0s4/better-bull-board-app:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: bbb-app-config
+        - secretRef:
+            name: bbb-app-secret
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bbb-app-service
+  namespace: better-bull-board
+  labels:
+    app: bbb-app
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+  selector:
+    app: bbb-app
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bbb-app-ingress
+  namespace: better-bull-board
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-nginx
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - "bbb.k3s.dimensionstudios.co"
+      secretName: k3s-letsencrypt-tls
+  rules:
+    - host: "bbb.k3s.dimensionstudios.co"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bbb-app-service
+                port:
+                  number: 80
