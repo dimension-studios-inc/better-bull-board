@@ -7,6 +7,7 @@ import {
   type WorkerOptions,
 } from "bullmq";
 import type Redis from "ioredis";
+import { onlyMaster } from "./lib/master";
 
 export class Worker<
   // biome-ignore lint/suspicious/noExplicitAny: extends of bullmq
@@ -38,6 +39,7 @@ export class Worker<
     this.ioredis = opts.ioredis;
     this.getJobTags = opts.getJobTags;
     // this.startLivenessProbe();
+
     this.waitingJobsEvent(name);
   }
 
@@ -55,43 +57,75 @@ export class Worker<
   // }
 
   private async waitingJobsEvent(queueName: string) {
-    const listener = this.ioredis.duplicate();
-    await listener.connect().catch(() => {});
     const queue = new Queue(queueName, { connection: this.ioredis });
-    listener.subscribe(`bbb:queue:${queueName}:job:waiting`, (err) => {
-      if (err) {
-        logger.error(`Error subscribing to waiting jobs: ${err}`);
-        return;
-      }
+
+    // Master election for this queue
+    const isMaster = await onlyMaster({
+      id: this.id,
+      lockKey: `bbb:waiting-jobs-lock:${queueName}`,
+      lockTtlMs: 5000,
+      lockRenewMs: 3000,
+      redis: this.ioredis,
     });
-    listener.on("message", async (_channel, message) => {
-      const { jobId } = JSON.parse(message) as { jobId: string };
-      const job = await queue.getJob(jobId);
-      if (!job) {
-        logger.error(`Job not found: ${jobId}`);
-        return;
+
+    let listener: Redis | null = null;
+    let subscribed = false;
+
+    const ensureSubscription = async () => {
+      if (isMaster() && !subscribed) {
+        // ✅ we became master → subscribe
+        listener ??= this.ioredis.duplicate();
+        await listener.connect().catch(() => {});
+
+        listener.subscribe(`bbb:queue:${queueName}:job:waiting`, (err) => {
+          if (err) {
+            logger.error(`Error subscribing: ${err}`);
+            return;
+          }
+          logger.info(`[${this.id}] subscribed to ${queueName}`);
+          subscribed = true;
+        });
+
+        listener.on("message", async (_channel, message) => {
+          const { jobId } = JSON.parse(message) as { jobId: string };
+          const job = await queue.getJob(jobId);
+          if (!job) {
+            logger.error(`Job not found: ${jobId}`);
+            return;
+          }
+
+          const tags = this.getJobTags?.(
+            job as Job<DataType, ResultType, NameType>,
+          ).filter(Boolean);
+
+          await this.ioredis.publish(
+            "bbb:worker:job",
+            JSON.stringify({
+              id: this.id,
+              job,
+              tags,
+              queueName,
+              isWaiting: true,
+            }),
+          );
+
+          await this.ioredis.publish(
+            `bbb:queue:${queueName}:job:waiting:${jobId}`,
+            JSON.stringify({ id: this.id }),
+          );
+        });
+      } else if (!isMaster() && subscribed && listener) {
+        // ❌ we lost master → unsubscribe
+        await listener
+          .unsubscribe(`bbb:queue:${queueName}:job:waiting`)
+          .catch(() => {});
+        subscribed = false;
+        logger.info(`[${this.id}] unsubscribed from ${queueName}`);
       }
-      const tags = this.getJobTags?.(
-        job as Job<DataType, ResultType, NameType>,
-      ).filter(Boolean);
-      this.ioredis.publish(
-        "bbb:worker:job",
-        JSON.stringify({
-          id: this.id,
-          job,
-          tags,
-          queueName,
-          isWaiting: true,
-        }),
-      );
-      // Answer the ingester
-      this.ioredis.publish(
-        `bbb:queue:${queueName}:job:waiting:${jobId}`,
-        JSON.stringify({
-          id: this.id,
-        }),
-      );
-    });
+    };
+
+    // run every 2s (tweak to your needs)
+    setInterval(ensureSubscription, 2000);
   }
 
   override async processJob(
