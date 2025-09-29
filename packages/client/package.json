@@ -2,6 +2,10 @@
   "name": "@better-bull-board/client",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
