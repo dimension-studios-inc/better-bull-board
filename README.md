@@ -55,3 +55,26 @@ docker-compose -f docker/compose.local.yaml up -d
 # Run the development servers
 npm run dev
 ```
+
+## Publishing
+
+### Publishing the Client Package
+
+To publish the `@better-bull-board/client` package to npm for others to use:
+
+1. Navigate to the client package directory:
+   ```bash
+   cd packages/client
+   ```
+
+2. Build the package:
+   ```bash
+   npm run build
+   ```
+
+3. Publish to npm:
+   ```bash
+   npm publish
+   ```
+
+**Note**: Make sure you're logged in to npm (`npm login`) and have the appropriate permissions to publish under the `@better-bull-board` scope. You may also want to update the version in `package.json` before publishing.
