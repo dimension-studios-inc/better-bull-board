@@ -116,12 +116,14 @@ export function QueuesTable() {
         <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow>
-              <TableHead style={{ width: "200px" }}>Queue Name</TableHead>
-              <TableHead style={{ width: "120px" }}>Status</TableHead>
-              <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
-              <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
-              <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
-              <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>
+              <TableHead style={{ width: "160px" }}>Queue Name</TableHead>
+              <TableHead style={{ width: "100px" }}>Status</TableHead>
+              <TableHead style={{ width: "100px" }}>Scheduler</TableHead>
+              <TableHead style={{ width: "100px" }}>Active Jobs</TableHead>
+              <TableHead style={{ width: "100px" }}>Failed Jobs</TableHead>
+              <TableHead style={{ width: "100px" }}>Completed Jobs</TableHead>
+              <TableHead style={{ width: "100px" }}>Workers</TableHead>
+              <TableHead style={{ width: "120px" }}>Resource Usage</TableHead>
               <TableHead style={{ width: "70px" }}>Trend</TableHead>
               <TableHead style={{ width: "90px" }}></TableHead>
             </TableRow>
@@ -176,6 +178,38 @@ export function QueuesTable() {
                   <span className="font-mono text-green-600">
                     {queue.completedJobs}
                   </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Active:</span>
+                      <span className="font-mono text-sm">
+                        {queue.workers.active}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Total:</span>
+                      <span className="font-mono text-sm text-muted-foreground">
+                        {queue.workers.total}
+                      </span>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">CPU:</span>
+                      <span className="font-mono text-sm">
+                        {queue.workers.averageCpuUsage.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">MEM:</span>
+                      <span className="font-mono text-sm">
+                        {queue.workers.averageMemoryUsage.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <QueueMiniChart data={queue.chartData} />

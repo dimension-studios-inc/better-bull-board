@@ -7,6 +7,8 @@ import {
   type WorkerOptions,
 } from "bullmq";
 import type Redis from "ioredis";
+import * as os from "os";
+import * as process from "process";
 import { onlyMaster } from "./lib/master";
 
 export class Worker<
@@ -20,6 +22,8 @@ export class Worker<
   private getJobTags?: (
     job: Job<DataType, ResultType, NameType>,
   ) => (string | undefined)[];
+  private queueName: string;
+  private livenessInterval?: NodeJS.Timeout;
 
   constructor(
     name: string,
@@ -38,23 +42,72 @@ export class Worker<
     super(name, processor, opts, Connection);
     this.ioredis = opts.ioredis;
     this.getJobTags = opts.getJobTags;
-    // this.startLivenessProbe();
+    this.queueName = name;
+    this.startLivenessProbe();
 
     this.waitingJobsEvent(name);
   }
 
-  // private startLivenessProbe() {
-  //   setInterval(() => {
-  //     const workerId = this.id;
+  private startLivenessProbe() {
+    this.livenessInterval = setInterval(() => {
+      this.sendLivenessProbe();
+    }, 5000); // Send liveness probe every 5 seconds
+    
+    // Send initial probe
+    this.sendLivenessProbe();
+  }
 
-  //     this.ioredis.publish(
-  //       "bbb:worker:liveness",
-  //       JSON.stringify({
-  //         id: workerId,
-  //       }),
-  //     );
-  //   }, 5000);
-  // }
+  private getSystemMetrics() {
+    const memUsage = process.memoryUsage();
+    const cpuUsage = process.cpuUsage();
+    
+    // Get total system memory
+    const totalMemory = os.totalmem();
+    
+    // Calculate CPU percentage (simplified - would need more sophisticated tracking for accurate CPU%)
+    const cpuPercent = (cpuUsage.user + cpuUsage.system) / 1000000; // Convert to seconds, but this is cumulative
+    
+    return {
+      memory: {
+        used: memUsage.rss, // Resident Set Size - physical memory currently used
+        max: totalMemory,
+      },
+      cpu: {
+        used: cpuPercent, // This is a simplified representation
+        max: 100,
+      },
+      hostname: os.hostname(),
+      pid: process.pid,
+    };
+  }
+
+  private sendLivenessProbe() {
+    try {
+      const metrics = this.getSystemMetrics();
+      
+      this.ioredis.publish(
+        "bbb:worker:liveness",
+        JSON.stringify({
+          id: this.id,
+          queueName: this.queueName,
+          hostname: metrics.hostname,
+          pid: metrics.pid,
+          memory: metrics.memory,
+          cpu: metrics.cpu,
+          timestamp: new Date().toISOString(),
+        }),
+      );
+    } catch (error) {
+      logger.error("Failed to send liveness probe", { error, workerId: this.id });
+    }
+  }
+
+  override async close() {
+    if (this.livenessInterval) {
+      clearInterval(this.livenessInterval);
+    }
+    return super.close();
+  }
 
   private async waitingJobsEvent(queueName: string) {
     const queue = new Queue(queueName, { connection: this.ioredis });

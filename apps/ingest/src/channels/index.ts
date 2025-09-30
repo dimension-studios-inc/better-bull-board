@@ -1,11 +1,10 @@
 import { logger } from "@rharkor/logger";
 import { handleJobChannel } from "./job";
 import { handleLogChannel } from "./log";
+import { handleLivenessChannel } from "./liveness";
 
 const CHANNELS = {
-  "bbb:worker:liveness": async (_channel: string, _message: string) => {
-    // Do nothing for now
-  },
+  "bbb:worker:liveness": handleLivenessChannel,
   "bbb:worker:job": handleJobChannel,
   "bbb:worker:job:log": handleLogChannel,
 };

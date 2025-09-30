@@ -25,6 +25,12 @@ export const getQueuesTableOutput = z.object({
           failed: z.number(),
         }),
       ),
+      workers: z.object({
+        total: z.number(),
+        active: z.number(),
+        averageMemoryUsage: z.number(),
+        averageCpuUsage: z.number(),
+      }),
     }),
   ),
   nextCursor: z.string().nullable(),
