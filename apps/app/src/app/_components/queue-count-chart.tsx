@@ -1,12 +1,18 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { getTopQueuesCountApiRoute } from "~/app/api/dashboard/top-queues-count/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { apiFetch } from "~/lib/utils/client";
-import { COLORS } from "./colors";
 
 interface QueueCountChartProps {
   days: number;
@@ -23,8 +29,8 @@ const CustomTooltip = ({
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-background border rounded p-2 shadow-sm text-sm">
-        <p className="font-medium">{data.name}</p>
+      <div className="bg-background border rounded p-3 shadow-lg text-sm">
+        <p className="font-medium">{data.queue}</p>
         <p className="text-muted-foreground">
           Runs: {data.value.toLocaleString()}
         </p>
@@ -45,7 +51,7 @@ export function QueueCountChart({ days }: QueueCountChartProps) {
 
   const chartData =
     queueCounts?.map((item) => ({
-      name: item.queue,
+      queue: item.queue,
       value: item.runCount,
     })) || [];
 
@@ -57,35 +63,34 @@ export function QueueCountChart({ days }: QueueCountChartProps) {
       <CardContent>
         {isLoading ? (
           <div className="h-80 flex items-center justify-center">
-            <Skeleton className="h-80 w-80 rounded-full" />
+            <Skeleton className="h-80 w-full" />
           </div>
         ) : chartData.length > 0 ? (
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={({ name, percent }) =>
-                    `${name} (${((percent as number) * 100).toFixed(0)}%)`
-                  }
-                  labelLine={false}
-                >
-                  {chartData.map((_, index) => (
-                    <Cell
-                      // biome-ignore lint/suspicious/noArrayIndexKey: _
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
+              <BarChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <XAxis
+                  dataKey="queue"
+                  tick={{ fontSize: 12 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) => value.toLocaleString()}
+                />
                 <Tooltip content={CustomTooltip} />
-              </PieChart>
+                <Bar
+                  dataKey="value"
+                  fill="#10b981"
+                  radius={[4, 4, 0, 0]}
+                  className="hover:opacity-80 transition-opacity"
+                />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         ) : (
