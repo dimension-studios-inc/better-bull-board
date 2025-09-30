@@ -37,7 +37,7 @@ export const stopStalledRuns = async () => {
           .set({ status: "failed" })
           .where(eq(jobRunsTable.id, _run.id));
         await clickhouseClient.command({
-          query: `ALTER TABLE job_runs_ch UPDATE status = 'failed' WHERE id = {id:UUID}`,
+          query: `UPDATE job_runs_ch SET status = 'failed' WHERE id = {id:UUID}`,
           query_params: { id: _run.id },
         });
         continue;

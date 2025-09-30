@@ -62,7 +62,7 @@ export const upsertJobRun = async (_jobRun: JobRunData): Promise<void> => {
       result: formattedRun.result ? JSON.stringify(formattedRun.result) : null,
     };
     await clickhouseClient.command({
-      query: `ALTER TABLE job_runs_ch UPDATE ${Object.entries(updateData)
+      query: `UPDATE job_runs_ch SET ${Object.entries(updateData)
         .map(([key]) => `${key} = {${key}:${jobRunsUpdateTypes[key]}}`)
         .join(", ")} WHERE id = {id:UUID}`,
       query_params: { id: formattedRun.id, ...updateData },
@@ -202,7 +202,7 @@ export const searchJobRuns = async (filters: {
 
 export const cancelJobRun = async (jobId: string) => {
   await clickhouseClient.command({
-    query: `ALTER TABLE job_runs_ch UPDATE status = 'failed', error_message = 'Job cancelled' WHERE job_id = {job_id:String}`,
+    query: `UPDATE job_runs_ch SET status = 'failed', error_message = 'Job cancelled' WHERE job_id = {job_id:String}`,
     query_params: { job_id: jobId },
   });
 };
