@@ -21,12 +21,14 @@ services:
       retries: 5
 
   clickhouse:
-    image: bitnami/clickhouse:latest
+    build:
+      context: ./clickhouse
+      dockerfile: Dockerfile
     container_name: better-bull-board_clickhouse
     restart: unless-stopped
     environment:
-      CLICKHOUSE_ADMIN_USER: default
-      CLICKHOUSE_ADMIN_PASSWORD: password
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
     ports:
       - "8123:8123"
       - "9000:9000"

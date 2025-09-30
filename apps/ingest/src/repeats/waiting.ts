@@ -24,13 +24,13 @@ async function attachQueueListener(queueName: string) {
       logger.warn(
         `No worker responded for job ${jobId}, not inserting into bbb`,
       );
-      await listener.unsubscribe(responseChannel);
+      await listener.quit();
     }, 1000);
 
     listener.on("message", async (channel) => {
       if (channel === responseChannel) {
         clearTimeout(timeout);
-        await listener.unsubscribe(responseChannel);
+        await listener.quit();
       }
     });
 

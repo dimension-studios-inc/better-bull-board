@@ -30,7 +30,7 @@ export const registerCancellationListener = async (
   });
   return {
     stop: () => {
-      listener.unsubscribe();
+      listener.quit();
     },
   };
 };
@@ -102,7 +102,7 @@ export const cancelJob = async ({
     const cleanup = () => {
       clearTimeout(timeout);
       stopRepeat();
-      listener.unsubscribe();
+      listener.quit();
     };
     // Timeout
     const timeout = setTimeout(() => {
