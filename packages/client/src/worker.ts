@@ -70,6 +70,7 @@ export class Worker<
 
     let listener: Redis | null = null;
     let subscribed = false;
+    const channel = `bbb:queue:${queueName}:job:waiting`;
 
     const ensureSubscription = async () => {
       if (isMaster() && !subscribed) {
@@ -77,12 +78,12 @@ export class Worker<
         listener ??= this.ioredis.duplicate();
         await listener.connect().catch(() => {});
 
-        listener.subscribe(`bbb:queue:${queueName}:job:waiting`, (err) => {
+        listener.subscribe(channel, (err) => {
           if (err) {
             logger.error(`Error subscribing: ${err}`);
             return;
           }
-          logger.info(`[${this.id}] subscribed to ${queueName}`);
+          logger.log(`[${this.id}] subscribed to ${channel}`);
           subscribed = true;
         });
 
@@ -116,11 +117,9 @@ export class Worker<
         });
       } else if (!isMaster() && subscribed && listener) {
         // ❌ we lost master → unsubscribe
-        await listener
-          .unsubscribe(`bbb:queue:${queueName}:job:waiting`)
-          .catch(() => {});
+        await listener.unsubscribe(channel).catch(() => {});
         subscribed = false;
-        logger.info(`[${this.id}] unsubscribed from ${queueName}`);
+        logger.log(`[${this.id}] unsubscribed from ${channel}`);
       }
     };
 
