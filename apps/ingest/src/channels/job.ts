@@ -37,7 +37,6 @@ export const handleJobChannel = async (_channel: string, message: string) => {
       : isWaiting
         ? "waiting"
         : "active";
-    logger.debug(`Job ${job.id} is ${status}`);
     const formatted: z.infer<typeof jobRunsInsertSchema> = {
       workerId: id,
       jobId: job.id,
@@ -67,8 +66,14 @@ export const handleJobChannel = async (_channel: string, message: string) => {
       1_000,
       async (signal) => {
         signal.throwIfAborted();
+        const insertPostresStart = performance.now();
         const jobRun = await upsertJobRun(validated);
+        const insertPostresEnd = performance.now();
+        console.log(
+          `upsertJobRun postgres: ${insertPostresEnd - insertPostresStart}ms`,
+        );
         dbId = jobRun.id;
+        const insertClickhouseStart = performance.now();
         await upsertJobRunCH({
           ...jobRun,
           job_id: jobRun.jobId,
@@ -84,6 +89,10 @@ export const handleJobChannel = async (_channel: string, message: string) => {
           started_at: jobRun.startedAt,
           finished_at: jobRun.finishedAt,
         });
+        const insertClickhouseEnd = performance.now();
+        console.log(
+          `upsertJobRun clickhouse: ${insertClickhouseEnd - insertClickhouseStart}ms`,
+        );
       },
     );
     dbId && redis.publish("bbb:ingest:events:job-refresh", dbId);
