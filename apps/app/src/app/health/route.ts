@@ -1,8 +1,8 @@
+import { clickhouseClient } from "@better-bull-board/clickhouse/client";
+import { db } from "@better-bull-board/db/server";
+import { sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { redis } from "~/lib/redis";
-import { db } from "@better-bull-board/db/server";
-import { clickhouseClient } from "@better-bull-board/clickhouse";
-import { sql } from "drizzle-orm";
 
 interface HealthCheckResult {
   service: string;
@@ -72,7 +72,7 @@ async function checkClickHouse(): Promise<HealthCheckResult> {
 
 export async function GET() {
   const startTime = Date.now();
-  
+
   try {
     // Run all health checks in parallel
     const [redisResult, dbResult, clickhouseResult] = await Promise.all([
@@ -83,10 +83,10 @@ export async function GET() {
 
     const results = [redisResult, dbResult, clickhouseResult];
     const totalResponseTime = Date.now() - startTime;
-    
+
     // Check if all services are healthy
-    const allHealthy = results.every(result => result.status === "healthy");
-    
+    const allHealthy = results.every((result) => result.status === "healthy");
+
     const response = {
       status: allHealthy ? "healthy" : "unhealthy",
       timestamp: new Date().toISOString(),
@@ -95,10 +95,9 @@ export async function GET() {
     };
 
     // Return 200 if all healthy, 503 if any service is unhealthy
-    return NextResponse.json(response, { 
-      status: allHealthy ? 200 : 503 
+    return NextResponse.json(response, {
+      status: allHealthy ? 200 : 503,
     });
-    
   } catch (error) {
     const response = {
       status: "unhealthy",
@@ -107,7 +106,7 @@ export async function GET() {
       error: error instanceof Error ? error.message : "Unknown error",
       services: [],
     };
-    
+
     return NextResponse.json(response, { status: 503 });
   }
 }

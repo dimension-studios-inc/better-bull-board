@@ -1,10 +1,14 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
 import { URL } from "node:url";
-import { logger } from "@rharkor/logger";
-import { redis } from "./redis";
+import { clickhouseClient } from "@better-bull-board/clickhouse/client";
 import { db } from "@better-bull-board/db/server";
-import { clickhouseClient } from "@better-bull-board/clickhouse";
+import { logger } from "@rharkor/logger";
 import { sql } from "drizzle-orm";
+import { redis } from "./redis";
 
 interface HealthCheckResult {
   service: string;
@@ -72,9 +76,12 @@ async function checkClickHouse(): Promise<HealthCheckResult> {
   }
 }
 
-async function handleHealthCheck(): Promise<{ response: string; statusCode: number }> {
+async function handleHealthCheck(): Promise<{
+  response: string;
+  statusCode: number;
+}> {
   const startTime = Date.now();
-  
+
   try {
     // Run all health checks in parallel
     const [redisResult, dbResult, clickhouseResult] = await Promise.all([
@@ -85,10 +92,10 @@ async function handleHealthCheck(): Promise<{ response: string; statusCode: numb
 
     const results = [redisResult, dbResult, clickhouseResult];
     const totalResponseTime = Date.now() - startTime;
-    
+
     // Check if all services are healthy
-    const allHealthy = results.every(result => result.status === "healthy");
-    
+    const allHealthy = results.every((result) => result.status === "healthy");
+
     const response = {
       status: allHealthy ? "healthy" : "unhealthy",
       timestamp: new Date().toISOString(),
@@ -99,9 +106,8 @@ async function handleHealthCheck(): Promise<{ response: string; statusCode: numb
     // Return 200 if all healthy, 503 if any service is unhealthy
     return {
       response: JSON.stringify(response, null, 2),
-      statusCode: allHealthy ? 200 : 503
+      statusCode: allHealthy ? 200 : 503,
     };
-    
   } catch (error) {
     const response = {
       status: "unhealthy",
@@ -110,65 +116,78 @@ async function handleHealthCheck(): Promise<{ response: string; statusCode: numb
       error: error instanceof Error ? error.message : "Unknown error",
       services: [],
     };
-    
+
     return {
       response: JSON.stringify(response, null, 2),
-      statusCode: 503
+      statusCode: 503,
     };
   }
 }
 
 function handleRequest(req: IncomingMessage, res: ServerResponse) {
+  // biome-ignore lint/style/noNonNullAssertion: _
   const url = new URL(req.url!, `http://${req.headers.host}`);
-  
+
   // Enable CORS for health checks
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
     res.writeHead(204);
     res.end();
     return;
   }
-  
-  if (req.method === 'GET' && url.pathname === '/health') {
+
+  if (req.method === "GET" && url.pathname === "/health") {
     handleHealthCheck()
       .then(({ response, statusCode }) => {
-        res.setHeader('Content-Type', 'application/json');
+        res.setHeader("Content-Type", "application/json");
         res.writeHead(statusCode);
         res.end(response);
       })
       .catch((error) => {
-        logger.error('Health check error:', error);
-        res.setHeader('Content-Type', 'application/json');
+        logger.error("Health check error:", error);
+        res.setHeader("Content-Type", "application/json");
         res.writeHead(500);
-        res.end(JSON.stringify({
-          status: "unhealthy",
-          error: "Internal server error",
-          timestamp: new Date().toISOString(),
-        }, null, 2));
+        res.end(
+          JSON.stringify(
+            {
+              status: "unhealthy",
+              error: "Internal server error",
+              timestamp: new Date().toISOString(),
+            },
+            null,
+            2,
+          ),
+        );
       });
     return;
   }
-  
+
   // Handle 404 for unknown routes
-  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Content-Type", "application/json");
   res.writeHead(404);
-  res.end(JSON.stringify({
-    error: "Not found",
-    message: "Only /health endpoint is available",
-  }, null, 2));
+  res.end(
+    JSON.stringify(
+      {
+        error: "Not found",
+        message: "Only /health endpoint is available",
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 export function startHealthServer(port: number = 8080): void {
   const server = createServer(handleRequest);
-  
+
   server.listen(port, () => {
     logger.log(`🏥 Health server listening on port ${port}`);
   });
-  
-  server.on('error', (error) => {
-    logger.error('Health server error:', error);
+
+  server.on("error", (error) => {
+    logger.error("Health server error:", error);
   });
 }
