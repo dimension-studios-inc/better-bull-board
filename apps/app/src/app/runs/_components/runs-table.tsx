@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { parseAsInteger, parseAsString, useQueryStates } from "nuqs";
+import { parseAsString, useQueryStates } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
@@ -31,17 +31,24 @@ export function RunsTable() {
     status: parseAsString.withDefault("all"),
     search: parseAsString.withDefault(""),
     tags: parseAsString.withDefault(""),
-    cursor: parseAsInteger,
+    cursor: parseAsString.withDefault(""),
   });
 
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
 
-  const filters: TRunFilters = {
-    ...urlFilters,
-    tags: urlFilters.tags ? urlFilters.tags.split(",").filter(Boolean) : [],
-    cursor: urlFilters.cursor ?? null,
-    limit: 15,
-  };
+  const filters: TRunFilters = useMemo(
+    () => ({
+      ...urlFilters,
+      tags: urlFilters.tags ? urlFilters.tags.split(",").filter(Boolean) : [],
+      cursor:
+        JSON.parse(
+          Buffer.from(urlFilters.cursor, "base64").toString("utf-8") || "null",
+        ) ?? null,
+      limit: 15,
+    }),
+    [urlFilters],
+  );
+
   const debouncedFilters = useDebounce(filters, 300);
 
   const { data: runs } = useQuery({
@@ -62,6 +69,10 @@ export function RunsTable() {
     for (const [key, value] of Object.entries(newFilters)) {
       if (key === "tags" && Array.isArray(value)) {
         urlUpdate[key] = value.length > 0 ? value.join(",") : "";
+      } else if (key === "cursor") {
+        urlUpdate[key] = Buffer.from(JSON.stringify(value || null)).toString(
+          "base64",
+        );
       } else {
         urlUpdate[key] = value;
       }
@@ -139,7 +150,7 @@ export function RunsTable() {
       />
       <div className="relative overflow-hidden rounded-lg border">
         <Table className="table-fixed w-full">
-          <TableHeader>
+          <TableHeader className="z-10">
             <TableRow>
               <TableHead style={{ width: "50px" }}>
                 <div className="flex items-center">
@@ -163,8 +174,8 @@ export function RunsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <AnimatePresence>
-              {jobs.map((run) => (
+            {jobs.map((run) => (
+              <AnimatePresence key={run.id}>
                 <motion.tr
                   key={run.id}
                   className={cn(
@@ -172,9 +183,8 @@ export function RunsTable() {
                     selectedJobIds.has(run.job_id) &&
                       "bg-blue-50 dark:bg-blue-950",
                   )}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, y: -100 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   layoutId={run.id}
                   onClick={() => handleRowClick(run.id)}
@@ -249,8 +259,8 @@ export function RunsTable() {
                     </div>
                   </TableCell>
                 </motion.tr>
-              ))}
-            </AnimatePresence>
+              </AnimatePresence>
+            ))}
           </TableBody>
         </Table>
       </div>

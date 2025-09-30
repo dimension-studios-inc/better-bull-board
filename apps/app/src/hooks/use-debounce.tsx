@@ -18,16 +18,15 @@ function useDebounce<T>(value: T, delay: number = 250): T {
   // Use functional update to ensure proper initialization with functions
   const [debouncedValue, setDebouncedValue] = useState<T>(() => value);
 
-  const stringifiedValue = JSON.stringify(value);
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedValue(JSON.parse(stringifiedValue));
+      setDebouncedValue(value);
     }, delay);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [stringifiedValue, delay]);
+  }, [value, delay]);
 
   return debouncedValue;
 }

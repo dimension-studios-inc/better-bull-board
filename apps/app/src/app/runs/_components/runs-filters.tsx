@@ -38,8 +38,8 @@ export function RunsFilters({
     >,
   ) => void;
   runs?: {
-    nextCursor: number | null;
-    prevCursor: number | null;
+    nextCursor: { created_at: number; job_id: string; id: string } | null;
+    prevCursor: { created_at: number; job_id: string; id: string } | null;
   };
   startEndContent?: React.ReactNode;
 }) {
@@ -66,6 +66,7 @@ export function RunsFilters({
     { value: "completed", label: "Completed" },
     { value: "failed", label: "Failed" },
     { value: "active", label: "Active" },
+    { value: "waiting", label: "Waiting" },
   ];
 
   const tagsOptions: ComboboxOption[] = useMemo(() => {

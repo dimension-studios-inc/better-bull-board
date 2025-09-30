@@ -50,8 +50,10 @@ async function flushLogBuffer() {
         });
 
         // Publish refresh events
-        redis.publish("bbb:ingest:events:job-refresh", originalItem.jobRunId);
-        redis.publish("bbb:ingest:events:log-refresh", originalItem.jobRunId);
+        redis.publish(
+          "bbb:ingest:events:job-log-refresh",
+          originalItem.jobRunId,
+        );
       }
     }
 

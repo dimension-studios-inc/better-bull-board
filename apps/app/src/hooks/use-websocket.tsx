@@ -8,7 +8,10 @@ export type WebSocketMessage = {
     | "job-refresh"
     | "queue-refresh"
     | "job-scheduler-refresh"
-    | "log-refresh";
+    | "job-log-refresh"
+    | "single-job-refresh"
+    | "single-queue-refresh"
+    | "single-job-scheduler-refresh";
   data: {
     id?: string;
     queueName?: string;
@@ -55,6 +58,8 @@ export const useWebSocket = (options: UseWebSocketOptions) => {
         case "job-refresh":
           queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
           queryClient.invalidateQueries({ queryKey: ["jobs/stats"] });
+          break;
+        case "single-job-refresh":
           queryClient.invalidateQueries({
             queryKey: ["jobs/single", message.data.jobId],
           });
@@ -67,7 +72,7 @@ export const useWebSocket = (options: UseWebSocketOptions) => {
           queryClient.invalidateQueries({ queryKey: ["queues/table"] });
           queryClient.invalidateQueries({ queryKey: ["queues/stats"] });
           break;
-        case "log-refresh":
+        case "job-log-refresh":
           queryClient.invalidateQueries({
             queryKey: ["jobs/logs", message.data.jobId],
           });

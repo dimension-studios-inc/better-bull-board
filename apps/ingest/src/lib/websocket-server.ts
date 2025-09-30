@@ -5,10 +5,13 @@ import { redis } from "./redis";
 
 export interface WebSocketMessage {
   type:
+    | "single-job-refresh"
+    | "single-queue-refresh"
+    | "single-job-scheduler-refresh"
+    | "job-log-refresh"
     | "job-refresh"
     | "queue-refresh"
-    | "job-scheduler-refresh"
-    | "log-refresh";
+    | "job-scheduler-refresh";
   data: {
     id?: string;
     queueName?: string;
@@ -49,12 +52,6 @@ class BullBoardWebSocketServer {
         logger.error("WebSocket client error", { error });
         this.clients.delete(ws);
       });
-
-      // Send initial connection confirmation
-      this.sendToClient(ws, {
-        type: "job-refresh",
-        data: { id: "connected" },
-      });
     });
 
     this.wss.on("listening", () => {
@@ -86,20 +83,47 @@ class BullBoardWebSocketServer {
       let wsMessage: WebSocketMessage;
 
       switch (channel) {
+        case "bbb:ingest:events:single-job-refresh":
+          wsMessage = {
+            type: "single-job-refresh",
+            data: { jobId: message },
+          };
+          break;
+        case "bbb:ingest:events:single-queue-refresh":
+          wsMessage = {
+            type: "single-queue-refresh",
+            data: { queueName: message },
+          };
+          break;
+        case "bbb:ingest:events:single-job-scheduler-refresh":
+          wsMessage = {
+            type: "single-job-scheduler-refresh",
+            data: { schedulerKey: message },
+          };
+          break;
+        case "bbb:ingest:events:job-log-refresh":
+          wsMessage = {
+            type: "job-log-refresh",
+            data: { jobId: message },
+          };
+          break;
         case "bbb:ingest:events:job-refresh":
-          wsMessage = { type: "job-refresh", data: { jobId: message } };
+          wsMessage = {
+            type: "job-refresh",
+            data: { id: message },
+          };
           break;
         case "bbb:ingest:events:queue-refresh":
-          wsMessage = { type: "queue-refresh", data: { queueName: message } };
+          wsMessage = {
+            type: "queue-refresh",
+            data: { queueName: message },
+          };
           break;
         case "bbb:ingest:events:job-scheduler-refresh":
           wsMessage = {
             type: "job-scheduler-refresh",
             data: { schedulerKey: message },
           };
-          break;
-        case "bbb:ingest:events:log-refresh":
-          wsMessage = { type: "log-refresh", data: { jobId: message } };
           break;
         default:
           logger.warn("Unknown Redis channel", { channel });
@@ -158,19 +182,6 @@ class BullBoardWebSocketServer {
         this.clients.delete(client);
       }
     });
-  }
-
-  private sendToClient(client: WebSocket, message: WebSocketMessage) {
-    if (client.readyState === client.OPEN) {
-      try {
-        client.send(JSON.stringify(message));
-      } catch (error) {
-        logger.error("Error sending message to specific WebSocket client", {
-          error,
-        });
-        this.clients.delete(client);
-      }
-    }
   }
 
   public getConnectionCount(): number {

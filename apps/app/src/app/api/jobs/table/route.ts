@@ -11,7 +11,7 @@ export const POST = createAuthenticatedApiRoute({
     const jobs = await searchJobRuns({
       limit: limit + 1,
       cursor,
-      direction: "next",
+      direction: "desc",
       search,
       queue: queue === "all" ? undefined : queue,
       status: status === "all" ? undefined : status,
@@ -22,7 +22,7 @@ export const POST = createAuthenticatedApiRoute({
       ? await searchJobRuns({
           limit: limit + 1,
           cursor,
-          direction: "prev",
+          direction: "asc",
           search,
           queue: queue === "all" ? undefined : queue,
           status: status === "all" ? undefined : status,
@@ -30,13 +30,27 @@ export const POST = createAuthenticatedApiRoute({
         })
       : [];
 
-    const nextCursor =
-      jobs.length > limit ? (jobs.pop()?.created_at ?? null) : null;
-    const prevCursor =
+    let nextCursor: { created_at: number; job_id: string; id: string } | null =
+      jobs.length > limit ? (jobs.pop() ?? null) : null;
+    if (nextCursor) {
+      nextCursor = {
+        created_at: nextCursor.created_at,
+        job_id: nextCursor.job_id,
+        id: nextCursor.id,
+      };
+    }
+    let prevCursor: { created_at: number; job_id: string; id: string } | null =
       previousJobs.length > limit
         ? // Since we are in desc order we need to shift not pop
-          (previousJobs.at(2)?.created_at ?? null)
+          (previousJobs.at(2) ?? null)
         : null;
+    if (prevCursor) {
+      prevCursor = {
+        created_at: prevCursor.created_at,
+        job_id: prevCursor.job_id,
+        id: prevCursor.id,
+      };
+    }
 
     return {
       jobs: jobs.map((job) => ({

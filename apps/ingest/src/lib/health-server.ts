@@ -180,7 +180,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
   );
 }
 
-export function startHealthServer(port: number = 8080): void {
+export function startHealthServer(port: number = 3001): void {
   const server = createServer(handleRequest);
 
   server.listen(port, () => {
