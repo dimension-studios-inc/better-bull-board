@@ -167,6 +167,7 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
         logger.log(
           `Updated job scheduler ${param.key} following keys have changed: ${needUpdate.join(", ")}`,
         );
+        logger.debug(param.template, existingJobScheduler.template);
       } else {
         await db.insert(jobSchedulersTable).values(param);
         logger.log(`Created job scheduler ${param.key}`);

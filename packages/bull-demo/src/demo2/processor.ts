@@ -22,7 +22,7 @@ export default patch(async (job: SandboxedJob) => {
   //   console[level](`[${i}] ${lorem}`);
   //   await new Promise((resolve) => setTimeout(resolve, 30));
   // }
-  await new Promise((resolve) => setTimeout(resolve, 10_000));
+  // await new Promise((resolve) => setTimeout(resolve, 10_000));
 
   console.log(`Job ${job.id} processed`);
 
