@@ -95,9 +95,17 @@ export class Worker<
             return;
           }
 
+          // Verify job status (can happen if the job is already being processed due to late waiting event)
+          const isWaiting = await job.isWaiting();
+          if (isWaiting === false) {
+            return;
+          }
+
           const tags = this.getJobTags?.(
             job as Job<DataType, ResultType, NameType>,
           ).filter(Boolean);
+
+          logger.debug(`Job ${jobId} is waiting on queue ${queueName}`);
 
           await this.ioredis.publish(
             "bbb:worker:job",

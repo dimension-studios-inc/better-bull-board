@@ -37,6 +37,7 @@ export const handleJobChannel = async (_channel: string, message: string) => {
       : isWaiting
         ? "waiting"
         : "active";
+    logger.debug(`Job ${job.id} is ${status}`);
     const formatted: z.infer<typeof jobRunsInsertSchema> = {
       workerId: id,
       jobId: job.id,
