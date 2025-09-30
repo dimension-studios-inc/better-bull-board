@@ -7,12 +7,11 @@ import {
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
 import type { Job } from "bullmq";
-import { getTableColumns, sql } from "drizzle-orm";
 import type { z } from "zod/v4";
 import { redis } from "~/lib/redis";
 
 // Batching configuration
-const FLUSH_SIZE = 100;
+const FLUSH_SIZE = 300;
 const FLUSH_INTERVAL = 200; // ms
 
 // Buffers for batching
@@ -71,16 +70,20 @@ async function flushJobRunBuffer() {
           queue: jobRunsTable.queue,
           name: jobRunsTable.name,
           tags: jobRunsTable.tags,
+          // Voluntarily not updating the createdAt
+          // createdAt: jobRunsTable.createdAt,
         },
       })
-      .returning({
-        ...getTableColumns(jobRunsTable),
-        inserted: sql<boolean>`(xmax = 0)`,
-      });
+      .returning();
 
     // Queue ClickHouse inserts and publish events
+    let index = 0;
     for (const jobRun of upsertedJobs) {
-      if (jobRun) {
+      const originalItem = values[index];
+      if (originalItem?.createdAt) {
+        // If the createdAt is the same as the original item, it means it was created
+        const created =
+          jobRun.createdAt.getTime() === originalItem.createdAt.getTime();
         clickhouseBuffer.push({
           data: {
             ...jobRun,
@@ -97,9 +100,15 @@ async function flushJobRunBuffer() {
             started_at: jobRun.startedAt,
             finished_at: jobRun.finishedAt,
           },
-          kind: jobRun.inserted ? "update" : "insert",
+          kind: created ? "insert" : "update",
+        });
+      } else {
+        logger.error("Job run not found in batch", {
+          jobRun,
+          batchSize: batch.length,
         });
       }
+      index++;
     }
 
     // Flush ClickHouse buffer if it's getting large
@@ -127,9 +136,10 @@ async function flushClickHouseBuffer() {
     await bulkUpsertJobRunCH(batch);
 
     // Publish refresh event
+    redis.publish("bbb:ingest:events:job-refresh", "1");
     await Promise.all(
       batch.map((jobRun) =>
-        redis.publish("bbb:ingest:events:job-refresh", jobRun.data.id),
+        redis.publish("bbb:ingest:events:single-job-refresh", jobRun.data.id),
       ),
     );
   } catch (error) {
@@ -157,6 +167,7 @@ function scheduleFlush() {
 }
 
 // Queue a job run for batched processing
+let throwToLargeAlert = false;
 function queueJobRun(jobData: z.infer<typeof jobRunsInsertSchema>) {
   jobRunBuffer.push({ data: jobData });
 
@@ -173,11 +184,16 @@ function queueJobRun(jobData: z.infer<typeof jobRunsInsertSchema>) {
     jobRunBuffer.length >= FLUSH_SIZE * 5 ||
     clickhouseBuffer.length >= FLUSH_SIZE * 5
   ) {
+    throwToLargeAlert = true;
     logger.warn("Job run buffer is getting large", {
       postgresBufferSize: jobRunBuffer.length,
-      postgresFlushSize: FLUSH_SIZE,
       clickhouseBufferSize: clickhouseBuffer.length,
-      clickhouseFlushSize: FLUSH_SIZE,
+    });
+  } else if (throwToLargeAlert) {
+    throwToLargeAlert = false;
+    logger.success("Job run buffer is back to normal", {
+      postgresBufferSize: jobRunBuffer.length,
+      clickhouseBufferSize: clickhouseBuffer.length,
     });
   }
 }
@@ -228,6 +244,7 @@ export const handleJobChannel = async (_channel: string, message: string) => {
       repeatJobKey: job.repeatJobKey,
       result: job.returnvalue,
       tags,
+      createdAt: new Date(), // We need to set the createdAt to the current date manually to check abbove if update or insert
     };
     const validated = jobRunsInsertSchema.parse(formatted);
 

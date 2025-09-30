@@ -100,7 +100,8 @@ const upsertQueue = async (queueName: string) => {
       throw new Error("Failed to update queue");
     }
     updatedQueue = _updatedQueue;
-    redis.publish("bbb:ingest:events:queue-refresh", queueName);
+    redis.publish("bbb:ingest:events:single-queue-refresh", queueName);
+    redis.publish("bbb:ingest:events:queue-refresh", "1");
   } else {
     const _createdQueue = await db
       .insert(queuesTable)
@@ -112,7 +113,8 @@ const upsertQueue = async (queueName: string) => {
       throw new Error("Failed to create queue");
     }
     updatedQueue = _createdQueue;
-    redis.publish("bbb:ingest:events:queue-refresh", queueName);
+    redis.publish("bbb:ingest:events:single-queue-refresh", queueName);
+    redis.publish("bbb:ingest:events:queue-refresh", "1");
   }
   return updatedQueue;
 };
@@ -173,7 +175,11 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
         logger.log(`Created job scheduler ${param.key}`);
       }
 
-      redis.publish("bbb:ingest:events:job-scheduler-refresh", param.key);
+      redis.publish(
+        "bbb:ingest:events:single-job-scheduler-refresh",
+        param.key,
+      );
+      redis.publish("bbb:ingest:events:job-scheduler-refresh", "1");
     }),
   );
 };

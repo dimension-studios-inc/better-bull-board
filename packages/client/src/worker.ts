@@ -109,8 +109,6 @@ export class Worker<
             job as Job<DataType, ResultType, NameType>,
           ).filter(Boolean);
 
-          logger.debug(`Job ${jobId} is waiting on queue ${queueName}`);
-
           await this.ioredis.publish(
             "bbb:worker:job",
             JSON.stringify({

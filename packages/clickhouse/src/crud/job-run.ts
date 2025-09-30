@@ -85,7 +85,7 @@ export const bulkUpsertJobRun = async (
   const jobRunsToInsert = jobRunDataSchema
     .array()
     .parse(toInsert.map((jobRun) => jobRun.data));
-  const formattedRuns = jobRunsToInsert.map((jobRun) => ({
+  const formattedRunsToInsert = jobRunsToInsert.map((jobRun) => ({
     ...jobRun,
     created_at: jobRun.created_at.getTime(),
     enqueued_at: jobRun.enqueued_at?.getTime(),
@@ -106,7 +106,7 @@ export const bulkUpsertJobRun = async (
 
   await clickhouseClient.insert({
     table: "job_runs_ch",
-    values: formattedRuns,
+    values: formattedRunsToInsert,
     format: "JSONEachRow",
   });
 
@@ -139,8 +139,8 @@ export const searchJobRuns = async (filters: {
   dateTo?: Date;
   limit?: number;
   search?: string;
-  cursor?: number | null;
-  direction?: "next" | "prev";
+  cursor?: { created_at: number; job_id: string; id: string } | null;
+  direction?: "asc" | "desc";
 }): Promise<
   (Omit<
     JobRunData,
@@ -205,28 +205,48 @@ export const searchJobRuns = async (filters: {
   }
 
   if (filters.cursor) {
-    if (filters.direction === "prev") {
-      conditions.push("created_at > {cursor:UInt64}");
+    // cursor should be an object with created_at, job_id, id
+    const { created_at, job_id, id } = filters.cursor;
+
+    if (filters.direction === "asc") {
+      conditions.push(`
+      (
+        created_at > {cursor_created_at:DateTime64(3, 'UTC')}
+        OR (created_at = {cursor_created_at:DateTime64(3, 'UTC')} AND job_id > {cursor_job_id:String})
+        OR (created_at = {cursor_created_at:DateTime64(3, 'UTC')} AND job_id = {cursor_job_id:String} AND id > {cursor_id:UUID})
+      )
+    `);
     } else {
-      conditions.push("created_at <= {cursor:UInt64}");
+      conditions.push(`
+      (
+        created_at < {cursor_created_at:DateTime64(3, 'UTC')}
+        OR (created_at = {cursor_created_at:DateTime64(3, 'UTC')} AND job_id < {cursor_job_id:String})
+        OR (created_at = {cursor_created_at:DateTime64(3, 'UTC')} AND job_id = {cursor_job_id:String} AND id < {cursor_id:UUID})
+      )
+    `);
     }
-    params.cursor = filters.cursor;
+
+    Object.assign(params, {
+      cursor_created_at: new Date(created_at),
+      cursor_job_id: job_id,
+      cursor_id: id,
+    });
   }
+
   const limit = filters.limit || 100;
 
   const whereClause =
     conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-  const orderDirection = filters.direction === "prev" ? "ASC" : "DESC";
+  const orderDirection = filters.direction === "asc" ? "ASC" : "DESC";
 
   const query = `
-    SELECT  
-      *
-    FROM job_runs_ch 
-    ${whereClause}
-    ORDER BY created_at ${orderDirection}
-    LIMIT {limit:UInt32}
-  `;
+  SELECT *
+  FROM job_runs_ch
+  ${whereClause}
+  ORDER BY created_at ${orderDirection}, job_id ${orderDirection}, id ${orderDirection}
+  LIMIT {limit:UInt32}
+`;
 
   const result = await clickhouseClient.query({
     query,
@@ -249,8 +269,7 @@ export const searchJobRuns = async (filters: {
       : null,
   }));
 
-  // If we got results in reverse order (prev direction), reverse them back to normal order
-  return filters.direction === "prev" ? processedData.reverse() : processedData;
+  return processedData;
 };
 
 export const cancelJobRun = async (jobId: string) => {

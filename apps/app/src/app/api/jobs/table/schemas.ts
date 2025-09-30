@@ -3,7 +3,13 @@ import z from "zod";
 import { registerApiRoute } from "~/lib/utils/client";
 
 export const getJobsTableInput = z.object({
-  cursor: z.number().nullish(),
+  cursor: z
+    .object({
+      created_at: z.number(),
+      job_id: z.string(),
+      id: z.string(),
+    })
+    .nullish(),
   search: z.string().optional(),
   status: z.string().optional(),
   queue: z.string().optional(),
@@ -13,8 +19,20 @@ export const getJobsTableInput = z.object({
 
 export const getJobsTableOutput = z.object({
   jobs: z.array(jobRunDataSchema),
-  nextCursor: z.number().nullable(),
-  prevCursor: z.number().nullable(),
+  nextCursor: z
+    .object({
+      created_at: z.number(),
+      job_id: z.string(),
+      id: z.string(),
+    })
+    .nullable(),
+  prevCursor: z
+    .object({
+      created_at: z.number(),
+      job_id: z.string(),
+      id: z.string(),
+    })
+    .nullable(),
 });
 
 export const getJobsTableApiRoute = registerApiRoute({

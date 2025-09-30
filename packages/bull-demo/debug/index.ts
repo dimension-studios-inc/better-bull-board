@@ -29,7 +29,9 @@ const main = async () => {
     );
   };
 
-  setInterval(() => bulkJobs(1000), 1000);
+  setInterval(async () => {
+    await bulkJobs(10);
+  }, 1000);
 };
 
 main();

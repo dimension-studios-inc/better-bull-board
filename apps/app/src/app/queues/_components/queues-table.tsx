@@ -127,15 +127,14 @@ export function QueuesTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <AnimatePresence>
-              {data?.queues.map((queue) => (
+            {data?.queues.map((queue) => (
+              <AnimatePresence key={queue.name}>
                 <motion.tr
                   key={queue.name}
                   className="group border-b transition-colors cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
                   onClick={() => handleQueueClick(queue.name)}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, y: -100 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   layoutId={queue.name}
                 >
@@ -189,8 +188,8 @@ export function QueuesTable() {
                     </div>
                   </TableCell>
                 </motion.tr>
-              ))}
-            </AnimatePresence>
+              </AnimatePresence>
+            ))}
           </TableBody>
         </Table>
       </div>
