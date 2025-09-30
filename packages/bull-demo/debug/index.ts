@@ -1,11 +1,11 @@
 import { logger } from "@rharkor/logger";
 import { queue } from "../src/demo2/queue";
-import { deleteAllSchedulers } from "../src/utils";
+import { deleteAllSchedulers, registerScheduler } from "../src/utils";
 
 const main = async () => {
   await logger.init();
   await deleteAllSchedulers();
-  // await registerScheduler();
+  await registerScheduler();
   // logger.log("Scheduler registered");
 
   // const singleJob = async (i: number) => {

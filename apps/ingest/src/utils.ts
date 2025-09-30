@@ -91,7 +91,11 @@ export function getChangedKeys<T extends Record<string, unknown>>(
     const oldVal = oldObj[k];
 
     if (typeof newVal === "object" && newVal !== null) {
-      return JSON.stringify(newVal) !== JSON.stringify(oldVal);
+      const eq = JSON.stringify(newVal) !== JSON.stringify(oldVal);
+      if (!eq) {
+        console.log(key, newVal, oldVal);
+      }
+      return eq;
     }
     return newVal !== oldVal;
   }) as (keyof T)[];
