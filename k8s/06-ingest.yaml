@@ -18,39 +18,39 @@ spec:
         app: bbb-ingest
     spec:
       containers:
-      - name: bbb-ingest
-        image: public.ecr.aws/n5q7l0s4/better-bull-board-ingest:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8080
-        envFrom:
-        - configMapRef:
-            name: bbb-ingest-config
-        - secretRef:
-            name: bbb-ingest-secret
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 5
-          timeoutSeconds: 10
-          failureThreshold: 3
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1024Mi"
-            cpu: "500m"
+        - name: bbb-ingest
+          image: public.ecr.aws/n5q7l0s4/better-bull-board-ingest:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: bbb-ingest-config
+            - secretRef:
+                name: bbb-ingest-secret
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1024Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -62,9 +62,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 8080
-    targetPort: 8080
-    protocol: TCP
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
   selector:
     app: bbb-ingest
 ---
