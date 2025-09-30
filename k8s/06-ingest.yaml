@@ -28,18 +28,20 @@ spec:
             - secretRef:
                 name: bbb-ingest-secret
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /health
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 10
             failureThreshold: 3
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /health
               port: 8080
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 5
-            timeoutSeconds: 5
+            timeoutSeconds: 10
             failureThreshold: 3
           resources:
             requests:
@@ -48,7 +50,6 @@ spec:
             limits:
               memory: "1024Mi"
               cpu: "500m"
-
 ---
 # Headless service for stable DNS (required by StatefulSet)
 apiVersion: v1

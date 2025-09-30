@@ -28,19 +28,19 @@ spec:
             name: bbb-app-secret
         livenessProbe:
           httpGet:
-            path: /
+            path: /health
             port: 3000
           initialDelaySeconds: 30
           periodSeconds: 10
-          timeoutSeconds: 5
+          timeoutSeconds: 10
           failureThreshold: 3
         readinessProbe:
           httpGet:
-            path: /
+            path: /health
             port: 3000
-          initialDelaySeconds: 10
+          initialDelaySeconds: 15
           periodSeconds: 5
-          timeoutSeconds: 5
+          timeoutSeconds: 10
           failureThreshold: 3
         resources:
           requests:
