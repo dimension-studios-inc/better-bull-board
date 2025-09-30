@@ -117,7 +117,7 @@ export class Worker<
         });
       } else if (!isMaster() && subscribed && listener) {
         // ❌ we lost master → unsubscribe
-        await listener.unsubscribe(channel).catch(() => {});
+        await listener.quit();
         subscribed = false;
         logger.log(`[${this.id}] unsubscribed from ${channel}`);
       }
