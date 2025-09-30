@@ -23,11 +23,13 @@ const main = async () => {
   //   hello: "world",
   // });
 
-  const bulkJobs = async () => {
-    await Promise.all(Array.from({ length: 100 }).map((_, i) => singleJob(i)));
+  const bulkJobs = async (count: number) => {
+    await Promise.all(
+      Array.from({ length: count }).map((_, i) => singleJob(i)),
+    );
   };
 
-  await bulkJobs();
+  setInterval(() => bulkJobs(1000), 1000);
 };
 
-main().then(() => process.exit(0));
+main();
