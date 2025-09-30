@@ -78,7 +78,7 @@ export class Worker<
         listener ??= this.ioredis.duplicate();
         await listener.connect().catch(() => {});
 
-        listener.subscribe(channel, (err) => {
+        await listener.subscribe(channel, (err) => {
           if (err) {
             logger.error(`Error subscribing: ${err}`);
             return;
@@ -95,9 +95,21 @@ export class Worker<
             return;
           }
 
+          // Verify job status (can happen if the job is already being processed due to late waiting event)
+          const isWaiting = await job.isWaiting();
+          if (isWaiting === false) {
+            await this.ioredis.publish(
+              `bbb:queue:${queueName}:job:waiting:${jobId}`,
+              JSON.stringify({ id: this.id }),
+            );
+            return;
+          }
+
           const tags = this.getJobTags?.(
             job as Job<DataType, ResultType, NameType>,
           ).filter(Boolean);
+
+          logger.debug(`Job ${jobId} is waiting on queue ${queueName}`);
 
           await this.ioredis.publish(
             "bbb:worker:job",
@@ -117,7 +129,7 @@ export class Worker<
         });
       } else if (!isMaster() && subscribed && listener) {
         // ❌ we lost master → unsubscribe
-        await listener.unsubscribe(channel).catch(() => {});
+        await listener.quit();
         subscribed = false;
         logger.log(`[${this.id}] unsubscribed from ${channel}`);
       }

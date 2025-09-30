@@ -162,96 +162,96 @@ export function RunsTable() {
               <TableHead style={{ width: "90px" }}>Actions</TableHead>
             </TableRow>
           </TableHeader>
-        <TableBody>
-          <AnimatePresence mode="wait">
-            {jobs.map((run) => (
-              <motion.tr
-                key={run.id}
-                className={cn(
-                  "group border-b transition-colors hover:bg-muted/50 cursor-pointer",
-                  selectedJobIds.has(run.job_id) &&
-                    "bg-blue-50 dark:bg-blue-950",
-                )}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-                layoutId={run.id}
-                onClick={() => handleRowClick(run.id)}
-              >
-                <TableCell>
-                  <div className="flex items-center">
-                    <Checkbox
-                      checked={selectedJobIds.has(run.job_id)}
-                      onCheckedChange={(checked) =>
-                        handleSelectJob(run.job_id, checked as boolean)
-                      }
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                      aria-label={`Select job ${run.job_id}`}
-                    />
-                  </div>
-                </TableCell>
-                <TableCell className="font-mono text-xs">
-                  {run.job_id.slice(0, 32)}
-                  {run.job_id.length > 32 && "..."}
-                </TableCell>
-                <TableCell>{run.queue}</TableCell>
-                <TableCell className="overflow-hidden">
-                  {run.tags?.map((tag) => (
-                    <Badge key={tag} variant="outline">
-                      {tag}
-                    </Badge>
-                  ))}
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(run.status)}>
-                    {run.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {run.started_at &&
-                  run.finished_at &&
-                  (run.status === "completed" || run.status === "failed")
-                    ? formatDistanceStrict(run.started_at, run.finished_at)
-                    : "-"}
-                </TableCell>
-                <TableCell className="truncate">
-                  {formatDistanceToNow(new Date(run.created_at), {
-                    addSuffix: true,
-                  })}
-                </TableCell>
-                <TableCell className="truncate">
-                  {run.finished_at
-                    ? formatDistanceToNow(new Date(run.finished_at), {
-                        addSuffix: true,
-                      })
-                    : "-"}
-                </TableCell>
-                <TableCell
-                  className={cn("max-w-48 truncate text-xs", {
-                    "text-red-600":
-                      run.status === "failed" && run.error_message,
-                  })}
+          <TableBody>
+            <AnimatePresence>
+              {jobs.map((run) => (
+                <motion.tr
+                  key={run.id}
+                  className={cn(
+                    "group border-b transition-colors hover:bg-muted/50 cursor-pointer",
+                    selectedJobIds.has(run.job_id) &&
+                      "bg-blue-50 dark:bg-blue-950",
+                  )}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  layoutId={run.id}
+                  onClick={() => handleRowClick(run.id)}
                 >
-                  {run.status === "failed" && run.error_message
-                    ? run.error_message
-                    : "-"}
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <RunActions
-                      jobId={run.job_id}
-                      queueName={run.queue}
-                      status={run.status}
-                    />
-                  </div>
-                </TableCell>
-              </motion.tr>
-            ))}
-          </AnimatePresence>
-        </TableBody>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <Checkbox
+                        checked={selectedJobIds.has(run.job_id)}
+                        onCheckedChange={(checked) =>
+                          handleSelectJob(run.job_id, checked as boolean)
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        aria-label={`Select job ${run.job_id}`}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {run.job_id.slice(0, 32)}
+                    {run.job_id.length > 32 && "..."}
+                  </TableCell>
+                  <TableCell>{run.queue}</TableCell>
+                  <TableCell className="overflow-hidden">
+                    {run.tags?.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(run.status)}>
+                      {run.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {run.started_at &&
+                    run.finished_at &&
+                    (run.status === "completed" || run.status === "failed")
+                      ? formatDistanceStrict(run.started_at, run.finished_at)
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="truncate">
+                    {formatDistanceToNow(new Date(run.created_at), {
+                      addSuffix: true,
+                    })}
+                  </TableCell>
+                  <TableCell className="truncate">
+                    {run.finished_at
+                      ? formatDistanceToNow(new Date(run.finished_at), {
+                          addSuffix: true,
+                        })
+                      : "-"}
+                  </TableCell>
+                  <TableCell
+                    className={cn("max-w-48 truncate text-xs", {
+                      "text-red-600":
+                        run.status === "failed" && run.error_message,
+                    })}
+                  >
+                    {run.status === "failed" && run.error_message
+                      ? run.error_message
+                      : "-"}
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <RunActions
+                        jobId={run.job_id}
+                        queueName={run.queue}
+                        status={run.status}
+                      />
+                    </div>
+                  </TableCell>
+                </motion.tr>
+              ))}
+            </AnimatePresence>
+          </TableBody>
         </Table>
       </div>
     </div>

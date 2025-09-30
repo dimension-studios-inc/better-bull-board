@@ -81,6 +81,23 @@ export const getJobFromBullId = async (jobId: string, enqueuedAt: Date) => {
   return result;
 };
 
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== "object" || a === null || b === null) return false;
+
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b as Record<string, unknown>);
+  if (aKeys.length !== bKeys.length) return false;
+
+  return aKeys.every((k) =>
+    deepEqual(
+      (a as Record<string, unknown>)[k],
+      (b as Record<string, unknown>)[k as keyof typeof b],
+    ),
+  );
+}
+
 export function getChangedKeys<T extends Record<string, unknown>>(
   newObj: T,
   oldObj: Partial<T>,
@@ -91,7 +108,7 @@ export function getChangedKeys<T extends Record<string, unknown>>(
     const oldVal = oldObj[k];
 
     if (typeof newVal === "object" && newVal !== null) {
-      return JSON.stringify(newVal) !== JSON.stringify(oldVal);
+      return !deepEqual(newVal, oldVal);
     }
     return newVal !== oldVal;
   }) as (keyof T)[];

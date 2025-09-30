@@ -126,72 +126,72 @@ export function QueuesTable() {
               <TableHead style={{ width: "90px" }}></TableHead>
             </TableRow>
           </TableHeader>
-        <TableBody>
-          <AnimatePresence mode="wait">
-            {data?.queues.map((queue) => (
-              <motion.tr
-                key={queue.name}
-                className="group border-b transition-colors cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
-                onClick={() => handleQueueClick(queue.name)}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-                layoutId={queue.name}
-              >
-                <TableCell className="font-medium">{queue.name}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={"outline"}
-                    className={cn({
-                      "opacity-50": queue.isPaused,
-                    })}
-                  >
-                    {queue.isPaused ? "Paused" : "Running"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono truncate block">
-                    {queue.patterns.length
-                      ? queue.patterns.join(", ")
-                      : queue.everys.length
-                        ? queue.everys.map(
-                            (every) =>
-                              `Every ${formatDuration({
-                                seconds: Number(every) / 1000,
-                              })}`,
-                          )
-                        : undefined}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono">{queue.activeJobs}</span>
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono text-red-600">
-                    {queue.failedJobs}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono text-green-600">
-                    {queue.completedJobs}
-                  </span>
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <QueueMiniChart data={queue.chartData} />
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <QueueActions
-                      queueName={queue.name}
-                      isPaused={queue.isPaused}
-                    />
-                  </div>
-                </TableCell>
-              </motion.tr>
-            ))}
-          </AnimatePresence>
-        </TableBody>
+          <TableBody>
+            <AnimatePresence>
+              {data?.queues.map((queue) => (
+                <motion.tr
+                  key={queue.name}
+                  className="group border-b transition-colors cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
+                  onClick={() => handleQueueClick(queue.name)}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  layoutId={queue.name}
+                >
+                  <TableCell className="font-medium">{queue.name}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={"outline"}
+                      className={cn({
+                        "opacity-50": queue.isPaused,
+                      })}
+                    >
+                      {queue.isPaused ? "Paused" : "Running"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono truncate block">
+                      {queue.patterns.length
+                        ? queue.patterns.join(", ")
+                        : queue.everys.length
+                          ? queue.everys.map(
+                              (every) =>
+                                `Every ${formatDuration({
+                                  seconds: Number(every) / 1000,
+                                })}`,
+                            )
+                          : undefined}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono">{queue.activeJobs}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-red-600">
+                      {queue.failedJobs}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-green-600">
+                      {queue.completedJobs}
+                    </span>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <QueueMiniChart data={queue.chartData} />
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <QueueActions
+                        queueName={queue.name}
+                        isPaused={queue.isPaused}
+                      />
+                    </div>
+                  </TableCell>
+                </motion.tr>
+              ))}
+            </AnimatePresence>
+          </TableBody>
         </Table>
       </div>
     </div>

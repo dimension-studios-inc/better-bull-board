@@ -159,16 +159,15 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
         const needUpdate = getChangedKeys(param, existingJobScheduler);
         if (needUpdate.length === 0) return;
 
-        logger.debug(
-          `Need to update job scheduler ${param.key} with keys: ${needUpdate.join(", ")}`,
-        );
-
         await db
           .update(jobSchedulersTable)
           .set(param)
           .where(eq(jobSchedulersTable.key, param.key));
 
-        logger.log(`Updated job scheduler ${param.key}`);
+        logger.log(
+          `Updated job scheduler ${param.key} following keys have changed: ${needUpdate.join(", ")}`,
+        );
+        logger.debug(param.template, existingJobScheduler.template);
       } else {
         await db.insert(jobSchedulersTable).values(param);
         logger.log(`Created job scheduler ${param.key}`);

@@ -24,13 +24,13 @@ async function attachQueueListener(queueName: string) {
       logger.warn(
         `No worker responded for job ${jobId}, not inserting into bbb`,
       );
-      await listener.unsubscribe(responseChannel);
+      await listener.quit();
     }, 1000);
 
     listener.on("message", async (channel) => {
       if (channel === responseChannel) {
         clearTimeout(timeout);
-        await listener.unsubscribe(responseChannel);
+        await listener.quit();
       }
     });
 
@@ -42,7 +42,7 @@ async function attachQueueListener(queueName: string) {
   });
 
   queueEvents.on("error", (err) => {
-    logger.error(`⚠️ QueueEvents error [${queueName}]:`, err);
+    logger.error(`QueueEvents error [${queueName}]:`, err);
   });
 
   await queueEvents.waitUntilReady();

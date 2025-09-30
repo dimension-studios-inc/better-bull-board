@@ -111,6 +111,7 @@ export default function RunViewPage() {
       <PageTitle
         title={`Run ${run.job.jobId}`}
         description={`${run.job.queue} • ${run.job.status}`}
+        withRunsLink
       />
 
       <div className="flex flex-row gap-2">
