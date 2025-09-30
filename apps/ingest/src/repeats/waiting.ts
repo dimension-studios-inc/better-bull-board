@@ -42,7 +42,7 @@ async function attachQueueListener(queueName: string) {
   });
 
   queueEvents.on("error", (err) => {
-    logger.error(`⚠️ QueueEvents error [${queueName}]:`, err);
+    logger.error(`QueueEvents error [${queueName}]:`, err);
   });
 
   await queueEvents.waitUntilReady();

@@ -78,7 +78,7 @@ export class Worker<
         listener ??= this.ioredis.duplicate();
         await listener.connect().catch(() => {});
 
-        listener.subscribe(channel, (err) => {
+        await listener.subscribe(channel, (err) => {
           if (err) {
             logger.error(`Error subscribing: ${err}`);
             return;
@@ -98,6 +98,10 @@ export class Worker<
           // Verify job status (can happen if the job is already being processed due to late waiting event)
           const isWaiting = await job.isWaiting();
           if (isWaiting === false) {
+            await this.ioredis.publish(
+              `bbb:queue:${queueName}:job:waiting:${jobId}`,
+              JSON.stringify({ id: this.id }),
+            );
             return;
           }
 

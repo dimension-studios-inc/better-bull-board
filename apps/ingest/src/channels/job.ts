@@ -63,7 +63,7 @@ export const handleJobChannel = async (_channel: string, message: string) => {
     let dbId: string | undefined;
     await redlock.using(
       [`bbb:job-run:upsert:${validated.jobId}`],
-      1_000,
+      5_000,
       async (signal) => {
         signal.throwIfAborted();
         const insertPostresStart = performance.now();
