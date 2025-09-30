@@ -2,6 +2,7 @@ import { logger } from "@rharkor/logger";
 import { handleChannel } from "./channels";
 import { redis } from "./lib/redis";
 import { startWebSocketServer } from "./lib/websocket-server";
+import { startHealthServer } from "./lib/health-server";
 import { migrateDatabases } from "./migration";
 import { clearData } from "./repeats/clear-data";
 import { autoIngestQueues } from "./repeats/queues";
@@ -34,6 +35,9 @@ const main = async () => {
 
   // Start WebSocket server
   startWebSocketServer();
+  
+  // Start Health server
+  startHealthServer();
 };
 
 main();
