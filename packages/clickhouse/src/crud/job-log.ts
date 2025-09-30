@@ -15,6 +15,21 @@ export const insertJobLog = async (_jobLog: JobLogData): Promise<void> => {
   });
 };
 
+export const bulkInsertJobLog = async (
+  _jobLogs: JobLogData[],
+): Promise<void> => {
+  const jobLogs = jobLogDataSchema.array().parse(_jobLogs);
+  const formattedLogs = jobLogs.map((jobLog) => ({
+    ...jobLog,
+    ts: jobLog.ts.getTime(),
+  }));
+  await clickhouseClient.insert({
+    table: "job_logs_ch",
+    values: formattedLogs,
+    format: "JSONEachRow",
+  });
+};
+
 export const searchJobLogs = async (filters: {
   jobRunId?: string;
   id?: string;
