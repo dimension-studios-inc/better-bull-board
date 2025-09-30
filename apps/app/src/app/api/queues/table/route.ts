@@ -1,5 +1,5 @@
 import { getQueueStatsWithChart } from "@better-bull-board/clickhouse";
-import { jobSchedulersTable, queuesTable } from "@better-bull-board/db";
+import { jobSchedulersTable, queuesTable, workersTable, workerStatsTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { and, asc, desc, eq, gte, ilike, lt, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
@@ -73,6 +73,38 @@ export const POST = createAuthenticatedApiRoute({
     // Create a map for quick lookup
     const statsMap = new Map(queueStats.map((stat) => [stat.queueName, stat]));
 
+    // Get worker statistics for all queues
+    const workerStats = await db
+      .select({
+        queueName: workersTable.queueName,
+        totalWorkers: sql<number>`COUNT(*)`,
+        activeWorkers: sql<number>`SUM(CASE WHEN ${workersTable.isActive} THEN 1 ELSE 0 END)`,
+        avgMemoryUsage: sql<number>`COALESCE(AVG(${workerStatsTable.memoryUsagePercent}), 0)`,
+        avgCpuUsage: sql<number>`COALESCE(AVG(${workerStatsTable.cpuUsagePercent}), 0)`,
+      })
+      .from(workersTable)
+      .leftJoin(
+        workerStatsTable,
+        and(
+          eq(workerStatsTable.workerId, workersTable.workerId),
+          gte(workerStatsTable.recordedAt, new Date(Date.now() - 5 * 60 * 1000)) // Last 5 minutes of stats
+        )
+      )
+      .where(search ? ilike(workersTable.queueName, `%${search}%`) : undefined)
+      .groupBy(workersTable.queueName);
+
+    const workerStatsMap = new Map(
+      workerStats.map((stat) => [
+        stat.queueName,
+        {
+          total: Number(stat.totalWorkers || 0),
+          active: Number(stat.activeWorkers || 0),
+          averageMemoryUsage: Number(stat.avgMemoryUsage || 0),
+          averageCpuUsage: Number(stat.avgCpuUsage || 0),
+        },
+      ])
+    );
+
     const nextCursor = rows.length > limit ? (rows.pop()?.name ?? null) : null;
     const prevCursor =
       previousRows.length > limit ? (previousRows.at(-2)?.name ?? null) : null;
@@ -87,6 +119,13 @@ export const POST = createAuthenticatedApiRoute({
           chartData: [],
         };
 
+        const workers = workerStatsMap.get(row.name) ?? {
+          total: 0,
+          active: 0,
+          averageMemoryUsage: 0,
+          averageCpuUsage: 0,
+        };
+
         return {
           name: row.name,
           isPaused: row.isPaused,
@@ -96,6 +135,7 @@ export const POST = createAuthenticatedApiRoute({
           failedJobs: stats.failedJobs,
           completedJobs: stats.completedJobs,
           chartData: stats.chartData,
+          workers,
         };
       }),
       nextCursor,
