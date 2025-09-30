@@ -1,4 +1,5 @@
-import { insertJobLog as insertJobLogCH } from "@better-bull-board/clickhouse";
+import { bulkInsertJobLog as bulkInsertJobLogCH } from "@better-bull-board/clickhouse";
+import type { JobLogData } from "@better-bull-board/clickhouse/schemas";
 import {
   jobLogsInsertSchema,
   jobLogsTable,
@@ -18,7 +19,7 @@ const logBuffer: Array<{
   data: z.infer<typeof jobLogsInsertSchema>;
   jobRunId: string;
 }> = [];
-const clickhouseLogBuffer: Array<any> = [];
+const clickhouseLogBuffer: Array<JobLogData> = [];
 
 let logFlushTimer: NodeJS.Timeout | null = null;
 
@@ -27,23 +28,19 @@ async function flushLogBuffer() {
   if (logBuffer.length === 0) return;
 
   const batch = logBuffer.splice(0, logBuffer.length);
-  const startTime = performance.now();
 
   try {
     // Batch insert to PostgreSQL (logs are append-only, no conflicts)
     const insertedLogs = await db
       .insert(jobLogsTable)
-      .values(batch.map(item => item.data))
+      .values(batch.map((item) => item.data))
       .returning();
-
-    const endTime = performance.now();
-    console.log(`Batch insert PostgreSQL logs (${batch.length} logs): ${endTime - startTime}ms`);
 
     // Queue ClickHouse inserts and publish events
     for (let i = 0; i < insertedLogs.length; i++) {
       const insertedLog = insertedLogs[i];
       const originalItem = batch[i];
-      
+
       if (insertedLog && originalItem) {
         // Add to ClickHouse buffer
         clickhouseLogBuffer.push({
@@ -63,7 +60,10 @@ async function flushLogBuffer() {
       await flushClickHouseLogBuffer();
     }
   } catch (error) {
-    logger.error("Error in batch log insert", { error, batchSize: batch.length });
+    logger.error("Error in batch log insert", {
+      error,
+      batchSize: batch.length,
+    });
     // Re-queue failed items for retry (optional)
     logBuffer.unshift(...batch);
   }
@@ -74,16 +74,15 @@ async function flushClickHouseLogBuffer() {
   if (clickhouseLogBuffer.length === 0) return;
 
   const batch = clickhouseLogBuffer.splice(0, clickhouseLogBuffer.length);
-  const startTime = performance.now();
 
   try {
     // Batch insert to ClickHouse
-    await Promise.all(batch.map(logEntry => insertJobLogCH(logEntry)));
-    
-    const endTime = performance.now();
-    console.log(`Batch insert ClickHouse logs (${batch.length} logs): ${endTime - startTime}ms`);
+    await bulkInsertJobLogCH(batch);
   } catch (error) {
-    logger.error("Error in batch ClickHouse log insert", { error, batchSize: batch.length });
+    logger.error("Error in batch ClickHouse log insert", {
+      error,
+      batchSize: batch.length,
+    });
     // Re-queue failed items for retry (optional)
     clickhouseLogBuffer.unshift(...batch);
   }
@@ -104,9 +103,12 @@ function scheduleLogFlush() {
 }
 
 // Queue a log entry for batched processing
-function queueLogEntry(logData: z.infer<typeof jobLogsInsertSchema>, jobRunId: string) {
+function queueLogEntry(
+  logData: z.infer<typeof jobLogsInsertSchema>,
+  jobRunId: string,
+) {
   logBuffer.push({ data: logData, jobRunId });
-  
+
   // Flush immediately if buffer is full
   if (logBuffer.length >= FLUSH_SIZE) {
     setTimeout(flushLogBuffer, 0);
