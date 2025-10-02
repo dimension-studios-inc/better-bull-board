@@ -5,6 +5,7 @@ import {
   jobRunsTable,
 } from "@better-bull-board/db/schemas/job/schema";
 import { db } from "@better-bull-board/db/server";
+import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update";
 import { logger } from "@rharkor/logger";
 import type { Job } from "bullmq";
 import type { z } from "zod/v4";
@@ -43,38 +44,47 @@ async function flushJobRunBuffer() {
     }
     const values = Array.from(deduped.values()).map((item) => item.data);
 
+    console.log(
+      "values",
+      values.filter((item) => item.queue.includes("{test-log}")),
+    );
+
     // Batch upsert to PostgreSQL
     const upsertedJobs = await db
       .insert(jobRunsTable)
       .values(values)
       .onConflictDoUpdate({
         target: [jobRunsTable.jobId, jobRunsTable.enqueuedAt],
-        set: {
-          status: jobRunsTable.status,
-          attempt: jobRunsTable.attempt,
-          startedAt: jobRunsTable.startedAt,
-          finishedAt: jobRunsTable.finishedAt,
-          errorMessage: jobRunsTable.errorMessage,
-          errorStack: jobRunsTable.errorStack,
-          result: jobRunsTable.result,
-          backoff: jobRunsTable.backoff,
-          data: jobRunsTable.data,
-          priority: jobRunsTable.priority,
-          delayMs: jobRunsTable.delayMs,
-          repeatJobKey: jobRunsTable.repeatJobKey,
-          parentJobId: jobRunsTable.parentJobId,
-          workerId: jobRunsTable.workerId,
-          enqueuedAt: jobRunsTable.enqueuedAt,
-          jobId: jobRunsTable.jobId,
-          maxAttempts: jobRunsTable.maxAttempts,
-          queue: jobRunsTable.queue,
-          name: jobRunsTable.name,
-          tags: jobRunsTable.tags,
-          // Voluntarily not updating the createdAt
-          // createdAt: jobRunsTable.createdAt,
-        },
+        // Voluntarily not updating the createdAt
+        set: conflictUpdateSet(jobRunsTable, [
+          "status",
+          "attempt",
+          "startedAt",
+          "finishedAt",
+          "errorMessage",
+          "errorStack",
+          "result",
+          "backoff",
+          "data",
+          "priority",
+          "delayMs",
+          "repeatJobKey",
+          "parentJobId",
+          "workerId",
+          "enqueuedAt",
+          "jobId",
+          "maxAttempts",
+          "queue",
+          "name",
+          "tags",
+        ]),
       })
       .returning();
+
+    console.log(
+      "upsertedJobs",
+      upsertedJobs.filter((item) => item.queue.includes("{test-log}")),
+    );
 
     // Queue ClickHouse inserts and publish events
     let index = 0;
@@ -215,6 +225,9 @@ export const handleJobChannel = async (_channel: string, message: string) => {
     };
     if (!job.id) {
       throw new Error("Job ID is required");
+    }
+    if (queue === "{test-log}") {
+      console.log({ message });
     }
     const status = job.finishedOn
       ? job.failedReason
