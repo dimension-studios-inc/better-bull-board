@@ -1,7 +1,5 @@
-import { cancelJob } from "@better-bull-board/client/lib/cancellation";
 import { logger } from "@rharkor/logger";
 import { queue } from "../src/demo2/queue";
-import { redis } from "../src/lib/redis";
 import { deleteAllSchedulers } from "../src/utils";
 
 const main = async () => {
@@ -10,13 +8,12 @@ const main = async () => {
   // await registerScheduler();
   // logger.log("Scheduler registered");
 
-  const singleJob = async (i: number) => {
-    const job = await queue.add("test-job-name", {});
+  const singleJob = async () => {
+    const job = await queue.add("test-job-name", {
+      wait: 500,
+      longData: new Array(1000).fill("test"),
+    });
     if (!job.id) throw new Error("Job ID is undefined");
-    const shouldCancel = i % 2 === 0;
-    if (shouldCancel) {
-      await cancelJob({ redis, jobId: job.id, queueName: "demo-queue" });
-    }
   };
 
   // await queue.add("test-job-name", {
@@ -24,9 +21,7 @@ const main = async () => {
   // });
 
   const bulkJobs = async (count: number) => {
-    await Promise.all(
-      Array.from({ length: count }).map((_, i) => singleJob(i)),
-    );
+    await Promise.all(Array.from({ length: count }).map(() => singleJob()));
   };
 
   setInterval(async () => {

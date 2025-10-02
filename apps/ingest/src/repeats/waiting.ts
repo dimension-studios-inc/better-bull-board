@@ -76,7 +76,7 @@ export async function attachQueueListener(queueName: string) {
         `⏱ No worker responded for job ${jobId} in queue ${queueName}`,
       );
       timeouts.delete(jobId);
-    }, 1000);
+    }, 3000);
 
     timeouts.set(jobId, timeout);
 

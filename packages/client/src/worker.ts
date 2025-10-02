@@ -91,6 +91,10 @@ export class Worker<
           const { jobId } = JSON.parse(message) as { jobId: string };
           const job = await queue.getJob(jobId);
           if (!job) {
+            await this.ioredis.publish(
+              `bbb:queue:${queueName}:job:waiting:${jobId}`,
+              JSON.stringify({ id: this.id, error: "Job not found" }),
+            );
             logger.error(`Job not found: ${jobId}`);
             return;
           }
@@ -100,7 +104,7 @@ export class Worker<
           if (isWaiting === false) {
             await this.ioredis.publish(
               `bbb:queue:${queueName}:job:waiting:${jobId}`,
-              JSON.stringify({ id: this.id }),
+              JSON.stringify({ id: this.id, error: "Job is not waiting" }),
             );
             return;
           }
@@ -109,21 +113,22 @@ export class Worker<
             job as Job<DataType, ResultType, NameType>,
           ).filter(Boolean);
 
-          await this.ioredis.publish(
-            "bbb:worker:job",
-            JSON.stringify({
-              id: this.id,
-              job,
-              tags,
-              queueName,
-              isWaiting: true,
-            }),
-          );
-
-          await this.ioredis.publish(
-            `bbb:queue:${queueName}:job:waiting:${jobId}`,
-            JSON.stringify({ id: this.id }),
-          );
+          await Promise.all([
+            this.ioredis.publish(
+              "bbb:worker:job",
+              JSON.stringify({
+                id: this.id,
+                job,
+                tags,
+                queueName,
+                isWaiting: true,
+              }),
+            ),
+            this.ioredis.publish(
+              `bbb:queue:${queueName}:job:waiting:${jobId}`,
+              JSON.stringify({ id: this.id, success: true }),
+            ),
+          ]);
         });
       } else if (!isMaster() && subscribed && listener) {
         // ❌ we lost master → unsubscribe

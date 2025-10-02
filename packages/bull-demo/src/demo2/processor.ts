@@ -5,6 +5,8 @@ import { redis } from "../lib/redis";
 export default patch(async (job: SandboxedJob) => {
   console.log(`Processing job ${job.id}`);
 
+  await new Promise((resolve) => setTimeout(resolve, job.data.wait));
+
   // Print random log level 2k times
   // for (let i = 0; i < 20; i++) {
   //   const levels = ["debug", "info", "warn", "error", "log"] as const;
