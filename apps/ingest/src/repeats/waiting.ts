@@ -83,7 +83,7 @@ export async function attachQueueListener(queueName: string) {
     // publish after scheduling timeout
     await redis.publish(
       `bbb:queue:${queueName}:job:waiting`,
-      JSON.stringify({ jobId }),
+      JSON.stringify({ jobId, ts: Date.now() }),
     );
   });
 
