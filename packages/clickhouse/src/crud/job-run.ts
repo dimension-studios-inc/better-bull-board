@@ -6,11 +6,11 @@ import { type JobRunData, jobRunDataSchema } from "./schemas";
 const jobRunsUpdateTypes: Record<string, string> = {
   // identifiers
   job_id: "String",
-  queue: "String", // LowCardinality(String) → String
+  queue: "LowCardinality(String)",
   name: "Nullable(String)",
 
   // status / attempts
-  status: "String", // LowCardinality(String) → String
+  status: "LowCardinality(String)",
   attempt: "UInt16",
   max_attempts: "UInt16",
   priority: "Nullable(Int32)",
@@ -23,7 +23,7 @@ const jobRunsUpdateTypes: Record<string, string> = {
   worker_id: "Nullable(String)",
 
   // arrays / tags
-  tags: "Array(String)", // LowCardinality(String) in array → Array(String)
+  tags: "Array(LowCardinality(String))",
 
   // payloads
   data: "Nullable(JSON)",
@@ -142,9 +142,17 @@ export const searchJobRuns = async (filters: {
   cursor?: { created_at: number; job_id: string; id: string } | null;
   direction?: "asc" | "desc";
 }): Promise<
-  (Omit<
+  (Pick<
     JobRunData,
-    "created_at" | "enqueued_at" | "started_at" | "finished_at"
+    | "id"
+    | "job_id"
+    | "queue"
+    | "name"
+    | "status"
+    | "attempt"
+    | "max_attempts"
+    | "error_message"
+    | "tags"
   > & {
     created_at: number;
     enqueued_at: number | null;
@@ -241,7 +249,7 @@ export const searchJobRuns = async (filters: {
   const orderDirection = filters.direction === "asc" ? "ASC" : "DESC";
 
   const query = `
-  SELECT *
+  SELECT id, job_id, queue, name, status, attempt, max_attempts, created_at, enqueued_at, started_at, finished_at, error_message, tags
   FROM job_runs_ch
   ${whereClause}
   ORDER BY created_at ${orderDirection}, job_id ${orderDirection}, id ${orderDirection}
@@ -254,7 +262,22 @@ export const searchJobRuns = async (filters: {
     format: "JSONEachRow",
   });
 
-  const data = (await result.json()) as JobRunData[];
+  const data = (await result.json()) as Pick<
+    JobRunData,
+    | "id"
+    | "job_id"
+    | "queue"
+    | "name"
+    | "status"
+    | "attempt"
+    | "max_attempts"
+    | "created_at"
+    | "enqueued_at"
+    | "started_at"
+    | "finished_at"
+    | "error_message"
+    | "tags"
+  >[];
   const processedData = data.map((item) => ({
     ...item,
     created_at: new Date(`${item.created_at}Z`).getTime(),

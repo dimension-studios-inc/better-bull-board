@@ -18,7 +18,23 @@ export const getJobsTableInput = z.object({
 });
 
 export const getJobsTableOutput = z.object({
-  jobs: z.array(jobRunDataSchema),
+  jobs: z.array(
+    jobRunDataSchema.pick({
+      id: true,
+      job_id: true,
+      queue: true,
+      name: true,
+      status: true,
+      attempt: true,
+      max_attempts: true,
+      created_at: true,
+      enqueued_at: true,
+      started_at: true,
+      finished_at: true,
+      error_message: true,
+      tags: true,
+    }),
+  ),
   nextCursor: z
     .object({
       created_at: z.number(),

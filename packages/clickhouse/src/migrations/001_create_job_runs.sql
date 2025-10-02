@@ -44,6 +44,6 @@ CREATE TABLE job_runs_ch
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(created_at)
-ORDER BY (queue, created_at, job_id, id)
+ORDER BY (created_at, queue, job_id, id)
 TTL created_at + INTERVAL 30 DAY DELETE
 SETTINGS index_granularity = 8192;

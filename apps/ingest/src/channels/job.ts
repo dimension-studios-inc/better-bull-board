@@ -44,11 +44,6 @@ async function flushJobRunBuffer() {
     }
     const values = Array.from(deduped.values()).map((item) => item.data);
 
-    console.log(
-      "values",
-      values.filter((item) => item.queue.includes("{test-log}")),
-    );
-
     // Batch upsert to PostgreSQL
     const upsertedJobs = await db
       .insert(jobRunsTable)
@@ -80,11 +75,6 @@ async function flushJobRunBuffer() {
         ]),
       })
       .returning();
-
-    console.log(
-      "upsertedJobs",
-      upsertedJobs.filter((item) => item.queue.includes("{test-log}")),
-    );
 
     // Queue ClickHouse inserts and publish events
     let index = 0;

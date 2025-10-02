@@ -23,7 +23,9 @@ export const createApiRoute = <IS extends ZodType, OS extends ZodType>({
       req.method === "GET" || !apiRoute.inputSchema
         ? undefined
         : await req.json().catch((e) => {
-            logger.error(`Error parsing JSON in ${req.url}: ${e}`);
+            logger.error(
+              `Error parsing JSON in ${req.url}: ${req.text()} ${e}`,
+            );
             throw e;
           });
     const parsed = await inputSchema?.parseAsync(json).catch((error) => {
