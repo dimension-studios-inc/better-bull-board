@@ -17,7 +17,7 @@ new Worker("demo-queue", processorFile1, {
   },
 });
 
-new Worker("demo-queue-2", processorFile2, {
+new Worker("{demo-queue-2}", processorFile2, {
   connection: redis,
   ioredis: redis,
   useWorkerThreads: true,

@@ -1,7 +1,7 @@
 import { Queue } from "bullmq";
 import { redis } from "../lib/redis";
 
-export const queue = new Queue("demo-queue-2", {
+export const queue = new Queue("{demo-queue-2}", {
   connection: redis,
 });
 
