@@ -112,7 +112,7 @@ export const bulkUpsertJobRun = async (
 
   const updateRow = async (jobRun: (typeof formattedRunsToUpdate)[number]) => {
     const updateData = {
-      ...omit(jobRun, ["created_at", "job_id", "id", "queue"]),
+      ...omit(jobRun, ["created_at", "job_id", "id", "queue", "tags"]),
       backoff: jobRun.backoff ? JSON.stringify(jobRun.backoff) : null,
       data: jobRun.data ? JSON.stringify(jobRun.data) : null,
       result: jobRun.result ? JSON.stringify(jobRun.result) : null,

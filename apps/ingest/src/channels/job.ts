@@ -74,7 +74,10 @@ async function flushJobRunBuffer() {
           "tags",
         ]),
       })
-      .returning();
+      .returning({
+        id: jobRunsTable.id,
+        createdAt: jobRunsTable.createdAt,
+      });
 
     // Queue ClickHouse inserts and publish events
     let index = 0;
@@ -87,18 +90,27 @@ async function flushJobRunBuffer() {
         clickhouseBuffer.push({
           data: {
             ...jobRun,
-            job_id: jobRun.jobId,
-            max_attempts: jobRun.maxAttempts,
-            delay_ms: jobRun.delayMs,
-            repeat_job_key: jobRun.repeatJobKey,
-            parent_job_id: jobRun.parentJobId,
-            worker_id: jobRun.workerId,
-            error_message: jobRun.errorMessage,
-            error_stack: jobRun.errorStack,
-            created_at: jobRun.createdAt,
-            enqueued_at: jobRun.enqueuedAt,
-            started_at: jobRun.startedAt,
-            finished_at: jobRun.finishedAt,
+            ...originalItem,
+            status: originalItem.status,
+            data: originalItem.data ?? null,
+            result: originalItem.result ?? null,
+            name: originalItem.name ?? null,
+            attempt: originalItem.attempt ?? 0,
+            priority: originalItem.priority ?? null,
+            backoff: originalItem.backoff ?? null,
+            job_id: originalItem.jobId,
+            tags: originalItem.tags ?? null,
+            max_attempts: originalItem.maxAttempts ?? 1,
+            delay_ms: originalItem.delayMs ?? 0,
+            repeat_job_key: originalItem.repeatJobKey ?? null,
+            parent_job_id: originalItem.parentJobId ?? null,
+            worker_id: originalItem.workerId ?? null,
+            error_message: originalItem.errorMessage ?? null,
+            error_stack: originalItem.errorStack ?? null,
+            created_at: originalItem.createdAt,
+            enqueued_at: originalItem.enqueuedAt ?? null,
+            started_at: originalItem.startedAt ?? null,
+            finished_at: originalItem.finishedAt ?? null,
           },
           kind: created ? "insert" : "update",
         });
