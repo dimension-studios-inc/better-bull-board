@@ -88,7 +88,17 @@ export class Worker<
         });
 
         listener.on("message", async (_channel, message) => {
-          const { jobId } = JSON.parse(message) as { jobId: string };
+          const { jobId, ts } = JSON.parse(message) as {
+            jobId: string;
+            ts: number;
+          };
+          const receivedAt = Date.now();
+          if (receivedAt - ts > 1000) {
+            logger.warn(
+              `Received late waiting message for job ${jobId} in ${queueName}`,
+              { receivedAt, ts },
+            );
+          }
           const job = await queue.getJob(jobId);
           if (!job) {
             await this.ioredis.publish(
@@ -129,6 +139,17 @@ export class Worker<
               JSON.stringify({ id: this.id, success: true }),
             ),
           ]);
+          const sentAt = Date.now();
+          if (sentAt - ts > 1000) {
+            logger.warn(
+              `Sent late waiting message for job ${jobId} in ${queueName}`,
+              {
+                sentAt,
+                receivedAt,
+                ts,
+              },
+            );
+          }
         });
       } else if (!isMaster() && subscribed && listener) {
         // ❌ we lost master → unsubscribe
