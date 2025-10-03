@@ -34,6 +34,7 @@ export const jobRunDataSchema = z.object({
   enqueued_at: z.coerce.date().nullable(),
   started_at: z.coerce.date().nullable(),
   finished_at: z.coerce.date().nullable(),
+  updated_at: z.coerce.date(),
 });
 
 export type JobRunData = z.infer<typeof jobRunDataSchema>;

@@ -40,9 +40,11 @@ CREATE TABLE job_runs_ch
   duration_ms Nullable(UInt32) MATERIALIZED
     (finished_at IS NULL OR started_at IS NULL
       ? NULL
-      : toUInt32(1000 * date_diff('millisecond', started_at, finished_at)))
+      : toUInt32(1000 * date_diff('millisecond', started_at, finished_at))),
+
+  updated_at DateTime64(3, 'UTC') MATERIALIZED toDateTime(now())
 )
-ENGINE = MergeTree
+ENGINE = ReplacingMergeTree(updated_at)
 PARTITION BY toYYYYMM(created_at)
 ORDER BY (created_at, queue, job_id, id)
 TTL created_at + INTERVAL 30 DAY DELETE

@@ -10,7 +10,7 @@ export const POST = createAuthenticatedApiRoute({
     // Query to get distinct tags from job runs
     const query = `
       SELECT DISTINCT arrayJoin(tags) as tag
-      FROM job_runs_ch 
+      FROM job_runs_ch FINAL
       WHERE tag != ''
       ${search ? "AND tag ILIKE {search:String}" : ""}
       ORDER BY tag

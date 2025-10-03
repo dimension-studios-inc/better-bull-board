@@ -33,6 +33,7 @@ export const getJobsTableOutput = z.object({
       finished_at: true,
       error_message: true,
       tags: true,
+      updated_at: true,
     }),
   ),
   nextCursor: z

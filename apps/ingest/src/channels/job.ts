@@ -21,8 +21,7 @@ const jobRunBuffer: Array<{
   dbId?: string;
 }> = [];
 const clickhouseBuffer: Array<{
-  data: JobRunData;
-  kind: "insert" | "update";
+  data: Omit<JobRunData, "updated_at">;
 }> = [];
 
 let flushTimer: NodeJS.Timeout | null = null;
@@ -84,9 +83,6 @@ async function flushJobRunBuffer() {
     for (const jobRun of upsertedJobs) {
       const originalItem = values[index];
       if (originalItem?.createdAt) {
-        // If the createdAt is the same as the original item, it means it was created
-        const created =
-          jobRun.createdAt.getTime() === originalItem.createdAt.getTime();
         clickhouseBuffer.push({
           data: {
             ...jobRun,
@@ -107,12 +103,11 @@ async function flushJobRunBuffer() {
             worker_id: originalItem.workerId ?? null,
             error_message: originalItem.errorMessage ?? null,
             error_stack: originalItem.errorStack ?? null,
-            created_at: originalItem.createdAt,
+            created_at: jobRun.createdAt, // Keep the value from the database
             enqueued_at: originalItem.enqueuedAt ?? null,
             started_at: originalItem.startedAt ?? null,
             finished_at: originalItem.finishedAt ?? null,
           },
-          kind: created ? "insert" : "update",
         });
       } else {
         logger.error("Job run not found in batch", {
