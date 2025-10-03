@@ -81,6 +81,7 @@ export const POST = createAuthenticatedApiRoute({
       queues: rows.map((row) => {
         const stats = statsMap.get(row.name) ?? {
           queueName: row.name,
+          waitingJobs: 0,
           activeJobs: 0,
           failedJobs: 0,
           completedJobs: 0,
@@ -92,6 +93,7 @@ export const POST = createAuthenticatedApiRoute({
           isPaused: row.isPaused,
           patterns: row.patterns?.filter(Boolean) ?? [],
           everys: row.everys?.filter(Boolean) ?? [],
+          waitingJobs: stats.waitingJobs,
           activeJobs: stats.activeJobs,
           failedJobs: stats.failedJobs,
           completedJobs: stats.completedJobs,

@@ -164,6 +164,7 @@ export const getQueueStatsWithChart = async ({
     const statsPromises = queueNames.map(async (queueName) => {
       const countQuery = `
         SELECT 
+          countIf(status = 'waiting') as waiting_jobs,
           countIf(status = 'active') as active_jobs,
           countIf(status = 'failed' AND created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}) as failed_jobs,
           countIf(status = 'completed' AND created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}) as completed_jobs
@@ -211,11 +212,17 @@ export const getQueueStatsWithChart = async ({
 
       const counts =
         (countData[0] as {
+          waiting_jobs: string;
           active_jobs: string;
           failed_jobs: string;
           completed_jobs: string;
         }) ||
-        ({ active_jobs: "0", failed_jobs: "0", completed_jobs: "0" } as const);
+        ({
+          waiting_jobs: "0",
+          active_jobs: "0",
+          failed_jobs: "0",
+          completed_jobs: "0",
+        } as const);
 
       const chartData = (
         chartDataRaw as {
@@ -231,6 +238,7 @@ export const getQueueStatsWithChart = async ({
 
       return {
         queueName,
+        waitingJobs: Number(counts.waiting_jobs),
         activeJobs: Number(counts.active_jobs),
         failedJobs: Number(counts.failed_jobs),
         completedJobs: Number(counts.completed_jobs),

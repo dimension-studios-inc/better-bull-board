@@ -52,6 +52,7 @@ export interface QueueChartData {
 
 export interface QueueStatsWithChart {
   queueName: string;
+  waitingJobs: number;
   activeJobs: number;
   failedJobs: number;
   completedJobs: number;
