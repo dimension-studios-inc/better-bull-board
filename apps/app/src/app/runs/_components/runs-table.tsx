@@ -175,7 +175,7 @@ export function RunsTable() {
           </TableHeader>
           <TableBody>
             {jobs.map((run) => (
-              <AnimatePresence key={run.id}>
+              <AnimatePresence key={`${run.id}-${run.updated_at.getTime()}`}>
                 <motion.tr
                   key={run.id}
                   className={cn(

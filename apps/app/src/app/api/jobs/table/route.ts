@@ -59,6 +59,7 @@ export const POST = createAuthenticatedApiRoute({
         enqueued_at: job.enqueued_at ? new Date(job.enqueued_at) : null,
         started_at: job.started_at ? new Date(job.started_at) : null,
         finished_at: job.finished_at ? new Date(job.finished_at) : null,
+        updated_at: new Date(job.updated_at),
       })),
       nextCursor,
       prevCursor,

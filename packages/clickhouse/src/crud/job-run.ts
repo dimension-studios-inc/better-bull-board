@@ -1,50 +1,11 @@
 import z from "zod";
-import { omit } from "~/utils";
 import { clickhouseClient } from "../lib/client";
 import { type JobRunData, jobRunDataSchema } from "./schemas";
 
-const jobRunsUpdateTypes: Record<string, string> = {
-  // identifiers
-  job_id: "String",
-  queue: "LowCardinality(String)",
-  name: "Nullable(String)",
-
-  // status / attempts
-  status: "LowCardinality(String)",
-  attempt: "UInt16",
-  max_attempts: "UInt16",
-  priority: "Nullable(Int32)",
-  delay_ms: "UInt32",
-  backoff: "Nullable(JSON)",
-
-  // relationships
-  repeat_job_key: "Nullable(String)",
-  parent_job_id: "Nullable(String)",
-  worker_id: "Nullable(String)",
-
-  // arrays / tags
-  tags: "Array(LowCardinality(String))",
-
-  // payloads
-  data: "Nullable(JSON)",
-  result: "Nullable(JSON)",
-
-  // errors
-  error_type: "Nullable(String)",
-  error_message: "Nullable(String)",
-  error_stack: "Nullable(String)",
-
-  // timing
-  enqueued_at: "Nullable(DateTime64(3, 'UTC'))",
-  started_at: "Nullable(DateTime64(3, 'UTC'))",
-  finished_at: "Nullable(DateTime64(3, 'UTC'))",
-};
-
 export const upsertJobRun = async (
-  _jobRun: JobRunData,
-  kind: "insert" | "update",
+  _jobRun: Omit<JobRunData, "updated_at">,
 ): Promise<void> => {
-  const jobRun = jobRunDataSchema.parse(_jobRun);
+  const jobRun = jobRunDataSchema.omit({ updated_at: true }).parse(_jobRun);
   const formattedRun = {
     ...jobRun,
     created_at: jobRun.created_at.getTime(),
@@ -52,81 +13,37 @@ export const upsertJobRun = async (
     started_at: jobRun.started_at?.getTime(),
     finished_at: jobRun.finished_at?.getTime(),
   };
-  if (kind === "update") {
-    const updateData = {
-      ...omit(formattedRun, ["created_at", "job_id", "id", "queue"]),
-      backoff: formattedRun.backoff
-        ? JSON.stringify(formattedRun.backoff)
-        : null,
-      data: formattedRun.data ? JSON.stringify(formattedRun.data) : null,
-      result: formattedRun.result ? JSON.stringify(formattedRun.result) : null,
-    };
-    await clickhouseClient.command({
-      query: `UPDATE job_runs_ch SET ${Object.entries(updateData)
-        .map(([key]) => `${key} = {${key}:${jobRunsUpdateTypes[key]}}`)
-        .join(", ")} WHERE id = {id:UUID}`,
-      query_params: { id: formattedRun.id, ...updateData },
-    });
-  } else {
-    await clickhouseClient.insert({
-      table: "job_runs_ch",
-      values: [formattedRun],
-      format: "JSONEachRow",
-    });
-  }
-};
-
-export const bulkUpsertJobRun = async (
-  _jobRuns: { data: JobRunData; kind: "insert" | "update" }[],
-): Promise<void> => {
-  const toInsert = _jobRuns.filter((jobRun) => jobRun.kind === "insert");
-  const toUpdate = _jobRuns.filter((jobRun) => jobRun.kind === "update");
-
-  const jobRunsToInsert = jobRunDataSchema
-    .array()
-    .parse(toInsert.map((jobRun) => jobRun.data));
-  const formattedRunsToInsert = jobRunsToInsert.map((jobRun) => ({
-    ...jobRun,
-    created_at: jobRun.created_at.getTime(),
-    enqueued_at: jobRun.enqueued_at?.getTime(),
-    started_at: jobRun.started_at?.getTime(),
-    finished_at: jobRun.finished_at?.getTime(),
-  }));
-
-  const jobRunsToUpdate = jobRunDataSchema
-    .array()
-    .parse(toUpdate.map((jobRun) => jobRun.data));
-  const formattedRunsToUpdate = jobRunsToUpdate.map((jobRun) => ({
-    ...jobRun,
-    created_at: jobRun.created_at.getTime(),
-    enqueued_at: jobRun.enqueued_at?.getTime(),
-    started_at: jobRun.started_at?.getTime(),
-    finished_at: jobRun.finished_at?.getTime(),
-  }));
 
   await clickhouseClient.insert({
     table: "job_runs_ch",
-    values: formattedRunsToInsert,
+    values: [formattedRun],
     format: "JSONEachRow",
   });
+};
 
-  const updateRow = async (jobRun: (typeof formattedRunsToUpdate)[number]) => {
-    const updateData = {
-      ...omit(jobRun, ["created_at", "job_id", "id", "queue", "tags"]),
-      backoff: jobRun.backoff ? JSON.stringify(jobRun.backoff) : null,
-      data: jobRun.data ? JSON.stringify(jobRun.data) : null,
-      result: jobRun.result ? JSON.stringify(jobRun.result) : null,
-    };
-    await clickhouseClient.command({
-      query: `UPDATE job_runs_ch SET ${Object.entries(updateData)
-        .map(([key]) => `${key} = {${key}:${jobRunsUpdateTypes[key]}}`)
-        .join(", ")} WHERE id = {id:UUID}`,
-      query_params: { id: jobRun.id, ...updateData },
+export const bulkUpsertJobRun = async (
+  _jobRuns: { data: Omit<JobRunData, "updated_at"> }[],
+): Promise<void> => {
+  const jobRuns = jobRunDataSchema
+    .omit({ updated_at: true })
+    .array()
+    .parse(_jobRuns.map((jobRun) => jobRun.data));
+
+  const formattedRuns = jobRuns.map((jobRun) => ({
+    ...jobRun,
+    created_at: jobRun.created_at.getTime(),
+    enqueued_at: jobRun.enqueued_at?.getTime(),
+    started_at: jobRun.started_at?.getTime(),
+    finished_at: jobRun.finished_at?.getTime(),
+  }));
+
+  if (formattedRuns.length > 0) {
+    await clickhouseClient.insert({
+      table: "job_runs_ch",
+      values: formattedRuns,
+      format: "JSONEachRow",
     });
-  };
-
-  // Can't bulk update in ClickHouse, so we need to update each one individually
-  await Promise.all(formattedRunsToUpdate.map(updateRow));
+  }
 };
 
 export const searchJobRuns = async (filters: {
@@ -158,6 +75,7 @@ export const searchJobRuns = async (filters: {
     enqueued_at: number | null;
     started_at: number | null;
     finished_at: number | null;
+    updated_at: number;
   })[]
 > => {
   const conditions: string[] = [];
@@ -213,7 +131,6 @@ export const searchJobRuns = async (filters: {
   }
 
   if (filters.cursor) {
-    // cursor should be an object with created_at, job_id, id
     const { created_at, job_id, id } = filters.cursor;
 
     if (filters.direction === "asc") {
@@ -242,15 +159,13 @@ export const searchJobRuns = async (filters: {
   }
 
   const limit = filters.limit || 100;
-
   const whereClause =
     conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
   const orderDirection = filters.direction === "asc" ? "ASC" : "DESC";
 
   const query = `
-  SELECT id, job_id, queue, name, status, attempt, max_attempts, created_at, enqueued_at, started_at, finished_at, error_message, tags
-  FROM job_runs_ch
+  SELECT id, job_id, queue, name, status, attempt, max_attempts, created_at, enqueued_at, started_at, finished_at, error_message, tags, updated_at
+  FROM job_runs_ch FINAL
   ${whereClause}
   ORDER BY created_at ${orderDirection}, job_id ${orderDirection}, id ${orderDirection}
   LIMIT {limit:UInt32}
@@ -277,6 +192,7 @@ export const searchJobRuns = async (filters: {
     | "finished_at"
     | "error_message"
     | "tags"
+    | "updated_at"
   >[];
   const processedData = data.map((item) => ({
     ...item,
@@ -290,14 +206,24 @@ export const searchJobRuns = async (filters: {
     finished_at: item.finished_at
       ? new Date(`${item.finished_at}Z`).getTime()
       : null,
+    updated_at: new Date(`${item.updated_at}Z`).getTime(),
   }));
 
   return processedData;
 };
 
-export const cancelJobRun = async (jobId: string) => {
-  await clickhouseClient.command({
-    query: `UPDATE job_runs_ch SET status = 'failed', error_message = 'Job cancelled' WHERE job_id = {job_id:String}`,
-    query_params: { job_id: jobId },
+export const cancelJobRun = async (job: Omit<JobRunData, "updated_at">) => {
+  await clickhouseClient.insert({
+    table: "job_runs_ch",
+    values: [
+      {
+        ...job,
+        created_at: job.created_at.getTime(),
+        enqueued_at: job.enqueued_at?.getTime(),
+        started_at: job.started_at?.getTime(),
+        finished_at: job.finished_at?.getTime(),
+      },
+    ],
+    format: "JSONEachRow",
   });
 };

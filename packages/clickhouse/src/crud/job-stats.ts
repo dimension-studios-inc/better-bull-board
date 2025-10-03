@@ -42,20 +42,20 @@ export const getJobStats = async ({
 }): Promise<JobStats> => {
   const activeQuery = `
     SELECT count() as count
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE status = 'active'
   `;
 
   const failedQuery = `
     SELECT count() as count
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL 
     WHERE status = 'failed' 
     AND created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}
   `;
 
   const completed24hQuery = `
     SELECT count() as count
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE status = 'completed' 
     AND created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}
   `;
@@ -168,7 +168,7 @@ export const getQueueStatsWithChart = async ({
           countIf(status = 'active') as active_jobs,
           countIf(status = 'failed' AND created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}) as failed_jobs,
           countIf(status = 'completed' AND created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}) as completed_jobs
-        FROM job_runs_ch 
+        FROM job_runs_ch FINAL
         WHERE queue = {queue:String}
       `;
 
@@ -177,7 +177,7 @@ export const getQueueStatsWithChart = async ({
           ${interval} as timestamp,
           countIf(status = 'completed') as completed,
           countIf(status = 'failed') as failed
-        FROM job_runs_ch 
+        FROM job_runs_ch FINAL
         WHERE queue = {queue:String}
           AND created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}
         GROUP BY timestamp
@@ -262,26 +262,26 @@ export const getEnhancedJobStats = async ({
 }): Promise<EnhancedJobStats> => {
   const runningTasksQuery = `
     SELECT count() as count
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE status = 'active'
   `;
 
   const waitingInQueueQuery = `
     SELECT count() as count
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE status = 'waiting'
   `;
 
   const successesQuery = `
     SELECT count() as count
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE status = 'completed' 
     AND created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}
   `;
 
   const failuresQuery = `
     SELECT count() as count
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE status = 'failed' 
     AND created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}
   `;
@@ -348,7 +348,7 @@ export const getQueuePerformanceData = async ({
         finished_at - started_at,
         status = 'completed' AND started_at IS NOT NULL AND finished_at IS NOT NULL
       ) as avg_duration_seconds
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}
     GROUP BY queue
     ORDER BY total_runs DESC
@@ -404,7 +404,7 @@ export const getTopQueuesByDuration = async ({
         finished_at - started_at,
         status = 'completed' AND started_at IS NOT NULL AND finished_at IS NOT NULL
       ) as total_duration_seconds
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}
     GROUP BY queue
     HAVING total_duration_seconds > 0
@@ -447,7 +447,7 @@ export const getTopQueuesByRunCount = async ({
     SELECT 
       queue,
       count() as run_count
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}
     GROUP BY queue
     ORDER BY run_count DESC
@@ -503,7 +503,7 @@ export const getRunGraphData = async ({
     SELECT 
       ${interval} as timestamp,
       count() as run_count
-    FROM job_runs_ch 
+    FROM job_runs_ch FINAL
     WHERE created_at BETWEEN {date_from:DateTime64(3, 'UTC')} AND {date_to:DateTime64(3, 'UTC')}
     GROUP BY timestamp
     ORDER BY timestamp
