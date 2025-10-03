@@ -15,6 +15,7 @@ export const getQueuesTableOutput = z.object({
       isPaused: z.boolean(),
       patterns: z.array(z.string()),
       everys: z.array(z.number()),
+      waitingJobs: z.number(),
       activeJobs: z.number(),
       failedJobs: z.number(),
       completedJobs: z.number(),

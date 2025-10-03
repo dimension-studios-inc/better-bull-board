@@ -50,7 +50,7 @@ export function QueuePerformanceTable({ days }: QueuePerformanceTableProps) {
         ) : (
           <ScrollArea className="h-96">
             <Table>
-              <TableHeader>
+              <TableHeader className="z-10">
                 <TableRow>
                   <TableHead>Queue</TableHead>
                   <TableHead className="text-right">Total Runs</TableHead>

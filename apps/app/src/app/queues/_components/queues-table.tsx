@@ -114,11 +114,12 @@ export function QueuesTable() {
       </div>
       <div className="relative overflow-hidden rounded-lg border">
         <Table className="table-fixed w-full">
-          <TableHeader>
+          <TableHeader className="z-10">
             <TableRow>
               <TableHead style={{ width: "200px" }}>Queue Name</TableHead>
               <TableHead style={{ width: "120px" }}>Status</TableHead>
               <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
+              <TableHead style={{ width: "120px" }}>Waiting</TableHead>
               <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
               <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
               <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>
@@ -138,7 +139,9 @@ export function QueuesTable() {
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   layoutId={queue.name}
                 >
-                  <TableCell className="font-medium">{queue.name}</TableCell>
+                  <TableCell className="font-medium truncate">
+                    {queue.name}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant={"outline"}
@@ -162,6 +165,9 @@ export function QueuesTable() {
                             )
                           : undefined}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono">{queue.waitingJobs}</span>
                   </TableCell>
                   <TableCell>
                     <span className="font-mono">{queue.activeJobs}</span>
