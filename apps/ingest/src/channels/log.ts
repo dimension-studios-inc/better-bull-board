@@ -1,12 +1,9 @@
 import { bulkInsertJobLog as bulkInsertJobLogCH } from "@better-bull-board/clickhouse";
 import type { JobLogData } from "@better-bull-board/clickhouse/schemas";
-import {
-  jobLogsInsertSchema,
-  jobLogsTable,
-} from "@better-bull-board/db/schemas/job/schema";
+import { jobLogsTable } from "@better-bull-board/db/schemas/job/schema";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
-import type { z } from "zod/v4";
+import { z } from "zod/v4";
 import { redis } from "~/lib/redis";
 import { getJobFromBullId } from "~/utils";
 
@@ -14,11 +11,18 @@ import { getJobFromBullId } from "~/utils";
 const FLUSH_SIZE = 100;
 const FLUSH_INTERVAL = 200; // ms
 
+const pendingLogSchema = z.object({
+  level: z.enum(["log", "debug", "info", "warn", "error"]),
+  message: z.string(),
+  ts: z.date(),
+  logSeq: z.number(),
+  jobId: z.string(),
+  queue: z.string(),
+  jobTimestamp: z.number(),
+});
+
 // Buffers for batching
-const logBuffer: Array<{
-  data: z.infer<typeof jobLogsInsertSchema>;
-  jobRunId: string;
-}> = [];
+const logBuffer: Array<z.infer<typeof pendingLogSchema>> = [];
 const clickhouseLogBuffer: Array<JobLogData> = [];
 
 let logFlushTimer: NodeJS.Timeout | null = null;
@@ -30,16 +34,49 @@ async function flushLogBuffer() {
   const batch = logBuffer.splice(0, logBuffer.length);
 
   try {
+    const batchWithJobRunId = await Promise.all(
+      batch.map(async (item) => {
+        let jobRunId = await getJobFromBullId(
+          item.jobId,
+          new Date(item.jobTimestamp),
+          item.queue,
+        );
+        if (!jobRunId) {
+          // Retry in 1 second
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          jobRunId = await getJobFromBullId(
+            item.jobId,
+            new Date(item.jobTimestamp),
+            item.queue,
+          );
+          if (!jobRunId) {
+            logger.warn("Received log for job that no longer exists", {
+              jobId: item.jobId,
+              queue: item.queue,
+            });
+            return;
+          }
+        }
+        return { ...item, jobRunId };
+      }),
+    );
+
+    const filteredBatch = batchWithJobRunId.filter(
+      (item) => item !== undefined,
+    );
+
+    if (filteredBatch.length === 0) return;
+
     // Batch insert to PostgreSQL (logs are append-only, no conflicts)
     const insertedLogs = await db
       .insert(jobLogsTable)
-      .values(batch.map((item) => item.data))
+      .values(filteredBatch)
       .returning();
 
     // Queue ClickHouse inserts and publish events
     for (let i = 0; i < insertedLogs.length; i++) {
       const insertedLog = insertedLogs[i];
-      const originalItem = batch[i];
+      const originalItem = batchWithJobRunId[i];
 
       if (insertedLog && originalItem) {
         // Add to ClickHouse buffer
@@ -105,19 +142,9 @@ function scheduleLogFlush() {
 }
 
 // Queue a log entry for batched processing
-function queueLogEntry(
-  logData: z.infer<typeof jobLogsInsertSchema>,
-  jobRunId: string,
-) {
-  logBuffer.push({ data: logData, jobRunId });
-
-  // Flush immediately if buffer is full
-  if (logBuffer.length >= FLUSH_SIZE) {
-    setTimeout(flushLogBuffer, 0);
-  } else {
-    // Schedule a flush if not already scheduled
-    scheduleLogFlush();
-  }
+function queueLogEntry(logData: z.infer<typeof pendingLogSchema>) {
+  logBuffer.push(logData);
+  scheduleLogFlush();
 }
 
 export const handleLogChannel = async (_channel: string, message: string) => {
@@ -140,33 +167,22 @@ export const handleLogChannel = async (_channel: string, message: string) => {
       message: string;
       level: string;
     };
-    let jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp), queue);
-    if (!jobRunId) {
-      // Retry in 1 second
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp), queue);
-      if (!jobRunId) {
-        logger.warn("Received log for job that no longer exists", {
-          jobId,
-          queue,
-        });
-        return;
-      }
-    }
 
     // Format the log data
-    const formatted: z.infer<typeof jobLogsInsertSchema> = {
-      jobRunId,
+    const formatted = {
       level: level as "log" | "debug" | "info" | "warn" | "error",
       message: logMessage,
       ts: new Date(logTimestamp),
       logSeq,
+      jobId,
+      queue,
+      jobTimestamp,
     };
 
-    const validated = jobLogsInsertSchema.parse(formatted);
+    const validated = pendingLogSchema.parse(formatted);
 
     // Queue for batched processing instead of individual insert
-    queueLogEntry(validated, jobRunId);
+    queueLogEntry(validated);
   } catch (e) {
     logger.error("Error saving log", { error: e, message });
   }
