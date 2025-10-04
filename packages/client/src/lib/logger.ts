@@ -108,6 +108,7 @@ export function installConsoleRelay({
               JSON.stringify({
                 id: ctx.id,
                 jobId: ctx.job.id,
+                queue: ctx.job.queueName,
                 logTimestamp: ts,
                 logSeq: seq,
                 jobTimestamp: ctx.job.timestamp,

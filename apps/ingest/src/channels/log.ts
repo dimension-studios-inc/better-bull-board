@@ -125,6 +125,7 @@ export const handleLogChannel = async (_channel: string, message: string) => {
     const {
       jobId,
       message: logMessage,
+      queue,
       logTimestamp,
       logSeq,
       jobTimestamp,
@@ -132,17 +133,18 @@ export const handleLogChannel = async (_channel: string, message: string) => {
     } = JSON.parse(message) as {
       id: string;
       jobId: string;
+      queue: string;
       logTimestamp: number;
       logSeq: number;
       jobTimestamp: number;
       message: string;
       level: string;
     };
-    let jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp));
+    let jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp), queue);
     if (!jobRunId) {
       // Retry in 1 second
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp));
+      jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp), queue);
       if (!jobRunId) {
         logger.warn("No job run found for job ID", { jobId });
         return;

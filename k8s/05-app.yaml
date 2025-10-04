@@ -16,39 +16,39 @@ spec:
         app: bbb-app
     spec:
       containers:
-      - name: app
-        image: public.ecr.aws/n5q7l0s4/better-bull-board-app:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 3000
-        envFrom:
-        - configMapRef:
-            name: bbb-app-config
-        - secretRef:
-            name: bbb-app-secret
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 15
-          periodSeconds: 5
-          timeoutSeconds: 10
-          failureThreshold: 3
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
+        - name: app
+          image: public.ecr.aws/n5q7l0s4/better-bull-board-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: bbb-app-config
+            - secretRef:
+                name: bbb-app-secret
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -60,9 +60,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: 3000
-    protocol: TCP
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
   selector:
     app: bbb-app
 ---
@@ -78,7 +78,7 @@ spec:
   tls:
     - hosts:
         - "bbb.k3s.dimensionstudios.co"
-      secretName: k3s-letsencrypt-tls
+      secretName: app-k3s-letsencrypt-tls
   rules:
     - host: "bbb.k3s.dimensionstudios.co"
       http:

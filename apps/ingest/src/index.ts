@@ -1,5 +1,6 @@
 import { logger } from "@rharkor/logger";
 import { handleChannel } from "./channels";
+import { env } from "./lib/env";
 import { startHealthServer } from "./lib/health-server";
 import { redis } from "./lib/redis";
 import { startWebSocketServer } from "./lib/websocket-server";
@@ -38,6 +39,16 @@ const main = async () => {
 
   // Start Health server
   startHealthServer();
+
+  if (env.ENV === "development") {
+    logger.log("PID", process.pid);
+  }
 };
+
+// print memory usage every 10 seconds
+setInterval(() => {
+  const memoryUsage = process.memoryUsage();
+  logger.log("Memory usage", memoryUsage.rss / 1024 / 1024);
+}, 10_000);
 
 main();

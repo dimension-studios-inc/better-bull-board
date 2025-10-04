@@ -38,6 +38,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "@types/heapdump": "0.3.4",
     "@types/node": "^24.5.2",
     "@types/ws": "^8.5.12",
     "tsx": "^4.19.3"

@@ -81,10 +81,17 @@ export async function attachQueueListener(queueName: string) {
     timeouts.set(jobId, timeout);
 
     // publish after scheduling timeout
+    const ts = Date.now();
     await redis.publish(
       `bbb:queue:${queueName}:job:waiting`,
-      JSON.stringify({ jobId, ts: Date.now() }),
+      JSON.stringify({ jobId, ts }),
     );
+    const delay = Date.now() - ts;
+    if (delay > 500) {
+      logger.warn(
+        `⏱ Job ${jobId} in queue ${queueName} took ${delay}ms to be scheduled`,
+      );
+    }
   });
 
   queueEvents.on("error", (err) => {
@@ -153,3 +160,9 @@ export async function autoIngestWaitingJobs() {
     });
   }, 60_000);
 }
+
+///Each 10s print size of activeTimeouts and activeListeners
+setInterval(() => {
+  logger.log("Active timeouts", activeTimeouts.size);
+  logger.log("Active listeners", activeListeners.size);
+}, 10_000);
