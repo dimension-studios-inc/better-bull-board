@@ -119,7 +119,7 @@ export function QueuesTable() {
               <TableHead style={{ width: "200px" }}>Queue Name</TableHead>
               <TableHead style={{ width: "120px" }}>Status</TableHead>
               <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
-              <TableHead style={{ width: "120px" }}>Waiting</TableHead>
+              <TableHead style={{ width: "120px" }}>Waiting Jobs</TableHead>
               <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
               <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
               <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>

@@ -10,9 +10,10 @@ const CACHE_KEY_PREFIX = "bbb:job-run-id:";
 const getCachedValue = async (
   jobId: string,
   enqueuedAt: Date,
+  queue: string,
 ): Promise<string | null> => {
   try {
-    const key = `${CACHE_KEY_PREFIX}${jobId}:${enqueuedAt.getTime()}`;
+    const key = `${CACHE_KEY_PREFIX}${queue}:${jobId}:${enqueuedAt.getTime()}`;
     const cached = await redis.get(key);
 
     if (cached === null) {
@@ -29,24 +30,30 @@ const getCachedValue = async (
 const setCachedValue = async (
   jobId: string,
   enqueuedAt: Date,
+  queue: string,
   value: string,
 ): Promise<void> => {
   try {
-    const key = `${CACHE_KEY_PREFIX}${jobId}:${enqueuedAt.getTime()}`;
+    const key = `${CACHE_KEY_PREFIX}${queue}:${jobId}:${enqueuedAt.getTime()}`;
     await redis.setex(key, CACHE_TTL_SECONDS, value);
   } catch (error) {
     logger.warn("Failed to set cached value in Redis", {
       jobId,
       enqueuedAt,
+      queue,
       value,
       error,
     });
   }
 };
 
-export const getJobFromBullId = async (jobId: string, enqueuedAt: Date) => {
+export const getJobFromBullId = async (
+  jobId: string,
+  enqueuedAt: Date,
+  queue: string,
+) => {
   // Check cache first
-  const cachedResult = await getCachedValue(jobId, enqueuedAt);
+  const cachedResult = await getCachedValue(jobId, enqueuedAt, queue);
   if (cachedResult !== null) {
     return cachedResult;
   }
@@ -58,6 +65,7 @@ export const getJobFromBullId = async (jobId: string, enqueuedAt: Date) => {
       and(
         eq(jobRunsTable.jobId, jobId),
         eq(jobRunsTable.enqueuedAt, enqueuedAt),
+        eq(jobRunsTable.queue, queue),
       ),
     )
     .limit(1);
@@ -69,14 +77,14 @@ export const getJobFromBullId = async (jobId: string, enqueuedAt: Date) => {
   } else {
     const jobRunId = jobRun.id;
     if (!jobRunId) {
-      logger.warn("Invalid job run data", { jobId, enqueuedAt });
+      logger.warn("Invalid job run data", { jobId, enqueuedAt, queue });
       result = undefined;
     } else {
       result = jobRunId;
     }
   }
 
-  if (result) await setCachedValue(jobId, enqueuedAt, result);
+  if (result) await setCachedValue(jobId, enqueuedAt, queue, result);
 
   return result;
 };

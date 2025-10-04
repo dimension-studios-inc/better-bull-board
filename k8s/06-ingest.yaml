@@ -99,7 +99,7 @@ spec:
   tls:
     - hosts:
         - "wss.bbb.k3s.dimensionstudios.co"
-      secretName: k3s-letsencrypt-tls
+      secretName: ingest-k3s-letsencrypt-tls
   rules:
     - host: "wss.bbb.k3s.dimensionstudios.co"
       http:
