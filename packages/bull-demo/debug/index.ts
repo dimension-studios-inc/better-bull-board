@@ -10,7 +10,7 @@ const main = async () => {
 
   const singleJob = async () => {
     const job = await queue.add("test-job-name", {
-      wait: 500,
+      wait: 50,
       longData: new Array(1000).fill("test"),
     });
     if (!job.id) throw new Error("Job ID is undefined");
@@ -25,8 +25,8 @@ const main = async () => {
   };
 
   setInterval(async () => {
-    await bulkJobs(10);
-  }, 1000);
+    await bulkJobs(50);
+  }, 500);
 };
 
 main();

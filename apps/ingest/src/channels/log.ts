@@ -146,7 +146,10 @@ export const handleLogChannel = async (_channel: string, message: string) => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp), queue);
       if (!jobRunId) {
-        logger.warn("No job run found for job ID", { jobId });
+        logger.warn("Received log for job that no longer exists", {
+          jobId,
+          queue,
+        });
         return;
       }
     }

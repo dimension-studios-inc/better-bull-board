@@ -160,9 +160,3 @@ export async function autoIngestWaitingJobs() {
     });
   }, 60_000);
 }
-
-///Each 10s print size of activeTimeouts and activeListeners
-setInterval(() => {
-  logger.log("Active timeouts", activeTimeouts.size);
-  logger.log("Active listeners", activeListeners.size);
-}, 10_000);
