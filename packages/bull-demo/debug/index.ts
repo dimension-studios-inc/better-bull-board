@@ -24,9 +24,11 @@ const main = async () => {
     await Promise.all(Array.from({ length: count }).map(() => singleJob()));
   };
 
-  setInterval(async () => {
-    await bulkJobs(50);
-  }, 500);
+  // setInterval(async () => {
+  //   await bulkJobs(50);
+  // }, 500);
+
+  await bulkJobs(10);
 };
 
 main();

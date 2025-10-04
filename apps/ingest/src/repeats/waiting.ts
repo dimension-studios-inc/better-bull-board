@@ -8,11 +8,10 @@ import { chunk } from "~/utils";
 // Single subscriber for ALL queues/jobs
 let globalSubscriber: ReturnType<typeof redis.duplicate> | null = null;
 
-// Track timeouts: Map<queueName, Map<jobId, Timeout>>
-const activeTimeouts = new Map<string, Map<string, NodeJS.Timeout>>();
-
 // Active queueEvents only
 export const activeListeners = new Map<string, QueueEvents>();
+
+const handlers: Record<string, () => void> = {};
 
 async function ensureSubscriber() {
   if (globalSubscriber) return;
@@ -20,34 +19,38 @@ async function ensureSubscriber() {
   globalSubscriber = redis.duplicate();
   await globalSubscriber.connect().catch(() => {});
 
+  await globalSubscriber.psubscribe("bbb:queue:*:job:waiting:*");
+
   // Handle ALL job waiting responses
-  globalSubscriber.on("pmessage", (_pattern, channel) => {
+  globalSubscriber?.on("pmessage", (_pattern, channel) => {
     const match = channel.match(/^bbb:queue:(.+):job:waiting:(.+)$/);
     if (!match) {
-      logger.error("Invalid channel missing jobId or queueName", { channel });
+      logger.error("Invalid channel missing jobId or queueName", {
+        channel,
+      });
       return;
     }
 
-    const [, queueName, jobId] = match;
-    if (!jobId || !queueName) {
-      logger.error("Invalid channel missing jobId or queueName", { channel });
+    const [, eventQueueName, eventJobId] = match;
+    if (!eventJobId || !eventQueueName) {
+      logger.error("Invalid channel missing jobId or queueName", {
+        channel,
+      });
       return;
     }
-    const timeouts = activeTimeouts.get(queueName);
-    if (!timeouts) return;
 
-    const timeout = timeouts.get(jobId);
-    if (timeout) {
-      clearTimeout(timeout);
-      timeouts.delete(jobId);
+    logger.log("Received waiting message", {
+      handlerKey: `bbb:queue:${eventQueueName}:job:waiting:${eventJobId}`,
+    });
+
+    const handler =
+      handlers[`bbb:queue:${eventQueueName}:job:waiting:${eventJobId}`];
+    if (handler) {
+      handler();
     } else {
-      logger.warn(
-        `Received late/unknown message for job ${jobId} in ${queueName}`,
-      );
+      logger.warn("Received waiting message with no handler", { channel });
     }
   });
-
-  await globalSubscriber.psubscribe("bbb:queue:*:job:waiting:*");
 }
 
 export async function attachQueueListener(queueName: string) {
@@ -58,27 +61,24 @@ export async function attachQueueListener(queueName: string) {
   const queueEvents = new QueueEvents(queueName, { connection: redis });
   activeListeners.set(queueName, queueEvents);
 
-  // Ensure we track timeouts for this queue
-  if (!activeTimeouts.has(queueName)) {
-    activeTimeouts.set(queueName, new Map());
-  }
-
   queueEvents.on("waiting", async ({ jobId }) => {
-    const timeouts = activeTimeouts.get(queueName);
-    if (!timeouts) {
-      logger.error("No timeouts for queue", { queueName });
+    if (!globalSubscriber) {
+      logger.error("Global subscriber not found");
       return;
     }
 
-    // create timeout
+    // Create timeout
+    const handlerKey = `bbb:queue:${queueName}:job:waiting:${jobId}`;
     const timeout = setTimeout(() => {
       logger.warn(
         `⏱ No worker responded for job ${jobId} in queue ${queueName}`,
       );
-      timeouts.delete(jobId);
+      delete handlers[handlerKey];
     }, 3000);
-
-    timeouts.set(jobId, timeout);
+    handlers[handlerKey] = () => {
+      clearTimeout(timeout);
+      delete handlers[handlerKey];
+    };
 
     // publish after scheduling timeout
     const ts = Date.now();
@@ -92,6 +92,7 @@ export async function attachQueueListener(queueName: string) {
         `⏱ Job ${jobId} in queue ${queueName} took ${delay}ms to be scheduled`,
       );
     }
+    logger.log(`Pushed waiting message ${handlerKey}`);
   });
 
   queueEvents.on("error", (err) => {
@@ -108,12 +109,6 @@ export async function detachQueueListener(queueName: string) {
 
   await queueEvents.close();
   activeListeners.delete(queueName);
-
-  const timeouts = activeTimeouts.get(queueName);
-  if (timeouts) {
-    for (const t of timeouts.values()) clearTimeout(t);
-    activeTimeouts.delete(queueName);
-  }
 
   logger.log(`🛑 Stopped listening to queue ${queueName}`);
 }
@@ -160,3 +155,16 @@ export async function autoIngestWaitingJobs() {
     });
   }, 60_000);
 }
+
+const cleanup = async () => {
+  for (const listener of activeListeners.values()) {
+    await listener.close();
+  }
+  activeListeners.clear();
+  if (globalSubscriber) {
+    await globalSubscriber.quit();
+    globalSubscriber = null;
+  }
+};
+
+process.on("exit", cleanup);

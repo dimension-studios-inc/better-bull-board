@@ -27,10 +27,6 @@ new Worker("{demo-queue-2}", processorFile2, {
   },
 });
 
-setInterval(() => {
-  console.log("Memory usage", process.memoryUsage().rss / 1024 / 1024);
-}, 1000);
-
 // new Worker("demo-queue-3", processorFile2, {
 //   connection: redis,
 //   ioredis: redis,
