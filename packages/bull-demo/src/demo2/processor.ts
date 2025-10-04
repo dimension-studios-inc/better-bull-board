@@ -3,7 +3,7 @@ import type { SandboxedJob } from "bullmq";
 import { redis } from "../lib/redis";
 
 export default patch(async (job: SandboxedJob) => {
-  console.log(`Processing job ${job.id}`);
+  // console.log(`Processing job ${job.id}`);
 
   await new Promise((resolve) => setTimeout(resolve, job.data.wait));
 
@@ -26,7 +26,7 @@ export default patch(async (job: SandboxedJob) => {
   // }
   // await new Promise((resolve) => setTimeout(resolve, 10_000));
 
-  console.log(`Job ${job.id} processed`);
+  // console.log(`Job ${job.id} processed`);
 
   return {
     status: {

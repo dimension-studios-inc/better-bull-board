@@ -41,14 +41,16 @@ const main = async () => {
   startHealthServer();
 
   if (env.ENV === "development") {
-    logger.log("PID", process.pid);
+    logger.log("🆔 Process ID", process.pid);
   }
 };
 
 // print memory usage every 10 seconds
-setInterval(() => {
-  const memoryUsage = process.memoryUsage();
-  logger.log("Memory usage", memoryUsage.rss / 1024 / 1024);
-}, 10_000);
+if (env.ENV === "development") {
+  setInterval(() => {
+    const memoryUsage = process.memoryUsage();
+    logger.subLog("Memory usage", memoryUsage.rss / 1024 / 1024);
+  }, 10_000);
+}
 
 main();

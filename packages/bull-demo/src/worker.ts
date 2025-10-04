@@ -5,17 +5,17 @@ import { redis } from "./lib/redis";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const processorFile1 = path.join(__dirname, "demo1/processor.cjs");
+// const processorFile1 = path.join(__dirname, "demo1/processor.cjs");
 const processorFile2 = path.join(__dirname, "demo2/processor.cjs");
-new Worker("demo-queue", processorFile1, {
-  connection: redis,
-  ioredis: redis,
-  useWorkerThreads: true,
-  concurrency: 10,
-  getJobTags() {
-    return ["demo-queue", "test"];
-  },
-});
+// new Worker("demo-queue", processorFile1, {
+//   connection: redis,
+//   ioredis: redis,
+//   useWorkerThreads: true,
+//   concurrency: 10,
+//   getJobTags() {
+//     return ["demo-queue", "test"];
+//   },
+// });
 
 new Worker("{demo-queue-2}", processorFile2, {
   connection: redis,
@@ -27,29 +27,33 @@ new Worker("{demo-queue-2}", processorFile2, {
   },
 });
 
-new Worker("demo-queue-3", processorFile2, {
-  connection: redis,
-  ioredis: redis,
-  useWorkerThreads: true,
-  concurrency: 10,
-  getJobTags() {
-    return ["demo-queue-3"];
-  },
-});
+setInterval(() => {
+  console.log("Memory usage", process.memoryUsage().rss / 1024 / 1024);
+}, 1000);
 
-new Worker("demo-queue-4", processorFile2, {
-  connection: redis,
-  ioredis: redis,
-  useWorkerThreads: true,
-  concurrency: 10,
-  getJobTags() {
-    return ["demo-queue-4"];
-  },
-});
+// new Worker("demo-queue-3", processorFile2, {
+//   connection: redis,
+//   ioredis: redis,
+//   useWorkerThreads: true,
+//   concurrency: 10,
+//   getJobTags() {
+//     return ["demo-queue-3"];
+//   },
+// });
 
-new Worker("demo-queue-5", processorFile2, {
-  connection: redis,
-  ioredis: redis,
-  useWorkerThreads: true,
-  concurrency: 10,
-});
+// new Worker("demo-queue-4", processorFile2, {
+//   connection: redis,
+//   ioredis: redis,
+//   useWorkerThreads: true,
+//   concurrency: 10,
+//   getJobTags() {
+//     return ["demo-queue-4"];
+//   },
+// });
+
+// new Worker("demo-queue-5", processorFile2, {
+//   connection: redis,
+//   ioredis: redis,
+//   useWorkerThreads: true,
+//   concurrency: 10,
+// });
