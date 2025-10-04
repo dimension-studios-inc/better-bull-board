@@ -9,16 +9,19 @@ import { clearData } from "./repeats/clear-data";
 import { autoIngestQueues } from "./repeats/queues";
 import { stopStalledRuns } from "./repeats/stalled";
 import { autoIngestWaitingJobs } from "./repeats/waiting";
+import { cleanupManager } from "./lib/cleanup-manager";
+
+let eventSubscriber: ReturnType<typeof redis.duplicate> | null = null;
 
 const listenToEvents = async () => {
-  const subscriber = redis.duplicate();
-  await subscriber.connect().catch(() => {});
+  eventSubscriber = redis.duplicate();
+  await eventSubscriber.connect().catch(() => {});
 
-  await subscriber.psubscribe("bbb:worker:*", (error) => {
+  await eventSubscriber.psubscribe("bbb:worker:*", (error) => {
     if (error) throw error;
     logger.log("📥 Ingesting data from Redis");
   });
-  subscriber.on("pmessage", handleChannel);
+  eventSubscriber.on("pmessage", handleChannel);
 };
 
 const main = async () => {
@@ -45,10 +48,51 @@ const main = async () => {
   }
 };
 
-// print memory usage every 10 seconds
-setInterval(() => {
+// Enhanced memory monitoring
+let lastMemoryUsage = 0;
+let memoryIncreaseCount = 0;
+
+const memoryInterval = setInterval(() => {
   const memoryUsage = process.memoryUsage();
-  logger.log("Memory usage", memoryUsage.rss / 1024 / 1024);
+  const currentRSS = memoryUsage.rss / 1024 / 1024;
+  
+  // Log memory usage
+  logger.log("Memory usage", currentRSS.toFixed(2), "MB");
+  
+  // Track memory increases
+  if (lastMemoryUsage > 0) {
+    const increase = currentRSS - lastMemoryUsage;
+    if (increase > 5) { // More than 5MB increase
+      memoryIncreaseCount++;
+      logger.warn(`Memory increased by ${increase.toFixed(2)}MB (${memoryIncreaseCount} consecutive increases)`);
+      
+      if (memoryIncreaseCount >= 5) {
+        logger.error("Potential memory leak detected: 5 consecutive significant increases");
+        // Force garbage collection if available
+        if (global.gc) {
+          global.gc();
+          logger.log("Forced garbage collection");
+        }
+      }
+    } else {
+      memoryIncreaseCount = 0; // Reset counter
+    }
+  }
+  
+  lastMemoryUsage = currentRSS;
 }, 10_000);
+cleanupManager.addInterval(memoryInterval);
+
+// Register cleanup functions
+cleanupManager.addCleanupFunction(async () => {
+  if (eventSubscriber) {
+    await eventSubscriber.quit().catch(() => {});
+    eventSubscriber = null;
+  }
+});
+
+cleanupManager.addCleanupFunction(async () => {
+  await redis.quit().catch(() => {});
+});
 
 main();

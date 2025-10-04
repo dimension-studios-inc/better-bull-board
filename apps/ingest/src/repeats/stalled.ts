@@ -5,6 +5,7 @@ import { logger } from "@rharkor/logger";
 import { Queue } from "bullmq";
 import { and, eq, lte } from "drizzle-orm";
 import { redis } from "~/lib/redis";
+import { cleanupManager } from "~/lib/cleanup-manager";
 
 export const stopStalledRuns = async () => {
   const refreshStalledRuns = async () => {
@@ -57,12 +58,14 @@ export const stopStalledRuns = async () => {
     }
   };
 
-  setInterval(
+  const stalledInterval = setInterval(
     () => {
       refreshStalledRuns();
     },
     1000 * 60 * 60, // every hour
   );
+  cleanupManager.addInterval(stalledInterval);
+  
   refreshStalledRuns();
 
   logger.log(`🛑 Stopping stalled runs`);

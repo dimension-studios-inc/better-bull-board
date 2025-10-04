@@ -60,13 +60,14 @@ export class Worker<
     const queue = new Queue(queueName, { connection: this.ioredis });
 
     // Master election for this queue
-    const isMaster = await onlyMaster({
+    const masterElection = await onlyMaster({
       id: this.id,
       lockKey: `bbb:waiting-jobs-lock:${queueName}`,
       lockTtlMs: 5000,
       lockRenewMs: 3000,
       redis: this.ioredis,
     });
+    const isMaster = masterElection.isMaster;
 
     let listener: Redis | null = null;
     let subscribed = false;
@@ -160,7 +161,24 @@ export class Worker<
     };
 
     // run every 2s (tweak to your needs)
-    setInterval(ensureSubscription, 2000);
+    const subscriptionInterval = setInterval(ensureSubscription, 2000);
+
+    // Cleanup function
+    const cleanup = () => {
+      clearInterval(subscriptionInterval);
+      if (listener) {
+        listener.quit().catch(() => {});
+      }
+      masterElection.cleanup();
+    };
+
+    // Cleanup on process exit
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+    
+    // Store cleanup for potential manual cleanup
+    (this as any)._cleanupFunctions = (this as any)._cleanupFunctions || [];
+    (this as any)._cleanupFunctions.push(cleanup);
   }
 
   override async processJob(
@@ -209,5 +227,24 @@ export class Worker<
       }),
     );
     return result;
+  }
+
+  // Add cleanup method
+  async cleanup() {
+    // Call all stored cleanup functions
+    const cleanupFunctions = (this as any)._cleanupFunctions || [];
+    for (const cleanup of cleanupFunctions) {
+      try {
+        cleanup();
+      } catch (error) {
+        logger.error('Error during worker cleanup:', error);
+      }
+    }
+    
+    // Clear the cleanup functions array
+    (this as any)._cleanupFunctions = [];
+    
+    // Close the worker
+    await this.close();
   }
 }

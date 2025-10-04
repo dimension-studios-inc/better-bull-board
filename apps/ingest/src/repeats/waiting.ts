@@ -4,6 +4,7 @@ import { logger } from "@rharkor/logger";
 import { QueueEvents } from "bullmq";
 import { redis } from "~/lib/redis";
 import { chunk } from "~/utils";
+import { cleanupManager } from "~/lib/cleanup-manager";
 
 // Single subscriber for ALL queues/jobs
 let globalSubscriber: ReturnType<typeof redis.duplicate> | null = null;
@@ -68,6 +69,12 @@ export async function attachQueueListener(queueName: string) {
     if (!timeouts) {
       logger.error("No timeouts for queue", { queueName });
       return;
+    }
+
+    // Clear any existing timeout for this job first
+    const existingTimeout = timeouts.get(jobId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
     }
 
     // create timeout
@@ -154,15 +161,67 @@ export async function autoIngestWaitingJobs() {
   logger.log("⏳ Ingesting waiting jobs");
 
   // Then refresh every 60s
-  setInterval(() => {
+  const refreshInterval = setInterval(() => {
     refreshQueueListeners().catch((err) => {
       logger.error("Failed to refresh queue listeners", err);
     });
   }, 60_000);
+  cleanupManager.addInterval(refreshInterval);
 }
 
+// Periodic cleanup of stale timeouts (every 5 minutes)
+const cleanupInterval = setInterval(() => {
+  let totalTimeouts = 0;
+  for (const [queueName, timeouts] of activeTimeouts.entries()) {
+    totalTimeouts += timeouts.size;
+    // If a queue has too many timeouts (> 1000), clear some old ones
+    if (timeouts.size > 1000) {
+      logger.warn(`Queue ${queueName} has ${timeouts.size} active timeouts, clearing oldest 500`);
+      const entries = Array.from(timeouts.entries());
+      const toClear = entries.slice(0, 500);
+      for (const [jobId, timeout] of toClear) {
+        clearTimeout(timeout);
+        timeouts.delete(jobId);
+      }
+    }
+  }
+  
+  logger.log("Active timeouts", totalTimeouts);
+  logger.log("Active listeners", activeListeners.size);
+}, 300_000); // 5 minutes
+cleanupManager.addInterval(cleanupInterval);
+
 ///Each 10s print size of activeTimeouts and activeListeners
-setInterval(() => {
-  logger.log("Active timeouts", activeTimeouts.size);
+const debugInterval = setInterval(() => {
+  let totalTimeouts = 0;
+  for (const timeouts of activeTimeouts.values()) {
+    totalTimeouts += timeouts.size;
+  }
+  logger.log("Active timeouts", totalTimeouts);
   logger.log("Active listeners", activeListeners.size);
 }, 10_000);
+cleanupManager.addInterval(debugInterval);
+
+// Register cleanup function with cleanup manager
+cleanupManager.addCleanupFunction(async () => {
+  // Clear all timeouts
+  for (const timeouts of activeTimeouts.values()) {
+    for (const timeout of timeouts.values()) {
+      clearTimeout(timeout);
+    }
+    timeouts.clear();
+  }
+  activeTimeouts.clear();
+  
+  // Close all listeners
+  for (const [queueName, queueEvents] of activeListeners.entries()) {
+    await queueEvents.close().catch(() => {});
+  }
+  activeListeners.clear();
+  
+  // Close global subscriber
+  if (globalSubscriber) {
+    await globalSubscriber.quit().catch(() => {});
+    globalSubscriber = null;
+  }
+});

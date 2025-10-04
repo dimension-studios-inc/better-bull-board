@@ -4,6 +4,7 @@ import { logger } from "@rharkor/logger";
 import { formatDistance } from "date-fns";
 import { lt } from "drizzle-orm";
 import { env } from "~/lib/env";
+import { cleanupManager } from "~/lib/cleanup-manager";
 
 // we want do delete old data such as job runs and job logs after AUTO_DELETE_POSTGRES_DATA
 export const clearData = async () => {
@@ -19,12 +20,14 @@ export const clearData = async () => {
     await db.delete(jobRunsTable).where(lt(jobRunsTable.createdAt, deleteDate));
   };
 
-  setInterval(
+  const clearDataInterval = setInterval(
     () => {
       deleteData();
     },
     1000 * 60 * 60,
   );
+  cleanupManager.addInterval(clearDataInterval);
+  
   deleteData();
 
   logger.log(

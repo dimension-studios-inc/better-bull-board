@@ -7,6 +7,7 @@ import type Redis from "ioredis";
 import type { Cluster } from "ioredis";
 import { redis } from "~/lib/redis";
 import { getChangedKeys } from "~/utils";
+import { cleanupManager } from "~/lib/cleanup-manager";
 
 const maxCount = 150000;
 const maxTime = 40000;
@@ -57,9 +58,11 @@ export const ingestQueues = async () => {
 };
 
 export const autoIngestQueues = async () => {
-  setInterval(() => {
+  const ingestInterval = setInterval(() => {
     ingestQueues();
   }, 60_000);
+  cleanupManager.addInterval(ingestInterval);
+  
   ingestQueues();
 
   logger.log("🔄 Queues ingestion started");

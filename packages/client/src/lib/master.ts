@@ -51,6 +51,7 @@ export const onlyMaster = async ({
   redis: Redis;
 }) => {
   let isMaster = false;
+  let renewInterval: NodeJS.Timeout | null = null;
 
   //* First we need to acquire the lock
   const lockAcquired = await acquireLock({ lockKey, lockTtlMs, id, redis });
@@ -61,9 +62,23 @@ export const onlyMaster = async ({
   }
 
   //* Then we need to renew the lock
-  setInterval(async () => {
+  renewInterval = setInterval(async () => {
     isMaster = await renewLock({ lockKey, lockTtlMs, id, redis });
   }, lockRenewMs);
 
-  return () => isMaster;
+  const cleanup = () => {
+    if (renewInterval) {
+      clearInterval(renewInterval);
+      renewInterval = null;
+    }
+  };
+
+  // Cleanup on process exit
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
+
+  return {
+    isMaster: () => isMaster,
+    cleanup
+  };
 };

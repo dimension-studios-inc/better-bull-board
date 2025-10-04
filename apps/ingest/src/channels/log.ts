@@ -142,11 +142,17 @@ export const handleLogChannel = async (_channel: string, message: string) => {
     };
     let jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp), queue);
     if (!jobRunId) {
-      // Retry in 1 second
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp), queue);
+      // Retry with exponential backoff: 500ms, 1s, 2s
+      const retryDelays = [500, 1000, 2000];
+      
+      for (const delay of retryDelays) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp), queue);
+        if (jobRunId) break;
+      }
+      
       if (!jobRunId) {
-        logger.warn("No job run found for job ID", { jobId });
+        logger.warn(`No job run found for job ID ${jobId} after ${retryDelays.length + 1} attempts`);
         return;
       }
     }
