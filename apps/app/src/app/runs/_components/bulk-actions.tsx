@@ -19,7 +19,7 @@ import { apiFetch } from "~/lib/utils/client";
 
 interface BulkActionsProps {
   selectedJobs: Array<{
-    job_id: string;
+    jobId: string;
     queue: string;
     status: string;
   }>;
@@ -39,7 +39,7 @@ export function BulkActions({
       apiRoute: bulkCancelJobsApiRoute,
       body: {
         jobs: selectedJobs.map((job) => ({
-          jobId: job.job_id,
+          jobId: job.jobId,
           queueName: job.queue,
         })),
       },
@@ -56,7 +56,7 @@ export function BulkActions({
       apiRoute: bulkReplayJobsApiRoute,
       body: {
         jobs: selectedJobs.map((job) => ({
-          jobId: job.job_id,
+          jobId: job.jobId,
           queueName: job.queue,
         })),
       },
@@ -146,12 +146,12 @@ export function BulkActions({
             <div className="space-y-2">
               {cancellableJobs.map((job) => (
                 <div
-                  key={job.job_id}
+                  key={job.jobId}
                   className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
                 >
                   <Badge variant="outline">{job.queue}</Badge>
                   <span className="font-mono text-xs">
-                    {job.job_id.slice(0, 20)}...
+                    {job.jobId.slice(0, 20)}...
                   </span>
                   <Badge className="ml-auto">{job.status}</Badge>
                 </div>
@@ -191,12 +191,12 @@ export function BulkActions({
             <div className="space-y-2">
               {replayableJobs.map((job) => (
                 <div
-                  key={job.job_id}
+                  key={job.jobId}
                   className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
                 >
                   <Badge variant="outline">{job.queue}</Badge>
                   <span className="font-mono text-xs">
-                    {job.job_id.slice(0, 20)}...
+                    {job.jobId.slice(0, 20)}...
                   </span>
                   <Badge className="ml-auto">{job.status}</Badge>
                 </div>

@@ -38,8 +38,8 @@ export function RunsFilters({
     >,
   ) => void;
   runs?: {
-    nextCursor: { created_at: number; job_id: string; id: string } | null;
-    prevCursor: { created_at: number; job_id: string; id: string } | null;
+    nextCursor: { createdAt: Date; jobId: string; id: string } | null;
+    prevCursor: { createdAt: Date; jobId: string; id: string } | null;
   };
   startEndContent?: React.ReactNode;
 }) {
@@ -136,13 +136,23 @@ export function RunsFilters({
   //* Pagination
   const handleNextPage = () => {
     if (runs?.nextCursor) {
-      setFilters({ cursor: runs.nextCursor });
+      setFilters({
+        cursor: {
+          ...runs.nextCursor,
+          createdAt: runs.nextCursor.createdAt.getTime(),
+        },
+      });
     }
   };
 
   const handlePrevPage = () => {
     if (runs?.prevCursor) {
-      setFilters({ cursor: runs.prevCursor });
+      setFilters({
+        cursor: {
+          ...runs.prevCursor,
+          createdAt: runs.prevCursor.createdAt.getTime(),
+        },
+      });
     } else {
       setFilters({ cursor: null });
     }

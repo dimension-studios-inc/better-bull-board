@@ -9,7 +9,6 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@better-bull-board/clickhouse": "*",
     "@better-bull-board/client": "*",
     "@better-bull-board/db": "*",
     "@better-bull-board/ingest": "*",

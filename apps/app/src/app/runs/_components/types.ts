@@ -3,6 +3,6 @@ export type TRunFilters = {
   status: string;
   search: string;
   tags: string[];
-  cursor: { created_at: number; job_id: string; id: string } | null;
+  cursor: { createdAt: number; jobId: string; id: string } | null;
   limit: number;
 };

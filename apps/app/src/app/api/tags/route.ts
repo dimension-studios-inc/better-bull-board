@@ -1,4 +1,6 @@
-import { clickhouseClient } from "@better-bull-board/clickhouse/client";
+import { jobRunsTable } from "@better-bull-board/db";
+import { db } from "@better-bull-board/db/server";
+import { sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getTagsApiRoute } from "./schemas";
 
@@ -7,28 +9,22 @@ export const POST = createAuthenticatedApiRoute({
   async handler(input) {
     const { search } = input;
 
-    // Query to get distinct tags from job runs
-    const query = `
-      SELECT DISTINCT arrayJoin(tags) as tag
-      FROM job_runs_ch FINAL
-      WHERE tag != ''
-      ${search ? "AND tag ILIKE {search:String}" : ""}
-      ORDER BY tag
-      LIMIT 100
-    `;
-
-    const params = search ? { search: `%${search}%` } : {};
-
-    const result = await clickhouseClient.query({
-      query,
-      query_params: params,
-      format: "JSONEachRow",
-    });
-
-    const tags = await result.json<{ tag: string }>();
+    const tags = await db
+      .select({
+        tag: sql<string>`unnest(${jobRunsTable.tags})`,
+      })
+      .from(jobRunsTable)
+      .where(
+        search
+          ? sql`unnest(${jobRunsTable.tags}) ILIKE ${`%${search}%`}`
+          : undefined,
+      )
+      .groupBy(sql`unnest(${jobRunsTable.tags})`)
+      .orderBy(sql`unnest(${jobRunsTable.tags})`)
+      .limit(100);
 
     return {
-      tags: tags.map((row) => row.tag),
+      tags: tags.map((row) => row.tag).filter(Boolean),
     };
   },
 });

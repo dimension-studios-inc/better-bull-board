@@ -1,4 +1,3 @@
-import { jobLogDataSchema } from "@better-bull-board/clickhouse/schemas";
 import { logLevelEnum } from "@better-bull-board/db";
 import z from "zod";
 import { registerApiRoute } from "~/lib/utils/client";
@@ -13,7 +12,12 @@ export const getJobLogsInput = z.object({
 
 export const getJobLogsOutput = z.object({
   logs: z.array(
-    jobLogDataSchema.extend({
+    z.object({
+      id: z.string(),
+      jobRunId: z.string(),
+      level: z.string(),
+      message: z.string(),
+      logSeq: z.number(),
       ts: z.number(),
     }),
   ),

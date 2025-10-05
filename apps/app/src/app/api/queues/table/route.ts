@@ -1,9 +1,48 @@
-import { getQueueStatsWithChart } from "@better-bull-board/clickhouse";
-import { jobSchedulersTable, queuesTable } from "@better-bull-board/db";
+import {
+  jobRunsTable,
+  jobSchedulersTable,
+  queuesTable,
+} from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
+import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
 import { and, asc, desc, eq, gte, ilike, lt, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
+
+function fillChartData(
+  dateFrom: Date,
+  dateTo: Date,
+  stepKind: string,
+  chartData: { timestamp: string; completed: number; failed: number }[],
+) {
+  const filled: { timestamp: string; completed: number; failed: number }[] = [];
+  const map = new Map(
+    chartData.map((d) => [
+      new Date(d.timestamp).toISOString().slice(0, 19).replace("T", " "),
+      d,
+    ]),
+  );
+
+  for (
+    let d = new Date(dateFrom);
+    d <= dateTo;
+    d = stepKind === "hour" ? addHours(d, 1) : addDays(d, 1)
+  ) {
+    const ts =
+      stepKind === "hour"
+        ? startOfHour(d).toISOString().slice(0, 19).replace("T", " ")
+        : startOfDay(d).toISOString().slice(0, 19).replace("T", " ");
+
+    if (map.has(ts)) {
+      filled.push(
+        map.get(ts) as { timestamp: string; completed: number; failed: number },
+      );
+    } else {
+      filled.push({ timestamp: ts, completed: 0, failed: 0 });
+    }
+  }
+  return filled;
+}
 
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getQueuesTableApiRoute,
@@ -39,14 +78,13 @@ export const POST = createAuthenticatedApiRoute({
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
           ),
         )
-        .groupBy(queuesTable.id) // ✅ ensures one row per queue
+        .groupBy(queuesTable.id)
         .orderBy(
           direction === "prev" ? desc(queuesTable.name) : asc(queuesTable.name),
         )
         .limit(limit + 1);
     };
 
-    // Get queue info from Postgres (basic queue data)
     const rows = await getRows("next");
     const previousRows = cursor ? await getRows("prev") : [];
 
@@ -55,7 +93,6 @@ export const POST = createAuthenticatedApiRoute({
       .from(queuesTable)
       .where(search ? ilike(queuesTable.name, `%${search}%`) : undefined);
 
-    // Get job run stats from ClickHouse
     const queueNames = rows.map((row) => row.name);
     const timePeriodDays = Number(timePeriod);
     const dateFrom = new Date(
@@ -63,14 +100,51 @@ export const POST = createAuthenticatedApiRoute({
     );
     const dateTo = new Date();
 
-    const queueStats = await getQueueStatsWithChart({
-      queueNames,
-      dateFrom,
-      dateTo,
-      timePeriod: timePeriodDays,
-    });
+    const interval = timePeriodDays <= 7 ? "hour" : "day";
 
-    // Create a map for quick lookup
+    const queueStats = await Promise.all(
+      queueNames.map(async (queueName) => {
+        const [counts] = await db
+          .select({
+            waitingJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'waiting')`,
+            activeJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'active')`,
+            failedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed' AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
+            completedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed' AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
+          })
+          .from(jobRunsTable)
+          .where(eq(jobRunsTable.queue, queueName));
+
+        const chartData = await db
+          .select({
+            timestamp:
+              interval === "hour"
+                ? sql<string>`date_trunc('hour', ${jobRunsTable.createdAt})`
+                : sql<string>`date_trunc('day', ${jobRunsTable.createdAt})`,
+            completed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
+            failed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
+          })
+          .from(jobRunsTable)
+          .where(
+            and(
+              eq(jobRunsTable.queue, queueName),
+              gte(jobRunsTable.createdAt, dateFrom),
+              lt(jobRunsTable.createdAt, dateTo),
+            ),
+          )
+          .groupBy(sql`timestamp`)
+          .orderBy(sql`timestamp`);
+
+        return {
+          queueName,
+          waitingJobs: Number(counts?.waitingJobs ?? 0),
+          activeJobs: Number(counts?.activeJobs ?? 0),
+          failedJobs: Number(counts?.failedJobs ?? 0),
+          completedJobs: Number(counts?.completedJobs ?? 0),
+          chartData: fillChartData(dateFrom, dateTo, interval, chartData),
+        };
+      }),
+    );
+
     const statsMap = new Map(queueStats.map((stat) => [stat.queueName, stat]));
 
     const nextCursor = rows.length > limit ? (rows.pop()?.name ?? null) : null;

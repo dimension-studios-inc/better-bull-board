@@ -17,7 +17,7 @@ import { RunDetailsDrawer } from "./_components/run-details-drawer";
 
 interface LogEntry {
   id: string;
-  job_run_id: string;
+  jobRunId: string;
   level: string;
   message: string;
   ts: number;
