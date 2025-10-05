@@ -1,5 +1,6 @@
 import { logger } from "@rharkor/logger";
-import { queue } from "../src/demo2/queue";
+import { Queue } from "bullmq";
+import { redis } from "../src/lib/redis";
 import { deleteAllSchedulers } from "../src/utils";
 
 const main = async () => {
@@ -9,6 +10,10 @@ const main = async () => {
   // logger.log("Scheduler registered");
 
   const singleJob = async () => {
+    const randomQueue = `{demo-queue-${Math.floor(Math.random() * 7) + 1}}`;
+    const queue = new Queue(randomQueue, {
+      connection: redis,
+    });
     const job = await queue.add("test-job-name", {
       wait: 1000,
       // longData: new Array(1000).fill("test"),
@@ -25,8 +30,9 @@ const main = async () => {
   };
 
   setInterval(async () => {
-    await bulkJobs(10);
+    await bulkJobs(11);
   }, 15000);
+  await bulkJobs(11);
 };
 
 main();

@@ -5,9 +5,14 @@ import { redis } from "../lib/redis";
 export default patch(async (job: SandboxedJob) => {
   console.log(`Processing job ${job.id}`);
 
-  await new Promise((resolve) => setTimeout(resolve, 10_000));
+  await new Promise((resolve) => setTimeout(resolve, job.data.wait));
 
   console.log(`Job ${job.id} processed`);
 
-  return { status: "done" };
+  return {
+    status: {
+      name: "done",
+      description: "Job completed successfully",
+    },
+  };
 }, redis);
