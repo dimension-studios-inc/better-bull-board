@@ -27,7 +27,8 @@
     "zod": "^3.25.76"
   },
   "peerDependencies": {
-    "drizzle-orm": "*"
+    "drizzle-orm": "*",
+    "pg": "*"
   },
   "exports": {
     "./*": {

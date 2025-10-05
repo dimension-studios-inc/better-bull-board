@@ -1,3 +1,4 @@
+import { monitorEventLoopDelay } from "node:perf_hooks";
 import { logger } from "@rharkor/logger";
 import { handleChannel } from "./channels";
 import { env } from "./lib/env";
@@ -52,5 +53,12 @@ if (env.ENV === "development") {
     logger.subLog("Memory usage", memoryUsage.rss / 1024 / 1024);
   }, 10_000);
 }
+
+const h = monitorEventLoopDelay({ resolution: 20 });
+h.enable();
+setInterval(() => {
+  const p99 = h.percentile(99) / 1e6; // ms
+  if (p99 > 100) logger.warn("Event loop p99", p99, "ms");
+}, 2000);
 
 main();

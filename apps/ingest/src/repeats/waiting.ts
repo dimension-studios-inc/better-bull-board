@@ -39,10 +39,6 @@ async function ensureSubscriber() {
       return;
     }
 
-    logger.log("Received waiting message", {
-      handlerKey: `bbb:queue:${eventQueueName}:job:waiting:${eventJobId}`,
-    });
-
     const handler =
       handlers[`bbb:queue:${eventQueueName}:job:waiting:${eventJobId}`];
     if (handler) {
@@ -81,18 +77,19 @@ export async function attachQueueListener(queueName: string) {
     };
 
     // publish after scheduling timeout
-    const ts = Date.now();
-    await redis.publish(
+    const pub = redis.duplicate();
+    await pub.connect().catch(() => {});
+    const t0 = process.hrtime.bigint();
+    await pub.publish(
       `bbb:queue:${queueName}:job:waiting`,
-      JSON.stringify({ jobId, ts }),
+      JSON.stringify({ jobId, ts: Date.now() }),
     );
-    const delay = Date.now() - ts;
-    if (delay > 500) {
+    const rttMs = Number(process.hrtime.bigint() - t0) / 1e6;
+    if (rttMs > 500) {
       logger.warn(
-        `⏱ Job ${jobId} in queue ${queueName} took ${delay}ms to be scheduled`,
+        `⏱ Job ${jobId} in queue ${queueName} took ${rttMs}ms to be scheduled`,
       );
     }
-    logger.log(`Pushed waiting message ${handlerKey}`);
   });
 
   queueEvents.on("error", (err) => {
