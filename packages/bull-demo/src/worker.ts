@@ -21,7 +21,7 @@ new Worker("{demo-queue-2}", processorFile2, {
   connection: redis,
   ioredis: redis,
   useWorkerThreads: true,
-  concurrency: 10,
+  concurrency: 1,
   getJobTags() {
     return ["demo-queue-2"];
   },

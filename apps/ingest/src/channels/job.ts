@@ -6,7 +6,9 @@ import { db } from "@better-bull-board/db/server";
 import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update";
 import { logger } from "@rharkor/logger";
 import type { Job } from "bullmq";
+import { getTableName, sql } from "drizzle-orm";
 import type { z } from "zod/v4";
+import { redis } from "~/lib/redis";
 
 // Batching configuration
 const FLUSH_SIZE = 300;
@@ -45,39 +47,49 @@ async function flushJobRunBuffer() {
     });
 
     // Batch upsert to PostgreSQL
-    await db
+    const inserted = await db
       .insert(jobRunsTable)
       .values(values)
       .onConflictDoUpdate({
         target: [jobRunsTable.jobId, jobRunsTable.enqueuedAt],
         // Voluntarily not updating the createdAt
-        set: conflictUpdateSet(jobRunsTable, [
-          "status",
-          "attempt",
-          "startedAt",
-          "finishedAt",
-          "errorMessage",
-          "errorStack",
-          "result",
-          "backoff",
-          "data",
-          "priority",
-          "delayMs",
-          "repeatJobKey",
-          "parentJobId",
-          "workerId",
-          "enqueuedAt",
-          "jobId",
-          "maxAttempts",
-          "queue",
-          "name",
-          "tags",
-        ]),
+        set: {
+          ...conflictUpdateSet(jobRunsTable, [
+            "attempt",
+            "startedAt",
+            "finishedAt",
+            "errorMessage",
+            "errorStack",
+            "result",
+            "backoff",
+            "data",
+            "priority",
+            "delayMs",
+            "repeatJobKey",
+            "parentJobId",
+            "workerId",
+            "enqueuedAt",
+            "jobId",
+            "maxAttempts",
+            "queue",
+            "name",
+            "tags",
+          ]),
+          status: sql.raw(
+            `CASE WHEN excluded.${jobRunsTable.status.name} = 'waiting' THEN ${getTableName(jobRunsTable)}.${jobRunsTable.status.name} ELSE excluded.${jobRunsTable.status.name} END`,
+          ),
+        },
       })
       .returning({
         id: jobRunsTable.id,
         createdAt: jobRunsTable.createdAt,
       });
+    await redis.publish("bbb:ingest:events:job-refresh", "1");
+    await Promise.all(
+      inserted.map((jobRun) =>
+        redis.publish("bbb:ingest:events:single-job-refresh", jobRun.id),
+      ),
+    );
   } catch (error) {
     logger.error("Error in batch job upsert", {
       error,
