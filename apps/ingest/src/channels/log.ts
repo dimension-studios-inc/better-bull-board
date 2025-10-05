@@ -1,5 +1,3 @@
-import { bulkInsertJobLog as bulkInsertJobLogCH } from "@better-bull-board/clickhouse";
-import type { JobLogData } from "@better-bull-board/clickhouse/schemas";
 import { jobLogsTable } from "@better-bull-board/db/schemas/job/schema";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
@@ -10,7 +8,6 @@ import { redis } from "~/lib/redis";
 import { getJobFromBullId } from "~/utils";
 
 // Batching configuration
-const FLUSH_SIZE = 100;
 const FLUSH_INTERVAL = 200; // ms
 
 const pendingLogSchema = z.object({
@@ -25,7 +22,6 @@ const pendingLogSchema = z.object({
 
 // Buffers for batching
 const logBuffer: Array<z.infer<typeof pendingLogSchema>> = [];
-const clickhouseLogBuffer: Array<JobLogData> = [];
 
 let logFlushTimer: NodeJS.Timeout | null = null;
 
@@ -118,37 +114,14 @@ async function flushLogBuffer() {
 
         await withDeadlockRetry(async () => {
           // Insert *only* rows for this one jobRunId
-          const inserted = await db
+          await db
             .insert(jobLogsTable)
             .values(chunk) // each has jobRunId, level, message, ts, logSeq
             .returning();
 
-          // Map by local index (no cross-batch index drift)
-          for (let j = 0; j < inserted.length; j++) {
-            const ins = inserted[j];
-            const src = chunk[j];
-
-            if (ins && src) {
-              // ClickHouse buffer
-              clickhouseLogBuffer.push({
-                ...ins,
-                job_run_id: ins.jobRunId,
-                log_seq: ins.logSeq,
-              });
-
-              // Publish refresh for this job run
-              await redis.publish(
-                "bbb:ingest:events:job-log-refresh",
-                src.jobRunId,
-              );
-            }
-          }
+          await redis.publish("bbb:ingest:events:job-log-refresh", jobRunId);
         });
       }
-    }
-
-    if (clickhouseLogBuffer.length >= FLUSH_SIZE) {
-      await flushClickHouseLogBuffer();
     }
   } catch (error) {
     logger.error("Error in batch log insert", {
@@ -160,26 +133,6 @@ async function flushLogBuffer() {
   }
 }
 
-// Batch flush function for ClickHouse logs
-async function flushClickHouseLogBuffer() {
-  if (clickhouseLogBuffer.length === 0) return;
-
-  const batch = clickhouseLogBuffer.splice(0, clickhouseLogBuffer.length);
-
-  try {
-    // Batch insert to ClickHouse
-    await bulkInsertJobLogCH(batch);
-  } catch (error) {
-    logger.error("Error in batch ClickHouse log insert", {
-      error,
-      batchSize: batch.length,
-      batch,
-    });
-    // Re-queue failed items for retry (optional)
-    clickhouseLogBuffer.unshift(...batch);
-  }
-}
-
 // Schedule periodic flushes for logs
 function scheduleLogFlush() {
   if (logFlushTimer) {
@@ -187,8 +140,7 @@ function scheduleLogFlush() {
   }
   logFlushTimer = setTimeout(async () => {
     await flushLogBuffer();
-    await flushClickHouseLogBuffer();
-    if (logBuffer.length > 0 || clickhouseLogBuffer.length > 0) {
+    if (logBuffer.length > 0) {
       scheduleLogFlush(); // Reschedule if there are still items
     }
   }, FLUSH_INTERVAL);

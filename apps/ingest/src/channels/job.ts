@@ -1,5 +1,3 @@
-import { bulkUpsertJobRun as bulkUpsertJobRunCH } from "@better-bull-board/clickhouse";
-import type { JobRunData } from "@better-bull-board/clickhouse/schemas";
 import {
   jobRunsInsertSchema,
   jobRunsTable,
@@ -9,7 +7,6 @@ import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update";
 import { logger } from "@rharkor/logger";
 import type { Job } from "bullmq";
 import type { z } from "zod/v4";
-import { redis } from "~/lib/redis";
 
 // Batching configuration
 const FLUSH_SIZE = 300;
@@ -19,9 +16,6 @@ const FLUSH_INTERVAL = 200; // ms
 const jobRunBuffer: Array<{
   data: z.infer<typeof jobRunsInsertSchema>;
   dbId?: string;
-}> = [];
-const clickhouseBuffer: Array<{
-  data: Omit<JobRunData, "updated_at">;
 }> = [];
 
 let flushTimer: NodeJS.Timeout | null = null;
@@ -51,7 +45,7 @@ async function flushJobRunBuffer() {
     });
 
     // Batch upsert to PostgreSQL
-    const upsertedJobs = await db
+    await db
       .insert(jobRunsTable)
       .values(values)
       .onConflictDoUpdate({
@@ -84,51 +78,6 @@ async function flushJobRunBuffer() {
         id: jobRunsTable.id,
         createdAt: jobRunsTable.createdAt,
       });
-
-    // Queue ClickHouse inserts and publish events
-    let index = 0;
-    for (const jobRun of upsertedJobs) {
-      const originalItem = values[index];
-      if (originalItem?.createdAt) {
-        clickhouseBuffer.push({
-          data: {
-            ...jobRun,
-            ...originalItem,
-            status: originalItem.status,
-            data: originalItem.data ?? null,
-            result: originalItem.result ?? null,
-            name: originalItem.name ?? null,
-            attempt: originalItem.attempt ?? 0,
-            priority: originalItem.priority ?? null,
-            backoff: originalItem.backoff ?? null,
-            job_id: originalItem.jobId,
-            tags: originalItem.tags ?? null,
-            max_attempts: originalItem.maxAttempts ?? 1,
-            delay_ms: originalItem.delayMs ?? 0,
-            repeat_job_key: originalItem.repeatJobKey ?? null,
-            parent_job_id: originalItem.parentJobId ?? null,
-            worker_id: originalItem.workerId ?? null,
-            error_message: originalItem.errorMessage ?? null,
-            error_stack: originalItem.errorStack ?? null,
-            created_at: jobRun.createdAt, // Keep the value from the database
-            enqueued_at: originalItem.enqueuedAt ?? null,
-            started_at: originalItem.startedAt ?? null,
-            finished_at: originalItem.finishedAt ?? null,
-          },
-        });
-      } else {
-        logger.error("Job run not found in batch", {
-          jobRun,
-          batchSize: batch.length,
-        });
-      }
-      index++;
-    }
-
-    // Flush ClickHouse buffer if it's getting large
-    if (clickhouseBuffer.length >= FLUSH_SIZE) {
-      await flushClickHouseBuffer();
-    }
   } catch (error) {
     logger.error("Error in batch job upsert", {
       error,
@@ -139,34 +88,6 @@ async function flushJobRunBuffer() {
   }
 }
 
-// Batch flush function for ClickHouse
-async function flushClickHouseBuffer() {
-  if (clickhouseBuffer.length === 0) return;
-
-  const batch = clickhouseBuffer.splice(0, clickhouseBuffer.length);
-
-  try {
-    // Batch insert to ClickHouse
-    await bulkUpsertJobRunCH(batch);
-
-    // Publish refresh event
-    redis.publish("bbb:ingest:events:job-refresh", "1");
-    await Promise.all(
-      batch.map((jobRun) =>
-        redis.publish("bbb:ingest:events:single-job-refresh", jobRun.data.id),
-      ),
-    );
-  } catch (error) {
-    logger.error("Error in batch ClickHouse insert", {
-      error,
-      batchSize: batch.length,
-      batch,
-    });
-    // Re-queue failed items for retry (optional)
-    clickhouseBuffer.unshift(...batch);
-  }
-}
-
 // Schedule periodic flushes
 function scheduleFlush() {
   if (flushTimer) {
@@ -174,8 +95,7 @@ function scheduleFlush() {
   }
   flushTimer = setTimeout(async () => {
     await flushJobRunBuffer();
-    await flushClickHouseBuffer();
-    if (jobRunBuffer.length > 0 || clickhouseBuffer.length > 0) {
+    if (jobRunBuffer.length > 0) {
       scheduleFlush(); // Reschedule if there are still items
     }
   }, FLUSH_INTERVAL);
@@ -195,20 +115,15 @@ function queueJobRun(jobData: z.infer<typeof jobRunsInsertSchema>) {
   }
 
   // Log a warning if the buffer is getting large
-  if (
-    jobRunBuffer.length >= FLUSH_SIZE * 5 ||
-    clickhouseBuffer.length >= FLUSH_SIZE * 5
-  ) {
+  if (jobRunBuffer.length >= FLUSH_SIZE * 5) {
     throwToLargeAlert = true;
     logger.warn("Job run buffer is getting large", {
       postgresBufferSize: jobRunBuffer.length,
-      clickhouseBufferSize: clickhouseBuffer.length,
     });
   } else if (throwToLargeAlert) {
     throwToLargeAlert = false;
     logger.success("Job run buffer is back to normal", {
       postgresBufferSize: jobRunBuffer.length,
-      clickhouseBufferSize: clickhouseBuffer.length,
     });
   }
 }

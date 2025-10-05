@@ -19,7 +19,7 @@ import { cn } from "~/lib/utils/client";
 
 interface LogEntry {
   id: string;
-  job_run_id: string;
+  jobRunId: string;
   level: string;
   message: string;
   ts: number;

@@ -89,12 +89,12 @@ export function RunsTable() {
   }, [debouncedFilters]);
 
   const selectedJobs = useMemo(() => {
-    return jobs.filter((job) => selectedJobIds.has(job.job_id));
+    return jobs.filter((job) => selectedJobIds.has(job.jobId));
   }, [jobs, selectedJobIds]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedJobIds(new Set(jobs.map((job) => job.job_id)));
+      setSelectedJobIds(new Set(jobs.map((job) => job.jobId)));
     } else {
       setSelectedJobIds(new Set());
     }
@@ -175,12 +175,12 @@ export function RunsTable() {
           </TableHeader>
           <TableBody>
             {jobs.map((run) => (
-              <AnimatePresence key={`${run.id}-${run.updated_at.getTime()}`}>
+              <AnimatePresence key={`${run.id}-${run.createdAt.getTime()}`}>
                 <motion.tr
                   key={run.id}
                   className={cn(
                     "group border-b transition-colors hover:bg-muted/50 cursor-pointer",
-                    selectedJobIds.has(run.job_id) &&
+                    selectedJobIds.has(run.jobId) &&
                       "bg-blue-50 dark:bg-blue-950",
                   )}
                   initial={{ opacity: 0, y: -100 }}
@@ -192,20 +192,20 @@ export function RunsTable() {
                   <TableCell>
                     <div className="flex items-center">
                       <Checkbox
-                        checked={selectedJobIds.has(run.job_id)}
+                        checked={selectedJobIds.has(run.jobId)}
                         onCheckedChange={(checked) =>
-                          handleSelectJob(run.job_id, checked as boolean)
+                          handleSelectJob(run.jobId, checked as boolean)
                         }
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
-                        aria-label={`Select job ${run.job_id}`}
+                        aria-label={`Select job ${run.jobId}`}
                       />
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-xs">
-                    {run.job_id.slice(0, 32)}
-                    {run.job_id.length > 32 && "..."}
+                    {run.jobId.slice(0, 32)}
+                    {run.jobId.length > 32 && "..."}
                   </TableCell>
                   <TableCell>{run.queue}</TableCell>
                   <TableCell className="overflow-hidden">
@@ -221,20 +221,20 @@ export function RunsTable() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {run.started_at &&
-                    run.finished_at &&
+                    {run.startedAt &&
+                    run.finishedAt &&
                     (run.status === "completed" || run.status === "failed")
-                      ? formatDistanceStrict(run.started_at, run.finished_at)
+                      ? formatDistanceStrict(run.startedAt, run.finishedAt)
                       : "-"}
                   </TableCell>
                   <TableCell className="truncate">
-                    {formatDistanceToNow(new Date(run.created_at), {
+                    {formatDistanceToNow(new Date(run.createdAt), {
                       addSuffix: true,
                     })}
                   </TableCell>
                   <TableCell className="truncate">
-                    {run.finished_at
-                      ? formatDistanceToNow(new Date(run.finished_at), {
+                    {run.finishedAt
+                      ? formatDistanceToNow(new Date(run.finishedAt), {
                           addSuffix: true,
                         })
                       : "-"}
@@ -242,17 +242,17 @@ export function RunsTable() {
                   <TableCell
                     className={cn("max-w-48 truncate text-xs", {
                       "text-red-600":
-                        run.status === "failed" && run.error_message,
+                        run.status === "failed" && run.errorMessage,
                     })}
                   >
-                    {run.status === "failed" && run.error_message
-                      ? run.error_message
+                    {run.status === "failed" && run.errorMessage
+                      ? run.errorMessage
                       : "-"}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <RunActions
-                        jobId={run.job_id}
+                        jobId={run.jobId}
                         queueName={run.queue}
                         status={run.status}
                       />

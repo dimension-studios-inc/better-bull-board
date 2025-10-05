@@ -1,12 +1,11 @@
-import { jobRunDataSchema } from "@better-bull-board/clickhouse/schemas";
 import z from "zod";
 import { registerApiRoute } from "~/lib/utils/client";
 
 export const getJobsTableInput = z.object({
   cursor: z
     .object({
-      created_at: z.number(),
-      job_id: z.string(),
+      createdAt: z.number(),
+      jobId: z.string(),
       id: z.string(),
     })
     .nullish(),
@@ -19,34 +18,33 @@ export const getJobsTableInput = z.object({
 
 export const getJobsTableOutput = z.object({
   jobs: z.array(
-    jobRunDataSchema.pick({
-      id: true,
-      job_id: true,
-      queue: true,
-      name: true,
-      status: true,
-      attempt: true,
-      max_attempts: true,
-      created_at: true,
-      enqueued_at: true,
-      started_at: true,
-      finished_at: true,
-      error_message: true,
-      tags: true,
-      updated_at: true,
+    z.object({
+      id: z.string(),
+      jobId: z.string(),
+      queue: z.string(),
+      name: z.string().nullable(),
+      status: z.string(),
+      attempt: z.number(),
+      maxAttempts: z.number(),
+      createdAt: z.date(),
+      enqueuedAt: z.date().nullable(),
+      startedAt: z.date().nullable(),
+      finishedAt: z.date().nullable(),
+      errorMessage: z.string().nullable(),
+      tags: z.array(z.string()).nullable(),
     }),
   ),
   nextCursor: z
     .object({
-      created_at: z.number(),
-      job_id: z.string(),
+      createdAt: z.date(),
+      jobId: z.string(),
       id: z.string(),
     })
     .nullable(),
   prevCursor: z
     .object({
-      created_at: z.number(),
-      job_id: z.string(),
+      createdAt: z.date(),
+      jobId: z.string(),
       id: z.string(),
     })
     .nullable(),

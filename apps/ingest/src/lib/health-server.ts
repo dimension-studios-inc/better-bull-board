@@ -4,7 +4,6 @@ import {
   type ServerResponse,
 } from "node:http";
 import { URL } from "node:url";
-import { clickhouseClient } from "@better-bull-board/clickhouse/client";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
 import { sql } from "drizzle-orm";
@@ -56,26 +55,6 @@ async function checkDatabase(): Promise<HealthCheckResult> {
   }
 }
 
-async function checkClickHouse(): Promise<HealthCheckResult> {
-  const start = Date.now();
-  try {
-    // Simple query to test ClickHouse connection
-    await clickhouseClient.query({ query: "SELECT 1" });
-    return {
-      service: "clickhouse",
-      status: "healthy",
-      responseTime: Date.now() - start,
-    };
-  } catch (error) {
-    return {
-      service: "clickhouse",
-      status: "unhealthy",
-      responseTime: Date.now() - start,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
-
 async function handleHealthCheck(): Promise<{
   response: string;
   statusCode: number;
@@ -84,13 +63,12 @@ async function handleHealthCheck(): Promise<{
 
   try {
     // Run all health checks in parallel
-    const [redisResult, dbResult, clickhouseResult] = await Promise.all([
+    const [redisResult, dbResult] = await Promise.all([
       checkRedis(),
       checkDatabase(),
-      checkClickHouse(),
     ]);
 
-    const results = [redisResult, dbResult, clickhouseResult];
+    const results = [redisResult, dbResult];
     const totalResponseTime = Date.now() - startTime;
 
     // Check if all services are healthy

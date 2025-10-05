@@ -1,4 +1,3 @@
-import { clickhouseClient } from "@better-bull-board/clickhouse/client";
 import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
@@ -36,10 +35,6 @@ export const stopStalledRuns = async () => {
           .update(jobRunsTable)
           .set({ status: "failed" })
           .where(eq(jobRunsTable.id, _run.id));
-        await clickhouseClient.command({
-          query: `UPDATE job_runs_ch SET status = 'failed' WHERE id = {id:UUID}`,
-          query_params: { id: _run.id },
-        });
         continue;
       }
       const jobStatus = await job.getState();

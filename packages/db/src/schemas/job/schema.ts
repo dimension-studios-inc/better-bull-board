@@ -90,3 +90,4 @@ export const jobLogsTable = pgTable(
 );
 
 export const jobLogsInsertSchema = createInsertSchema(jobLogsTable);
+export const jobLogsSelectSchema = createSelectSchema(jobLogsTable);

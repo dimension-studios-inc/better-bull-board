@@ -1,4 +1,7 @@
-import { searchJobRuns } from "@better-bull-board/clickhouse";
+import { jobRunsTable, type jobStatusEnum } from "@better-bull-board/db";
+import { db } from "@better-bull-board/db/server";
+import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { z } from "zod";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobsTableApiRoute } from "./schemas";
 
@@ -8,59 +11,98 @@ export const POST = createAuthenticatedApiRoute({
     const { cursor, search, queue, status, tags } = input;
     const limit = input.limit ?? 20;
 
-    const jobs = await searchJobRuns({
-      limit: limit + 1,
-      cursor,
-      direction: "desc",
-      search,
-      queue: queue === "all" ? undefined : queue,
-      status: status === "all" ? undefined : status,
-      tags: tags && tags.length > 0 ? tags : undefined,
-    });
+    const conditions = [];
+
+    if (search) {
+      const searchConditions = [
+        ilike(jobRunsTable.name, `%${search}%`),
+        ilike(jobRunsTable.queue, `%${search}%`),
+        ilike(jobRunsTable.jobId, `%${search}%`),
+        ilike(jobRunsTable.errorMessage, `%${search}%`),
+      ];
+
+      if (z.uuid().safeParse(search).success) {
+        searchConditions.push(eq(jobRunsTable.id, search));
+      }
+
+      conditions.push(or(...searchConditions));
+    }
+
+    if (queue && queue !== "all") {
+      conditions.push(eq(jobRunsTable.queue, queue));
+    }
+
+    if (status && status !== "all") {
+      conditions.push(
+        eq(
+          jobRunsTable.status,
+          status as (typeof jobStatusEnum.enumValues)[number],
+        ),
+      );
+    }
+
+    if (tags && tags.length > 0) {
+      conditions.push(sql`${jobRunsTable.tags} && ${tags}`);
+    }
+
+    if (cursor) {
+      const { createdAt, jobId, id } = cursor;
+      const createdAtDate = new Date(createdAt);
+
+      if (cursor) {
+        conditions.push(
+          or(
+            sql`${jobRunsTable.createdAt} < ${createdAtDate}`,
+            and(
+              sql`${jobRunsTable.createdAt} = ${createdAtDate}`,
+              sql`${jobRunsTable.jobId} < ${jobId}`,
+            ),
+            and(
+              sql`${jobRunsTable.createdAt} = ${createdAtDate}`,
+              sql`${jobRunsTable.jobId} = ${jobId}`,
+              sql`${jobRunsTable.id} < ${id}`,
+            ),
+          ),
+        );
+      }
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const jobs = await db
+      .select()
+      .from(jobRunsTable)
+      .where(whereClause)
+      .orderBy(
+        desc(jobRunsTable.createdAt),
+        desc(jobRunsTable.jobId),
+        desc(jobRunsTable.id),
+      )
+      .limit(limit + 1);
 
     const previousJobs = cursor
-      ? await searchJobRuns({
-          limit: limit + 1,
-          cursor,
-          direction: "asc",
-          search,
-          queue: queue === "all" ? undefined : queue,
-          status: status === "all" ? undefined : status,
-          tags: tags && tags.length > 0 ? tags : undefined,
-        })
+      ? await db
+          .select()
+          .from(jobRunsTable)
+          .where(whereClause)
+          .orderBy(
+            asc(jobRunsTable.createdAt),
+            asc(jobRunsTable.jobId),
+            asc(jobRunsTable.id),
+          )
+          .limit(limit + 1)
       : [];
 
-    let nextCursor: { created_at: number; job_id: string; id: string } | null =
+    const nextCursor: { createdAt: Date; jobId: string; id: string } | null =
       jobs.length > limit ? (jobs.pop() ?? null) : null;
-    if (nextCursor) {
-      nextCursor = {
-        created_at: nextCursor.created_at,
-        job_id: nextCursor.job_id,
-        id: nextCursor.id,
-      };
-    }
-    let prevCursor: { created_at: number; job_id: string; id: string } | null =
+    const prevCursor: { createdAt: Date; jobId: string; id: string } | null =
       previousJobs.length > limit
         ? // Since we are in desc order we need to shift not pop
           (previousJobs.pop() ?? null)
         : null;
-    if (prevCursor) {
-      prevCursor = {
-        created_at: prevCursor.created_at,
-        job_id: prevCursor.job_id,
-        id: prevCursor.id,
-      };
-    }
 
     return {
-      jobs: jobs.map((job) => ({
-        ...job,
-        created_at: new Date(job.created_at),
-        enqueued_at: job.enqueued_at ? new Date(job.enqueued_at) : null,
-        started_at: job.started_at ? new Date(job.started_at) : null,
-        finished_at: job.finished_at ? new Date(job.finished_at) : null,
-        updated_at: new Date(job.updated_at),
-      })),
+      jobs,
       nextCursor,
       prevCursor,
     };

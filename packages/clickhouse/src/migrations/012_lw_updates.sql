@@ -1,1 +1,0 @@
-SET allow_experimental_lightweight_update = 1;
