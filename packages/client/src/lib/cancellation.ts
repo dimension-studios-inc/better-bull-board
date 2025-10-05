@@ -12,7 +12,7 @@ export const registerCancellationListener = async (
   const listener = redis.duplicate();
   await listener.connect().catch(() => {});
 
-  listener.subscribe(`bbb:cancellation:${jobId}`, (err) => {
+  await listener.subscribe(`bbb:cancellation:${jobId}`, (err) => {
     if (err) throw err;
   });
   listener.on("message", async (channel, message) => {
