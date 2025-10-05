@@ -34,9 +34,16 @@ function fillChartData(
         : startOfDay(d).toISOString().slice(0, 19).replace("T", " ");
 
     if (map.has(ts)) {
-      filled.push(
-        map.get(ts) as { timestamp: string; completed: number; failed: number },
-      );
+      const data = map.get(ts) as {
+        timestamp: string;
+        completed: number;
+        failed: number;
+      };
+      filled.push({
+        ...data,
+        completed: Number(data.completed),
+        failed: Number(data.failed),
+      });
     } else {
       filled.push({ timestamp: ts, completed: 0, failed: 0 });
     }
@@ -118,8 +125,12 @@ export const POST = createAuthenticatedApiRoute({
           .select({
             timestamp:
               interval === "hour"
-                ? sql<string>`date_trunc('hour', ${jobRunsTable.createdAt})`
-                : sql<string>`date_trunc('day', ${jobRunsTable.createdAt})`,
+                ? sql<string>`date_trunc('hour', ${jobRunsTable.createdAt})`.as(
+                    "timestamp",
+                  )
+                : sql<string>`date_trunc('day', ${jobRunsTable.createdAt})`.as(
+                    "timestamp",
+                  ),
             completed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
             failed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
           })

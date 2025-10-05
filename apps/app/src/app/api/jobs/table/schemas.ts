@@ -26,24 +26,24 @@ export const getJobsTableOutput = z.object({
       status: z.string(),
       attempt: z.number(),
       maxAttempts: z.number(),
-      createdAt: z.date(),
-      enqueuedAt: z.date().nullable(),
-      startedAt: z.date().nullable(),
-      finishedAt: z.date().nullable(),
+      createdAt: z.coerce.date(),
+      enqueuedAt: z.coerce.date().nullable(),
+      startedAt: z.coerce.date().nullable(),
+      finishedAt: z.coerce.date().nullable(),
       errorMessage: z.string().nullable(),
       tags: z.array(z.string()).nullable(),
     }),
   ),
   nextCursor: z
     .object({
-      createdAt: z.date(),
+      createdAt: z.coerce.date(),
       jobId: z.string(),
       id: z.string(),
     })
     .nullable(),
   prevCursor: z
     .object({
-      createdAt: z.date(),
+      createdAt: z.coerce.date(),
       jobId: z.string(),
       id: z.string(),
     })
