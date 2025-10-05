@@ -3,6 +3,7 @@ import {
   Worker as BullMQWorker,
   type Job,
   Queue,
+  QueueEvents,
   type RedisConnection,
   type WorkerOptions,
 } from "bullmq";
@@ -68,49 +69,27 @@ export class Worker<
       redis: this.ioredis,
     });
 
-    let listener: Redis | null = null;
+    let listener: QueueEvents | null = null;
     let subscribed = false;
-    let messageHandler: ((_channel: string, message: string) => void) | null;
+    let messageHandler:
+      | ((args: { jobId: string; prev?: string }) => void)
+      | null;
     const channel = `bbb:queue:${queueName}:job:waiting`;
 
     const ensureSubscription = async () => {
-      const onMessage = async (_channel: string, message: string) => {
-        const { jobId, ts } = JSON.parse(message) as {
-          jobId: string;
-          ts: number;
-        };
-        const receivedAt = Date.now();
-        if (receivedAt - ts > 1000) {
-          logger.warn(
-            `Received late waiting message for job ${jobId} in ${queueName}`,
-            { receivedAt, ts },
-          );
-        }
-        const job = await queue.getJob(jobId);
-        if (!job) {
-          await this.ioredis.publish(
-            `bbb:queue:${queueName}:job:waiting:${jobId}`,
-            JSON.stringify({ id: this.id, error: "Job not found" }),
-          );
-          logger.error(`Job not found: ${jobId}`);
-          return;
-        }
+      if (isMaster() && !subscribed) {
+        subscribed = true;
+        // ✅ we became master → subscribe
+        listener ??= new QueueEvents(queueName, { connection: this.ioredis });
 
-        // Verify job status (can happen if the job is already being processed due to late waiting event)
-        const isWaiting = await job.isWaiting();
-        if (isWaiting === false) {
-          await this.ioredis.publish(
-            `bbb:queue:${queueName}:job:waiting:${jobId}`,
-            JSON.stringify({ id: this.id, error: "Job is not waiting" }),
-          );
-          return;
-        }
-
-        const tags = this.getJobTags?.(
-          job as Job<DataType, ResultType, NameType>,
-        ).filter(Boolean);
-
-        await Promise.all([
+        const onMessage = async (args: { jobId: string; prev?: string }) => {
+          const job = await queue.getJob(args.jobId);
+          if (!job) return;
+          const tags = this.getJobTags?.(
+            job as Job<DataType, ResultType, NameType>,
+          ).filter(Boolean);
+          const isWaiting = await job.isWaiting();
+          if (!isWaiting) return;
           this.ioredis.publish(
             "bbb:worker:job",
             JSON.stringify({
@@ -120,45 +99,16 @@ export class Worker<
               queueName,
               isWaiting: true,
             }),
-          ),
-          this.ioredis.publish(
-            `bbb:queue:${queueName}:job:waiting:${jobId}`,
-            JSON.stringify({ id: this.id, success: true }),
-          ),
-        ]);
-        const sentAt = Date.now();
-        if (sentAt - ts > 1000) {
-          logger.warn(
-            `Sent late waiting message for job ${jobId} in ${queueName}`,
-            {
-              sentAt,
-              receivedAt,
-              ts,
-            },
           );
-        }
-      };
-
-      if (isMaster() && !subscribed) {
-        // ✅ we became master → subscribe
-        listener ??= this.ioredis.duplicate();
-        await listener.connect().catch(() => {});
-
-        await listener.subscribe(channel, (err) => {
-          if (err) {
-            logger.error(`Error subscribing: ${err}`);
-            return;
-          }
-          logger.log(`[${this.id}] subscribed to ${channel}`);
-          subscribed = true;
-        });
+        };
 
         messageHandler = onMessage;
-        listener.on("message", messageHandler);
+        listener.on("waiting", messageHandler);
+        logger.log(`[${this.id}] subscribed to ${channel}`);
       } else if (!isMaster() && subscribed && listener) {
         // ❌ we lost master → unsubscribe
-        if (messageHandler) listener.off("message", messageHandler);
-        await listener.quit();
+        if (messageHandler) listener.off("waiting", messageHandler);
+        await listener.disconnect();
         listener = null;
         messageHandler = null;
         subscribed = false;

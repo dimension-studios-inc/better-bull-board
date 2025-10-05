@@ -40,7 +40,7 @@ async function migratePostgreSQL(): Promise<void> {
 
   try {
     // Run drizzle-kit migrate command
-    const { stdout, stderr } = await execAsync("npx drizzle-kit migrate", {
+    const { stderr } = await execAsync("npx drizzle-kit migrate", {
       cwd: path.resolve(process.cwd(), "packages/db"),
       env: {
         ...process.env,
@@ -53,7 +53,6 @@ async function migratePostgreSQL(): Promise<void> {
     }
 
     logger.log("✅ PostgreSQL migrations completed");
-    logger.log("PostgreSQL migration output:", stdout);
   } catch (error) {
     logger.error("❌ PostgreSQL migration failed", error);
     throw new Error(`PostgreSQL migration failed: ${error}`);
