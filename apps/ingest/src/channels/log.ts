@@ -3,6 +3,8 @@ import type { JobLogData } from "@better-bull-board/clickhouse/schemas";
 import { jobLogsTable } from "@better-bull-board/db/schemas/job/schema";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
+import { DrizzleQueryError } from "drizzle-orm";
+import { DatabaseError } from "pg";
 import { z } from "zod/v4";
 import { redis } from "~/lib/redis";
 import { getJobFromBullId } from "~/utils";
@@ -27,74 +29,124 @@ const clickhouseLogBuffer: Array<JobLogData> = [];
 
 let logFlushTimer: NodeJS.Timeout | null = null;
 
+async function withDeadlockRetry<T>(
+  fn: () => Promise<T>,
+  tries = 5,
+): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e: unknown) {
+      if (e instanceof DrizzleQueryError && e.cause instanceof DatabaseError) {
+        const code = e.cause.code;
+        if (code !== "40P01") throw e;
+        lastErr = e;
+        const backoff = 25 * (i + 1) + Math.floor(Math.random() * 50);
+        await new Promise((r) => setTimeout(r, backoff));
+      } else {
+        logger.error("Error in withDeadlockRetry", { error: e });
+        throw e;
+      }
+    }
+  }
+  throw lastErr;
+}
+
 // Batch flush function for PostgreSQL logs
 async function flushLogBuffer() {
   if (logBuffer.length === 0) return;
-
   const batch = logBuffer.splice(0, logBuffer.length);
 
   try {
-    const batchWithJobRunId = await Promise.all(
-      batch.map(async (item) => {
-        let jobRunId = await getJobFromBullId(
-          item.jobId,
-          new Date(item.jobTimestamp),
-          item.queue,
-        );
-        if (!jobRunId) {
-          // Retry in 1 second
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          jobRunId = await getJobFromBullId(
-            item.jobId,
-            new Date(item.jobTimestamp),
-            item.queue,
-          );
-          if (!jobRunId) {
-            logger.warn("Received log for job that no longer exists", {
-              jobId: item.jobId,
-              queue: item.queue,
-            });
-            return;
+    // Resolve jobRunId for each item (keep only valid ones)
+    const withRunIds = (
+      await Promise.all(
+        batch.map(async (item) => {
+          const { jobId, queue, jobTimestamp } = item;
+
+          const delays = [500, 1000, 3000]; // retry delays in ms
+          let jobRunId: string | undefined;
+
+          for (let i = 0; i <= delays.length; i++) {
+            jobRunId = await getJobFromBullId(
+              jobId,
+              new Date(jobTimestamp),
+              queue,
+            );
+            if (jobRunId) break;
+            if (i < delays.length) {
+              await new Promise((r) => setTimeout(r, delays[i]));
+            }
           }
-        }
-        return { ...item, jobRunId };
-      }),
-    );
 
-    const filteredBatch = batchWithJobRunId.filter(
-      (item) => item !== undefined,
-    );
+          if (!jobRunId) {
+            logger.warn(
+              "⚠️ Received log for job that could not be found after retries",
+              {
+                jobId,
+                queue,
+              },
+            );
+            return undefined;
+          }
 
-    if (filteredBatch.length === 0) return;
+          return { ...item, jobRunId };
+        }),
+      )
+    ).filter((x): x is (typeof batch)[number] & { jobRunId: string } => !!x);
 
-    // Batch insert to PostgreSQL (logs are append-only, no conflicts)
-    const insertedLogs = await db
-      .insert(jobLogsTable)
-      .values(filteredBatch)
-      .returning();
+    if (withRunIds.length === 0) return;
 
-    // Queue ClickHouse inserts and publish events
-    for (let i = 0; i < insertedLogs.length; i++) {
-      const insertedLog = insertedLogs[i];
-      const originalItem = batchWithJobRunId[i];
+    // Group by jobRunId → each INSERT references exactly one parent row
+    const groups = new Map<string, Array<(typeof withRunIds)[number]>>();
+    for (const row of withRunIds) {
+      const arr = groups.get(row.jobRunId) ?? [];
+      arr.push(row);
+      groups.set(row.jobRunId, arr);
+    }
 
-      if (insertedLog && originalItem) {
-        // Add to ClickHouse buffer
-        clickhouseLogBuffer.push({
-          ...insertedLog,
-          job_run_id: insertedLog.jobRunId,
-          log_seq: insertedLog.logSeq,
+    // Deterministic order to minimize cross-transaction lock contention
+    const orderedRunIds = Array.from(groups.keys()).sort();
+
+    for (const jobRunId of orderedRunIds) {
+      const rows = groups.get(jobRunId) ?? [];
+
+      // Optional: chunk big groups (keeps statements reasonably sized)
+      for (let i = 0; i < rows.length; i += 100) {
+        const chunk = rows.slice(i, i + 100);
+
+        await withDeadlockRetry(async () => {
+          // Insert *only* rows for this one jobRunId
+          const inserted = await db
+            .insert(jobLogsTable)
+            .values(chunk) // each has jobRunId, level, message, ts, logSeq
+            .returning();
+
+          // Map by local index (no cross-batch index drift)
+          for (let j = 0; j < inserted.length; j++) {
+            const ins = inserted[j];
+            const src = chunk[j];
+
+            if (ins && src) {
+              // ClickHouse buffer
+              clickhouseLogBuffer.push({
+                ...ins,
+                job_run_id: ins.jobRunId,
+                log_seq: ins.logSeq,
+              });
+
+              // Publish refresh for this job run
+              await redis.publish(
+                "bbb:ingest:events:job-log-refresh",
+                src.jobRunId,
+              );
+            }
+          }
         });
-
-        // Publish refresh events
-        redis.publish(
-          "bbb:ingest:events:job-log-refresh",
-          originalItem.jobRunId,
-        );
       }
     }
 
-    // Flush ClickHouse buffer if it's getting large
     if (clickhouseLogBuffer.length >= FLUSH_SIZE) {
       await flushClickHouseLogBuffer();
     }
@@ -103,7 +155,7 @@ async function flushLogBuffer() {
       error,
       batchSize: batch.length,
     });
-    // Re-queue failed items for retry (optional)
+    // Re-queue failed items
     logBuffer.unshift(...batch);
   }
 }
@@ -121,6 +173,7 @@ async function flushClickHouseLogBuffer() {
     logger.error("Error in batch ClickHouse log insert", {
       error,
       batchSize: batch.length,
+      batch,
     });
     // Re-queue failed items for retry (optional)
     clickhouseLogBuffer.unshift(...batch);

@@ -160,6 +160,7 @@ async function flushClickHouseBuffer() {
     logger.error("Error in batch ClickHouse insert", {
       error,
       batchSize: batch.length,
+      batch,
     });
     // Re-queue failed items for retry (optional)
     clickhouseBuffer.unshift(...batch);
