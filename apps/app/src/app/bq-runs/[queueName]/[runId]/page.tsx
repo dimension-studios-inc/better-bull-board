@@ -1,6 +1,7 @@
 import { jobRunsTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { and, eq } from "drizzle-orm";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 
 interface BqRunPageProps {
@@ -25,8 +26,8 @@ export default async function BqRunPage({ params }: BqRunPageProps) {
       .where(
         and(
           eq(jobRunsTable.queue, decodedQueueName),
-          eq(jobRunsTable.jobId, decodedRunId)
-        )
+          eq(jobRunsTable.jobId, decodedRunId),
+        ),
       )
       .limit(1);
 
@@ -38,6 +39,9 @@ export default async function BqRunPage({ params }: BqRunPageProps) {
       redirect("/?error=run-not-found");
     }
   } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
     console.error("Error retrieving job run:", error);
     // On error, redirect to home with error toast
     redirect("/?error=server-error");
