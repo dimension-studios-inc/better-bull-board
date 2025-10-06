@@ -28,8 +28,6 @@ export const env = createEnv({
     ADMIN_PASSWORD: z.string().min(1),
     JWT_SECRET: z.string().min(1),
     WEBSOCKET_URL: z.url(), // Not in public otherwise it will be bring in the built app
-    BBB_QUEUE_NAME: z.string().optional(),
-    BBB_RUN_ID: z.string().optional(),
   },
   // Leave client empty because we don't want to include any var in the built app for public use
   client: {},
