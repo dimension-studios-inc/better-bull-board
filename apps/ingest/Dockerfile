@@ -13,7 +13,6 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV API_HOSTNAME=0.0.0.0
 ENV PORT=8080
-ENV NODE_OPTIONS="--max-old-space-size=6144"
 
 
 #* ---- Turbo stage ----
@@ -36,6 +35,7 @@ COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
 FROM turbo AS builder
+ENV NODE_OPTIONS="--max-old-space-size=6144"
 COPY --from=installer /app .
 RUN npm run build:ingest
 
