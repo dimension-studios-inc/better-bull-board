@@ -11,7 +11,6 @@ ENV TURBO_API=$TURBO_API
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME="0.0.0.0"
-ENV NODE_OPTIONS="--max-old-space-size=6144"
 
 FROM base AS turbo
 RUN npm install turbo --global
@@ -29,6 +28,7 @@ COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
 FROM turbo AS builder
+ENV NODE_OPTIONS="--max-old-space-size=6144"
 COPY --from=installer /app .
 
 # Dummy env for the build to work without .env
