@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceStrict, formatDistanceToNow } from "date-fns";
+import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryStates } from "nuqs";
@@ -228,13 +228,13 @@ export function RunsTable() {
                       : "-"}
                   </TableCell>
                   <TableCell className="truncate">
-                    {formatDistanceToNow(new Date(run.createdAt), {
+                    {formatDistanceToNowStrict(new Date(run.createdAt), {
                       addSuffix: true,
                     })}
                   </TableCell>
                   <TableCell className="truncate">
                     {run.finishedAt
-                      ? formatDistanceToNow(new Date(run.finishedAt), {
+                      ? formatDistanceToNowStrict(new Date(run.finishedAt), {
                           addSuffix: true,
                         })
                       : "-"}

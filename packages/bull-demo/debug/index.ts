@@ -10,29 +10,23 @@ const main = async () => {
   // logger.log("Scheduler registered");
 
   const singleJob = async () => {
-    const randomQueue = `{demo-queue-${Math.floor(Math.random() * 7) + 1}}`;
+    const randomQueue = `{demo-queue}`;
     const queue = new Queue(randomQueue, {
       connection: redis,
     });
     const job = await queue.add("test-job-name", {
       wait: 1000,
-      // longData: new Array(1000).fill("test"),
     });
     if (!job.id) throw new Error("Job ID is undefined");
   };
-
-  // await queue.add("test-job-name", {
-  //   hello: "world",
-  // });
-
   const bulkJobs = async (count: number) => {
     await Promise.all(Array.from({ length: count }).map(() => singleJob()));
   };
 
   setInterval(async () => {
-    await bulkJobs(11);
+    await bulkJobs(10);
   }, 15000);
-  await bulkJobs(11);
+  await bulkJobs(10);
 };
 
 main();

@@ -1,7 +1,8 @@
 import { cancelJob } from "@better-bull-board/client/lib/cancellation";
 import { jobRunsTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import { eq } from "drizzle-orm";
+import { logger } from "@rharkor/logger";
+import { and, eq } from "drizzle-orm";
 import { redis } from "~/lib/redis";
 
 export const cancelJobHandler = async (input: {
@@ -18,12 +19,13 @@ export const cancelJobHandler = async (input: {
 
   //* Sometimes the job doesnt exist anymore in redis so we need to ensure that it was really cancelled
   // Postgres
-
   await db.transaction(async (tx) => {
     const [pgjob] = await tx
       .select()
       .from(jobRunsTable)
-      .where(eq(jobRunsTable.jobId, jobId))
+      .where(
+        and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, queueName)),
+      )
       .limit(1);
     if (!pgjob) {
       throw new Error(`Job ${jobId} not found`);
@@ -36,12 +38,18 @@ export const cancelJobHandler = async (input: {
           status: "failed",
           errorMessage: "Job cancelled",
         })
-        .where(eq(jobRunsTable.jobId, jobId))
+        .where(
+          and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, queueName)),
+        )
         .returning();
 
       if (!updated) {
         throw new Error(`Updated job ${jobId} not found`);
       }
+
+      logger.log(`Job ${jobId} (${queueName}) has been cancelled successfully`);
+    } else {
+      logger.log(`Job ${jobId} (${queueName}) has already been completed`);
     }
   });
 
