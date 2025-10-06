@@ -2,7 +2,7 @@ import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
 import { Queue } from "bullmq";
-import { and, eq, lte } from "drizzle-orm";
+import { and, eq, lte, or } from "drizzle-orm";
 import { redis } from "~/lib/redis";
 
 export const stopStalledRuns = async () => {
@@ -16,7 +16,10 @@ export const stopStalledRuns = async () => {
       .from(jobRunsTable)
       .where(
         and(
-          eq(jobRunsTable.status, "active"),
+          or(
+            eq(jobRunsTable.status, "active"),
+            eq(jobRunsTable.status, "waiting"),
+          ),
           lte(jobRunsTable.createdAt, canBeStalledBefore),
         ),
       );
@@ -38,7 +41,7 @@ export const stopStalledRuns = async () => {
         continue;
       }
       const jobStatus = await job.getState();
-      if (jobStatus === "active") continue;
+      if (jobStatus === _run.status) continue;
       logger.warn(`Run ${_run.id} is stalled, updating status`);
       await redis.publish(
         "bbb:worker:job",
