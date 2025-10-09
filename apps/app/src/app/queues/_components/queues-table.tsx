@@ -112,7 +112,7 @@ export function QueuesTable() {
           </Button>
         </div>
       </div>
-      <div className="relative overflow-hidden rounded-lg border">
+      <div className="relative overflow-y-scroll rounded-lg border">
         <Table className="table-fixed w-full">
           <TableHeader className="z-10">
             <TableRow>
