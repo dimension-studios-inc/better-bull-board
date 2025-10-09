@@ -148,7 +148,7 @@ export function RunsTable() {
           )
         }
       />
-      <div className="relative overflow-hidden rounded-lg border">
+      <div className="relative overflow-y-scroll rounded-lg border">
         <Table className="table-fixed w-full">
           <TableHeader className="z-10">
             <TableRow>
@@ -207,7 +207,7 @@ export function RunsTable() {
                     {run.jobId.slice(0, 32)}
                     {run.jobId.length > 32 && "..."}
                   </TableCell>
-                  <TableCell>{run.queue}</TableCell>
+                  <TableCell className="truncate">{run.queue}</TableCell>
                   <TableCell className="overflow-hidden">
                     {run.tags?.map((tag) => (
                       <Badge key={tag} variant="outline">
