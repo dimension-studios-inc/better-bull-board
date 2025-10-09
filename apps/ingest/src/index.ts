@@ -45,12 +45,12 @@ const main = async () => {
 };
 
 // print memory usage every 10 seconds
-if (env.ENV === "development") {
-  setInterval(() => {
-    const memoryUsage = process.memoryUsage();
-    logger.subLog("Memory usage", memoryUsage.rss / 1024 / 1024);
-  }, 10_000);
-}
+// if (env.ENV === "development") {
+//   setInterval(() => {
+//     const memoryUsage = process.memoryUsage();
+//     logger.subLog("Memory usage", memoryUsage.rss / 1024 / 1024);
+//   }, 10_000);
+// }
 
 const h = monitorEventLoopDelay({ resolution: 20 });
 h.enable();

@@ -39,11 +39,10 @@ async function flushJobRunBuffer() {
     }
     const values = Array.from(deduped.values()).map((item) => item.data);
     values.sort((a, b) => {
-      const byJob = a.jobId.localeCompare(b.jobId);
-      if (byJob !== 0) return byJob;
       const ae = a.enqueuedAt ? new Date(a.enqueuedAt).getTime() : 0;
       const be = b.enqueuedAt ? new Date(b.enqueuedAt).getTime() : 0;
-      return ae - be;
+      if (ae !== be) return ae - be;
+      return a.jobId.localeCompare(b.jobId);
     });
 
     // Batch upsert to PostgreSQL
