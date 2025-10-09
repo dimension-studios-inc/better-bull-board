@@ -22,7 +22,7 @@ const main = async () => {
       return [`demo-queue`];
     },
   });
-  await worker.waitingJobsEvent();
+  await worker.waitUntilReady();
 
   logger.info("Worker started");
 };

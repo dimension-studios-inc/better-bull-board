@@ -22,6 +22,8 @@ export class Worker<
     job: Job<DataType, ResultType, NameType>,
   ) => (string | undefined)[];
 
+  hasWaitingJobsEventsInitialized = false;
+
   constructor(
     name: string,
     processor: string | URL | null, // Do not allow processor, we need to use sandboxed processor in order to be able to cancel the job (see: https://docs.bullmq.io/guide/workers/sandboxed-processors)
@@ -57,7 +59,7 @@ export class Worker<
   //   }, 5000);
   // }
 
-  async waitingJobsEvent() {
+  private async waitingJobsEvent() {
     const queueName = this.name;
     const queue = new Queue(queueName, { connection: this.ioredis });
 
@@ -104,6 +106,7 @@ export class Worker<
         };
 
         messageHandler = onMessage;
+        await listener.waitUntilReady();
         listener.on("waiting", messageHandler);
         logger.log(`[${this.id}] subscribed to ${channel}`);
       } else if (!isMaster() && subscribed && listener) {
@@ -115,11 +118,27 @@ export class Worker<
         subscribed = false;
         logger.log(`[${this.id}] unsubscribed from ${channel}`);
       }
+      this.hasWaitingJobsEventsInitialized = true;
     };
 
     // run every 2s (tweak to your needs)
     setInterval(ensureSubscription, 2000);
     await ensureSubscription();
+  }
+
+  override async waitUntilReady() {
+    const redis = await super.waitUntilReady();
+    let attempts = 0;
+    while (!this.hasWaitingJobsEventsInitialized && attempts < 20) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      attempts++;
+    }
+    if (!this.hasWaitingJobsEventsInitialized) {
+      throw new Error(
+        "Waiting jobs events failed to initialize after 20 seconds",
+      );
+    }
+    return redis;
   }
 
   override async processJob(
