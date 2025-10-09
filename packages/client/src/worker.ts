@@ -41,7 +41,7 @@ export class Worker<
     this.getJobTags = opts.getJobTags;
     // this.startLivenessProbe();
 
-    this.waitingJobsEvent(name);
+    this.waitingJobsEvent();
   }
 
   // private startLivenessProbe() {
@@ -57,7 +57,8 @@ export class Worker<
   //   }, 5000);
   // }
 
-  private async waitingJobsEvent(queueName: string) {
+  async waitingJobsEvent() {
+    const queueName = this.name;
     const queue = new Queue(queueName, { connection: this.ioredis });
 
     // Master election for this queue
@@ -118,6 +119,7 @@ export class Worker<
 
     // run every 2s (tweak to your needs)
     setInterval(ensureSubscription, 2000);
+    await ensureSubscription();
   }
 
   override async processJob(
