@@ -1,6 +1,6 @@
 import { jobRunsTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import { and, avg, count, eq, gte, lte, sql } from "drizzle-orm";
+import { and, avg, count, gte, lte, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuePerformanceApiRoute } from "./schemas";
 
@@ -16,8 +16,8 @@ export const POST = createAuthenticatedApiRoute({
         .select({
           queue: jobRunsTable.queue,
           totalRuns: count(),
-          successes: count(eq(jobRunsTable.status, "completed")),
-          failures: count(eq(jobRunsTable.status, "failed")),
+          successes: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
+          failures: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
           avgDuration: avg(
             sql<number>`
               CASE 

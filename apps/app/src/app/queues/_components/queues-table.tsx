@@ -27,7 +27,7 @@ export function QueuesTable() {
   const router = useRouter();
   const [urlState, setUrlState] = useQueryStates({
     search: parseAsString.withDefault(""),
-    timePeriod: parseAsString.withDefault("30"),
+    timePeriod: parseAsString.withDefault("1"),
     cursor: parseAsString.withDefault(""),
   });
 
