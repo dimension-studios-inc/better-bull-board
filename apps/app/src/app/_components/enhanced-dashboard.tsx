@@ -12,7 +12,7 @@ import { QueuePerformanceTable } from "./queue-performance-table";
 import { RunGraphChart } from "./run-graph-chart";
 
 export function EnhancedDashboard() {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("7");
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("1");
   const days = parseInt(timePeriod, 10);
 
   return (
