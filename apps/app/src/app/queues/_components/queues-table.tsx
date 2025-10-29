@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { apiFetch, cn } from "~/lib/utils/client";
+import { apiFetch, cn, smartFormatDuration } from "~/lib/utils/client";
 import { QueueActions } from "./queue-actions";
 import { QueueMiniChart } from "./queue-mini-chart";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
@@ -123,6 +123,7 @@ export function QueuesTable() {
               <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
               <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
               <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>
+              <TableHead style={{ width: "120px" }}>Pressure</TableHead>
               <TableHead style={{ width: "70px" }}>Trend</TableHead>
               <TableHead style={{ width: "90px" }}></TableHead>
             </TableRow>
@@ -180,6 +181,11 @@ export function QueuesTable() {
                   <TableCell>
                     <span className="font-mono text-green-600">
                       {queue.completedJobs}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono">
+                      {smartFormatDuration(queue.pressure)}
                     </span>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>

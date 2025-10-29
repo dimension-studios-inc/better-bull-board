@@ -24,9 +24,9 @@ const main = async () => {
   };
 
   setInterval(async () => {
-    await bulkJobs(10);
-  }, 15000);
-  await bulkJobs(10);
+    await bulkJobs(1);
+  }, 2000);
+  await bulkJobs(1);
 };
 
 main();

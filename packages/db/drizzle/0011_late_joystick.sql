@@ -1,0 +1,1 @@
+CREATE INDEX "ix_job_runs_status" ON "job_runs" USING btree ("status");
