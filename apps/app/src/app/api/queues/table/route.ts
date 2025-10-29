@@ -116,19 +116,33 @@ export const POST = createAuthenticatedApiRoute({
     const countsStart = Date.now();
     const allCounts = await db
       .select({
-        queueName: jobRunsTable.queue,
-        waitingJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'waiting')`,
-        activeJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'active')`,
-        failedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed' AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
-        completedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed' AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
+        name: queuesTable.name,
+        waitingJobs: sql<number>`(
+              SELECT COUNT(*)
+              FROM ${jobRunsTable}
+              WHERE ${jobRunsTable.queue} = queues.name
+              AND ${jobRunsTable.status} = 'waiting')`.as("waiting_jobs"),
+        activeJobs:
+          sql<number>`(SELECT COUNT(*) FROM ${jobRunsTable} WHERE ${jobRunsTable.queue} = queues.name AND ${jobRunsTable.status} = 'active')`.as(
+            "active_jobs",
+          ),
         // Pressure is the average time (in ms) spent in waiting state for jobs completed or failed in the time period
-        pressure: sql<
-          number | null
-        >`AVG(EXTRACT(EPOCH FROM (LEAST(${jobRunsTable.startedAt}, ${dateTo}) - GREATEST(${jobRunsTable.enqueuedAt}, ${dateFrom}))) * 1000) FILTER (WHERE (${jobRunsTable.status} = 'completed' OR ${jobRunsTable.status} = 'failed') AND ${jobRunsTable.enqueuedAt} IS NOT NULL AND ${jobRunsTable.startedAt} IS NOT NULL AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
+        pressure: sql<number | null>`(
+          SELECT ROUND(AVG(EXTRACT(EPOCH FROM (jra."started_at" - jra."enqueued_at")) * 1000)) as pressure
+          FROM (
+            SELECT *
+            FROM ${jobRunsTable} jra
+            WHERE jra.queue = queues.name
+            AND (jra.status = 'completed' OR jra.status = 'failed')
+            AND jra.enqueued_at IS NOT NULL
+            AND jra.started_at IS NOT NULL
+            ORDER BY jra.created_at DESC
+            LIMIT 100
+          ) jra
+        )`.as("pressure"),
       })
-      .from(jobRunsTable)
-      .where(inArray(jobRunsTable.queue, queueNames))
-      .groupBy(jobRunsTable.queue);
+      .from(queuesTable)
+      .where(inArray(queuesTable.name, queueNames));
 
     const countsTime = Date.now() - countsStart;
 
@@ -165,9 +179,7 @@ export const POST = createAuthenticatedApiRoute({
     const processStart = Date.now();
 
     // Create maps for efficient lookup
-    const countsMap = new Map(
-      allCounts.map((count) => [count.queueName, count]),
-    );
+    const countsMap = new Map(allCounts.map((count) => [count.name, count]));
 
     const chartDataMap = new Map<
       string,
@@ -192,8 +204,6 @@ export const POST = createAuthenticatedApiRoute({
         queueName,
         waitingJobs: Number(counts?.waitingJobs ?? 0),
         activeJobs: Number(counts?.activeJobs ?? 0),
-        failedJobs: Number(counts?.failedJobs ?? 0),
-        completedJobs: Number(counts?.completedJobs ?? 0),
         pressure: Number(counts?.pressure ?? 0),
         chartData: fillChartData(dateFrom, dateTo, interval, chartData),
       };
@@ -232,8 +242,6 @@ export const POST = createAuthenticatedApiRoute({
           everys: row.everys?.filter(Boolean) ?? [],
           waitingJobs: stats.waitingJobs,
           activeJobs: stats.activeJobs,
-          failedJobs: stats.failedJobs,
-          completedJobs: stats.completedJobs,
           pressure: stats.pressure,
           chartData: stats.chartData,
         };
