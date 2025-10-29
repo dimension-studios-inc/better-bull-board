@@ -7,8 +7,9 @@ import { redis } from "./lib/redis";
 import { startWebSocketServer } from "./lib/websocket-server";
 import { migrateDatabases } from "./migration";
 import { clearData } from "./repeats/clear-data";
-import { autoIngestQueues } from "./repeats/queues";
-import { stopStalledRuns } from "./repeats/stalled";
+
+// import { autoIngestQueues } from "./repeats/queues";
+// import { stopStalledRuns } from "./repeats/stalled";
 
 const listenToEvents = async () => {
   const subscriber = redis.duplicate();
@@ -30,8 +31,8 @@ const main = async () => {
   //! Do not await
   listenToEvents();
   clearData();
-  autoIngestQueues();
-  stopStalledRuns();
+  // autoIngestQueues();
+  // stopStalledRuns();
 
   // Start WebSocket server
   startWebSocketServer();

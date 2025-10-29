@@ -17,8 +17,6 @@ export const getQueuesTableOutput = z.object({
       everys: z.array(z.number()),
       waitingJobs: z.number(),
       activeJobs: z.number(),
-      failedJobs: z.number(),
-      completedJobs: z.number(),
       pressure: z.number(),
       chartData: z.array(
         z.object({

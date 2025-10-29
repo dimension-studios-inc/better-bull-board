@@ -16,8 +16,8 @@ NC='\033[0m' # No Color
 echo -e "${YELLOW}Better Bull Board - Docker Build and Push Script${NC}"
 echo "================================================"
 
-# Ask user if they want to build and push PostgreSQL and ClickHouse
-echo -e "${YELLOW}Do you want to build and push PostgreSQL and ClickHouse images? (y/N):${NC}"
+# Ask user if they want to build and push PostgreSQL
+echo -e "${YELLOW}Do you want to build and push PostgreSQL image? (y/N):${NC}"
 read -r build_databases
 build_databases=${build_databases:-N}  # Default to 'N' if empty
 
@@ -66,28 +66,6 @@ else
     echo -e "${YELLOW}Skipping PostgreSQL build and push${NC}"
 fi
 
-# Build and push ClickHouse (if requested)
-if [[ "$build_databases" =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Building and pushing ClickHouse image...${NC}"
-    cd docker/clickhouse
-    docker build -t better-bull-board-clickhouse .
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to build ClickHouse image${NC}"
-        exit 1
-    fi
-
-    docker tag better-bull-board-clickhouse:latest ${ECR_REGISTRY}/better-bull-board-clickhouse:latest
-    docker push ${ECR_REGISTRY}/better-bull-board-clickhouse:latest
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Failed to push ClickHouse image${NC}"
-        exit 1
-    fi
-    cd ../..
-    echo -e "${GREEN}ClickHouse image built and pushed successfully${NC}"
-else
-    echo -e "${YELLOW}Skipping ClickHouse build and push${NC}"
-fi
-
 # Build and push App
 echo -e "${YELLOW}Building and pushing App image...${NC}"
 docker build -f apps/app/Dockerfile -t better-bull-board-app .
@@ -126,7 +104,6 @@ echo ""
 echo -e "${YELLOW}Update your Kubernetes deployment files with these image URIs:${NC}"
 if [[ "$build_databases" =~ ^[Yy]$ ]]; then
     echo "  PostgreSQL: ${ECR_REGISTRY}/better-bull-board-postgres:latest"
-    echo "  ClickHouse: ${ECR_REGISTRY}/better-bull-board-clickhouse:latest"
 fi
 echo "  App: ${ECR_REGISTRY}/better-bull-board-app:latest"
 echo "  Ingest: ${ECR_REGISTRY}/better-bull-board-ingest:latest"

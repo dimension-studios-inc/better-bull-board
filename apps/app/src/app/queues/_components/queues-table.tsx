@@ -121,9 +121,7 @@ export function QueuesTable() {
               <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
               <TableHead style={{ width: "120px" }}>Waiting Jobs</TableHead>
               <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
-              <TableHead style={{ width: "120px" }}>Failed Jobs</TableHead>
-              <TableHead style={{ width: "120px" }}>Completed Jobs</TableHead>
-              <TableHead style={{ width: "120px" }}>Pressure</TableHead>
+              <TableHead style={{ width: "240px" }}>Pressure</TableHead>
               <TableHead style={{ width: "70px" }}>Trend</TableHead>
               <TableHead style={{ width: "90px" }}></TableHead>
             </TableRow>
@@ -174,17 +172,7 @@ export function QueuesTable() {
                     <span className="font-mono">{queue.activeJobs}</span>
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono text-red-600">
-                      {queue.failedJobs}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-green-600">
-                      {queue.completedJobs}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono">
+                    <span className="font-mono truncate">
                       {smartFormatDuration(queue.pressure)}
                     </span>
                   </TableCell>

@@ -61,17 +61,7 @@ docker push ${ECR_PUBLIC_REGISTRY}/better-bull-board-postgres:latest
 cd ../..
 ```
 
-### 4. Build and Push ClickHouse Image
-
-```bash
-cd docker/clickhouse
-docker build -t better-bull-board-clickhouse .
-docker tag better-bull-board-clickhouse:latest ${ECR_PUBLIC_REGISTRY}/better-bull-board-clickhouse:latest
-docker push ${ECR_PUBLIC_REGISTRY}/better-bull-board-clickhouse:latest
-cd ../..
-```
-
-### 5. Build and Push App Image
+### 4. Build and Push App Image
 
 ```bash
 docker build -f apps/app/Dockerfile -t better-bull-board-app .
@@ -79,7 +69,7 @@ docker tag better-bull-board-app:latest ${ECR_PUBLIC_REGISTRY}/better-bull-board
 docker push ${ECR_PUBLIC_REGISTRY}/better-bull-board-app:latest
 ```
 
-### 6. Build and Push Ingest Image
+### 5. Build and Push Ingest Image
 
 ```bash
 docker build -f apps/ingest/Dockerfile -t better-bull-board-ingest .
