@@ -136,6 +136,8 @@ export const POST = createAuthenticatedApiRoute({
             AND (jra.status = 'completed' OR jra.status = 'failed')
             AND jra.enqueued_at IS NOT NULL
             AND jra.started_at IS NOT NULL
+            AND jra.created_at >= ${dateFrom}
+            AND jra.created_at < ${dateTo}
             ORDER BY jra.created_at DESC
             LIMIT 100
           ) jra

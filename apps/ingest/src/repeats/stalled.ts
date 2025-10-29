@@ -52,6 +52,7 @@ export const stopStalledRuns = async () => {
           queueName: job?.queueName,
         }),
       );
+      await queue.close();
     }
   };
 
