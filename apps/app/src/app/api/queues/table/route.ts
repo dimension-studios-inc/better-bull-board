@@ -5,7 +5,7 @@ import {
 } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
-import { and, asc, desc, eq, gte, ilike, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, lt, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
 
@@ -109,52 +109,103 @@ export const POST = createAuthenticatedApiRoute({
 
     const interval = timePeriodDays <= 7 ? "hour" : "day";
 
-    const queueStats = await Promise.all(
-      queueNames.map(async (queueName) => {
-        const [counts] = await db
-          .select({
-            waitingJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'waiting')`,
-            activeJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'active')`,
-            failedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed' AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
-            completedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed' AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
-          })
-          .from(jobRunsTable)
-          .where(eq(jobRunsTable.queue, queueName));
+    // Performance logging
+    const performanceStart = Date.now();
 
-        const chartData = await db
-          .select({
-            timestamp:
-              interval === "hour"
-                ? sql<string>`date_trunc('hour', ${jobRunsTable.createdAt})`.as(
-                    "timestamp",
-                  )
-                : sql<string>`date_trunc('day', ${jobRunsTable.createdAt})`.as(
-                    "timestamp",
-                  ),
-            completed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
-            failed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
-          })
-          .from(jobRunsTable)
-          .where(
-            and(
-              eq(jobRunsTable.queue, queueName),
-              gte(jobRunsTable.createdAt, dateFrom),
-              lt(jobRunsTable.createdAt, dateTo),
-            ),
-          )
-          .groupBy(sql`timestamp`)
-          .orderBy(sql`timestamp`);
+    // Single optimized query to get all queue counts at once
+    const countsStart = Date.now();
+    const allCounts = await db
+      .select({
+        queueName: jobRunsTable.queue,
+        waitingJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'waiting')`,
+        activeJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'active')`,
+        failedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed' AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
+        completedJobs: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed' AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
+        // Pressure is the average time (in ms) spent in waiting state for jobs completed or failed in the time period
+        pressure: sql<
+          number | null
+        >`AVG(EXTRACT(EPOCH FROM (LEAST(${jobRunsTable.startedAt}, ${dateTo}) - GREATEST(${jobRunsTable.enqueuedAt}, ${dateFrom}))) * 1000) FILTER (WHERE (${jobRunsTable.status} = 'completed' OR ${jobRunsTable.status} = 'failed') AND ${jobRunsTable.enqueuedAt} IS NOT NULL AND ${jobRunsTable.startedAt} IS NOT NULL AND ${jobRunsTable.createdAt} BETWEEN ${dateFrom} AND ${dateTo})`,
+      })
+      .from(jobRunsTable)
+      .where(inArray(jobRunsTable.queue, queueNames))
+      .groupBy(jobRunsTable.queue);
 
-        return {
-          queueName,
-          waitingJobs: Number(counts?.waitingJobs ?? 0),
-          activeJobs: Number(counts?.activeJobs ?? 0),
-          failedJobs: Number(counts?.failedJobs ?? 0),
-          completedJobs: Number(counts?.completedJobs ?? 0),
-          chartData: fillChartData(dateFrom, dateTo, interval, chartData),
-        };
-      }),
+    const countsTime = Date.now() - countsStart;
+
+    // Single optimized query to get all chart data at once
+    const chartStart = Date.now();
+    const allChartData = await db
+      .select({
+        queueName: jobRunsTable.queue,
+        timestamp:
+          interval === "hour"
+            ? sql<string>`date_trunc('hour', ${jobRunsTable.createdAt})`.as(
+                "timestamp",
+              )
+            : sql<string>`date_trunc('day', ${jobRunsTable.createdAt})`.as(
+                "timestamp",
+              ),
+        completed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
+        failed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
+      })
+      .from(jobRunsTable)
+      .where(
+        and(
+          inArray(jobRunsTable.queue, queueNames),
+          gte(jobRunsTable.createdAt, dateFrom),
+          lt(jobRunsTable.createdAt, dateTo),
+        ),
+      )
+      .groupBy(jobRunsTable.queue, sql`timestamp`)
+      .orderBy(jobRunsTable.queue, sql`timestamp`);
+
+    const chartTime = Date.now() - chartStart;
+
+    // Process the results in memory instead of making individual DB calls
+    const processStart = Date.now();
+
+    // Create maps for efficient lookup
+    const countsMap = new Map(
+      allCounts.map((count) => [count.queueName, count]),
     );
+
+    const chartDataMap = new Map<
+      string,
+      { timestamp: string; completed: number; failed: number }[]
+    >();
+    for (const chart of allChartData) {
+      if (!chartDataMap.has(chart.queueName)) {
+        chartDataMap.set(chart.queueName, []);
+      }
+      chartDataMap.get(chart.queueName)?.push({
+        timestamp: chart.timestamp,
+        completed: Number(chart.completed),
+        failed: Number(chart.failed),
+      });
+    }
+
+    const queueStats = queueNames.map((queueName) => {
+      const counts = countsMap.get(queueName);
+      const chartData = chartDataMap.get(queueName) ?? [];
+
+      return {
+        queueName,
+        waitingJobs: Number(counts?.waitingJobs ?? 0),
+        activeJobs: Number(counts?.activeJobs ?? 0),
+        failedJobs: Number(counts?.failedJobs ?? 0),
+        completedJobs: Number(counts?.completedJobs ?? 0),
+        pressure: Number(counts?.pressure ?? 0),
+        chartData: fillChartData(dateFrom, dateTo, interval, chartData),
+      };
+    });
+
+    const processTime = Date.now() - processStart;
+    const totalTime = Date.now() - performanceStart;
+    if (totalTime > 1000) {
+      console.log(
+        `[Performance] Total queue stats calculation completed in ${totalTime}ms (Counts: ${countsTime}ms, Chart: ${chartTime}ms, Process: ${processTime}ms)`,
+      );
+    }
 
     const statsMap = new Map(queueStats.map((stat) => [stat.queueName, stat]));
 
@@ -170,6 +221,7 @@ export const POST = createAuthenticatedApiRoute({
           activeJobs: 0,
           failedJobs: 0,
           completedJobs: 0,
+          pressure: 0,
           chartData: [],
         };
 
@@ -182,6 +234,7 @@ export const POST = createAuthenticatedApiRoute({
           activeJobs: stats.activeJobs,
           failedJobs: stats.failedJobs,
           completedJobs: stats.completedJobs,
+          pressure: stats.pressure,
           chartData: stats.chartData,
         };
       }),

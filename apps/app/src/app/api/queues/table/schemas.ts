@@ -19,6 +19,7 @@ export const getQueuesTableOutput = z.object({
       activeJobs: z.number(),
       failedJobs: z.number(),
       completedJobs: z.number(),
+      pressure: z.number(),
       chartData: z.array(
         z.object({
           timestamp: z.string(),

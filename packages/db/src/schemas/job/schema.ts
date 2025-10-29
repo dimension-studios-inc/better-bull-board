@@ -57,6 +57,7 @@ export const jobRunsTable = pgTable(
     index("ix_job_runs_created_at").on(t.createdAt),
     index("ix_job_runs_job").on(t.jobId),
     index("ix_job_runs_status_created_at").on(t.status, t.createdAt),
+    index("ix_job_runs_status").on(t.status),
     index("ix_job_runs_repeat_key").on(t.repeatJobKey),
     index("ix_job_runs_tags_gin").using("gin", t.tags),
     index("ix_job_runs_data_gin").using("gin", t.data),
