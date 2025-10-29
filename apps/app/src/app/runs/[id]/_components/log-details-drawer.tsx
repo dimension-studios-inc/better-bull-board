@@ -13,7 +13,6 @@ import {
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { ScrollArea } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
 import { cn } from "~/lib/utils/client";
 
@@ -89,7 +88,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
   const relativeTime = log.ts - startTime;
 
   return (
-    <Card className="h-[calc(100vh-12rem)]">
+    <Card className="h-[calc(100vh-12rem)] overflow-hidden">
       <CardHeader>
         <div className="flex items-center space-x-2">
           <Button
@@ -106,62 +105,56 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="h-full pb-6">
-        <ScrollArea className="h-full">
-          <div className="space-y-6">
-            {/* Log Level */}
-            <div>
-              <h3 className="text-sm font-medium mb-3">Level</h3>
-              <Badge className={getLevelColor(log.level)}>
-                {log.level.toUpperCase()}
-              </Badge>
-            </div>
+      <CardContent className="h-full pb-6 overflow-hidden">
+        <div className="space-y-6 overflow-y-auto overflow-x-hidden h-full">
+          {/* Log Level */}
+          <div>
+            <h3 className="text-sm font-medium mb-3">Level</h3>
+            <Badge className={getLevelColor(log.level)}>
+              {log.level.toUpperCase()}
+            </Badge>
+          </div>
 
-            <Separator />
+          <Separator />
 
-            {/* Basic Info */}
-            <div>
-              <h3 className="text-sm font-medium mb-3">Basic Information</h3>
-              <div className="space-y-3">
-                <DetailItem
-                  icon={
-                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                  }
-                  label="Timestamp"
-                  value={logDate.toISOString()}
-                />
-                <DetailItem
-                  icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-                  label="Relative Time"
-                  value={`${relativeTime}ms after start`}
-                />
-                <DetailItem
-                  icon={
-                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                  }
-                  label="Log ID"
-                  value={
-                    <span className="font-mono text-xs break-all">
-                      {log.id}
-                    </span>
-                  }
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Message */}
-            <div>
-              <h3 className="text-sm font-medium mb-3">Message</h3>
-              <div className="p-2 bg-muted/30 rounded border">
-                <pre className="text-xs font-mono whitespace-pre-wrap break-words">
-                  {log.message}
-                </pre>
-              </div>
+          {/* Basic Info */}
+          <div>
+            <h3 className="text-sm font-medium mb-3">Basic Information</h3>
+            <div className="space-y-3">
+              <DetailItem
+                icon={
+                  <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                }
+                label="Timestamp"
+                value={logDate.toISOString()}
+              />
+              <DetailItem
+                icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+                label="Relative Time"
+                value={`${relativeTime}ms after start`}
+              />
+              <DetailItem
+                icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
+                label="Log ID"
+                value={
+                  <span className="font-mono text-xs break-all">{log.id}</span>
+                }
+              />
             </div>
           </div>
-        </ScrollArea>
+
+          <Separator />
+
+          {/* Message */}
+          <div>
+            <h3 className="text-sm font-medium mb-3">Message</h3>
+            <div className="p-2 bg-muted/30 rounded border">
+              <pre className="text-xs font-mono whitespace-pre-wrap break-words">
+                {log.message}
+              </pre>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
