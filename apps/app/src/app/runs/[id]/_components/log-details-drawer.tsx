@@ -62,6 +62,36 @@ const getLevelColor = (level: string) => {
   }
 };
 
+const formatRelativeTime = (ms: number): string => {
+  if (ms < 0) return "0ms";
+
+  const hours = Math.floor(ms / 3_600_000);
+  const minutes = Math.floor((ms % 3_600_000) / 60_000);
+  const seconds = Math.floor((ms % 60_000) / 1_000);
+  const milliseconds = ms % 1_000;
+
+  const parts: string[] = [];
+
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes}m`);
+  }
+  if (seconds > 0 || parts.length > 0) {
+    parts.push(`${seconds}s`);
+  }
+  if (milliseconds > 0 && parts.length === 0) {
+    // Only show milliseconds if we don't have hours/minutes/seconds
+    parts.push(`${milliseconds}ms`);
+  } else if (milliseconds > 0 && ms < 60_000) {
+    // Show milliseconds for durations less than 1 minute
+    parts.push(`${milliseconds}ms`);
+  }
+
+  return parts.length > 0 ? parts.join(" ") : "0ms";
+};
+
 const DetailItem = ({
   icon,
   label,
@@ -131,7 +161,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
               <DetailItem
                 icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                 label="Relative Time"
-                value={`${relativeTime}ms after start`}
+                value={`${formatRelativeTime(relativeTime)} after start`}
               />
               <DetailItem
                 icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
