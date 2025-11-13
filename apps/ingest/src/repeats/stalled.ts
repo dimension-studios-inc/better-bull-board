@@ -31,12 +31,12 @@ export const stopStalledRuns = async () => {
       );
     for (const _run of stalledRuns) {
       const queue = new Queue(_run.queue, { connection: redis });
-      const job = await queue.getJob(_run.id);
+      const job = await queue.getJob(_run.jobId);
       if (!job) {
-        logger.warn(`Run ${_run.id} is stalled, updating status`);
+        logger.warn(`Run ${_run.jobId} is stalled, updating status`);
         await db
           .update(jobRunsTable)
-          .set({ status: "failed" })
+          .set({ status: "failed", errorMessage: "Job stalled" })
           .where(eq(jobRunsTable.id, _run.id));
         continue;
       }
