@@ -1,6 +1,16 @@
 import { jobRunsTable, type jobStatusEnum } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import { and, asc, desc, eq, gt, ilike, lt, or, sql } from "drizzle-orm";
+import {
+  and,
+  arrayOverlaps,
+  asc,
+  desc,
+  eq,
+  gt,
+  ilike,
+  lt,
+  or,
+} from "drizzle-orm";
 import { z } from "zod";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobsTableApiRoute } from "./schemas";
@@ -42,7 +52,7 @@ export const POST = createAuthenticatedApiRoute({
       }
 
       if (tags && tags.length > 0) {
-        conditions.push(sql`${jobRunsTable.tags} && ${tags}`);
+        conditions.push(arrayOverlaps(jobRunsTable.tags, tags));
       }
 
       if (cursor) {

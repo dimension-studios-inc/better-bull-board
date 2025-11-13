@@ -9,22 +9,35 @@ export const POST = createAuthenticatedApiRoute({
   async handler(input) {
     const { search } = input;
 
-    const tags = await db
-      .select({
-        tag: sql<string>`unnest(${jobRunsTable.tags})`,
-      })
-      .from(jobRunsTable)
-      .where(
-        search
-          ? sql`unnest(${jobRunsTable.tags}) ILIKE ${`%${search}%`}`
-          : undefined,
-      )
-      .groupBy(sql`unnest(${jobRunsTable.tags})`)
-      .orderBy(sql`unnest(${jobRunsTable.tags})`)
-      .limit(100);
+    // Use a subquery to unnest tags first, then filter on the unnested values
+    // We can't use unnest() in WHERE, so we unnest in a subquery and filter in the outer query
+    const tags = await db.execute(
+      search
+        ? sql`
+          SELECT DISTINCT unnested_tag AS tag
+          FROM (
+            SELECT unnest(jr.tags) AS unnested_tag
+            FROM ${jobRunsTable} jr
+          ) AS unnested_tags
+          WHERE unnested_tag ILIKE ${`%${search}%`}
+          ORDER BY unnested_tag
+          LIMIT 100
+        `
+        : sql`
+          SELECT DISTINCT unnested_tag AS tag
+          FROM (
+            SELECT unnest(jr.tags) AS unnested_tag
+            FROM ${jobRunsTable} jr
+          ) AS unnested_tags
+          ORDER BY unnested_tag
+          LIMIT 100
+        `,
+    );
 
     return {
-      tags: tags.map((row) => row.tag).filter(Boolean),
+      tags: (tags.rows as { tag: string }[])
+        .map((row) => row.tag)
+        .filter(Boolean),
     };
   },
 });
