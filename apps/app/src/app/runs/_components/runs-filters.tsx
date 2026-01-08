@@ -23,6 +23,7 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { apiFetch } from "~/lib/utils/client";
+import useDebounce from "~/hooks/use-debounce";
 import type { TRunFilters } from "./types";
 
 export function RunsFilters({
@@ -52,13 +53,15 @@ export function RunsFilters({
   const [statusSearch, setStatusSearch] = useState("");
   const [tagsSearch, setTagsSearch] = useState("");
 
+  const debouncedTagsSearch = useDebounce(tagsSearch, 250);
+
   const { data: tagsData, isFetching: isTagsFetching } = useQuery({
-    queryKey: ["tags", tagsSearch],
+    queryKey: ["tags", debouncedTagsSearch],
     queryFn: apiFetch({
       apiRoute: getTagsApiRoute,
-      body: { search: tagsSearch },
+      body: { search: debouncedTagsSearch },
     }),
-    enabled: tagsOpen || tagsSearch.length > 0,
+    enabled: tagsOpen && debouncedTagsSearch.length >= 2,
   });
 
   const statusOptions: ComboboxOption[] = [
@@ -118,17 +121,24 @@ export function RunsFilters({
         cursor: null,
         tags: newTags,
       });
-    } else {
-      setFilters({
-        cursor: null,
-        [filterKey]:
-          filterKey === "queue" || filterKey === "status"
-            ? "all"
-            : filterKey === "tags"
-              ? []
-              : "",
-      });
     }
+
+    if (filterKey === "queue") {
+      setFilters({ cursor: null, queue: "all" });
+      return;
+    }
+
+    if (filterKey === "status") {
+      setFilters({ cursor: null, status: "all" });
+      return;
+    }
+
+    if (filterKey === "tags") {
+      setFilters({ cursor: null, tags: [] });
+      return;
+    }
+
+    setFilters({ cursor: null, search: "" });
   };
 
   const activeFilters = getActiveFilters();
@@ -262,8 +272,12 @@ export function RunsFilters({
                       options={tagsOptions.filter(
                         (option) => !filters.tags.includes(option.value),
                       )}
-                      placeholder="Add tags..."
-                      noOptionsMessage="No tags found"
+                      placeholder="Type to search tags..."
+                      noOptionsMessage={
+                        debouncedTagsSearch.length < 2
+                          ? "Type at least 2 characters"
+                          : "No tags found"
+                      }
                       searchPlaceholder="Search tags..."
                       search={tagsSearch}
                       setSearch={setTagsSearch}
@@ -274,13 +288,16 @@ export function RunsFilters({
                       isFetching={isTagsFetching}
                       popoverContentClassName="w-80"
                     />
+                    <div className="text-xs text-muted-foreground">
+                      Start typing to search (2+ chars).
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </PopoverContent>
         </Popover>
-        <div className="flex-1 relative w-[350px]">
+        <div className="flex-1 relative w-96">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by job ID, name, or error..."
