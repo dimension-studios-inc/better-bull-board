@@ -136,7 +136,9 @@ export function LogsWaterfall({
   // Sort logs by timestamp ascending to show chronological order
   const sortedLogs = [...logs].sort((a, b) => a.ts - b.ts);
 
-  const startTime = run.enqueuedAt?.getTime() ?? 0;
+  const scheduledTime =
+    (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs;
+  const startTime = Math.max(run.createdAt.getTime(), scheduledTime);
   const endTime = run.finishedAt ? run.finishedAt.getTime() : Date.now();
   const totalDuration = endTime - startTime;
 
@@ -192,9 +194,7 @@ export function LogsWaterfall({
                 {/* Timeline dot */}
                 <Tooltip>
                   <TooltipTrigger>
-                    <div className="flex-shrink-0">
-                      {getLevelIcon(log.level)}
-                    </div>
+                    <div className="shrink-0">{getLevelIcon(log.level)}</div>
                   </TooltipTrigger>
                   <TooltipContent className="bg-none p-0 m-0" withoutArrow>
                     <Badge
