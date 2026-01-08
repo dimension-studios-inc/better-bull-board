@@ -75,7 +75,7 @@ const DetailItem = ({
   className?: string;
 }) => (
   <div className={cn("flex items-center space-x-3", className)}>
-    <div className="flex-shrink-0">{icon}</div>
+    <div className="shrink-0">{icon}</div>
     <div className="flex-1 min-w-0">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-sm font-medium">{value}</div>
@@ -282,7 +282,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                     <DetailItem
                       icon={<Clock className="h-4 w-4 text-muted-foreground" />}
                       label="Delay"
-                      value={`${run.delayMs}ms`}
+                      value={smartFormatDuration(run.delayMs)}
                     />
                   )}
                 </div>
@@ -331,7 +331,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                       Stack Trace
                     </div>
                     <div className="p-2 bg-red-50 border border-red-200 rounded text-xs font-mono dark:bg-red-950/30 dark:border-red-800 max-h-32 overflow-y-auto">
-                      <pre className="whitespace-pre-wrap break-words">
+                      <pre className="whitespace-pre-wrap wrap-break-word">
                         {run.errorStack}
                       </pre>
                     </div>

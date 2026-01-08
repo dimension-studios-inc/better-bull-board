@@ -14,7 +14,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
-import { cn } from "~/lib/utils/client";
+import { cn, smartFormatDuration } from "~/lib/utils/client";
 
 interface LogEntry {
   id: string;
@@ -62,35 +62,8 @@ const getLevelColor = (level: string) => {
   }
 };
 
-const formatRelativeTime = (ms: number): string => {
-  if (ms < 0) return "0ms";
-
-  const hours = Math.floor(ms / 3_600_000);
-  const minutes = Math.floor((ms % 3_600_000) / 60_000);
-  const seconds = Math.floor((ms % 60_000) / 1_000);
-  const milliseconds = ms % 1_000;
-
-  const parts: string[] = [];
-
-  if (hours > 0) {
-    parts.push(`${hours}h`);
-  }
-  if (minutes > 0) {
-    parts.push(`${minutes}m`);
-  }
-  if (seconds > 0 || parts.length > 0) {
-    parts.push(`${seconds}s`);
-  }
-  if (milliseconds > 0 && parts.length === 0) {
-    // Only show milliseconds if we don't have hours/minutes/seconds
-    parts.push(`${milliseconds}ms`);
-  } else if (milliseconds > 0 && ms < 60_000) {
-    // Show milliseconds for durations less than 1 minute
-    parts.push(`${milliseconds}ms`);
-  }
-
-  return parts.length > 0 ? parts.join(" ") : "0ms";
-};
+const formatRelativeTime = (ms: number): string =>
+  smartFormatDuration(Math.max(0, ms));
 
 const DetailItem = ({
   icon,
@@ -104,7 +77,7 @@ const DetailItem = ({
   className?: string;
 }) => (
   <div className={cn("flex items-center space-x-3", className)}>
-    <div className="flex-shrink-0">{icon}</div>
+    <div className="shrink-0">{icon}</div>
     <div className="flex-1 min-w-0">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-sm font-medium">{value}</div>
@@ -114,8 +87,10 @@ const DetailItem = ({
 
 export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
   const logDate = new Date(log.ts);
-  const startTime = run.enqueuedAt?.getTime() ?? 0;
-  const relativeTime = log.ts - startTime;
+  const scheduledTime =
+    (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs;
+  const baseTime = Math.max(run.createdAt.getTime(), scheduledTime);
+  const relativeTime = Math.max(0, log.ts - baseTime);
 
   return (
     <Card className="h-[calc(100vh-12rem)] overflow-hidden">
@@ -179,7 +154,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
           <div>
             <h3 className="text-sm font-medium mb-3">Message</h3>
             <div className="p-2 bg-muted/30 rounded border">
-              <pre className="text-xs font-mono whitespace-pre-wrap break-words">
+              <pre className="text-xs font-mono whitespace-pre-wrap wrap-break-word">
                 {log.message}
               </pre>
             </div>
