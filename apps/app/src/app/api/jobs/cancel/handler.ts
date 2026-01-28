@@ -5,10 +5,7 @@ import { logger } from "@rharkor/logger";
 import { and, eq } from "drizzle-orm";
 import { redis } from "~/lib/redis";
 
-export const cancelJobHandler = async (input: {
-  jobId: string;
-  queueName: string;
-}) => {
+export const cancelJobHandler = async (input: { jobId: string; queueName: string }) => {
   const { jobId, queueName } = input;
 
   await cancelJob({
@@ -23,9 +20,7 @@ export const cancelJobHandler = async (input: {
     const [pgjob] = await tx
       .select()
       .from(jobRunsTable)
-      .where(
-        and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, queueName)),
-      )
+      .where(and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, queueName)))
       .limit(1);
     if (!pgjob) {
       throw new Error(`Job ${jobId} not found`);
@@ -38,9 +33,7 @@ export const cancelJobHandler = async (input: {
           status: "failed",
           errorMessage: "Job cancelled",
         })
-        .where(
-          and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, queueName)),
-        )
+        .where(and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, queueName)))
         .returning();
 
       if (!updated) {

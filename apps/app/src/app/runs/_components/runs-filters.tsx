@@ -1,14 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Plus,
-  Search,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { getTagsApiRoute } from "~/app/api/tags/schemas";
@@ -17,11 +10,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Combobox, type ComboboxOption } from "~/components/ui/combobox";
 import { Input } from "~/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { apiFetch } from "~/lib/utils/client";
 import useDebounce from "~/hooks/use-debounce";
 import type { TRunFilters } from "./types";
@@ -33,11 +22,7 @@ export function RunsFilters({
   startEndContent,
 }: {
   filters: TRunFilters;
-  setFilters: (
-    filters: Partial<
-      Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "cursor">
-    >,
-  ) => void;
+  setFilters: (filters: Partial<Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "cursor">>) => void;
   runs?: {
     nextCursor: { createdAt: Date; jobId: string; id: string } | null;
     prevCursor: { createdAt: Date; jobId: string; id: string } | null;
@@ -173,11 +158,7 @@ export function RunsFilters({
       <div className="flex items-center gap-2">
         <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
           <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 gap-1 bg-transparent"
-            >
+            <Button variant="outline" size="sm" className="h-9 gap-1 bg-transparent">
               <Filter className="h-4 w-4" />
               Filters
               {activeFilters.length > 0 && (
@@ -193,9 +174,7 @@ export function RunsFilters({
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Queue
-                  </label>
+                  <label className="text-sm font-medium mb-2 block">Queue</label>
                   <QueueSelector
                     value={filters.queue}
                     onValueChange={(value) => setFilters({ queue: value })}
@@ -212,9 +191,7 @@ export function RunsFilters({
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Status
-                  </label>
+                  <label className="text-sm font-medium mb-2 block">Status</label>
                   <Combobox
                     value={filters.status}
                     onValueChange={(value) => setFilters({ status: value })}
@@ -238,20 +215,14 @@ export function RunsFilters({
                     {filters.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {filters.tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="secondary"
-                            className="text-xs"
-                          >
+                          <Badge key={tag} variant="secondary" className="text-xs">
                             {tag}
                             <Button
                               variant="ghost"
                               size="sm"
                               className="size-3 p-0 ml-1 hover:bg-transparent"
                               onClick={() => {
-                                const newTags = filters.tags.filter(
-                                  (t) => t !== tag,
-                                );
+                                const newTags = filters.tags.filter((t) => t !== tag);
                                 setFilters({ tags: newTags });
                               }}
                             >
@@ -269,15 +240,9 @@ export function RunsFilters({
                         }
                         setTagsSearch("");
                       }}
-                      options={tagsOptions.filter(
-                        (option) => !filters.tags.includes(option.value),
-                      )}
+                      options={tagsOptions.filter((option) => !filters.tags.includes(option.value))}
                       placeholder="Type to search tags..."
-                      noOptionsMessage={
-                        debouncedTagsSearch.length < 2
-                          ? "Type at least 2 characters"
-                          : "No tags found"
-                      }
+                      noOptionsMessage={debouncedTagsSearch.length < 2 ? "Type at least 2 characters" : "No tags found"}
                       searchPlaceholder="Search tags..."
                       search={tagsSearch}
                       setSearch={setTagsSearch}
@@ -288,9 +253,7 @@ export function RunsFilters({
                       isFetching={isTagsFetching}
                       popoverContentClassName="w-80"
                     />
-                    <div className="text-xs text-muted-foreground">
-                      Start typing to search (2+ chars).
-                    </div>
+                    <div className="text-xs text-muted-foreground">Start typing to search (2+ chars).</div>
                   </div>
                 </div>
               </div>
@@ -307,11 +270,7 @@ export function RunsFilters({
           />
         </div>
         {activeFilters.map((filter, index) => (
-          <Badge
-            key={`${filter.key}-${index}`}
-            variant="secondary"
-            className="h-9 px-2"
-          >
+          <Badge key={`${filter.key}-${index}`} variant="secondary" className="h-9 px-2">
             {filter.label}
             <Button
               variant="ghost"
@@ -326,29 +285,15 @@ export function RunsFilters({
         {startEndContent}
       </div>
       <div className="flex items-center gap-2">
-        <Button
-          onClick={() => router.push("/runs/create")}
-          size="sm"
-          className="gap-1"
-        >
+        <Button onClick={() => router.push("/runs/create")} size="sm" className="gap-1">
           <Plus className="h-4 w-4" />
           Create Run
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handlePrevPage}
-          disabled={!runs?.prevCursor && !filters.cursor}
-        >
+        <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={!runs?.prevCursor && !filters.cursor}>
           <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleNextPage}
-          disabled={!runs?.nextCursor}
-        >
+        <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!runs?.nextCursor}>
           Next
           <ChevronRight className="h-4 w-4" />
         </Button>

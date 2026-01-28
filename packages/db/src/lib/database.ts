@@ -49,8 +49,7 @@ pool.query = async (...args: any[]) => {
     if (formattedError.match(unknownRelationErrorRegex)) {
       const client = await pool.connect();
       // biome-ignore lint/suspicious/noExplicitAny: _
-      const { host, port, database, user } = (client as any)
-        .connectionParameters;
+      const { host, port, database, user } = (client as any).connectionParameters;
       client.release();
 
       logger.error(`[DB Middleware] Error in query: ${formattedError}`, {

@@ -22,9 +22,7 @@ interface UseInfiniteScrollOptions {
   /**
    * Ref for the loader element
    */
-  loaderRef?: RefObject<
-    HTMLDivElement | HTMLTableCellElement | HTMLLIElement | null
-  >;
+  loaderRef?: RefObject<HTMLDivElement | HTMLTableCellElement | HTMLLIElement | null>;
   /**
    * State to watch for changes
    */
@@ -68,9 +66,7 @@ export function useInfiniteScroll({
   enabled = true,
 }: UseInfiniteScrollOptions) {
   // Create a ref for the loader element
-  const localLoaderRef = useRef<HTMLDivElement | HTMLTableCellElement | null>(
-    null,
-  );
+  const localLoaderRef = useRef<HTMLDivElement | HTMLTableCellElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const _loaderRef = loaderRef ?? localLoaderRef;
 
@@ -85,9 +81,7 @@ export function useInfiniteScroll({
 
     // Debug information
     if (!currentLoaderRef) {
-      console.warn(
-        "Loader ref is not initialized. Make sure the ref is properly attached to a DOM element.",
-      );
+      console.warn("Loader ref is not initialized. Make sure the ref is properly attached to a DOM element.");
       return;
     }
 
@@ -105,14 +99,7 @@ export function useInfiniteScroll({
 
     // Start observing the loader element
     observerRef.current.observe(currentLoaderRef);
-  }, [
-    hasNextPage,
-    isFetchingNextPage,
-    rootMargin,
-    _loaderRef,
-    ...(watchState ?? []),
-    fetchNextPage,
-  ]);
+  }, [hasNextPage, isFetchingNextPage, rootMargin, _loaderRef, ...(watchState ?? []), fetchNextPage]);
 
   // Set up the intersection observer
   useEffect(() => {

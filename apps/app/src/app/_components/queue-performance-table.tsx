@@ -5,14 +5,7 @@ import { getQueuePerformanceApiRoute } from "~/app/api/dashboard/queue-performan
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Skeleton } from "~/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { apiFetch } from "~/lib/utils/client";
 
 interface QueuePerformanceTableProps {
@@ -63,15 +56,10 @@ export function QueuePerformanceTable({ days }: QueuePerformanceTableProps) {
               <TableBody>
                 {queuePerformance?.map((queue) => (
                   <TableRow key={queue.queue}>
-                    <TableCell
-                      className="font-medium max-w-48 truncate"
-                      title={queue.queue}
-                    >
+                    <TableCell className="font-medium max-w-48 truncate" title={queue.queue}>
                       {queue.queue}
                     </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {queue.totalRuns.toLocaleString()}
-                    </TableCell>
+                    <TableCell className="text-right font-mono">{queue.totalRuns.toLocaleString()}</TableCell>
                     <TableCell className="text-right font-mono text-green-600">
                       {queue.successes.toLocaleString()}
                     </TableCell>
@@ -91,17 +79,12 @@ export function QueuePerformanceTable({ days }: QueuePerformanceTableProps) {
                         {queue.errorRate.toFixed(1)}%
                       </span>
                     </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formatDuration(queue.avgDuration)}
-                    </TableCell>
+                    <TableCell className="text-right font-mono">{formatDuration(queue.avgDuration)}</TableCell>
                   </TableRow>
                 ))}
                 {!queuePerformance?.length && (
                   <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="text-center text-muted-foreground"
-                    >
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       No data available for the selected period
                     </TableCell>
                   </TableRow>

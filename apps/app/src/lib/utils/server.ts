@@ -11,10 +11,7 @@ export const createApiRoute = <IS extends ZodType, OS extends ZodType>({
     inputSchema?: IS;
     outputSchema: OS;
   };
-  handler: (
-    input: IS extends ZodType ? output<IS> : undefined,
-    req: NextRequest,
-  ) => Promise<output<OS>>;
+  handler: (input: IS extends ZodType ? output<IS> : undefined, req: NextRequest) => Promise<output<OS>>;
 }) => {
   const inputSchema = apiRoute.inputSchema as IS;
   const outputSchema = apiRoute.outputSchema as OS;
@@ -23,9 +20,7 @@ export const createApiRoute = <IS extends ZodType, OS extends ZodType>({
       req.method === "GET" || !apiRoute.inputSchema
         ? undefined
         : await req.json().catch((e) => {
-            logger.error(
-              `Error parsing JSON in ${req.url}: ${req.text()} ${e}`,
-            );
+            logger.error(`Error parsing JSON in ${req.url}: ${req.text()} ${e}`);
             throw e;
           });
     const parsed = await inputSchema?.parseAsync(json).catch((error) => {
@@ -34,10 +29,7 @@ export const createApiRoute = <IS extends ZodType, OS extends ZodType>({
     if (parsed instanceof NextResponse) {
       return parsed;
     }
-    const data = await handler(
-      parsed as IS extends ZodType ? output<IS> : undefined,
-      req,
-    );
+    const data = await handler(parsed as IS extends ZodType ? output<IS> : undefined, req);
     const validated = await outputSchema.parseAsync(data).catch((error) => {
       logger.error(error);
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -49,10 +41,7 @@ export const createApiRoute = <IS extends ZodType, OS extends ZodType>({
   };
 };
 
-export const createAuthenticatedApiRoute = <
-  IS extends ZodType,
-  OS extends ZodType,
->({
+export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodType>({
   apiRoute,
   handler,
 }: {
@@ -74,10 +63,7 @@ export const createAuthenticatedApiRoute = <
     // Check authentication first
     const user = await getAuthenticatedUser();
     if (!user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
     const json =
@@ -93,11 +79,7 @@ export const createAuthenticatedApiRoute = <
     if (parsed instanceof NextResponse) {
       return parsed;
     }
-    const data = await handler(
-      parsed as IS extends ZodType ? output<IS> : undefined,
-      req,
-      ctx,
-    );
+    const data = await handler(parsed as IS extends ZodType ? output<IS> : undefined, req, ctx);
     const validated = await outputSchema.parseAsync(data).catch((error) => {
       logger.error(error);
       return NextResponse.json({ error: error.message }, { status: 500 });

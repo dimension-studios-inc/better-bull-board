@@ -1,10 +1,7 @@
 /// <reference types="node" />
 declare module "redlock" {
   import { EventEmitter } from "node:events";
-  import type {
-    Cluster as IORedisCluster,
-    Redis as IORedisClient,
-  } from "ioredis";
+  import type { Cluster as IORedisCluster, Redis as IORedisClient } from "ioredis";
   declare type Client = IORedisClient | IORedisCluster;
   export declare type ClientExecutionResult =
     | {
@@ -43,10 +40,7 @@ declare module "redlock" {
   export declare class ExecutionError extends Error {
     readonly message: string;
     readonly attempts: ReadonlyArray<Promise<ExecutionStats>>;
-    constructor(
-      message: string,
-      attempts: ReadonlyArray<Promise<ExecutionStats>>,
-    );
+    constructor(message: string, attempts: ReadonlyArray<Promise<ExecutionStats>>);
   }
   export declare class Lock {
     readonly redlock: Redlock;
@@ -115,11 +109,7 @@ declare module "redlock" {
      * This method acquires a locks on the resources for the duration specified by
      * the `duration`.
      */
-    acquire(
-      resources: string[],
-      duration: number,
-      settings?: Partial<Settings>,
-    ): Promise<Lock>;
+    acquire(resources: string[], duration: number, settings?: Partial<Settings>): Promise<Lock>;
     /**
      * This method unlocks the provided lock from all servers still persisting it.
      * It will fail with an error if it is unable to release the lock on a quorum
@@ -131,11 +121,7 @@ declare module "redlock" {
     /**
      * This method extends a valid lock by the provided `duration`.
      */
-    extend(
-      existing: Lock,
-      duration: number,
-      settings?: Partial<Settings>,
-    ): Promise<Lock>;
+    extend(existing: Lock, duration: number, settings?: Partial<Settings>): Promise<Lock>;
     /**
      * Execute a script on all clients. The resulting promise is resolved or
      * rejected as soon as this quorum is reached; the resolution or rejection
@@ -183,10 +169,6 @@ declare module "redlock" {
       settings: Partial<Settings>,
       routine?: (signal: RedlockAbortSignal) => Promise<T>,
     ): Promise<T>;
-    using<T>(
-      resources: string[],
-      duration: number,
-      routine: (signal: RedlockAbortSignal) => Promise<T>,
-    ): Promise<T>;
+    using<T>(resources: string[], duration: number, routine: (signal: RedlockAbortSignal) => Promise<T>): Promise<T>;
   }
 }

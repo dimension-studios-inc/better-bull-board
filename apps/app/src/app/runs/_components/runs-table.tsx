@@ -9,14 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Checkbox } from "~/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import useDebounce from "~/hooks/use-debounce";
 import { apiFetch, cn } from "~/lib/utils/client";
 import { BulkActions } from "./bulk-actions";
@@ -40,10 +33,7 @@ export function RunsTable() {
     () => ({
       ...urlFilters,
       tags: urlFilters.tags ? urlFilters.tags.split(",").filter(Boolean) : [],
-      cursor:
-        JSON.parse(
-          Buffer.from(urlFilters.cursor, "base64").toString("utf-8") || "null",
-        ) ?? null,
+      cursor: JSON.parse(Buffer.from(urlFilters.cursor, "base64").toString("utf-8") || "null") ?? null,
       limit: 15,
     }),
     [urlFilters],
@@ -60,9 +50,7 @@ export function RunsTable() {
   });
 
   const handleFiltersChange = (
-    newFilters: Partial<
-      Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "cursor">
-    >,
+    newFilters: Partial<Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "cursor">>,
   ) => {
     const urlUpdate: Record<string, unknown> = {};
 
@@ -70,9 +58,7 @@ export function RunsTable() {
       if (key === "tags" && Array.isArray(value)) {
         urlUpdate[key] = value.length > 0 ? value.join(",") : "";
       } else if (key === "cursor") {
-        urlUpdate[key] = Buffer.from(JSON.stringify(value || null)).toString(
-          "base64",
-        );
+        urlUpdate[key] = Buffer.from(JSON.stringify(value || null)).toString("base64");
       } else {
         urlUpdate[key] = value;
       }
@@ -111,8 +97,7 @@ export function RunsTable() {
   };
 
   const isAllSelected = jobs.length > 0 && selectedJobIds.size === jobs.length;
-  const isPartiallySelected =
-    selectedJobIds.size > 0 && selectedJobIds.size < jobs.length;
+  const isPartiallySelected = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -141,10 +126,7 @@ export function RunsTable() {
         runs={runs}
         startEndContent={
           selectedJobs.length > 0 && (
-            <BulkActions
-              selectedJobs={selectedJobs}
-              onClearSelection={() => setSelectedJobIds(new Set())}
-            />
+            <BulkActions selectedJobs={selectedJobs} onClearSelection={() => setSelectedJobIds(new Set())} />
           )
         }
       />
@@ -180,8 +162,7 @@ export function RunsTable() {
                   key={run.id}
                   className={cn(
                     "group border-b transition-colors hover:bg-muted/50 cursor-pointer",
-                    selectedJobIds.has(run.jobId) &&
-                      "bg-blue-50 dark:bg-blue-950",
+                    selectedJobIds.has(run.jobId) && "bg-blue-50 dark:bg-blue-950",
                   )}
                   initial={{ opacity: 0, y: -100 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -193,9 +174,7 @@ export function RunsTable() {
                     <div className="flex items-center">
                       <Checkbox
                         checked={selectedJobIds.has(run.jobId)}
-                        onCheckedChange={(checked) =>
-                          handleSelectJob(run.jobId, checked as boolean)
-                        }
+                        onCheckedChange={(checked) => handleSelectJob(run.jobId, checked as boolean)}
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
@@ -216,14 +195,10 @@ export function RunsTable() {
                     ))}
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(run.status)}>
-                      {run.status}
-                    </Badge>
+                    <Badge className={getStatusColor(run.status)}>{run.status}</Badge>
                   </TableCell>
                   <TableCell>
-                    {run.startedAt &&
-                    run.finishedAt &&
-                    (run.status === "completed" || run.status === "failed")
+                    {run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")
                       ? formatDistanceStrict(run.startedAt, run.finishedAt)
                       : "-"}
                   </TableCell>
@@ -241,21 +216,14 @@ export function RunsTable() {
                   </TableCell>
                   <TableCell
                     className={cn("max-w-48 truncate text-xs", {
-                      "text-red-600":
-                        run.status === "failed" && run.errorMessage,
+                      "text-red-600": run.status === "failed" && run.errorMessage,
                     })}
                   >
-                    {run.status === "failed" && run.errorMessage
-                      ? run.errorMessage
-                      : "-"}
+                    {run.status === "failed" && run.errorMessage ? run.errorMessage : "-"}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <RunActions
-                        jobId={run.jobId}
-                        queueName={run.queue}
-                        status={run.status}
-                      />
+                      <RunActions jobId={run.jobId} queueName={run.queue} status={run.status} />
                     </div>
                   </TableCell>
                 </motion.tr>

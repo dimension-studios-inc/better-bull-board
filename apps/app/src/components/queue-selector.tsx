@@ -66,9 +66,7 @@ export function QueueSelector({
   });
 
   const queueOptions: ComboboxOption[] = useMemo(() => {
-    const options = includeAllOption
-      ? [{ value: "all", label: allOptionLabel }]
-      : [];
+    const options = includeAllOption ? [{ value: "all", label: allOptionLabel }] : [];
     if (queues?.pages) {
       queues.pages.forEach((page) => {
         if (page?.queues) {

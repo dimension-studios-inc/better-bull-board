@@ -66,10 +66,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label
-              htmlFor={passwordId}
-              className="block text-sm font-medium mb-2"
-            >
+            <label htmlFor={passwordId} className="block text-sm font-medium mb-2">
               Password
             </label>
             <Input
@@ -82,9 +79,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
+          {error && <div className="text-red-600 text-sm text-center">{error}</div>}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Signing in..." : "Sign In"}

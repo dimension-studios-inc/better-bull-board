@@ -11,12 +11,7 @@ export const POST = createAuthenticatedApiRoute({
     const dateFrom = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const dateTo = new Date();
 
-    const [
-      runningTasksResult,
-      waitingInQueueResult,
-      successesResult,
-      failuresResult,
-    ] = await Promise.all([
+    const [runningTasksResult, waitingInQueueResult, successesResult, failuresResult] = await Promise.all([
       // Count active/running tasks
       db
         .select({ count: count() })

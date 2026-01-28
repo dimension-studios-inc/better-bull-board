@@ -1,16 +1,6 @@
 import { jobRunsTable, type jobStatusEnum } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import {
-  and,
-  arrayOverlaps,
-  asc,
-  desc,
-  eq,
-  gt,
-  ilike,
-  lt,
-  or,
-} from "drizzle-orm";
+import { and, arrayOverlaps, asc, desc, eq, gt, ilike, lt, or } from "drizzle-orm";
 import { z } from "zod";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobsTableApiRoute } from "./schemas";
@@ -43,12 +33,7 @@ export const POST = createAuthenticatedApiRoute({
       }
 
       if (status && status !== "all") {
-        conditions.push(
-          eq(
-            jobRunsTable.status,
-            status as (typeof jobStatusEnum.enumValues)[number],
-          ),
-        );
+        conditions.push(eq(jobRunsTable.status, status as (typeof jobStatusEnum.enumValues)[number]));
       }
 
       if (tags && tags.length > 0) {
@@ -64,27 +49,13 @@ export const POST = createAuthenticatedApiRoute({
           direction === "next"
             ? or(
                 lt(jobRunsTable.createdAt, createdAtDate),
-                and(
-                  eq(jobRunsTable.createdAt, createdAtDate),
-                  lt(jobRunsTable.jobId, jobId),
-                ),
-                and(
-                  eq(jobRunsTable.createdAt, createdAtDate),
-                  eq(jobRunsTable.jobId, jobId),
-                  lt(jobRunsTable.id, id),
-                ),
+                and(eq(jobRunsTable.createdAt, createdAtDate), lt(jobRunsTable.jobId, jobId)),
+                and(eq(jobRunsTable.createdAt, createdAtDate), eq(jobRunsTable.jobId, jobId), lt(jobRunsTable.id, id)),
               )
             : or(
                 gt(jobRunsTable.createdAt, createdAtDate),
-                and(
-                  eq(jobRunsTable.createdAt, createdAtDate),
-                  gt(jobRunsTable.jobId, jobId),
-                ),
-                and(
-                  eq(jobRunsTable.createdAt, createdAtDate),
-                  eq(jobRunsTable.jobId, jobId),
-                  gt(jobRunsTable.id, id),
-                ),
+                and(eq(jobRunsTable.createdAt, createdAtDate), gt(jobRunsTable.jobId, jobId)),
+                and(eq(jobRunsTable.createdAt, createdAtDate), eq(jobRunsTable.jobId, jobId), gt(jobRunsTable.id, id)),
               );
 
         conditions.push(comparison);
@@ -93,16 +64,8 @@ export const POST = createAuthenticatedApiRoute({
       // Determine sort order
       const order =
         direction === "next"
-          ? [
-              desc(jobRunsTable.createdAt),
-              desc(jobRunsTable.jobId),
-              desc(jobRunsTable.id),
-            ]
-          : [
-              asc(jobRunsTable.createdAt),
-              asc(jobRunsTable.jobId),
-              asc(jobRunsTable.id),
-            ];
+          ? [desc(jobRunsTable.createdAt), desc(jobRunsTable.jobId), desc(jobRunsTable.id)]
+          : [asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id)];
 
       // Fetch one extra record to detect next page
       const result = await db
@@ -119,8 +82,7 @@ export const POST = createAuthenticatedApiRoute({
     const previousJobs = cursor ? await getRows("prev") : [];
 
     const nextCursor = jobs.length > limit ? (jobs.pop() ?? null) : null;
-    const prevCursor =
-      previousJobs.length > limit ? (previousJobs.pop() ?? null) : null;
+    const prevCursor = previousJobs.length > limit ? (previousJobs.pop() ?? null) : null;
 
     const hasMore = nextCursor !== null;
 

@@ -1,10 +1,7 @@
 import { Queue } from "bullmq";
 import { redis } from "~/lib/redis";
 
-export const replayJobHandler = async (input: {
-  jobId: string;
-  queueName: string;
-}) => {
+export const replayJobHandler = async (input: { jobId: string; queueName: string }) => {
   const { jobId, queueName } = input;
 
   const queue = new Queue(queueName, { connection: redis });

@@ -16,19 +16,13 @@ export const stopStalledRuns = async () => {
       .from(jobRunsTable)
       .where(
         and(
-          or(
-            eq(jobRunsTable.status, "active"),
-            eq(jobRunsTable.status, "waiting"),
-          ),
+          or(eq(jobRunsTable.status, "active"), eq(jobRunsTable.status, "waiting")),
           lte(jobRunsTable.createdAt, canBeStalledBefore),
         ),
       );
 
     //* Verify their status in redis directly
-    stalledRuns.length &&
-      logger.debug(
-        `Found ${stalledRuns.length} potential stalled runs (> 24h)`,
-      );
+    stalledRuns.length && logger.debug(`Found ${stalledRuns.length} potential stalled runs (> 24h)`);
     for (const _run of stalledRuns) {
       const queue = new Queue(_run.queue, { connection: redis });
       const job = await queue.getJob(_run.jobId);

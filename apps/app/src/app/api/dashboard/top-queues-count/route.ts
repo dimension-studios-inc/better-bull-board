@@ -19,12 +19,7 @@ export const POST = createAuthenticatedApiRoute({
           runCount: count(),
         })
         .from(jobRunsTable)
-        .where(
-          and(
-            gte(jobRunsTable.createdAt, dateFrom),
-            lte(jobRunsTable.createdAt, dateTo),
-          ),
-        )
+        .where(and(gte(jobRunsTable.createdAt, dateFrom), lte(jobRunsTable.createdAt, dateTo)))
         .groupBy(jobRunsTable.queue)
         .orderBy(sql`count(*) DESC`)
         .limit(limit);

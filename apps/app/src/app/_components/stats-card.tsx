@@ -49,9 +49,7 @@ export function StatsCards() {
             {isLoading ? (
               <Skeleton className="h-8 w-full" />
             ) : (
-              <div className="text-2xl font-bold font-mono">
-                {card.value?.toLocaleString()}
-              </div>
+              <div className="text-2xl font-bold font-mono">{card.value?.toLocaleString()}</div>
             )}
             <p className="text-xs text-muted-foreground">{card.description}</p>
           </CardContent>

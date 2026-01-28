@@ -7,11 +7,7 @@ import { deleteQueueApiRoute } from "~/app/api/queues/delete/schemas";
 import { pauseQueueApiRoute } from "~/app/api/queues/pause/schemas";
 import { resumeQueueApiRoute } from "~/app/api/queues/resume/schemas";
 import { Button } from "~/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { apiFetch } from "~/lib/utils/client";
 
 interface QueueActionsProps {
@@ -75,19 +71,13 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
       <Popover open={pausePopoverOpen} onOpenChange={setPausePopoverOpen}>
         <PopoverTrigger asChild>
           <Button variant="ghost" size="sm">
-            {isPaused ? (
-              <Play className="size-4" />
-            ) : (
-              <Pause className="size-4" />
-            )}
+            {isPaused ? <Play className="size-4" /> : <Pause className="size-4" />}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">
-                {isPaused ? "Resume Queue" : "Pause Queue"}
-              </h4>
+              <h4 className="font-medium leading-none">{isPaused ? "Resume Queue" : "Pause Queue"}</h4>
               <p className="text-sm text-muted-foreground">
                 {isPaused
                   ? `Are you sure you want to resume the queue "${queueName}"? This will allow jobs to be processed again.`
@@ -95,11 +85,7 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
               </p>
             </div>
             <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPausePopoverOpen(false)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setPausePopoverOpen(false)}>
                 Cancel
               </Button>
               <Button
@@ -117,40 +103,24 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
       {/* Delete Button */}
       <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-600 hover:text-red-700"
-          >
+          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
             <Trash2 className="size-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none text-red-600">
-                Delete Queue
-              </h4>
+              <h4 className="font-medium leading-none text-red-600">Delete Queue</h4>
               <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete the queue "{queueName}"? This
-                action will permanently remove the queue and all its data. This
-                action cannot be undone.
+                Are you sure you want to delete the queue "{queueName}"? This action will permanently remove the queue
+                and all its data. This action cannot be undone.
               </p>
             </div>
             <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDeletePopoverOpen(false)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setDeletePopoverOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-              >
+              <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteMutation.isPending}>
                 Delete
               </Button>
             </div>

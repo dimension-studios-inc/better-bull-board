@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  type TimePeriod,
-  TimePeriodSelector,
-} from "~/components/time-period-selector";
+import { type TimePeriod, TimePeriodSelector } from "~/components/time-period-selector";
 import { EnhancedStatsCards } from "./enhanced-stats-cards";
 import { QueueCountChart } from "./queue-count-chart";
 import { QueueDurationChart } from "./queue-duration-chart";
@@ -21,9 +18,7 @@ export function EnhancedDashboard() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-lg font-semibold">Dashboard Analytics</h2>
-          <p className="text-sm text-muted-foreground">
-            Monitor your BullMQ job performance and queue analytics
-          </p>
+          <p className="text-sm text-muted-foreground">Monitor your BullMQ job performance and queue analytics</p>
         </div>
         <TimePeriodSelector value={timePeriod} onChange={setTimePeriod} />
       </div>

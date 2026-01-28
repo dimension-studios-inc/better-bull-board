@@ -25,10 +25,7 @@ const logBuffer: Array<z.infer<typeof pendingLogSchema>> = [];
 
 let logFlushTimer: NodeJS.Timeout | null = null;
 
-async function withDeadlockRetry<T>(
-  fn: () => Promise<T>,
-  tries = 5,
-): Promise<T> {
+async function withDeadlockRetry<T>(fn: () => Promise<T>, tries = 5): Promise<T> {
   let lastErr: unknown;
   for (let i = 0; i < tries; i++) {
     try {
@@ -65,11 +62,7 @@ async function flushLogBuffer() {
           let jobRunId: string | undefined;
 
           for (let i = 0; i <= delays.length; i++) {
-            jobRunId = await getJobFromBullId(
-              jobId,
-              new Date(jobTimestamp),
-              queue,
-            );
+            jobRunId = await getJobFromBullId(jobId, new Date(jobTimestamp), queue);
             if (jobRunId) break;
             if (i < delays.length) {
               await new Promise((r) => setTimeout(r, delays[i]));
@@ -77,13 +70,10 @@ async function flushLogBuffer() {
           }
 
           if (!jobRunId) {
-            logger.warn(
-              "⚠️ Received log for job that could not be found after retries",
-              {
-                jobId,
-                queue,
-              },
-            );
+            logger.warn("⚠️ Received log for job that could not be found after retries", {
+              jobId,
+              queue,
+            });
             return undefined;
           }
 

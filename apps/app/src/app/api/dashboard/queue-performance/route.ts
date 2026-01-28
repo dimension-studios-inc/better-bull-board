@@ -31,12 +31,7 @@ export const POST = createAuthenticatedApiRoute({
           ),
         })
         .from(jobRunsTable)
-        .where(
-          and(
-            gte(jobRunsTable.createdAt, dateFrom),
-            lte(jobRunsTable.createdAt, dateTo),
-          ),
-        )
+        .where(and(gte(jobRunsTable.createdAt, dateFrom), lte(jobRunsTable.createdAt, dateTo)))
         .groupBy(jobRunsTable.queue)
         .orderBy(sql`count(*) DESC`);
 
@@ -45,10 +40,7 @@ export const POST = createAuthenticatedApiRoute({
         totalRuns: Number(item.totalRuns),
         successes: Number(item.successes),
         failures: Number(item.failures),
-        errorRate:
-          item.totalRuns > 0
-            ? (Number(item.failures) / Number(item.totalRuns)) * 100
-            : 0,
+        errorRate: item.totalRuns > 0 ? (Number(item.failures) / Number(item.totalRuns)) * 100 : 0,
         avgDuration: Number(item.avgDuration) || 0,
       }));
     } catch (error) {

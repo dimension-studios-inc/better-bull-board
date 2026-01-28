@@ -18,12 +18,7 @@ export const config: Config = {
     url: dbUrl,
   },
   extensionsFilters: ["postgis"],
-  tablesFilter: [
-    "!spatial_ref_sys",
-    "!public.geometry_columns",
-    "!public.geography_columns",
-    "!_prisma_migrations",
-  ],
+  tablesFilter: ["!spatial_ref_sys", "!public.geometry_columns", "!public.geography_columns", "!_prisma_migrations"],
 };
 
 export default defineConfig(config);

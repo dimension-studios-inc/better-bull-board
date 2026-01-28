@@ -7,11 +7,7 @@ import { AuthProvider } from "~/lib/auth/context";
 import { createQueryClient } from "~/lib/query-client";
 
 let clientQueryClientSingleton: QueryClient | undefined;
-const getQueryClient = ({
-  onRedirect,
-}: {
-  onRedirect: (path: string) => void;
-}) => {
+const getQueryClient = ({ onRedirect }: { onRedirect: (path: string) => void }) => {
   // biome-ignore lint/suspicious/noExplicitAny: globalThis is not typed
   if (typeof (globalThis as any).window === "undefined") {
     // Server: always make a new query client
@@ -25,13 +21,7 @@ const getQueryClient = ({
   return clientQueryClientSingleton;
 };
 
-export const Providers = ({
-  children,
-  WEBSOCKET_URL,
-}: {
-  children: React.ReactNode;
-  WEBSOCKET_URL: string;
-}) => {
+export const Providers = ({ children, WEBSOCKET_URL }: { children: React.ReactNode; WEBSOCKET_URL: string }) => {
   const router = useRouter();
   const queryClient = getQueryClient({
     onRedirect: (path) => {

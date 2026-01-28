@@ -32,9 +32,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NuqsAdapter>
           <Providers WEBSOCKET_URL={env.WEBSOCKET_URL}>
             <AuthGuard pathname={pathname}>{children}</AuthGuard>

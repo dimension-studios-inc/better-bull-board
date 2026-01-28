@@ -19,18 +19,12 @@ export const POST = createAuthenticatedApiRoute({
         .from(queuesTable)
         .where(
           and(
-            cursor
-              ? direction === "prev"
-                ? lt(queuesTable.name, cursor)
-                : gte(queuesTable.name, cursor)
-              : undefined,
+            cursor ? (direction === "prev" ? lt(queuesTable.name, cursor) : gte(queuesTable.name, cursor)) : undefined,
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
           ),
         )
         .groupBy(queuesTable.id)
-        .orderBy(
-          direction === "prev" ? desc(queuesTable.name) : asc(queuesTable.name),
-        )
+        .orderBy(direction === "prev" ? desc(queuesTable.name) : asc(queuesTable.name))
         .limit(limit + 1);
     };
 
@@ -44,8 +38,7 @@ export const POST = createAuthenticatedApiRoute({
       .where(search ? ilike(queuesTable.name, `%${search}%`) : undefined);
 
     const nextCursor = rows.length > limit ? (rows.pop()?.name ?? null) : null;
-    const prevCursor =
-      previousRows.length > limit ? (previousRows.at(-2)?.name ?? null) : null;
+    const prevCursor = previousRows.length > limit ? (previousRows.at(-2)?.name ?? null) : null;
 
     return {
       queues: rows,

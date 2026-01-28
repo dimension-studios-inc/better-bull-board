@@ -3,19 +3,8 @@
 import { CheckIcon, ChevronsUpDown } from "lucide-react";
 import type * as React from "react";
 import { Button } from "~/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "~/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "~/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { cn } from "~/lib/utils/client";
 import { Loader } from "./loader";
 
@@ -89,17 +78,9 @@ export function Combobox({
       </PopoverTrigger>
       <PopoverContent className={cn("w-[200px] p-0", popoverContentClassName)}>
         <Command shouldFilter={false}>
-          <CommandInput
-            onValueChange={setSearch}
-            placeholder={searchPlaceholder}
-            value={search}
-          />
+          <CommandInput onValueChange={setSearch} placeholder={searchPlaceholder} value={search} />
           <CommandList>
-            {isFetching ? (
-              <CommandEmpty>Loading...</CommandEmpty>
-            ) : (
-              <CommandEmpty>{noOptionsMessage}</CommandEmpty>
-            )}
+            {isFetching ? <CommandEmpty>Loading...</CommandEmpty> : <CommandEmpty>{noOptionsMessage}</CommandEmpty>}
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
@@ -111,12 +92,7 @@ export function Combobox({
                   value={option.value}
                 >
                   {!hideCheckIcon && (
-                    <CheckIcon
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === option.value ? "opacity-100" : "opacity-0",
-                      )}
-                    />
+                    <CheckIcon className={cn("mr-2 h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />
                   )}
                   {renderOption ? renderOption(option) : option.label}
                 </CommandItem>

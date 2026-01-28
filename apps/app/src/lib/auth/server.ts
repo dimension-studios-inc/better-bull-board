@@ -19,10 +19,7 @@ export interface AuthResponse {
 /**
  * Verify admin credentials
  */
-export async function verifyAdminCredentials(
-  email: string,
-  password: string,
-): Promise<boolean> {
+export async function verifyAdminCredentials(email: string, password: string): Promise<boolean> {
   if (email !== env.ADMIN_EMAIL) {
     return false;
   }
@@ -68,9 +65,7 @@ export async function getTokenFromRequest(): Promise<string | null> {
 /**
  * Create auth cookie string
  */
-export async function createAuthCookie(
-  token: string,
-): Promise<ResponseCookies> {
+export async function createAuthCookie(token: string): Promise<ResponseCookies> {
   const cookieStore = await cookies();
   return cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,

@@ -33,10 +33,7 @@ export const POST = createAuthenticatedApiRoute({
         .orderBy(asc(jobLogsTable.ts), asc(jobLogsTable.logSeq))
         .limit(limit)
         .offset(offset),
-      db
-        .select({ count: sql<number>`count(*)` })
-        .from(jobLogsTable)
-        .where(whereClause),
+      db.select({ count: sql<number>`count(*)` }).from(jobLogsTable).where(whereClause),
     ]);
     const count = countRow?.count ?? 0;
 

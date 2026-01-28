@@ -21,11 +21,7 @@ import { useEffect, useState } from "react";
 import { codeToHtml } from "shiki";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { Separator } from "~/components/ui/separator";
 import { cn, smartFormatDuration } from "~/lib/utils/client";
 
@@ -83,15 +79,7 @@ const DetailItem = ({
   </div>
 );
 
-const JsonCollapsible = ({
-  title,
-  data,
-  icon,
-}: {
-  title: string;
-  data: unknown;
-  icon: React.ReactNode;
-}) => {
+const JsonCollapsible = ({ title, data, icon }: { title: string; data: unknown; icon: React.ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [formattedData, setFormattedData] = useState<string>("");
 
@@ -117,11 +105,7 @@ const JsonCollapsible = ({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left hover:bg-muted/50 p-2 rounded">
-        {isOpen ? (
-          <ChevronDown className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        )}
+        {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         {icon}
         <span className="text-sm font-medium">{title}</span>
       </CollapsibleTrigger>
@@ -138,9 +122,7 @@ const JsonCollapsible = ({
 
 export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
   const duration =
-    run.startedAt &&
-    run.finishedAt &&
-    (run.status === "completed" || run.status === "failed")
+    run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")
       ? smartFormatDuration(run.finishedAt.getTime() - run.startedAt.getTime())
       : null;
 
@@ -157,9 +139,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
           {/* Status */}
           <div>
             <h3 className="text-sm font-medium mb-3">Status</h3>
-            <Badge className={getStatusColor(run.status)}>
-              {run.status.toUpperCase()}
-            </Badge>
+            <Badge className={getStatusColor(run.status)}>{run.status.toUpperCase()}</Badge>
           </div>
 
           <Separator />
@@ -171,11 +151,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
               <DetailItem
                 icon={<Hash className="h-4 w-4 text-muted-foreground" />}
                 label="Job ID"
-                value={
-                  <span className="font-mono text-xs break-all">
-                    {run.jobId}
-                  </span>
-                }
+                value={<span className="font-mono text-xs break-all">{run.jobId}</span>}
               />
               <DetailItem
                 icon={<Database className="h-4 w-4 text-muted-foreground" />}
@@ -183,19 +159,13 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                 value={run.queue}
               />
               {run.name && (
-                <DetailItem
-                  icon={<Tag className="h-4 w-4 text-muted-foreground" />}
-                  label="Name"
-                  value={run.name}
-                />
+                <DetailItem icon={<Tag className="h-4 w-4 text-muted-foreground" />} label="Name" value={run.name} />
               )}
               {run.workerId && (
                 <DetailItem
                   icon={<User className="h-4 w-4 text-muted-foreground" />}
                   label="Worker ID"
-                  value={
-                    <span className="font-mono text-xs">{run.workerId}</span>
-                  }
+                  value={<span className="font-mono text-xs">{run.workerId}</span>}
                 />
               )}
             </div>
@@ -208,35 +178,27 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
             <h3 className="text-sm font-medium mb-3">Timing</h3>
             <div className="space-y-3">
               <DetailItem
-                icon={
-                  <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                }
+                icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
                 label="Created"
                 value={new Date(run.createdAt).toISOString()}
               />
               {run.enqueuedAt && (
                 <DetailItem
-                  icon={
-                    <PlayCircle className="h-4 w-4 text-muted-foreground" />
-                  }
+                  icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
                   label="Enqueued"
                   value={new Date(run.enqueuedAt).toISOString()}
                 />
               )}
               {run.startedAt && (
                 <DetailItem
-                  icon={
-                    <PlayCircle className="h-4 w-4 text-muted-foreground" />
-                  }
+                  icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
                   label="Started"
                   value={new Date(run.startedAt).toISOString()}
                 />
               )}
               {run.finishedAt && (
                 <DetailItem
-                  icon={
-                    <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                  }
+                  icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
                   label="Finished"
                   value={new Date(run.finishedAt).toISOString()}
                 />
@@ -252,9 +214,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
           </div>
 
           {/* Execution Details */}
-          {(run.maxAttempts !== 0 ||
-            run.priority !== null ||
-            run.delayMs > 0) && (
+          {(run.maxAttempts !== 0 || run.priority !== null || run.delayMs > 0) && (
             <>
               <Separator />
               <div>
@@ -262,18 +222,14 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                 <div className="space-y-3">
                   {run.maxAttempts !== 0 && (
                     <DetailItem
-                      icon={
-                        <Settings className="h-4 w-4 text-muted-foreground" />
-                      }
+                      icon={<Settings className="h-4 w-4 text-muted-foreground" />}
                       label="Attempt"
                       value={`${run.attempt} / ${run.maxAttempts}`}
                     />
                   )}
                   {run.priority !== null && (
                     <DetailItem
-                      icon={
-                        <Settings className="h-4 w-4 text-muted-foreground" />
-                      }
+                      icon={<Settings className="h-4 w-4 text-muted-foreground" />}
                       label="Priority"
                       value={run.priority}
                     />
@@ -312,14 +268,10 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
             <>
               <Separator />
               <div>
-                <h3 className="text-sm font-medium mb-3 text-red-600">
-                  Error Details
-                </h3>
+                <h3 className="text-sm font-medium mb-3 text-red-600">Error Details</h3>
                 {run.errorMessage && (
                   <div className="mb-3">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      Message
-                    </div>
+                    <div className="text-xs text-muted-foreground mb-1">Message</div>
                     <div className="p-2 bg-red-50 border border-red-200 rounded text-sm dark:bg-red-950/30 dark:border-red-800">
                       {run.errorMessage}
                     </div>
@@ -327,13 +279,9 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                 )}
                 {run.errorStack && (
                   <div>
-                    <div className="text-xs text-muted-foreground mb-1">
-                      Stack Trace
-                    </div>
+                    <div className="text-xs text-muted-foreground mb-1">Stack Trace</div>
                     <div className="p-2 bg-red-50 border border-red-200 rounded text-xs font-mono dark:bg-red-950/30 dark:border-red-800 max-h-32 overflow-y-auto">
-                      <pre className="whitespace-pre-wrap wrap-break-word">
-                        {run.errorStack}
-                      </pre>
+                      <pre className="whitespace-pre-wrap wrap-break-word">{run.errorStack}</pre>
                     </div>
                   </div>
                 )}

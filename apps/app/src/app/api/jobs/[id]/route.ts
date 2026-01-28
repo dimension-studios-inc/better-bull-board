@@ -9,10 +9,7 @@ export const GET = createAuthenticatedApiRoute({
   async handler(_input, _req, ctx) {
     const { id } = await ctx.params;
 
-    const [jobRun] = await db
-      .select()
-      .from(jobRunsTable)
-      .where(eq(jobRunsTable.id, id));
+    const [jobRun] = await db.select().from(jobRunsTable).where(eq(jobRunsTable.id, id));
     if (!jobRun) {
       throw new Error("Job run not found");
     }

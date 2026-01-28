@@ -12,9 +12,9 @@
     "build:ingest": "turbo run build --filter=@better-bull-board/ingest --env-mode=loose"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.0",
-    "turbo": "^2.5.6",
-    "typescript": "5"
+    "@biomejs/biome": "2.3.13",
+    "turbo": "2.7.6",
+    "typescript": "5.9.3"
   },
   "engines": {
     "node": ">=18"

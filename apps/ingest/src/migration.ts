@@ -13,9 +13,7 @@ const execAsync = promisify(exec);
 export async function migrateDatabases(): Promise<void> {
   // Only run migrations in production
   if (env.ENV !== "production") {
-    logger.log(
-      "🚫 Skipping database migrations - not in production environment",
-    );
+    logger.log("🚫 Skipping database migrations - not in production environment");
     return;
   }
 
@@ -50,11 +48,7 @@ async function migratePostgreSQL(): Promise<void> {
       // Filter out npm notices and warnings
       const filteredStderr = stderr
         .split("\n")
-        .filter(
-          (line) =>
-            !line.trim().startsWith("npm notice") &&
-            !line.toLowerCase().includes("warning"),
-        )
+        .filter((line) => !line.trim().startsWith("npm notice") && !line.toLowerCase().includes("warning"))
         .join("\n");
 
       if (filteredStderr.trim()) {

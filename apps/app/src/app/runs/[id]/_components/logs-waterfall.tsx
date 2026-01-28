@@ -7,11 +7,7 @@ import { Badge } from "~/components/ui/badge";
 import { Loader } from "~/components/ui/loader";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Skeleton } from "~/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
 import { cn, smartFormatDuration } from "~/lib/utils/client";
 
@@ -81,15 +77,7 @@ const getWaterfallColor = (level: string) => {
   }
 };
 
-export function LogsWaterfall({
-  logs,
-  isLoading,
-  error,
-  run,
-  onLogClick,
-  hasMore,
-  onLoadMore,
-}: LogsWaterfallProps) {
+export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore, onLoadMore }: LogsWaterfallProps) {
   const { loaderRef: logsLoaderRef } = useInfiniteScroll({
     fetchNextPage: onLoadMore,
     hasNextPage: hasMore,
@@ -100,9 +88,7 @@ export function LogsWaterfall({
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Failed to load logs. There was an error retrieving the log data.
-        </AlertDescription>
+        <AlertDescription>Failed to load logs. There was an error retrieving the log data.</AlertDescription>
       </Alert>
     );
   }
@@ -126,18 +112,13 @@ export function LogsWaterfall({
   }
 
   if (!logs || logs.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No logs found for this run
-      </div>
-    );
+    return <div className="text-center py-8 text-muted-foreground">No logs found for this run</div>;
   }
 
   // Sort logs by timestamp ascending to show chronological order
   const sortedLogs = [...logs].sort((a, b) => a.ts - b.ts);
 
-  const scheduledTime =
-    (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs;
+  const scheduledTime = (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs;
   const startTime = Math.max(run.createdAt.getTime(), scheduledTime);
   const endTime = run.finishedAt ? run.finishedAt.getTime() : Date.now();
   const totalDuration = endTime - startTime;
@@ -147,9 +128,7 @@ export function LogsWaterfall({
       {/* Waterfall header with time markers */}
       <div className="grid grid-cols-12 gap-4 mb-4 pb-2 border-b">
         <div className="col-span-6">
-          <span className="text-sm font-medium text-muted-foreground">
-            Log Details
-          </span>
+          <span className="text-sm font-medium text-muted-foreground">Log Details</span>
         </div>
         <div className="col-span-6">
           <div className="flex justify-between text-xs text-muted-foreground">
@@ -163,8 +142,7 @@ export function LogsWaterfall({
       <div className="">
         {sortedLogs.map((log) => {
           const relativeTime = log.ts - startTime;
-          const position =
-            totalDuration > 0 ? (relativeTime / totalDuration) * 100 : 0;
+          const position = totalDuration > 0 ? (relativeTime / totalDuration) * 100 : 0;
 
           return (
             <div
@@ -174,33 +152,22 @@ export function LogsWaterfall({
                 "hover:bg-gray-50 hover:dark:bg-gray-950/30",
                 onLogClick && "cursor-pointer",
                 {
-                  "hover:bg-red-50 hover:dark:bg-red-950/30":
-                    log.level.toLowerCase() === "error",
-                  "hover:bg-yellow-50 hover:dark:bg-yellow-950/30":
-                    log.level.toLowerCase() === "warn",
-                  "hover:bg-purple-50 hover:dark:bg-purple-950/30":
-                    log.level.toLowerCase() === "debug",
-                  "hover:bg-blue-50 hover:dark:bg-blue-950/30":
-                    log.level.toLowerCase() === "info",
+                  "hover:bg-red-50 hover:dark:bg-red-950/30": log.level.toLowerCase() === "error",
+                  "hover:bg-yellow-50 hover:dark:bg-yellow-950/30": log.level.toLowerCase() === "warn",
+                  "hover:bg-purple-50 hover:dark:bg-purple-950/30": log.level.toLowerCase() === "debug",
+                  "hover:bg-blue-50 hover:dark:bg-blue-950/30": log.level.toLowerCase() === "info",
                 },
               )}
               onClick={() => onLogClick?.(log)}
             >
-              <div
-                className={cn(
-                  "col-span-6 flex items-center space-x-3 p-2 rounded font-mono",
-                )}
-              >
+              <div className={cn("col-span-6 flex items-center space-x-3 p-2 rounded font-mono")}>
                 {/* Timeline dot */}
                 <Tooltip>
                   <TooltipTrigger>
                     <div className="shrink-0">{getLevelIcon(log.level)}</div>
                   </TooltipTrigger>
                   <TooltipContent className="bg-none p-0 m-0" withoutArrow>
-                    <Badge
-                      className={getLevelColor(log.level)}
-                      variant="outline"
-                    >
+                    <Badge className={getLevelColor(log.level)} variant="outline">
                       {log.level.toUpperCase()}
                     </Badge>
                   </TooltipContent>
@@ -230,10 +197,7 @@ export function LogsWaterfall({
         })}
       </div>
       {hasMore && (
-        <div
-          className="flex items-center justify-center"
-          ref={logsLoaderRef as React.Ref<HTMLDivElement>}
-        >
+        <div className="flex items-center justify-center" ref={logsLoaderRef as React.Ref<HTMLDivElement>}>
           <Loader />
         </div>
       )}

@@ -30,8 +30,6 @@ export const getLastRunDataHandler = async (input: { queueName: string }) => {
       jobName: job.name,
     };
   } catch (error) {
-    throw new Error(
-      `Failed to get last run data: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
+    throw new Error(`Failed to get last run data: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 };

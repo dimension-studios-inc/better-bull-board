@@ -26,10 +26,7 @@ interface BulkActionsProps {
   onClearSelection: () => void;
 }
 
-export function BulkActions({
-  selectedJobs,
-  onClearSelection,
-}: BulkActionsProps) {
+export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [replayDialogOpen, setReplayDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -78,16 +75,11 @@ export function BulkActions({
 
   // Filter jobs that can be cancelled
   const cancellableJobs = selectedJobs.filter(
-    (job) =>
-      job.status === "active" ||
-      job.status === "waiting" ||
-      job.status === "delayed",
+    (job) => job.status === "active" || job.status === "waiting" || job.status === "delayed",
   );
 
   // Filter jobs that can be retried
-  const replayableJobs = selectedJobs.filter(
-    (job) => job.status === "completed" || job.status === "failed",
-  );
+  const replayableJobs = selectedJobs.filter((job) => job.status === "completed" || job.status === "failed");
 
   if (selectedJobs.length === 0) {
     return null;
@@ -120,12 +112,7 @@ export function BulkActions({
           </Button>
         )}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onClearSelection}
-          className="flex items-center gap-2"
-        >
+        <Button variant="outline" size="sm" onClick={onClearSelection} className="flex items-center gap-2">
           <Trash2 className="size-4" />
           Clear Selection
         </Button>
@@ -138,38 +125,25 @@ export function BulkActions({
             <DialogTitle className="text-red-600">Cancel Jobs</DialogTitle>
             <DialogDescription>
               Are you sure you want to cancel {cancellableJobs.length} job
-              {cancellableJobs.length === 1 ? "" : "s"}? This action cannot be
-              undone.
+              {cancellableJobs.length === 1 ? "" : "s"}? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-60 overflow-y-auto">
             <div className="space-y-2">
               {cancellableJobs.map((job) => (
-                <div
-                  key={job.jobId}
-                  className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
-                >
+                <div key={job.jobId} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
                   <Badge variant="outline">{job.queue}</Badge>
-                  <span className="font-mono text-xs">
-                    {job.jobId.slice(0, 20)}...
-                  </span>
+                  <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
                   <Badge className="ml-auto">{job.status}</Badge>
                 </div>
               ))}
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setCancelDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleBulkCancel}
-              disabled={bulkCancelMutation.isPending}
-            >
+            <Button variant="destructive" onClick={handleBulkCancel} disabled={bulkCancelMutation.isPending}>
               {bulkCancelMutation.isPending ? "Cancelling..." : "Cancel Jobs"}
             </Button>
           </DialogFooter>
@@ -183,37 +157,26 @@ export function BulkActions({
             <DialogTitle>Replay Jobs</DialogTitle>
             <DialogDescription>
               Are you sure you want to replay {replayableJobs.length} job
-              {replayableJobs.length === 1 ? "" : "s"}? This will create new job
-              instances with the same data and configuration.
+              {replayableJobs.length === 1 ? "" : "s"}? This will create new job instances with the same data and
+              configuration.
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-60 overflow-y-auto">
             <div className="space-y-2">
               {replayableJobs.map((job) => (
-                <div
-                  key={job.jobId}
-                  className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded"
-                >
+                <div key={job.jobId} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
                   <Badge variant="outline">{job.queue}</Badge>
-                  <span className="font-mono text-xs">
-                    {job.jobId.slice(0, 20)}...
-                  </span>
+                  <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
                   <Badge className="ml-auto">{job.status}</Badge>
                 </div>
               ))}
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setReplayDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setReplayDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleBulkReplay}
-              disabled={bulkReplayMutation.isPending}
-            >
+            <Button onClick={handleBulkReplay} disabled={bulkReplayMutation.isPending}>
               {bulkReplayMutation.isPending ? "Replaying..." : "Replay Jobs"}
             </Button>
           </DialogFooter>
