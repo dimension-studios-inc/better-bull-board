@@ -1,5 +1,8 @@
+"use client";
+
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "./ui/button";
 
 export function PageTitle({
@@ -11,11 +14,14 @@ export function PageTitle({
   description: string;
   withRunsLink?: boolean;
 }) {
+  const searchParams = useSearchParams();
+  const runsHref = searchParams.toString() ? `/runs?${searchParams.toString()}` : "/runs";
+
   return (
     <div>
       <div className="flex items-center gap-2">
         {withRunsLink && (
-          <Link href="/runs">
+          <Link href={runsHref}>
             <Button variant="ghost" size={"sm"}>
               <ArrowLeft className="size-4" />
             </Button>
