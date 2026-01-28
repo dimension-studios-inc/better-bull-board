@@ -42,12 +42,9 @@ export function apiFetch<
       `${typeof apiRoute.route === "function" ? apiRoute.route(parsedUrlParams as US) : apiRoute.route}`,
       {
         method: apiRoute.method,
-        body:
-          apiRoute.method === "GET" ? undefined : JSON.stringify(parsedBody),
+        body: apiRoute.method === "GET" ? undefined : JSON.stringify(parsedBody),
         headers: {
-          ...(apiRoute.method === "GET"
-            ? {}
-            : { "Content-Type": "application/json" }),
+          ...(apiRoute.method === "GET" ? {} : { "Content-Type": "application/json" }),
         },
         credentials: "include", // Include cookies for authentication
       },
@@ -57,11 +54,7 @@ export function apiFetch<
   };
 }
 
-export const registerApiRoute = <
-  I extends ZodType,
-  O extends ZodType,
-  U extends ZodType,
->(params: {
+export const registerApiRoute = <I extends ZodType, O extends ZodType, U extends ZodType>(params: {
   route: `/${string}` | ((input: output<U>) => `/${string}`);
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
   inputSchema?: I;

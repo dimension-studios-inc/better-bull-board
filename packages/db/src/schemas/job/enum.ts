@@ -12,10 +12,4 @@ export const jobStatusEnum = pgEnum("job_status", [
   // "waiting-children",
 ]);
 
-export const logLevelEnum = pgEnum("log_level", [
-  "log",
-  "debug",
-  "info",
-  "warn",
-  "error",
-]);
+export const logLevelEnum = pgEnum("log_level", ["log", "debug", "info", "warn", "error"]);

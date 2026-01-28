@@ -35,9 +35,7 @@ export const POST = createAuthenticatedApiRoute({
     );
 
     return {
-      tags: (tags.rows as { tag: string }[])
-        .map((row) => row.tag)
-        .filter(Boolean),
+      tags: (tags.rows as { tag: string }[]).map((row) => row.tag).filter(Boolean),
     };
   },
 });

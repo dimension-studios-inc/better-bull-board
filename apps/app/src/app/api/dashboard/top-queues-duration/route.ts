@@ -29,12 +29,7 @@ export const POST = createAuthenticatedApiRoute({
           ),
         })
         .from(jobRunsTable)
-        .where(
-          and(
-            gte(jobRunsTable.createdAt, dateFrom),
-            lte(jobRunsTable.createdAt, dateTo),
-          ),
-        )
+        .where(and(gte(jobRunsTable.createdAt, dateFrom), lte(jobRunsTable.createdAt, dateTo)))
         .groupBy(jobRunsTable.queue)
         .having(sql`sum(
           CASE 

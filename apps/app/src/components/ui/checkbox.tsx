@@ -15,17 +15,7 @@ interface CheckboxProps {
 }
 
 const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
-  (
-    {
-      checked = false,
-      indeterminate = false,
-      onCheckedChange,
-      className,
-      onClick,
-      ...props
-    },
-    ref,
-  ) => {
+  ({ checked = false, indeterminate = false, onCheckedChange, className, onClick, ...props }, ref) => {
     return (
       <button
         ref={ref}
@@ -38,18 +28,12 @@ const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
         }}
         className={cn(
           "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          checked || indeterminate
-            ? "bg-primary text-primary-foreground"
-            : "bg-background",
+          checked || indeterminate ? "bg-primary text-primary-foreground" : "bg-background",
           className,
         )}
         {...props}
       >
-        {indeterminate ? (
-          <Minus className="h-3 w-3" />
-        ) : checked ? (
-          <Check className="h-3 w-3" />
-        ) : null}
+        {indeterminate ? <Minus className="h-3 w-3" /> : checked ? <Check className="h-3 w-3" /> : null}
       </button>
     );
   },

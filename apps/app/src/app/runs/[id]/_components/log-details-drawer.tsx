@@ -1,15 +1,7 @@
 "use client";
 
 import type { jobRunsTable } from "@better-bull-board/db";
-import {
-  AlertCircle,
-  AlertTriangle,
-  ArrowLeft,
-  Bug,
-  CalendarClock,
-  Clock,
-  Info,
-} from "lucide-react";
+import { AlertCircle, AlertTriangle, ArrowLeft, Bug, CalendarClock, Clock, Info } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -62,8 +54,7 @@ const getLevelColor = (level: string) => {
   }
 };
 
-const formatRelativeTime = (ms: number): string =>
-  smartFormatDuration(Math.max(0, ms));
+const formatRelativeTime = (ms: number): string => smartFormatDuration(Math.max(0, ms));
 
 const DetailItem = ({
   icon,
@@ -87,8 +78,7 @@ const DetailItem = ({
 
 export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
   const logDate = new Date(log.ts);
-  const scheduledTime =
-    (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs;
+  const scheduledTime = (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs;
   const baseTime = Math.max(run.createdAt.getTime(), scheduledTime);
   const relativeTime = Math.max(0, log.ts - baseTime);
 
@@ -96,12 +86,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
     <Card className="h-[calc(100vh-12rem)] overflow-hidden">
       <CardHeader>
         <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="p-1 h-8 w-8"
-          >
+          <Button variant="ghost" size="sm" onClick={onBack} className="p-1 h-8 w-8">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <CardTitle className="flex items-center space-x-2">
@@ -115,9 +100,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
           {/* Log Level */}
           <div>
             <h3 className="text-sm font-medium mb-3">Level</h3>
-            <Badge className={getLevelColor(log.level)}>
-              {log.level.toUpperCase()}
-            </Badge>
+            <Badge className={getLevelColor(log.level)}>{log.level.toUpperCase()}</Badge>
           </div>
 
           <Separator />
@@ -127,9 +110,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
             <h3 className="text-sm font-medium mb-3">Basic Information</h3>
             <div className="space-y-3">
               <DetailItem
-                icon={
-                  <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                }
+                icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
                 label="Timestamp"
                 value={logDate.toISOString()}
               />
@@ -141,9 +122,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
               <DetailItem
                 icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
                 label="Log ID"
-                value={
-                  <span className="font-mono text-xs break-all">{log.id}</span>
-                }
+                value={<span className="font-mono text-xs break-all">{log.id}</span>}
               />
             </div>
           </div>
@@ -154,9 +133,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
           <div>
             <h3 className="text-sm font-medium mb-3">Message</h3>
             <div className="p-2 bg-muted/30 rounded border">
-              <pre className="text-xs font-mono whitespace-pre-wrap wrap-break-word">
-                {log.message}
-              </pre>
+              <pre className="text-xs font-mono whitespace-pre-wrap wrap-break-word">{log.message}</pre>
             </div>
           </div>
         </div>

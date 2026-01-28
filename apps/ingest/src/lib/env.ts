@@ -5,13 +5,7 @@ import { z } from "zod/v4";
 
 export const env = createEnv({
   server: {
-    ENV: z.enum([
-      "development",
-      "staging",
-      "preproduction",
-      "production",
-      "test",
-    ]),
+    ENV: z.enum(["development", "staging", "preproduction", "production", "test"]),
     REDIS_HOST: z.string(),
     REDIS_PORT: z
       .string()
@@ -27,11 +21,7 @@ export const env = createEnv({
       .string()
       .nullish()
       .transform((value) =>
-        value !== null && value !== undefined
-          ? value === "null"
-            ? null
-            : parseInt(value, 10)
-          : value,
+        value !== null && value !== undefined ? (value === "null" ? null : parseInt(value, 10)) : value,
       ),
     AUTO_DELETE_POSTGRES_DATA: z
       .string()

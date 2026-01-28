@@ -1,14 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getTopQueuesDurationApiRoute } from "~/app/api/dashboard/top-queues-duration/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -73,21 +66,9 @@ export function QueueDurationChart({ days }: QueueDurationChartProps) {
         ) : chartData.length > 0 ? (
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <XAxis
-                  dataKey="queue"
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => formatDuration(value)}
-                />
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <XAxis dataKey="queue" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => formatDuration(value)} />
                 <Tooltip content={CustomTooltip} />
                 <Bar
                   dataKey="value"

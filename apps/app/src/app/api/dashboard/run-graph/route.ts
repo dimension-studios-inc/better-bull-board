@@ -30,20 +30,12 @@ export const POST = createAuthenticatedApiRoute({
           runCount: count(),
         })
         .from(jobRunsTable)
-        .where(
-          and(
-            gte(jobRunsTable.createdAt, dateFrom),
-            lte(jobRunsTable.createdAt, dateTo),
-          ),
-        )
+        .where(and(gte(jobRunsTable.createdAt, dateFrom), lte(jobRunsTable.createdAt, dateTo)))
         .groupBy(interval)
         .orderBy(interval);
 
       const chartData = result.map((item) => ({
-        timestamp: new Date(item.timestamp)
-          .toISOString()
-          .slice(0, 19)
-          .replace("T", " "),
+        timestamp: new Date(item.timestamp).toISOString().slice(0, 19).replace("T", " "),
         runCount: Number(item.runCount),
       }));
 
@@ -51,11 +43,7 @@ export const POST = createAuthenticatedApiRoute({
       const filled = [];
       const map = new Map(chartData.map((d) => [d.timestamp, d]));
 
-      for (
-        let d = new Date(dateFrom);
-        d <= dateTo;
-        d = stepKind === "hour" ? addHours(d, 1) : addDays(d, 1)
-      ) {
+      for (let d = new Date(dateFrom); d <= dateTo; d = stepKind === "hour" ? addHours(d, 1) : addDays(d, 1)) {
         const ts =
           stepKind === "hour"
             ? startOfHour(d).toISOString().slice(0, 19).replace("T", " ")

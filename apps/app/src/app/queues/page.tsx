@@ -6,10 +6,7 @@ import { PageTitle } from "~/components/page-title";
 export default function QueuesPage() {
   return (
     <PageContainer>
-      <PageTitle
-        title="Queues"
-        description="Monitor and manage your BullMQ queues"
-      />
+      <PageTitle title="Queues" description="Monitor and manage your BullMQ queues" />
       <QueueStats />
       <QueuesTable />
     </PageContainer>

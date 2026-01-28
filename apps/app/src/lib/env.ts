@@ -18,11 +18,7 @@ export const env = createEnv({
       .string()
       .nullish()
       .transform((value) =>
-        value !== null && value !== undefined
-          ? value === "null"
-            ? null
-            : parseInt(value, 10)
-          : value,
+        value !== null && value !== undefined ? (value === "null" ? null : parseInt(value, 10)) : value,
       ),
     ADMIN_EMAIL: z.email(),
     ADMIN_PASSWORD: z.string().min(1),

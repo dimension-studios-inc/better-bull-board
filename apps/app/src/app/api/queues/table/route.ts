@@ -1,8 +1,4 @@
-import {
-  jobRunsTable,
-  jobSchedulersTable,
-  queuesTable,
-} from "@better-bull-board/db";
+import { jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
 import { and, asc, desc, eq, gte, ilike, inArray, lt, sql } from "drizzle-orm";
@@ -16,18 +12,9 @@ function fillChartData(
   chartData: { timestamp: string; completed: number; failed: number }[],
 ) {
   const filled: { timestamp: string; completed: number; failed: number }[] = [];
-  const map = new Map(
-    chartData.map((d) => [
-      new Date(d.timestamp).toISOString().slice(0, 19).replace("T", " "),
-      d,
-    ]),
-  );
+  const map = new Map(chartData.map((d) => [new Date(d.timestamp).toISOString().slice(0, 19).replace("T", " "), d]));
 
-  for (
-    let d = new Date(dateFrom);
-    d <= dateTo;
-    d = stepKind === "hour" ? addHours(d, 1) : addDays(d, 1)
-  ) {
+  for (let d = new Date(dateFrom); d <= dateTo; d = stepKind === "hour" ? addHours(d, 1) : addDays(d, 1)) {
     const ts =
       stepKind === "hour"
         ? startOfHour(d).toISOString().slice(0, 19).replace("T", " ")
@@ -63,32 +50,19 @@ export const POST = createAuthenticatedApiRoute({
           id: queuesTable.id,
           name: queuesTable.name,
           isPaused: queuesTable.isPaused,
-          patterns: sql<
-            string[] | null | undefined
-          >`array_agg(${jobSchedulersTable.pattern})`.as("patterns"),
-          everys: sql<
-            number[] | null | undefined
-          >`array_agg(${jobSchedulersTable.every})`.as("everys"),
+          patterns: sql<string[] | null | undefined>`array_agg(${jobSchedulersTable.pattern})`.as("patterns"),
+          everys: sql<number[] | null | undefined>`array_agg(${jobSchedulersTable.every})`.as("everys"),
         })
         .from(queuesTable)
-        .leftJoin(
-          jobSchedulersTable,
-          eq(jobSchedulersTable.queueId, queuesTable.id),
-        )
+        .leftJoin(jobSchedulersTable, eq(jobSchedulersTable.queueId, queuesTable.id))
         .where(
           and(
-            cursor
-              ? direction === "prev"
-                ? lt(queuesTable.name, cursor)
-                : gte(queuesTable.name, cursor)
-              : undefined,
+            cursor ? (direction === "prev" ? lt(queuesTable.name, cursor) : gte(queuesTable.name, cursor)) : undefined,
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
           ),
         )
         .groupBy(queuesTable.id)
-        .orderBy(
-          direction === "prev" ? desc(queuesTable.name) : asc(queuesTable.name),
-        )
+        .orderBy(direction === "prev" ? desc(queuesTable.name) : asc(queuesTable.name))
         .limit(limit + 1);
     };
 
@@ -102,9 +76,7 @@ export const POST = createAuthenticatedApiRoute({
 
     const queueNames = rows.map((row) => row.name);
     const timePeriodDays = Number(timePeriod);
-    const dateFrom = new Date(
-      Date.now() - timePeriodDays * 24 * 60 * 60 * 1000,
-    );
+    const dateFrom = new Date(Date.now() - timePeriodDays * 24 * 60 * 60 * 1000);
     const dateTo = new Date();
 
     const interval = timePeriodDays <= 7 ? "hour" : "day";
@@ -155,12 +127,8 @@ export const POST = createAuthenticatedApiRoute({
         queueName: jobRunsTable.queue,
         timestamp:
           interval === "hour"
-            ? sql<string>`date_trunc('hour', ${jobRunsTable.createdAt})`.as(
-                "timestamp",
-              )
-            : sql<string>`date_trunc('day', ${jobRunsTable.createdAt})`.as(
-                "timestamp",
-              ),
+            ? sql<string>`date_trunc('hour', ${jobRunsTable.createdAt})`.as("timestamp")
+            : sql<string>`date_trunc('day', ${jobRunsTable.createdAt})`.as("timestamp"),
         completed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
         failed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
       })
@@ -183,10 +151,7 @@ export const POST = createAuthenticatedApiRoute({
     // Create maps for efficient lookup
     const countsMap = new Map(allCounts.map((count) => [count.name, count]));
 
-    const chartDataMap = new Map<
-      string,
-      { timestamp: string; completed: number; failed: number }[]
-    >();
+    const chartDataMap = new Map<string, { timestamp: string; completed: number; failed: number }[]>();
     for (const chart of allChartData) {
       if (!chartDataMap.has(chart.queueName)) {
         chartDataMap.set(chart.queueName, []);
@@ -222,8 +187,7 @@ export const POST = createAuthenticatedApiRoute({
     const statsMap = new Map(queueStats.map((stat) => [stat.queueName, stat]));
 
     const nextCursor = rows.length > limit ? (rows.pop()?.name ?? null) : null;
-    const prevCursor =
-      previousRows.length > limit ? (previousRows.at(-2)?.name ?? null) : null;
+    const prevCursor = previousRows.length > limit ? (previousRows.at(-2)?.name ?? null) : null;
 
     return {
       queues: rows.map((row) => {

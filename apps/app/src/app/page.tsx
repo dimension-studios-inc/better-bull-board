@@ -25,10 +25,7 @@ export default function Home() {
 
   return (
     <PageContainer>
-      <PageTitle
-        title="Dashboard"
-        description="Monitor your BullMQ job statistics"
-      />
+      <PageTitle title="Dashboard" description="Monitor your BullMQ job statistics" />
       <EnhancedDashboard />
     </PageContainer>
   );

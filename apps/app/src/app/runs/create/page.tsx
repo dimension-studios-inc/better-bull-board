@@ -35,11 +35,7 @@ export default function CreateRunPage() {
 
   // Create job mutation
   const createJobMutation = useMutation({
-    mutationFn: (data: {
-      queueName: string;
-      jobName: string;
-      data: Record<string, unknown>;
-    }) =>
+    mutationFn: (data: { queueName: string; jobName: string; data: Record<string, unknown> }) =>
       apiFetch({
         apiRoute: createJobApiRoute,
         body: data,
@@ -102,10 +98,7 @@ export default function CreateRunPage() {
   return (
     <PageContainer>
       <div className="flex items-center justify-between">
-        <PageTitle
-          title="Create New Run"
-          description="Create a new job run in a queue"
-        />
+        <PageTitle title="Create New Run" description="Create a new job run in a queue" />
         <Button variant="outline" onClick={() => router.push("/runs")}>
           Cancel
         </Button>
@@ -128,14 +121,10 @@ export default function CreateRunPage() {
             popoverContentClassName="w-2xl"
           />
           {selectedQueue && selectedQueue !== "all" && isLastRunLoading && (
-            <p className="text-sm text-muted-foreground">
-              Loading last run data...
-            </p>
+            <p className="text-sm text-muted-foreground">Loading last run data...</p>
           )}
           {selectedQueue && selectedQueue !== "all" && lastRunData && (
-            <p className="text-sm text-muted-foreground">
-              Data prefilled from last run in this queue
-            </p>
+            <p className="text-sm text-muted-foreground">Data prefilled from last run in this queue</p>
           )}
         </div>
 
@@ -164,8 +153,7 @@ export default function CreateRunPage() {
             className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
           />
           <p className="text-sm text-muted-foreground">
-            Enter the job data as valid JSON. This data will be passed to the
-            job when it runs.
+            Enter the job data as valid JSON. This data will be passed to the job when it runs.
           </p>
         </div>
 
@@ -173,11 +161,7 @@ export default function CreateRunPage() {
           <Button type="submit" disabled={createJobMutation.isPending}>
             {createJobMutation.isPending ? "Creating..." : "Create Run"}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/runs")}
-          >
+          <Button type="button" variant="outline" onClick={() => router.push("/runs")}>
             Cancel
           </Button>
         </div>

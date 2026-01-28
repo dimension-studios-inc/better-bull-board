@@ -23,12 +23,7 @@ export default async function BqRunPage({ params }: BqRunPageProps) {
     const [jobRun] = await db
       .select({ id: jobRunsTable.id })
       .from(jobRunsTable)
-      .where(
-        and(
-          eq(jobRunsTable.queue, decodedQueueName),
-          eq(jobRunsTable.jobId, decodedRunId),
-        ),
-      )
+      .where(and(eq(jobRunsTable.queue, decodedQueueName), eq(jobRunsTable.jobId, decodedRunId)))
       .limit(1);
 
     if (jobRun) {

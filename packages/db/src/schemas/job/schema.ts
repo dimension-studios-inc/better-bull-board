@@ -1,15 +1,5 @@
 import { sql } from "drizzle-orm";
-import {
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  smallint,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { index, integer, jsonb, pgTable, smallint, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { jobStatusEnum, logLevelEnum } from "./enum";
 
@@ -40,16 +30,12 @@ export const jobRunsTable = pgTable(
     errorMessage: text("error_message"),
     errorStack: text("error_stack"),
 
-    createdAt: timestamp("created_at", { precision: 3, mode: "date" })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
+    createdAt: timestamp("created_at", { precision: 3, mode: "date" }).default(sql`CURRENT_TIMESTAMP`).notNull(),
     enqueuedAt: timestamp("enqueued_at", { precision: 3, mode: "date" }),
     startedAt: timestamp("started_at", { precision: 3, mode: "date" }),
     finishedAt: timestamp("finished_at", { precision: 3, mode: "date" }),
 
-    durationMs: integer("duration_ms").generatedAlwaysAs(
-      sql`EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000`,
-    ),
+    durationMs: integer("duration_ms").generatedAlwaysAs(sql`EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000`),
   },
   (t) => [
     uniqueIndex("ux_job_runs_jobid_enqueuedat").on(t.jobId, t.enqueuedAt), // Don't use jobId alone because if jobs are removed from bullmq it can overlap old ones
@@ -79,9 +65,7 @@ export const jobLogsTable = pgTable(
     level: logLevelEnum("level").notNull().default("info"),
     message: text("message").notNull(),
 
-    ts: timestamp("ts", { precision: 3, mode: "date" })
-      .notNull()
-      .default(sql`now()`),
+    ts: timestamp("ts", { precision: 3, mode: "date" }).notNull().default(sql`now()`),
     logSeq: integer("log_seq").notNull().default(0),
   },
   (t) => [

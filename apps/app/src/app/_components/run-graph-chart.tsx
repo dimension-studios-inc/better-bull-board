@@ -2,15 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getRunGraphApiRoute } from "~/app/api/dashboard/run-graph/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -36,15 +28,9 @@ const CustomTooltip =
       return (
         <div className="bg-background border rounded p-1 shadow-sm">
           <p className="font-medium">
-            {data.timestamp &&
-              format(
-                new Date(data.timestamp),
-                days <= 7 ? "EEEEEE HH:mm" : "MMM dd, yyyy",
-              )}
+            {data.timestamp && format(new Date(data.timestamp), days <= 7 ? "EEEEEE HH:mm" : "MMM dd, yyyy")}
           </p>
-          <p className="text-sm text-blue-600">
-            Runs: {data.runCount.toLocaleString()}
-          </p>
+          <p className="text-sm text-blue-600">Runs: {data.runCount.toLocaleString()}</p>
         </div>
       );
     }
@@ -64,10 +50,7 @@ export function RunGraphChart({ days }: RunGraphChartProps) {
     runGraphData?.map((item) => ({
       timestamp: item.timestamp,
       runCount: item.runCount,
-      formattedTime: format(
-        new Date(item.timestamp),
-        days <= 7 ? "EEEEEE HH:mm" : "MMM dd",
-      ),
+      formattedTime: format(new Date(item.timestamp), days <= 7 ? "EEEEEE HH:mm" : "MMM dd"),
     })) || [];
 
   return (
@@ -85,11 +68,7 @@ export function RunGraphChart({ days }: RunGraphChartProps) {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="formattedTime"
-                  tick={{ fontSize: 12 }}
-                  interval="preserveStartEnd"
-                />
+                <XAxis dataKey="formattedTime" tick={{ fontSize: 12 }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip content={CustomTooltip({ days })} />
                 <Line

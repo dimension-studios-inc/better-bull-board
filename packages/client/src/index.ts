@@ -10,10 +10,7 @@ export * from "./worker";
 /**
  * Install the console relay and return the patched cancelable function
  */
-export const patch = (
-  run: (job: SandboxedJob) => Promise<unknown>,
-  redis: Redis,
-) => {
+export const patch = (run: (job: SandboxedJob) => Promise<unknown>, redis: Redis) => {
   return async (job: SandboxedJob) => {
     // biome-ignore lint/suspicious/noConfusingVoidType: _
     const pendingPublishes = new Set<Promise<number | void>>();

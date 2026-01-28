@@ -1,14 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getTopQueuesCountApiRoute } from "~/app/api/dashboard/top-queues-count/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -31,9 +24,7 @@ const CustomTooltip = ({
     return (
       <div className="bg-background border rounded p-3 shadow-lg text-sm">
         <p className="font-medium">{data.queue}</p>
-        <p className="text-muted-foreground">
-          Runs: {data.value.toLocaleString()}
-        </p>
+        <p className="text-muted-foreground">Runs: {data.value.toLocaleString()}</p>
       </div>
     );
   }
@@ -68,21 +59,9 @@ export function QueueCountChart({ days }: QueueCountChartProps) {
         ) : chartData.length > 0 ? (
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <XAxis
-                  dataKey="queue"
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => value.toLocaleString()}
-                />
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <XAxis dataKey="queue" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => value.toLocaleString()} />
                 <Tooltip content={CustomTooltip} />
                 <Bar
                   dataKey="value"

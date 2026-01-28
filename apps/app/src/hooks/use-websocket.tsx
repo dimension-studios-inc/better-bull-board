@@ -124,10 +124,7 @@ export const useWebSocket = (options: UseWebSocketOptions) => {
           autoReconnect,
         });
 
-        if (
-          autoReconnect &&
-          connectionAttemptsRef.current < maxReconnectAttempts
-        ) {
+        if (autoReconnect && connectionAttemptsRef.current < maxReconnectAttempts) {
           reconnectTimeoutRef.current = setTimeout(() => {
             if (mountedRef.current) {
               connectionAttemptsRef.current += 1;

@@ -1,8 +1,4 @@
-import {
-  createServer,
-  type IncomingMessage,
-  type ServerResponse,
-} from "node:http";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { URL } from "node:url";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
@@ -63,10 +59,7 @@ async function handleHealthCheck(): Promise<{
 
   try {
     // Run all health checks in parallel
-    const [redisResult, dbResult] = await Promise.all([
-      checkRedis(),
-      checkDatabase(),
-    ]);
+    const [redisResult, dbResult] = await Promise.all([checkRedis(), checkDatabase()]);
 
     const results = [redisResult, dbResult];
     const totalResponseTime = Date.now() - startTime;

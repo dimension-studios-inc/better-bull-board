@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface JobTrendData {
   hourlyStats: Array<{
@@ -36,27 +28,9 @@ export function JobTrendChart({ data }: JobTrendChartProps) {
         <XAxis dataKey="hour" />
         <YAxis />
         <Tooltip />
-        <Line
-          type="monotone"
-          dataKey="completed"
-          stroke="#10b981"
-          strokeWidth={2}
-          name="Completed"
-        />
-        <Line
-          type="monotone"
-          dataKey="failed"
-          stroke="#ef4444"
-          strokeWidth={2}
-          name="Failed"
-        />
-        <Line
-          type="monotone"
-          dataKey="running"
-          stroke="#3b82f6"
-          strokeWidth={2}
-          name="Running"
-        />
+        <Line type="monotone" dataKey="completed" stroke="#10b981" strokeWidth={2} name="Completed" />
+        <Line type="monotone" dataKey="failed" stroke="#ef4444" strokeWidth={2} name="Failed" />
+        <Line type="monotone" dataKey="running" stroke="#3b82f6" strokeWidth={2} name="Running" />
       </LineChart>
     </ResponsiveContainer>
   );

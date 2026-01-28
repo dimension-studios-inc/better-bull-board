@@ -7,11 +7,7 @@ import { redis } from "./lib/redis";
 const CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
 const CACHE_KEY_PREFIX = "bbb:job-run-id:";
 
-const getCachedValue = async (
-  jobId: string,
-  enqueuedAt: Date,
-  queue: string,
-): Promise<string | null> => {
+const getCachedValue = async (jobId: string, enqueuedAt: Date, queue: string): Promise<string | null> => {
   try {
     const key = `${CACHE_KEY_PREFIX}${queue}:${jobId}:${enqueuedAt.getTime()}`;
     const cached = await redis.get(key);
@@ -27,12 +23,7 @@ const getCachedValue = async (
   }
 };
 
-const setCachedValue = async (
-  jobId: string,
-  enqueuedAt: Date,
-  queue: string,
-  value: string,
-): Promise<void> => {
+const setCachedValue = async (jobId: string, enqueuedAt: Date, queue: string, value: string): Promise<void> => {
   try {
     const key = `${CACHE_KEY_PREFIX}${queue}:${jobId}:${enqueuedAt.getTime()}`;
     await redis.setex(key, CACHE_TTL_SECONDS, value);
@@ -47,11 +38,7 @@ const setCachedValue = async (
   }
 };
 
-export const getJobFromBullId = async (
-  jobId: string,
-  enqueuedAt: Date,
-  queue: string,
-) => {
+export const getJobFromBullId = async (jobId: string, enqueuedAt: Date, queue: string) => {
   // Check cache first
   const cachedResult = await getCachedValue(jobId, enqueuedAt, queue);
   if (cachedResult !== null) {
@@ -61,13 +48,7 @@ export const getJobFromBullId = async (
   const [jobRun] = await db
     .select({ id: jobRunsTable.id })
     .from(jobRunsTable)
-    .where(
-      and(
-        eq(jobRunsTable.jobId, jobId),
-        eq(jobRunsTable.enqueuedAt, enqueuedAt),
-        eq(jobRunsTable.queue, queue),
-      ),
-    )
+    .where(and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.enqueuedAt, enqueuedAt), eq(jobRunsTable.queue, queue)))
     .limit(1);
 
   let result: string | undefined;
@@ -99,17 +80,11 @@ function deepEqual(a: unknown, b: unknown): boolean {
   if (aKeys.length !== bKeys.length) return false;
 
   return aKeys.every((k) =>
-    deepEqual(
-      (a as Record<string, unknown>)[k],
-      (b as Record<string, unknown>)[k as keyof typeof b],
-    ),
+    deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k as keyof typeof b]),
   );
 }
 
-export function getChangedKeys<T extends Record<string, unknown>>(
-  newObj: T,
-  oldObj: Partial<T>,
-): (keyof T)[] {
+export function getChangedKeys<T extends Record<string, unknown>>(newObj: T, oldObj: Partial<T>): (keyof T)[] {
   return Object.keys(newObj).filter((key) => {
     const k = key as keyof T;
     const newVal = newObj[k];

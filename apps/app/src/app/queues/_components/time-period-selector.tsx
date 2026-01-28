@@ -3,11 +3,7 @@
 import { CalendarDays } from "lucide-react";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 
 export type TimePeriod = "1" | "3" | "7" | "30";
 
@@ -23,15 +19,10 @@ const timePeriodOptions: { value: TimePeriod; label: string }[] = [
   { value: "30", label: "30 days" },
 ];
 
-export function TimePeriodSelector({
-  value,
-  onChange,
-}: TimePeriodSelectorProps) {
+export function TimePeriodSelector({ value, onChange }: TimePeriodSelectorProps) {
   const [open, setOpen] = useState(false);
 
-  const selectedOption = timePeriodOptions.find(
-    (option) => option.value === value,
-  );
+  const selectedOption = timePeriodOptions.find((option) => option.value === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

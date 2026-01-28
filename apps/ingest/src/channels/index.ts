@@ -10,11 +10,7 @@ const CHANNELS = {
   "bbb:worker:job:log": handleLogChannel,
 };
 
-export const handleChannel = async (
-  _subscribed: string,
-  channel: string,
-  message: string,
-) => {
+export const handleChannel = async (_subscribed: string, channel: string, message: string) => {
   const handler = CHANNELS[channel as keyof typeof CHANNELS];
   if (handler) {
     await handler(channel, message);

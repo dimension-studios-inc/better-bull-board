@@ -1,12 +1,5 @@
 import { logger } from "@rharkor/logger";
-import {
-  Worker as BullMQWorker,
-  type Job,
-  Queue,
-  QueueEvents,
-  type RedisConnection,
-  type WorkerOptions,
-} from "bullmq";
+import { Worker as BullMQWorker, type Job, Queue, QueueEvents, type RedisConnection, type WorkerOptions } from "bullmq";
 import type Redis from "ioredis";
 import { onlyMaster } from "./lib/master";
 
@@ -18,9 +11,7 @@ export class Worker<
   NameType extends string = string,
 > extends BullMQWorker<DataType, ResultType, NameType> {
   private ioredis: Redis;
-  private getJobTags?: (
-    job: Job<DataType, ResultType, NameType>,
-  ) => (string | undefined)[];
+  private getJobTags?: (job: Job<DataType, ResultType, NameType>) => (string | undefined)[];
 
   hasWaitingJobsEventsInitialized = false;
 
@@ -32,9 +23,7 @@ export class Worker<
       /**
        * Should return the tags of the job
        */
-      getJobTags?: (
-        job: Job<DataType, ResultType, NameType>,
-      ) => (string | undefined)[];
+      getJobTags?: (job: Job<DataType, ResultType, NameType>) => (string | undefined)[];
     },
     Connection?: typeof RedisConnection,
   ) {
@@ -74,9 +63,7 @@ export class Worker<
 
     let listener: QueueEvents | null = null;
     let subscribed = false;
-    let messageHandler:
-      | ((args: { jobId: string; prev?: string }) => void)
-      | null;
+    let messageHandler: ((args: { jobId: string; prev?: string }) => void) | null;
     const channel = `bbb:queue:${queueName}:job:waiting`;
 
     const ensureSubscription = async () => {
@@ -88,9 +75,7 @@ export class Worker<
         const onMessage = async (args: { jobId: string; prev?: string }) => {
           const job = await queue.getJob(args.jobId);
           if (!job) return;
-          const tags = this.getJobTags?.(
-            job as Job<DataType, ResultType, NameType>,
-          ).filter(Boolean);
+          const tags = this.getJobTags?.(job as Job<DataType, ResultType, NameType>).filter(Boolean);
           const isWaiting = await job.isWaiting();
           if (!isWaiting) return;
           this.ioredis.publish(
@@ -134,9 +119,7 @@ export class Worker<
       attempts++;
     }
     if (!this.hasWaitingJobsEventsInitialized) {
-      throw new Error(
-        "Waiting jobs events failed to initialize after 20 seconds",
-      );
+      throw new Error("Waiting jobs events failed to initialize after 20 seconds");
     }
     return redis;
   }
@@ -167,12 +150,7 @@ export class Worker<
       }),
     );
     //* Process
-    const result = await super.processJob(
-      job,
-      token,
-      fetchNextCallback,
-      jobsInProgress,
-    );
+    const result = await super.processJob(job, token, fetchNextCallback, jobsInProgress);
 
     //* Complete
     // When success: finishedOn is set and returnvalue is updated

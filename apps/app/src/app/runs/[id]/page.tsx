@@ -91,8 +91,7 @@ export default function RunViewPage() {
         <Alert variant="destructive">
           <AlertCircle className="size-4" />
           <AlertDescription>
-            Failed to load run details. The run might not exist or there was an
-            error loading it.
+            Failed to load run details. The run might not exist or there was an error loading it.
           </AlertDescription>
         </Alert>
       </PageContainer>
@@ -108,11 +107,7 @@ export default function RunViewPage() {
   };
   return (
     <PageContainer>
-      <PageTitle
-        title={`Run ${run.job.jobId}`}
-        description={`${run.job.queue} • ${run.job.status}`}
-        withRunsLink
-      />
+      <PageTitle title={`Run ${run.job.jobId}`} description={`${run.job.queue} • ${run.job.status}`} withRunsLink />
 
       <div className="flex flex-row gap-2">
         <div className="flex-1">
@@ -128,11 +123,7 @@ export default function RunViewPage() {
         </div>
         <div className="w-96">
           {selectedLog ? (
-            <LogDetailsDrawer
-              log={selectedLog}
-              run={job}
-              onBack={() => setSelectedLog(null)}
-            />
+            <LogDetailsDrawer log={selectedLog} run={job} onBack={() => setSelectedLog(null)} />
           ) : (
             <RunDetailsDrawer run={job} />
           )}

@@ -1,7 +1,4 @@
-import {
-  jobRunsInsertSchema,
-  jobRunsTable,
-} from "@better-bull-board/db/schemas/job/schema";
+import { jobRunsInsertSchema, jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
 import { db } from "@better-bull-board/db/server";
 import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update";
 import { logger } from "@rharkor/logger";
@@ -84,11 +81,7 @@ async function flushJobRunBuffer() {
         createdAt: jobRunsTable.createdAt,
       });
     await redis.publish("bbb:ingest:events:job-refresh", "1");
-    await Promise.all(
-      inserted.map((jobRun) =>
-        redis.publish("bbb:ingest:events:single-job-refresh", jobRun.id),
-      ),
-    );
+    await Promise.all(inserted.map((jobRun) => redis.publish("bbb:ingest:events:single-job-refresh", jobRun.id)));
   } catch (error) {
     logger.error("Error in batch job upsert", {
       error,
@@ -160,13 +153,7 @@ export const handleJobChannel = async (_channel: string, message: string) => {
     if (queue === "{test-log}") {
       console.log({ message });
     }
-    const status = job.finishedOn
-      ? job.failedReason
-        ? "failed"
-        : "completed"
-      : isWaiting
-        ? "waiting"
-        : "active";
+    const status = job.finishedOn ? (job.failedReason ? "failed" : "completed") : isWaiting ? "waiting" : "active";
     const formatted: z.infer<typeof jobRunsInsertSchema> = {
       workerId: id,
       jobId: job.id,

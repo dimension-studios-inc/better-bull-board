@@ -1,8 +1,4 @@
-import {
-  jobRunsTable,
-  jobSchedulersTable,
-  queuesTable,
-} from "@better-bull-board/db";
+import { jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";

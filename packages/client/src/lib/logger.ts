@@ -23,10 +23,7 @@ function nextLogTimestamp() {
 }
 
 export function formatForLogger(data: unknown): string {
-  if (data instanceof Error)
-    return data.stack
-      ? `${data.stack}${data.cause ? `\n${data.cause}` : ""}`
-      : data.message;
+  if (data instanceof Error) return data.stack ? `${data.stack}${data.cause ? `\n${data.cause}` : ""}` : data.message;
   if (typeof data === "object" && data !== null) {
     try {
       return JSON.stringify(data, null, 2);
@@ -34,8 +31,7 @@ export function formatForLogger(data: unknown): string {
       return safeStringify(data);
     }
   }
-  if (typeof data === "function")
-    return `[Function: ${data.name || "anonymous"}]`;
+  if (typeof data === "function") return `[Function: ${data.name || "anonymous"}]`;
   return String(data);
 }
 
@@ -94,11 +90,7 @@ export function installConsoleRelay({
     (...params: unknown[]) => {
       const ctx = jobStore.getStore();
       if (ctx?.job) {
-        const message = params
-          .map((p) =>
-            typeof p === "string" ? decolorize(p) : formatForLogger(p),
-          )
-          .join(" ");
+        const message = params.map((p) => (typeof p === "string" ? decolorize(p) : formatForLogger(p))).join(" ");
         // Fire-and-forget so console stays sync; swallow errors.
         if (ctx.autoEmitBBBLogs) {
           const { ts, seq } = nextLogTimestamp();
@@ -116,9 +108,7 @@ export function installConsoleRelay({
                 level,
               }),
             )
-            .catch((err) =>
-              original.error("🔍 Error publishing to redis", err),
-            );
+            .catch((err) => original.error("🔍 Error publishing to redis", err));
           addPendingPublish(p);
           p.finally(() => removePendingPublish(p));
         }
@@ -144,9 +134,6 @@ export function installConsoleRelay({
  * Run a function with the given job bound to the async context,
  * so any console.* within (including in awaited calls) is attributed correctly.
  */
-export function withJobConsole<T>(
-  ctx: Ctx,
-  fn: () => T | Promise<T>,
-): T | Promise<T> {
+export function withJobConsole<T>(ctx: Ctx, fn: () => T | Promise<T>): T | Promise<T> {
   return jobStore.run(ctx, fn);
 }

@@ -54,10 +54,7 @@ export async function GET() {
 
   try {
     // Run all health checks in parallel
-    const [redisResult, dbResult] = await Promise.all([
-      checkRedis(),
-      checkDatabase(),
-    ]);
+    const [redisResult, dbResult] = await Promise.all([checkRedis(), checkDatabase()]);
 
     const results = [redisResult, dbResult];
     const totalResponseTime = Date.now() - startTime;

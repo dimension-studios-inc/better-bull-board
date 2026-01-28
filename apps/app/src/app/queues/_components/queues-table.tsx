@@ -10,14 +10,7 @@ import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { apiFetch, cn, smartFormatDuration } from "~/lib/utils/client";
 import { QueueActions } from "./queue-actions";
 import { QueueMiniChart } from "./queue-mini-chart";
@@ -77,10 +70,7 @@ export function QueuesTable() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <TimePeriodSelector
-            value={options.timePeriod}
-            onChange={handleTimePeriodChange}
-          />
+          <TimePeriodSelector value={options.timePeriod} onChange={handleTimePeriodChange} />
           <div className="flex-1 relative max-w-[350px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -101,12 +91,7 @@ export function QueuesTable() {
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={isLoading || !data?.nextCursor}
-          >
+          <Button variant="outline" size="sm" onClick={handleNextPage} disabled={isLoading || !data?.nextCursor}>
             Next
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -138,9 +123,7 @@ export function QueuesTable() {
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   layoutId={queue.name}
                 >
-                  <TableCell className="font-medium truncate">
-                    {queue.name}
-                  </TableCell>
+                  <TableCell className="font-medium truncate">{queue.name}</TableCell>
                   <TableCell>
                     <Badge
                       variant={"outline"}
@@ -172,19 +155,14 @@ export function QueuesTable() {
                     <span className="font-mono">{queue.activeJobs}</span>
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono truncate">
-                      {smartFormatDuration(queue.pressure)}
-                    </span>
+                    <span className="font-mono truncate">{smartFormatDuration(queue.pressure)}</span>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <QueueMiniChart data={queue.chartData} />
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <QueueActions
-                        queueName={queue.name}
-                        isPaused={queue.isPaused}
-                      />
+                      <QueueActions queueName={queue.name} isPaused={queue.isPaused} />
                     </div>
                   </TableCell>
                 </motion.tr>
