@@ -107,7 +107,7 @@ export default function RunViewPage() {
   };
   return (
     <PageContainer>
-      <PageTitle title={`Run ${run.job.jobId}`} description={`${run.job.queue} • ${run.job.status}`} withRunsLink />
+      <PageTitle title={`Run ${run.job.jobId}`} description={`${run.job.queue} • ${run.job.status}`} withBackButton />
 
       <div className="flex flex-row gap-2">
         <div className="flex-1">
