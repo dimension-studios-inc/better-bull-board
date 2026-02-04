@@ -1,31 +1,27 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 
 export function PageTitle({
   title,
   description,
-  withRunsLink,
+  withBackButton,
 }: {
   title: string;
   description: string;
-  withRunsLink?: boolean;
+  withBackButton?: boolean;
 }) {
-  const searchParams = useSearchParams();
-  const runsHref = searchParams.toString() ? `/runs?${searchParams.toString()}` : "/runs";
+  const router = useRouter();
 
   return (
     <div>
       <div className="flex items-center gap-2">
-        {withRunsLink && (
-          <Link href={runsHref}>
-            <Button variant="ghost" size={"sm"}>
-              <ArrowLeft className="size-4" />
-            </Button>
-          </Link>
+        {withBackButton && (
+          <Button variant="ghost" size={"sm"} onClick={() => router.back()}>
+            <ArrowLeft className="size-4" />
+          </Button>
         )}
         <h1 className="text-3xl font-bold text-foreground">{title}</h1>
       </div>
