@@ -46,6 +46,9 @@ export const jobRunsTable = pgTable(
     index("ix_job_runs_status").on(t.status),
     index("ix_job_runs_repeat_key").on(t.repeatJobKey),
     index("ix_job_runs_tags_gin").using("gin", t.tags),
+    index("ix_job_runs_tags_text_trgm")
+      .using("gin", sql`(public.job_runs_tags_search_text(${t.tags})) gin_trgm_ops`)
+      .where(sql`cardinality(${t.tags}) > 0`),
     index("ix_job_runs_data_gin").using("gin", t.data),
   ],
 );
