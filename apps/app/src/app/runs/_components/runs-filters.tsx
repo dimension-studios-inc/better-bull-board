@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { getTagsApiRoute } from "~/app/api/tags/schemas";
 import { QueueSelector } from "~/components/queue-selector";
@@ -29,7 +29,6 @@ export function RunsFilters({
   };
   startEndContent?: React.ReactNode;
 }) {
-  const router = useRouter();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -285,9 +284,11 @@ export function RunsFilters({
         {startEndContent}
       </div>
       <div className="flex items-center gap-2">
-        <Button onClick={() => router.push("/runs/create")} size="sm" className="gap-1">
-          <Plus className="h-4 w-4" />
-          Create Run
+        <Button asChild size="sm" className="gap-1">
+          <Link href="/runs/create">
+            <Plus className="h-4 w-4" />
+            Create Run
+          </Link>
         </Button>
         <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={!runs?.prevCursor && !filters.cursor}>
           <ChevronLeft className="h-4 w-4" />
