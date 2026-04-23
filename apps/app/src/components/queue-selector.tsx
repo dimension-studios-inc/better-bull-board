@@ -1,9 +1,10 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { getQueuesNameApiRoute } from "~/app/api/queues/name/schemas";
 import { Combobox, type ComboboxOption } from "~/components/ui/combobox";
+import useDebounce from "~/hooks/use-debounce";
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
 import { apiFetch } from "~/lib/utils/client";
 
@@ -40,25 +41,26 @@ export function QueueSelector({
   allOptionLabel = "All Queues",
   allowCustomValue = false,
 }: QueueSelectorProps) {
+  const debouncedSearch = useDebounce(search, 250);
   const {
     data: queues,
     isLoading,
-    isFetching: isQueuesFetching,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["queues/name", search],
+    queryKey: ["queues/name", debouncedSearch],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
       apiFetch({
         apiRoute: getQueuesNameApiRoute,
         body: {
-          search,
+          search: debouncedSearch,
           cursor: pageParam,
         },
       })(),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
+    placeholderData: keepPreviousData,
   });
 
   const { loaderRef } = useInfiniteScroll({
@@ -71,10 +73,16 @@ export function QueueSelector({
 
   const queueOptions: ComboboxOption[] = useMemo(() => {
     const options = includeAllOption ? [{ value: "all", label: allOptionLabel }] : [];
+    const normalizedSearch = search.trim().toLowerCase();
+
     if (queues?.pages) {
       queues.pages.forEach((page) => {
         if (page?.queues) {
           page.queues.forEach((queue) => {
+            if (normalizedSearch && !queue.name.toLowerCase().includes(normalizedSearch)) {
+              return;
+            }
+
             options.push({ value: queue.name, label: queue.name });
           });
         }
@@ -117,7 +125,7 @@ export function QueueSelector({
       setOpen={setOpen}
       renderValue={renderValue || defaultRenderValue}
       className={className}
-      isFetching={isQueuesFetching}
+      isFetching={isLoading}
       infiniteLoadingProps={{
         hasNextPage,
         fetchNextPage,
