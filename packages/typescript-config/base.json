@@ -7,7 +7,6 @@
     "noUnusedParameters": true,
     "strict": true,
 
-    "baseUrl": "${configDir}",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,

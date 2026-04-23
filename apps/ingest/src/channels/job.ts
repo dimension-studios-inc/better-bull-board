@@ -169,7 +169,7 @@ export const handleJobChannel = async (_channel: string, message: string) => {
       startedAt: job.processedOn ? new Date(job.processedOn) : undefined,
       finishedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
       errorMessage: job.failedReason,
-      errorStack: job.stacktrace.join("\n"),
+      errorStack: job.stacktrace?.join("\n"),
       name: job.name,
       parentJobId: job.opts.parent?.id,
       repeatJobKey: job.repeatJobKey,

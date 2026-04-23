@@ -13,16 +13,10 @@ export const POST = createAuthenticatedApiRoute({
 
     const [runningTasksResult, waitingInQueueResult, successesResult, failuresResult] = await Promise.all([
       // Count active/running tasks
-      db
-        .select({ count: count() })
-        .from(jobRunsTable)
-        .where(eq(jobRunsTable.status, "active")),
+      db.select({ count: count() }).from(jobRunsTable).where(eq(jobRunsTable.status, "active")),
 
       // Count waiting tasks
-      db
-        .select({ count: count() })
-        .from(jobRunsTable)
-        .where(eq(jobRunsTable.status, "waiting")),
+      db.select({ count: count() }).from(jobRunsTable).where(eq(jobRunsTable.status, "waiting")),
 
       // Count completed tasks within date range
       db

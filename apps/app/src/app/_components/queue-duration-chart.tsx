@@ -19,7 +19,7 @@ const CustomTooltip = ({
   // biome-ignore lint/suspicious/noExplicitAny: _
   payload: any;
 }) => {
-  if (active && payload && payload.length) {
+  if (active && payload?.length) {
     const data = payload[0].payload;
     return (
       <div className="bg-background border rounded p-3 shadow-lg text-sm">

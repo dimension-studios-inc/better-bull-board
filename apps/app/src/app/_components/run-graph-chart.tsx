@@ -23,7 +23,7 @@ const CustomTooltip =
     payload: any;
     label?: string | number;
   }) => {
-    if (active && payload && payload.length) {
+    if (active && payload?.length) {
       const data = payload[0].payload;
       return (
         <div className="bg-background border rounded p-1 shadow-sm">
