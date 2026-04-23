@@ -7,6 +7,8 @@ import { Combobox, type ComboboxOption } from "~/components/ui/combobox";
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
 import { apiFetch } from "~/lib/utils/client";
 
+const getCustomQueueOptionLabel = (queueName: string) => `Use custom queue "${queueName}"`;
+
 interface QueueSelectorProps {
   value: string;
   onValueChange: (value: string) => void;
@@ -20,6 +22,7 @@ interface QueueSelectorProps {
   renderValue?: (value: string) => string;
   includeAllOption?: boolean;
   allOptionLabel?: string;
+  allowCustomValue?: boolean;
 }
 
 export function QueueSelector({
@@ -35,6 +38,7 @@ export function QueueSelector({
   renderValue,
   includeAllOption = false,
   allOptionLabel = "All Queues",
+  allowCustomValue = false,
 }: QueueSelectorProps) {
   const {
     data: queues,
@@ -76,12 +80,27 @@ export function QueueSelector({
         }
       });
     }
+    const customQueueName = search.trim();
+    const hasCustomQueueName = options.some((option) => option.value === customQueueName);
+
+    if (allowCustomValue && customQueueName && !hasCustomQueueName) {
+      options.push({
+        value: customQueueName,
+        label: getCustomQueueOptionLabel(customQueueName),
+      });
+    }
+
     return options;
-  }, [queues, includeAllOption, allOptionLabel]);
+  }, [queues, includeAllOption, allOptionLabel, allowCustomValue, search]);
 
   const defaultRenderValue = (value: string) => {
     const option = queueOptions?.find((opt) => opt.value === value);
-    return option ? option.label : isLoading ? "Loading..." : "";
+    if (!option) {
+      if (isLoading) return "Loading...";
+      return allowCustomValue ? value : "";
+    }
+
+    return option.label === getCustomQueueOptionLabel(option.value) ? option.value : option.label;
   };
 
   return (

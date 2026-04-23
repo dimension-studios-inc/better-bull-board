@@ -119,6 +119,7 @@ export default function CreateRunPage() {
             placeholder="Select a queue..."
             className="w-full"
             popoverContentClassName="w-2xl"
+            allowCustomValue
           />
           {selectedQueue && selectedQueue !== "all" && isLastRunLoading && (
             <p className="text-sm text-muted-foreground">Loading last run data...</p>
