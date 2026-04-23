@@ -1,11 +1,14 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { getQueuesNameApiRoute } from "~/app/api/queues/name/schemas";
 import { Combobox, type ComboboxOption } from "~/components/ui/combobox";
+import useDebounce from "~/hooks/use-debounce";
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
 import { apiFetch } from "~/lib/utils/client";
+
+const getCustomQueueOptionLabel = (queueName: string) => `Use custom queue "${queueName}"`;
 
 interface QueueSelectorProps {
   value: string;
@@ -20,6 +23,7 @@ interface QueueSelectorProps {
   renderValue?: (value: string) => string;
   includeAllOption?: boolean;
   allOptionLabel?: string;
+  allowCustomValue?: boolean;
 }
 
 export function QueueSelector({
@@ -35,26 +39,28 @@ export function QueueSelector({
   renderValue,
   includeAllOption = false,
   allOptionLabel = "All Queues",
+  allowCustomValue = false,
 }: QueueSelectorProps) {
+  const debouncedSearch = useDebounce(search, 250);
   const {
     data: queues,
     isLoading,
-    isFetching: isQueuesFetching,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["queues/name", search],
+    queryKey: ["queues/name", debouncedSearch],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
       apiFetch({
         apiRoute: getQueuesNameApiRoute,
         body: {
-          search,
+          search: debouncedSearch,
           cursor: pageParam,
         },
       })(),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
+    placeholderData: keepPreviousData,
   });
 
   const { loaderRef } = useInfiniteScroll({
@@ -67,21 +73,42 @@ export function QueueSelector({
 
   const queueOptions: ComboboxOption[] = useMemo(() => {
     const options = includeAllOption ? [{ value: "all", label: allOptionLabel }] : [];
+    const normalizedSearch = search.trim().toLowerCase();
+
     if (queues?.pages) {
       queues.pages.forEach((page) => {
         if (page?.queues) {
           page.queues.forEach((queue) => {
+            if (normalizedSearch && !queue.name.toLowerCase().includes(normalizedSearch)) {
+              return;
+            }
+
             options.push({ value: queue.name, label: queue.name });
           });
         }
       });
     }
+    const customQueueName = search.trim();
+    const hasCustomQueueName = options.some((option) => option.value === customQueueName);
+
+    if (allowCustomValue && customQueueName && !hasCustomQueueName) {
+      options.push({
+        value: customQueueName,
+        label: getCustomQueueOptionLabel(customQueueName),
+      });
+    }
+
     return options;
-  }, [queues, includeAllOption, allOptionLabel]);
+  }, [queues, includeAllOption, allOptionLabel, allowCustomValue, search]);
 
   const defaultRenderValue = (value: string) => {
     const option = queueOptions?.find((opt) => opt.value === value);
-    return option ? option.label : isLoading ? "Loading..." : "";
+    if (!option) {
+      if (isLoading) return "Loading...";
+      return allowCustomValue ? value : "";
+    }
+
+    return option.label === getCustomQueueOptionLabel(option.value) ? option.value : option.label;
   };
 
   return (
@@ -98,7 +125,7 @@ export function QueueSelector({
       setOpen={setOpen}
       renderValue={renderValue || defaultRenderValue}
       className={className}
-      isFetching={isQueuesFetching}
+      isFetching={isLoading}
       infiniteLoadingProps={{
         hasNextPage,
         fetchNextPage,

@@ -33,5 +33,7 @@ export const createJobHandler = async (input: {
     };
   } catch (error) {
     throw new Error(`Failed to create job: ${error instanceof Error ? error.message : "Unknown error"}`);
+  } finally {
+    await queue.close();
   }
 };

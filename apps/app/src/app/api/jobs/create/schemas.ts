@@ -2,8 +2,8 @@ import z from "zod";
 import { registerApiRoute } from "~/lib/utils/client";
 
 export const createJobInput = z.object({
-  queueName: z.string().min(1, "Queue name is required"),
-  jobName: z.string().min(1, "Job name is required"),
+  queueName: z.string().trim().min(1, "Queue name is required"),
+  jobName: z.string().trim().min(1, "Job name is required"),
   data: z.record(z.string(), z.unknown()).optional().default({}),
   options: z
     .object({
