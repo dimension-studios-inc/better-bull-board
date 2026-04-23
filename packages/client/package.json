@@ -1,7 +1,8 @@
 {
   "name": "@better-bull-board/client",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
   "version": "0.0.15",
   "publishConfig": {
     "access": "public"
@@ -17,29 +18,29 @@
   "license": "ISC",
   "dependencies": {
     "@rharkor/logger": "^1.3.3",
-    "@t3-oss/env-core": "^0.13.4",
-    "bullmq": "^5.58.6",
-    "dotenv": "^17.0.0",
-    "ioredis": "^5.7.0",
-    "tsdown": "^0.15.2",
-    "typescript": "^5.9.2",
-    "zod": "^3.25.76"
+    "@t3-oss/env-core": "^0.13.11",
+    "bullmq": "^5.76.0",
+    "dotenv": "^17.4.2",
+    "ioredis": "^5.10.1",
+    "tsdown": "^0.21.9",
+    "typescript": "^6.0.3",
+    "zod": "^4.3.6"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./*": {
-      "types": "./dist/*.d.ts",
-      "import": "./dist/*.js",
+      "types": "./dist/*.d.mts",
+      "import": "./dist/*.mjs",
       "require": "./dist/*.cjs"
     }
   },
   "type": "module",
   "devDependencies": {
-    "@types/node": "^24.5.2",
-    "tsx": "^4.19.3"
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0"
   }
 }

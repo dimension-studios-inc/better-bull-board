@@ -11,8 +11,8 @@ import { Button } from "~/components/ui/button";
 import { Combobox, type ComboboxOption } from "~/components/ui/combobox";
 import { Input } from "~/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { apiFetch } from "~/lib/utils/client";
 import useDebounce from "~/hooks/use-debounce";
+import { apiFetch } from "~/lib/utils/client";
 import type { TRunFilters } from "./types";
 
 export function RunsFilters({
@@ -269,8 +269,8 @@ export function RunsFilters({
             className="pl-10"
           />
         </div>
-        {activeFilters.map((filter, index) => (
-          <Badge key={`${filter.key}-${index}`} variant="secondary" className="h-9 px-2">
+        {activeFilters.map((filter) => (
+          <Badge key={`${filter.key}-${filter.value}`} variant="secondary" className="h-9 px-2">
             {filter.label}
             <Button
               variant="ghost"

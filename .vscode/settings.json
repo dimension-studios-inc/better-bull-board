@@ -1,4 +1,7 @@
 {
+  // Disable prettier by default
+  "prettier.enable": false,
+
   // Use Biome as the default formatter
   "editor.defaultFormatter": "biomejs.biome",
 
@@ -32,5 +35,8 @@
   "editor.detectIndentation": false,
   "[yaml]": {
     "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
   }
 }

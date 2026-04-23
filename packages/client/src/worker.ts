@@ -127,11 +127,7 @@ export class Worker<
   override async processJob(
     job: Job<DataType, ResultType, NameType>,
     token: string,
-    fetchNextCallback: () => boolean,
-    jobsInProgress: Set<{
-      job: Job;
-      ts: number;
-    }>,
+    fetchNextCallback?: () => boolean,
     // biome-ignore lint/suspicious/noConfusingVoidType: override
   ): Promise<void | Job<DataType, ResultType, NameType>> {
     if (!job.id) {
@@ -150,7 +146,7 @@ export class Worker<
       }),
     );
     //* Process
-    const result = await super.processJob(job, token, fetchNextCallback, jobsInProgress);
+    const result = await super.processJob(job, token, fetchNextCallback);
 
     //* Complete
     // When success: finishedOn is set and returnvalue is updated
