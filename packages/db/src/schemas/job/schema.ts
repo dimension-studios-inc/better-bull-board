@@ -69,6 +69,7 @@ export const jobLogsTable = pgTable(
     logSeq: integer("log_seq").notNull().default(0),
   },
   (t) => [
+    uniqueIndex("ux_job_logs_run_ts_seq").on(t.jobRunId, t.ts, t.logSeq),
     index("ix_job_logs_job_run_ts").on(t.jobRunId, t.ts),
     index("ix_job_logs_ts_brin").using("brin", t.ts), // cheap time-range scans
   ],

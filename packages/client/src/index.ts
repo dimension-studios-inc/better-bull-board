@@ -1,10 +1,12 @@
 import type { SandboxedJob } from "bullmq";
 import type Redis from "ioredis";
 import { cancelable } from "./lib/cancellation";
+import { emitJobLogSyncEvent } from "./lib/log-events";
 import { installConsoleRelay, withJobConsole } from "./lib/logger";
 
 export * from "./lib/cancellation";
 export * from "./lib/job-events";
+export * from "./lib/log-events";
 export * from "./lib/logger";
 export * from "./worker";
 
@@ -31,7 +33,12 @@ export const patch = (run: (job: SandboxedJob) => Promise<unknown>, redis: Redis
     const result = await withJobConsole(
       {
         id: job.id,
-        publish: redis.publish.bind(redis),
+        emitBBBLog: (event) =>
+          emitJobLogSyncEvent({
+            redis,
+            workerId: job.id,
+            ...event,
+          }),
         autoEmitJobLogs: true,
         autoEmitBBBLogs: true,
         job,

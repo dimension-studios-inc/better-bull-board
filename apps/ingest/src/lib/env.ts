@@ -38,6 +38,16 @@ export const env = createEnv({
       .string()
       .optional()
       .transform((value) => (value ? parseInt(value, 10) : 30_000)),
+    JOB_LOG_SYNC_STREAM_KEY: z.string().default("bbb:worker:job-logs"),
+    JOB_LOG_SYNC_CONSUMER_GROUP: z.string().default("bbb-ingest-logs"),
+    JOB_LOG_SYNC_BATCH_SIZE: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 500)),
+    JOB_LOG_SYNC_PENDING_IDLE_MS: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 30_000)),
     JOB_RECONCILE_INTERVAL_MS: z
       .string()
       .optional()

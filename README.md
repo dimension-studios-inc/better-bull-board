@@ -149,7 +149,7 @@ Essential environment variables to configure:
 #### Scaling Considerations
 
 - **App Service**: Horizontally scalable (multiple replicas supported)
-- **Ingest Service**: Horizontally scalable for job ingestion. Job events are distributed with Redis Streams consumer groups; periodic maintenance uses Redis locks. Job log ingestion still uses a single elected pub/sub consumer until logs are moved to streams.
+- **Ingest Service**: Horizontally scalable for job and job log ingestion. Job and log events are distributed with Redis Streams consumer groups; periodic maintenance uses Redis locks.
 - **Database**: Use managed services (AWS RDS, etc.) for production
 - **ClickHouse**: Consider clustering for high-volume deployments
 

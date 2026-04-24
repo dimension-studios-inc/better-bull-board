@@ -1,8 +1,8 @@
-import { jobRunsTable } from "@better-bull-board/db";
+import { jobLogsTable, jobRunsTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
 import { Queue } from "bullmq";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { redis } from "../src/lib/redis";
 
 type StressOptions = {
@@ -18,6 +18,7 @@ type StressOptions = {
   streamKey: string;
   reportEvery: number;
   verify: boolean;
+  verifyLogs: boolean;
   verifyTerminal: boolean;
   verifyTimeoutMs: number;
   verifyIntervalMs: number;
@@ -30,6 +31,26 @@ type ExpectedJob = {
   shouldFail: boolean;
   payloadLength: number;
 };
+
+type StressMismatch =
+  | {
+      actual: {
+        index?: number;
+        name: string | null;
+        payloadLength: number;
+        queue: string;
+        runId?: string;
+        shouldFail?: boolean;
+        wait?: number;
+      };
+      expected: ExpectedJob;
+      jobId: string;
+      status: string;
+    }
+  | {
+      jobId: string;
+      reason: string;
+    };
 
 const getArgValue = (name: string) => {
   const prefix = `--${name}=`;
@@ -83,6 +104,7 @@ const readOptions = (): StressOptions => ({
   streamKey: getStringArg("stream-key", "bbb:worker:jobs"),
   reportEvery: getNumberArg("report-every", 1000),
   verify: getBooleanArg("verify", false),
+  verifyLogs: getBooleanArg("verify-logs", false),
   verifyTerminal: getBooleanArg("verify-terminal", false),
   verifyTimeoutMs: getNumberArg("verify-timeout-ms", 120_000),
   verifyIntervalMs: getNumberArg("verify-interval-ms", 2000),
@@ -137,6 +159,7 @@ const verifyPostgresReplication = async ({
 }) => {
   const expectedFailed = expectedJobs.filter((job) => job.shouldFail).length;
   const expectedCompleted = expectedJobs.length - expectedFailed;
+  const expectedLogCount = expectedJobs.length * 2;
   const deadline = Date.now() + options.verifyTimeoutMs;
 
   while (true) {
@@ -152,8 +175,19 @@ const verifyPostgresReplication = async ({
       .where(sql`${jobRunsTable.data}->'stress'->>'runId' = ${runId}`);
 
     const rowsById = new Map(rows.map((row) => [row.jobId, row]));
+    let logCount = 0;
+    if (options.verifyLogs) {
+      const [logCountRow] = await db
+        .select({
+          count: sql<number>`count(*)::int`,
+        })
+        .from(jobLogsTable)
+        .innerJoin(jobRunsTable, eq(jobLogsTable.jobRunId, jobRunsTable.id))
+        .where(sql`${jobRunsTable.data}->'stress'->>'runId' = ${runId}`);
+      logCount = logCountRow?.count ?? 0;
+    }
     const missing = expectedJobs.filter((job) => !rowsById.has(job.jobId));
-    const mismatches = [];
+    const mismatches: StressMismatch[] = [];
     let completed = 0;
     let failed = 0;
     let terminal = 0;
@@ -209,8 +243,9 @@ const verifyPostgresReplication = async ({
       }
     }
 
-    const terminalSatisfied = !options.verifyTerminal || terminal === expectedJobs.length;
-    if (missing.length === 0 && mismatches.length === 0 && terminalSatisfied) {
+    const terminalSatisfied = !(options.verifyTerminal || options.verifyLogs) || terminal === expectedJobs.length;
+    const logsSatisfied = !options.verifyLogs || logCount === expectedLogCount;
+    if (missing.length === 0 && mismatches.length === 0 && terminalSatisfied && logsSatisfied) {
       logger.success("Postgres replication verified", {
         runId,
         expected: expectedJobs.length,
@@ -220,6 +255,8 @@ const verifyPostgresReplication = async ({
         expectedCompleted,
         expectedFailed,
         terminal,
+        expectedLogs: options.verifyLogs ? expectedLogCount : undefined,
+        foundLogs: options.verifyLogs ? logCount : undefined,
       });
       return;
     }
@@ -239,6 +276,8 @@ const verifyPostgresReplication = async ({
         expectedFailed,
         terminal,
         verifyTerminal: options.verifyTerminal,
+        expectedLogs: options.verifyLogs ? expectedLogCount : undefined,
+        foundLogs: options.verifyLogs ? logCount : undefined,
       });
       throw new Error("Postgres replication verification failed");
     }
@@ -251,6 +290,8 @@ const verifyPostgresReplication = async ({
       mismatchCount: mismatches.length,
       terminal,
       verifyTerminal: options.verifyTerminal,
+      expectedLogs: options.verifyLogs ? expectedLogCount : undefined,
+      foundLogs: options.verifyLogs ? logCount : undefined,
     });
 
     await new Promise((resolve) => setTimeout(resolve, options.verifyIntervalMs));
