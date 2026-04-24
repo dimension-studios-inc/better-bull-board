@@ -109,6 +109,7 @@ export function RunsFilters({
         cursor: null,
         tags: newTags,
       });
+      return;
     }
 
     if (filterKey === "queue") {
