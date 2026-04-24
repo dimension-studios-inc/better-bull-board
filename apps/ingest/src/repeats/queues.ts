@@ -5,6 +5,8 @@ import { Queue } from "bullmq";
 import { and, eq, notInArray } from "drizzle-orm";
 import type Redis from "ioredis";
 import type { Cluster } from "ioredis";
+import { withLock } from "~/lib/distributed-lock";
+import { instanceId } from "~/lib/instance";
 import { redis } from "~/lib/redis";
 import { getChangedKeys } from "~/utils";
 
@@ -29,6 +31,16 @@ const scanForQueues = async (node: Redis | Cluster, startTime: number) => {
 };
 
 export const ingestQueues = async () => {
+  const lockedResult = await withLock({
+    key: "bbb:queues-ingest-lock",
+    owner: instanceId,
+    ttlMs: 55_000,
+    run: ingestQueuesUnsafe,
+  });
+  return lockedResult;
+};
+
+const ingestQueuesUnsafe = async () => {
   try {
     const allQueuesKeys = await scanForQueues(redis, Date.now());
     // <namespace>:<queueName>:id

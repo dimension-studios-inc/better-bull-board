@@ -4,6 +4,7 @@ import { cancelable } from "./lib/cancellation";
 import { installConsoleRelay, withJobConsole } from "./lib/logger";
 
 export * from "./lib/cancellation";
+export * from "./lib/job-events";
 export * from "./lib/logger";
 export * from "./worker";
 

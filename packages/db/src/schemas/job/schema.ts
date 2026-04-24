@@ -38,7 +38,7 @@ export const jobRunsTable = pgTable(
     durationMs: integer("duration_ms").generatedAlwaysAs(sql`EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000`),
   },
   (t) => [
-    uniqueIndex("ux_job_runs_jobid_enqueuedat").on(t.jobId, t.enqueuedAt), // Don't use jobId alone because if jobs are removed from bullmq it can overlap old ones
+    uniqueIndex("ux_job_runs_queue_jobid_enqueuedat").on(t.queue, t.jobId, t.enqueuedAt), // Job ids can overlap across queues.
     index("ix_job_runs_queue_created_at").on(t.queue, t.createdAt),
     index("ix_job_runs_created_at").on(t.createdAt),
     index("ix_job_runs_job").on(t.jobId),

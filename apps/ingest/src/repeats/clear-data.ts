@@ -3,7 +3,9 @@ import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
 import { formatDistance } from "date-fns";
 import { lt } from "drizzle-orm";
+import { withLock } from "~/lib/distributed-lock";
 import { env } from "~/lib/env";
+import { instanceId } from "~/lib/instance";
 
 // we want do delete old data such as job runs and job logs after AUTO_DELETE_POSTGRES_DATA
 export const clearData = async () => {
@@ -11,12 +13,19 @@ export const clearData = async () => {
   if (!autoDeletePostgresData) return;
 
   const deleteData = async () => {
-    const now = new Date();
-    const deleteDate = new Date(now.getTime() - autoDeletePostgresData);
+    await withLock({
+      key: "bbb:postgres-retention-lock",
+      owner: instanceId,
+      ttlMs: 1000 * 60 * 30,
+      run: async () => {
+        const now = new Date();
+        const deleteDate = new Date(now.getTime() - autoDeletePostgresData);
 
-    // Delete job runs
-    //? This will delete logs too
-    await db.delete(jobRunsTable).where(lt(jobRunsTable.createdAt, deleteDate));
+        // Delete job runs
+        //? This will delete logs too
+        await db.delete(jobRunsTable).where(lt(jobRunsTable.createdAt, deleteDate));
+      },
+    });
   };
 
   setInterval(
