@@ -28,6 +28,38 @@ export const env = createEnv({
       .optional()
       .transform((value) => (value ? parseInt(value, 10) : undefined)),
     WEBSOCKET_PORT: z.string().transform((value) => parseInt(value, 10)),
+    JOB_SYNC_STREAM_KEY: z.string().default("bbb:worker:jobs"),
+    JOB_SYNC_CONSUMER_GROUP: z.string().default("bbb-ingest"),
+    JOB_SYNC_BATCH_SIZE: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 300)),
+    JOB_SYNC_PENDING_IDLE_MS: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 30_000)),
+    JOB_LOG_SYNC_STREAM_KEY: z.string().default("bbb:worker:job-logs"),
+    JOB_LOG_SYNC_CONSUMER_GROUP: z.string().default("bbb-ingest-logs"),
+    JOB_LOG_SYNC_BATCH_SIZE: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 500)),
+    JOB_LOG_SYNC_PENDING_IDLE_MS: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 30_000)),
+    JOB_RECONCILE_INTERVAL_MS: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 60_000)),
+    JOB_RECONCILE_PAGE_SIZE: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 500)),
+    JOB_RECONCILE_MAX_QUEUES_PER_TICK: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 25)),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

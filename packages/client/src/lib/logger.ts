@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { Job, SandboxedJob } from "bullmq";
+import type { JobLogSyncEventInput } from "./log-events";
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: we don't want to colorize the logs
 const ansiRegex = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
@@ -52,7 +53,7 @@ function safeStringify(obj: unknown): string {
 
 type Ctx = {
   job: Job | SandboxedJob;
-  publish: (channel: string, message: string) => Promise<number>;
+  emitBBBLog: (event: JobLogSyncEventInput) => Promise<void>;
   autoEmitJobLogs?: boolean;
   autoEmitBBBLogs?: boolean;
   id: string;
@@ -92,23 +93,19 @@ export function installConsoleRelay({
       if (ctx?.job) {
         const message = params.map((p) => (typeof p === "string" ? decolorize(p) : formatForLogger(p))).join(" ");
         // Fire-and-forget so console stays sync; swallow errors.
-        if (ctx.autoEmitBBBLogs) {
+        if (ctx.autoEmitBBBLogs && ctx.job.id) {
           const { ts, seq } = nextLogTimestamp();
           const p = ctx
-            .publish(
-              "bbb:worker:job:log",
-              JSON.stringify({
-                id: ctx.id,
-                jobId: ctx.job.id,
-                queue: ctx.job.queueName,
-                logTimestamp: ts,
-                logSeq: seq,
-                jobTimestamp: ctx.job.timestamp,
-                message,
-                level,
-              }),
-            )
-            .catch((err) => original.error("🔍 Error publishing to redis", err));
+            .emitBBBLog({
+              jobId: ctx.job.id,
+              queueName: ctx.job.queueName,
+              logTimestamp: ts,
+              logSeq: seq,
+              jobTimestamp: ctx.job.timestamp,
+              message,
+              level,
+            })
+            .catch((err) => original.error("🔍 Error writing log to Redis stream", err));
           addPendingPublish(p);
           p.finally(() => removePendingPublish(p));
         }

@@ -5,14 +5,15 @@
 ## What we store
 - **Queues**: via polling
 - **Schedulers**: via polling
-- **Jobs**: via ingestion
+- **Jobs**: via Redis Streams ingestion and periodic reconciliation
 - **Jobs Logs**: via ingestion
 
 ## How does this work?
 There's two main notions in this project:
 
 - **Polling**: This process is used for long living data in redis like Queues and Schedulers.
-- **Ingestion**: For huge amount of data, we use a different approach. We use a Redis Streams to ingest the data.
+- **Ingestion**: For huge amount of data, we use Redis Streams consumer groups to ingest durable job events.
+- **Reconciliation**: Jobs are periodically checked against BullMQ state so missed or stale rows in Postgres are repaired.
 
 ### Why not use ingestion everywhere?
 Because we want to keep the use of this tool simple wrapping all your queues with the bbb client can be a pain.
@@ -148,7 +149,7 @@ Essential environment variables to configure:
 #### Scaling Considerations
 
 - **App Service**: Horizontally scalable (multiple replicas supported)
-- **Ingest Service**: NOT scalable (single instance only)
+- **Ingest Service**: Horizontally scalable for job and job log ingestion. Job and log events are distributed with Redis Streams consumer groups; periodic maintenance uses Redis locks.
 - **Database**: Use managed services (AWS RDS, etc.) for production
 - **ClickHouse**: Consider clustering for high-volume deployments
 

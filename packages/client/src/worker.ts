@@ -1,7 +1,10 @@
 import { logger } from "@rharkor/logger";
 import { Worker as BullMQWorker, type Job, Queue, QueueEvents, type RedisConnection, type WorkerOptions } from "bullmq";
 import type Redis from "ioredis";
+import { emitJobSyncEvent } from "./lib/job-events";
 import { onlyMaster } from "./lib/master";
+
+const isDefinedString = (value: string | undefined): value is string => value !== undefined;
 
 export class Worker<
   // biome-ignore lint/suspicious/noExplicitAny: extends of bullmq
@@ -75,19 +78,18 @@ export class Worker<
         const onMessage = async (args: { jobId: string; prev?: string }) => {
           const job = await queue.getJob(args.jobId);
           if (!job) return;
-          const tags = this.getJobTags?.(job as Job<DataType, ResultType, NameType>).filter(Boolean);
+          const tags = this.getJobTags?.(job as Job<DataType, ResultType, NameType>).filter(isDefinedString);
           const isWaiting = await job.isWaiting();
           if (!isWaiting) return;
-          this.ioredis.publish(
-            "bbb:worker:job",
-            JSON.stringify({
-              id: this.id,
-              job,
-              tags,
-              queueName,
-              isWaiting: true,
-            }),
-          );
+          await emitJobSyncEvent({
+            redis: this.ioredis,
+            workerId: this.id,
+            job: job as Job<DataType, ResultType, NameType>,
+            tags,
+            queueName,
+            phase: "waiting",
+            state: "waiting",
+          });
         };
 
         messageHandler = onMessage;
@@ -133,33 +135,33 @@ export class Worker<
     if (!job.id) {
       throw new Error("Job ID is required");
     }
-    const tags = this.getJobTags?.(job).filter(Boolean);
+    const tags = this.getJobTags?.(job).filter(isDefinedString);
     const queueName = job.queueName;
     //* Register the job
-    this.ioredis.publish(
-      "bbb:worker:job",
-      JSON.stringify({
-        id: this.id,
+    await emitJobSyncEvent({
+      redis: this.ioredis,
+      workerId: this.id,
+      job,
+      tags,
+      queueName,
+      phase: "active",
+      state: "active",
+    });
+    try {
+      //* Process
+      return await super.processJob(job, token, fetchNextCallback);
+    } finally {
+      //* Complete
+      // When success: finishedOn is set and returnvalue is updated
+      // When fail: failedReason, finishedOn and stacktrace are set
+      await emitJobSyncEvent({
+        redis: this.ioredis,
+        workerId: this.id,
         job,
         tags,
         queueName,
-      }),
-    );
-    //* Process
-    const result = await super.processJob(job, token, fetchNextCallback);
-
-    //* Complete
-    // When success: finishedOn is set and returnvalue is updated
-    // When fail: failedReason, finishedOn and stacktrace are set
-    this.ioredis.publish(
-      "bbb:worker:job",
-      JSON.stringify({
-        id: this.id,
-        job,
-        tags,
-        queueName,
-      }),
-    );
-    return result;
+        phase: "terminal",
+      });
+    }
   }
 }

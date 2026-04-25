@@ -1,11 +1,6 @@
-import { jobRunsInsertSchema, jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
-import { db } from "@better-bull-board/db/server";
-import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update";
 import { logger } from "@rharkor/logger";
-import type { Job } from "bullmq";
-import { getTableName, sql } from "drizzle-orm";
-import type { z } from "zod/v4";
-import { redis } from "~/lib/redis";
+import { formatJobRun, type JobRunInsert, type JobSnapshot } from "~/sync/job-format";
+import { safeUpsertJobRuns } from "~/sync/job-upsert";
 
 // Batching configuration
 const FLUSH_SIZE = 300;
@@ -13,7 +8,7 @@ const FLUSH_INTERVAL = 200; // ms
 
 // Buffers for batching
 const jobRunBuffer: Array<{
-  data: z.infer<typeof jobRunsInsertSchema>;
+  data: JobRunInsert;
   dbId?: string;
 }> = [];
 
@@ -28,60 +23,7 @@ async function flushJobRunBuffer() {
   const batch = jobRunBuffer.splice(0, jobRunBuffer.length);
 
   try {
-    // Deduplicate on (jobId, enqueuedAt) so Postgres never updates the same row twice
-    const deduped = new Map<string, (typeof batch)[0]>();
-    for (const item of batch) {
-      const key = `${item.data.jobId}-${item.data.enqueuedAt?.getTime?.() ?? item.data.enqueuedAt}`;
-      deduped.set(key, item); // later item wins
-    }
-    const values = Array.from(deduped.values()).map((item) => item.data);
-    values.sort((a, b) => {
-      const ae = a.enqueuedAt ? new Date(a.enqueuedAt).getTime() : 0;
-      const be = b.enqueuedAt ? new Date(b.enqueuedAt).getTime() : 0;
-      if (ae !== be) return ae - be;
-      return a.jobId.localeCompare(b.jobId);
-    });
-
-    // Batch upsert to PostgreSQL
-    const inserted = await db
-      .insert(jobRunsTable)
-      .values(values)
-      .onConflictDoUpdate({
-        target: [jobRunsTable.jobId, jobRunsTable.enqueuedAt],
-        // Voluntarily not updating the createdAt
-        set: {
-          ...conflictUpdateSet(jobRunsTable, [
-            "attempt",
-            "startedAt",
-            "finishedAt",
-            "errorMessage",
-            "errorStack",
-            "result",
-            "backoff",
-            "data",
-            "priority",
-            "delayMs",
-            "repeatJobKey",
-            "parentJobId",
-            "workerId",
-            "enqueuedAt",
-            "jobId",
-            "maxAttempts",
-            "queue",
-            "name",
-            "tags",
-          ]),
-          status: sql.raw(
-            `CASE WHEN excluded.${jobRunsTable.status.name} = 'waiting' THEN ${getTableName(jobRunsTable)}.${jobRunsTable.status.name} ELSE excluded.${jobRunsTable.status.name} END`,
-          ),
-        },
-      })
-      .returning({
-        id: jobRunsTable.id,
-        createdAt: jobRunsTable.createdAt,
-      });
-    await redis.publish("bbb:ingest:events:job-refresh", "1");
-    await Promise.all(inserted.map((jobRun) => redis.publish("bbb:ingest:events:single-job-refresh", jobRun.id)));
+    await safeUpsertJobRuns(batch.map((item) => item.data));
   } catch (error) {
     logger.error("Error in batch job upsert", {
       error,
@@ -107,7 +49,7 @@ function scheduleFlush() {
 
 // Queue a job run for batched processing
 let throwToLargeAlert = false;
-function queueJobRun(jobData: z.infer<typeof jobRunsInsertSchema>) {
+function queueJobRun(jobData: JobRunInsert) {
   jobRunBuffer.push({ data: jobData });
 
   // Flush immediately if buffer is full
@@ -142,7 +84,7 @@ export const handleJobChannel = async (_channel: string, message: string) => {
       queueName: queue,
     } = JSON.parse(message) as {
       id: string;
-      job: ReturnType<Job["toJSON"]>;
+      job: JobSnapshot;
       isWaiting?: boolean;
       tags?: string[];
       queueName: string;
@@ -153,31 +95,13 @@ export const handleJobChannel = async (_channel: string, message: string) => {
     if (queue === "{test-log}") {
       console.log({ message });
     }
-    const status = job.finishedOn ? (job.failedReason ? "failed" : "completed") : isWaiting ? "waiting" : "active";
-    const formatted: z.infer<typeof jobRunsInsertSchema> = {
+    const validated = formatJobRun({
       workerId: id,
-      jobId: job.id,
-      queue,
-      status,
-      attempt: job.attemptsMade,
-      maxAttempts: job.opts.attempts,
-      priority: job.opts.priority,
-      delayMs: job.opts.delay,
-      backoff: job.opts.backoff,
-      data: job.data,
-      enqueuedAt: new Date(job.timestamp),
-      startedAt: job.processedOn ? new Date(job.processedOn) : undefined,
-      finishedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
-      errorMessage: job.failedReason,
-      errorStack: job.stacktrace?.join("\n"),
-      name: job.name,
-      parentJobId: job.opts.parent?.id,
-      repeatJobKey: job.repeatJobKey,
-      result: job.returnvalue,
+      job,
+      queueName: queue,
       tags,
-      createdAt: new Date(), // We need to set the createdAt to the current date manually to check abbove if update or insert
-    };
-    const validated = jobRunsInsertSchema.parse(formatted);
+      phase: isWaiting ? "waiting" : "snapshot",
+    });
 
     // Queue for batched processing instead of individual upsert
     queueJobRun(validated);
