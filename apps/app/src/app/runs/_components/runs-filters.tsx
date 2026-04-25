@@ -54,6 +54,10 @@ export function RunsFilters({
     { value: "failed", label: "Failed" },
     { value: "active", label: "Active" },
     { value: "waiting", label: "Waiting" },
+    { value: "delayed", label: "Delayed" },
+    { value: "prioritized", label: "Prioritized" },
+    { value: "waiting-children", label: "Waiting Children" },
+    { value: "unknown", label: "Unknown" },
   ];
 
   const tagsOptions: ComboboxOption[] = useMemo(() => {

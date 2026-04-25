@@ -1,25 +1,14 @@
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { logger } from "@rharkor/logger";
-import { handleChannel } from "./channels";
 import { env } from "./lib/env";
 import { startHealthServer } from "./lib/health-server";
-import { redis } from "./lib/redis";
 import { startWebSocketServer } from "./lib/websocket-server";
 import { migrateDatabases } from "./migration";
 import { clearData } from "./repeats/clear-data";
 import { autoIngestQueues } from "./repeats/queues";
-import { stopStalledRuns } from "./repeats/stalled";
-
-const listenToEvents = async () => {
-  const subscriber = redis.duplicate();
-  await subscriber.connect().catch(() => {});
-
-  await subscriber.psubscribe("bbb:worker:*", (error) => {
-    if (error) throw error;
-    logger.log("📥 Ingesting data from Redis");
-  });
-  subscriber.on("pmessage", handleChannel);
-};
+import { autoReconcileJobs } from "./repeats/reconcile-jobs";
+import { startJobStreamIngestion } from "./sync/job-stream";
+import { startJobLogStreamIngestion } from "./sync/log-stream";
 
 const main = async () => {
   await logger.init();
@@ -28,10 +17,15 @@ const main = async () => {
   await migrateDatabases();
 
   //! Do not await
-  listenToEvents();
+  startJobStreamIngestion().catch((error) => {
+    logger.error("Failed to start job stream ingestion", { error });
+  });
+  startJobLogStreamIngestion().catch((error) => {
+    logger.error("Failed to start job log stream ingestion", { error });
+  });
   clearData();
   autoIngestQueues();
-  stopStalledRuns();
+  autoReconcileJobs();
 
   // Start WebSocket server
   startWebSocketServer();

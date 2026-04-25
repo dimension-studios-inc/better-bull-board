@@ -85,6 +85,20 @@
       "when": 1761732873888,
       "tag": "0011_late_joystick",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1777046400000,
+      "tag": "0012_reliable_job_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1777046500000,
+      "tag": "0013_job_log_streams",
+      "breakpoints": true
     }
   ]
 }

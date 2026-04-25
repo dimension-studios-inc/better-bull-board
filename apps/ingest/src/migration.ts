@@ -1,7 +1,9 @@
 import { exec } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
+import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
+import { sql } from "drizzle-orm";
 import { env } from "./lib/env";
 
 const execAsync = promisify(exec);
@@ -35,26 +37,30 @@ export async function migrateDatabases(): Promise<void> {
  */
 async function migratePostgreSQL(): Promise<void> {
   try {
-    // Run drizzle-kit migrate command
-    const { stderr } = await execAsync("npx drizzle-kit migrate", {
-      cwd: path.resolve(process.cwd(), "packages/db"),
-      env: {
-        ...process.env,
-        DATABASE_URL: process.env.DATABASE_URL,
-      },
-    });
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('better-bull-board:migrations'))`);
 
-    if (stderr) {
-      // Filter out npm notices and warnings
-      const filteredStderr = stderr
-        .split("\n")
-        .filter((line) => !line.trim().startsWith("npm notice") && !line.toLowerCase().includes("warning"))
-        .join("\n");
+      // Run drizzle-kit migrate command
+      const { stderr } = await execAsync("npx drizzle-kit migrate", {
+        cwd: path.resolve(process.cwd(), "packages/db"),
+        env: {
+          ...process.env,
+          DATABASE_URL: process.env.DATABASE_URL,
+        },
+      });
 
-      if (filteredStderr.trim()) {
-        logger.error("PostgreSQL migration error:", filteredStderr);
+      if (stderr) {
+        // Filter out npm notices and warnings
+        const filteredStderr = stderr
+          .split("\n")
+          .filter((line) => !line.trim().startsWith("npm notice") && !line.toLowerCase().includes("warning"))
+          .join("\n");
+
+        if (filteredStderr.trim()) {
+          logger.error("PostgreSQL migration error:", filteredStderr);
+        }
       }
-    }
+    });
   } catch (error) {
     logger.error("❌ PostgreSQL migration failed", error);
     throw new Error(`PostgreSQL migration failed: ${error}`);

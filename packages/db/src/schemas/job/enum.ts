@@ -5,11 +5,10 @@ export const jobStatusEnum = pgEnum("job_status", [
   "completed",
   "failed",
   "waiting",
-  // "delayed",
-  // "paused",
-  // "stalled",
-  // "discarded",
-  // "waiting-children",
+  "delayed",
+  "prioritized",
+  "waiting-children",
+  "unknown",
 ]);
 
 export const logLevelEnum = pgEnum("log_level", ["log", "debug", "info", "warn", "error"]);
