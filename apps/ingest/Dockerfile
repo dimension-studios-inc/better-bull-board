@@ -57,4 +57,4 @@ COPY --from=builder /app /app
 RUN chown -R nodeapp:nodejs /app /home/nodeapp
 USER nodeapp
 
-CMD ["node", "apps/ingest/dist/index.js"]
+CMD ["node", "apps/ingest/dist/index.mjs"]
