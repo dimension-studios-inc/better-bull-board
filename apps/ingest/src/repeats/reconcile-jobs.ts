@@ -16,6 +16,11 @@ const NON_TERMINAL_STATUSES = ["waiting", "active", "delayed", "prioritized", "w
 let reconcileInterval: NodeJS.Timeout | null = null;
 let queueCursor = 0;
 
+const inspectUnexpectedJob = (job: unknown) => ({
+  type: typeof job,
+  value: job,
+});
+
 const isBullMqJob = (job: Job | undefined): job is Job => Boolean(job?.id && typeof job.getState === "function");
 
 const getQueueNames = async () => {
@@ -43,7 +48,11 @@ const reconcileRetainedBullMqJobs = async (queue: Queue, queueName: string) => {
 
     for (const job of jobs) {
       if (!isBullMqJob(job)) {
-        logger.warn("Skipping missing BullMQ job during reconciliation", { queueName, start });
+        logger.warn("Skipping unexpected BullMQ job during reconciliation", {
+          queueName,
+          start,
+          job: inspectUnexpectedJob(job),
+        });
         continue;
       }
 
