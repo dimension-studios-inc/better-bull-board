@@ -5,6 +5,7 @@ import { startHealthServer } from "./lib/health-server";
 import { startWebSocketServer } from "./lib/websocket-server";
 import { migrateDatabases } from "./migration";
 import { clearData } from "./repeats/clear-data";
+import { startDashboardRollups } from "./repeats/dashboard-rollups";
 import { autoIngestQueues } from "./repeats/queues";
 import { autoReconcileJobs } from "./repeats/reconcile-jobs";
 import { startJobStreamIngestion } from "./sync/job-stream";
@@ -24,6 +25,7 @@ const main = async () => {
     logger.error("Failed to start job log stream ingestion", { error });
   });
   clearData();
+  startDashboardRollups();
   autoIngestQueues();
   autoReconcileJobs();
 

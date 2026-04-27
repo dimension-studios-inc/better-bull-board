@@ -1,14 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { getTopQueuesCountApiRoute } from "~/app/api/dashboard/top-queues-count/schemas";
+import type { z } from "zod";
+import type { dashboardTopQueuesCountOutput } from "~/app/api/dashboard/summary/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { apiFetch } from "~/lib/utils/client";
 
 interface QueueCountChartProps {
-  days: number;
+  queueCounts: z.output<typeof dashboardTopQueuesCountOutput>[] | undefined;
+  isLoading: boolean;
 }
 
 const CustomTooltip = ({
@@ -31,15 +31,7 @@ const CustomTooltip = ({
   return null;
 };
 
-export function QueueCountChart({ days }: QueueCountChartProps) {
-  const { data: queueCounts, isLoading } = useQuery({
-    queryKey: ["dashboard/top-queues-count", days],
-    queryFn: apiFetch({
-      apiRoute: getTopQueuesCountApiRoute,
-      body: { days, limit: 10 },
-    }),
-  });
-
+export function QueueCountChart({ queueCounts, isLoading }: QueueCountChartProps) {
   const chartData =
     queueCounts?.map((item) => ({
       queue: item.queue,

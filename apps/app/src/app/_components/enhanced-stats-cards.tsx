@@ -1,25 +1,19 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react";
-import { getEnhancedStatsApiRoute } from "~/app/api/dashboard/enhanced-stats/schemas";
+import type { z } from "zod";
+import type { dashboardEnhancedStatsOutput } from "~/app/api/dashboard/summary/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { apiFetch, cn } from "~/lib/utils/client";
+import { cn } from "~/lib/utils/client";
 
 interface EnhancedStatsCardsProps {
   days: number;
+  stats: z.output<typeof dashboardEnhancedStatsOutput> | undefined;
+  isLoading: boolean;
 }
 
-export function EnhancedStatsCards({ days }: EnhancedStatsCardsProps) {
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ["dashboard/enhanced-stats", days],
-    queryFn: apiFetch({
-      apiRoute: getEnhancedStatsApiRoute,
-      body: { days },
-    }),
-  });
-
+export function EnhancedStatsCards({ days, stats, isLoading }: EnhancedStatsCardsProps) {
   const cards = [
     {
       title: "Running Tasks",
