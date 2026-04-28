@@ -77,3 +77,27 @@ export const jobLogsTable = pgTable(
 
 export const jobLogsInsertSchema = createInsertSchema(jobLogsTable);
 export const jobLogsSelectSchema = createSelectSchema(jobLogsTable);
+
+// Ingest-internal buffer for log events that arrive before the parent job run exists.
+export const jobLogBufferTable = pgTable(
+  "job_log_buffer",
+  {
+    id: uuid().primaryKey().notNull().default(sql`uuid_generate_v7()`),
+    queue: text("queue").notNull(),
+    jobId: text("job_id").notNull(),
+    jobTimestamp: timestamp("job_timestamp", { precision: 3, mode: "date" }).notNull(),
+    logTimestamp: timestamp("log_timestamp", { precision: 3, mode: "date" }).notNull(),
+    logSeq: integer("log_seq").notNull().default(0),
+    level: logLevelEnum("level").notNull().default("info"),
+    message: text("message").notNull(),
+    createdAt: timestamp("created_at", { precision: 3, mode: "date" }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (t) => [
+    uniqueIndex("ux_job_log_buffer_identity").on(t.queue, t.jobId, t.jobTimestamp, t.logTimestamp, t.logSeq),
+    index("ix_job_log_buffer_created_at").on(t.createdAt),
+    index("ix_job_log_buffer_job").on(t.queue, t.jobId, t.jobTimestamp),
+  ],
+);
+
+export const jobLogBufferInsertSchema = createInsertSchema(jobLogBufferTable);
+export const jobLogBufferSelectSchema = createSelectSchema(jobLogBufferTable);

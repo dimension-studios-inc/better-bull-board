@@ -99,6 +99,13 @@
       "when": 1777046500000,
       "tag": "0013_job_log_streams",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1777046600000,
+      "tag": "0014_job_log_buffer",
+      "breakpoints": true
     }
   ]
 }
