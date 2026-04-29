@@ -1,6 +1,6 @@
 import { jobRunsTable, type jobStatusEnum } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import { and, arrayOverlaps, asc, desc, eq, gt, ilike, lt, or } from "drizzle-orm";
+import { and, arrayOverlaps, asc, desc, eq, gt, gte, ilike, lt, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobsTableApiRoute } from "./schemas";
@@ -8,8 +8,11 @@ import { getJobsTableApiRoute } from "./schemas";
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getJobsTableApiRoute,
   async handler(input) {
-    const { cursor, search, queue, status, tags } = input;
+    const { cursor, search, queue, status, tags, createdFrom, createdTo } = input;
     const limit = input.limit ?? 20;
+    const sortBy = input.sortBy ?? "createdAt";
+    const sortDirection = input.sortDirection ?? "desc";
+    const durationSortExpression = sql<number>`COALESCE(${jobRunsTable.durationMs}, 0)`;
 
     const getRows = async (direction: "next" | "prev") => {
       const conditions = [];
@@ -40,32 +43,65 @@ export const POST = createAuthenticatedApiRoute({
         conditions.push(arrayOverlaps(jobRunsTable.tags, tags));
       }
 
+      if (createdFrom) {
+        conditions.push(gte(jobRunsTable.createdAt, new Date(createdFrom)));
+      }
+
+      if (createdTo) {
+        const createdToDate = new Date(createdTo);
+        createdToDate.setHours(23, 59, 59, 999);
+        conditions.push(lte(jobRunsTable.createdAt, createdToDate));
+      }
+
       if (cursor) {
         // Cursor filtering
-        const { createdAt, jobId, id } = cursor;
+        const { createdAt, jobId, id, durationMs } = cursor;
         const createdAtDate = new Date(createdAt);
 
+        const isNext = direction === "next";
+        const isDescending = sortDirection === "desc";
+        const shouldUseLessThan = isNext === isDescending;
+
+        const createdAtComparison = shouldUseLessThan
+          ? or(
+              lt(jobRunsTable.createdAt, createdAtDate),
+              and(eq(jobRunsTable.createdAt, createdAtDate), lt(jobRunsTable.jobId, jobId)),
+              and(eq(jobRunsTable.createdAt, createdAtDate), eq(jobRunsTable.jobId, jobId), lt(jobRunsTable.id, id)),
+            )
+          : or(
+              gt(jobRunsTable.createdAt, createdAtDate),
+              and(eq(jobRunsTable.createdAt, createdAtDate), gt(jobRunsTable.jobId, jobId)),
+              and(eq(jobRunsTable.createdAt, createdAtDate), eq(jobRunsTable.jobId, jobId), gt(jobRunsTable.id, id)),
+            );
+
         const comparison =
-          direction === "next"
+          sortBy === "durationMs"
             ? or(
-                lt(jobRunsTable.createdAt, createdAtDate),
-                and(eq(jobRunsTable.createdAt, createdAtDate), lt(jobRunsTable.jobId, jobId)),
-                and(eq(jobRunsTable.createdAt, createdAtDate), eq(jobRunsTable.jobId, jobId), lt(jobRunsTable.id, id)),
+                shouldUseLessThan
+                  ? lt(durationSortExpression, durationMs ?? 0)
+                  : gt(durationSortExpression, durationMs ?? 0),
+                and(eq(durationSortExpression, durationMs ?? 0), createdAtComparison),
               )
-            : or(
-                gt(jobRunsTable.createdAt, createdAtDate),
-                and(eq(jobRunsTable.createdAt, createdAtDate), gt(jobRunsTable.jobId, jobId)),
-                and(eq(jobRunsTable.createdAt, createdAtDate), eq(jobRunsTable.jobId, jobId), gt(jobRunsTable.id, id)),
-              );
+            : createdAtComparison;
 
         conditions.push(comparison);
       }
 
       // Determine sort order
+      const orderDirection = direction === "next" ? sortDirection : sortDirection === "desc" ? "asc" : "desc";
       const order =
-        direction === "next"
-          ? [desc(jobRunsTable.createdAt), desc(jobRunsTable.jobId), desc(jobRunsTable.id)]
-          : [asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id)];
+        sortBy === "durationMs"
+          ? orderDirection === "desc"
+            ? [
+                desc(durationSortExpression),
+                desc(jobRunsTable.createdAt),
+                desc(jobRunsTable.jobId),
+                desc(jobRunsTable.id),
+              ]
+            : [asc(durationSortExpression), asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id)]
+          : orderDirection === "desc"
+            ? [desc(jobRunsTable.createdAt), desc(jobRunsTable.jobId), desc(jobRunsTable.id)]
+            : [asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id)];
 
       // Fetch one extra record to detect next page
       const result = await db
