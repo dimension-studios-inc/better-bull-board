@@ -1,7 +1,7 @@
 import { jobRunsTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
-import { type JobType, Queue } from "bullmq";
+import { type Job, type JobType, Queue } from "bullmq";
 import { and, eq, inArray } from "drizzle-orm";
 import { acquireLock, releaseLock } from "~/lib/distributed-lock";
 import { env } from "~/lib/env";
@@ -15,6 +15,13 @@ const NON_TERMINAL_STATUSES = ["waiting", "active", "delayed", "prioritized", "w
 
 let reconcileInterval: NodeJS.Timeout | null = null;
 let queueCursor = 0;
+
+const inspectUnexpectedJob = (job: unknown) => ({
+  type: typeof job,
+  value: job,
+});
+
+const isBullMqJob = (job: Job | undefined): job is Job => Boolean(job?.id && typeof job.getState === "function");
 
 const getQueueNames = async () => {
   const queues = await db.select({ name: queuesTable.name }).from(queuesTable);
@@ -40,6 +47,15 @@ const reconcileRetainedBullMqJobs = async (queue: Queue, queueName: string) => {
     if (jobs.length === 0) break;
 
     for (const job of jobs) {
+      if (!isBullMqJob(job)) {
+        logger.warn("Skipping unexpected BullMQ job during reconciliation", {
+          queueName,
+          start,
+          job: inspectUnexpectedJob(job),
+        });
+        continue;
+      }
+
       const state = bullStateToPersistedStatus(await job.getState());
       rows.push(
         formatJobRun({
@@ -72,7 +88,7 @@ const reconcileMissingNonTerminalRows = async (queue: Queue, queueName: string) 
 
   for (const row of staleRows) {
     const job = await queue.getJob(row.jobId);
-    if (job) {
+    if (isBullMqJob(job)) {
       const state = bullStateToPersistedStatus(await job.getState());
       await safeUpsertJobRuns([
         formatJobRun({
