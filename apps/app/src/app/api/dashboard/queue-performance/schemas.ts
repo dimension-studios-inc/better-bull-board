@@ -13,6 +13,8 @@ export const getQueuePerformanceOutput = z.array(
     failures: z.number(),
     errorRate: z.number(),
     avgDuration: z.number(),
+    minDuration: z.number(),
+    maxDuration: z.number(),
   }),
 );
 

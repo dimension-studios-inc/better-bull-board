@@ -29,6 +29,28 @@ export const POST = createAuthenticatedApiRoute({
               END
             `,
           ),
+          minDuration: sql<number>`
+            MIN(
+              CASE 
+                WHEN ${jobRunsTable.status} = 'completed' 
+                  AND ${jobRunsTable.startedAt} IS NOT NULL 
+                  AND ${jobRunsTable.finishedAt} IS NOT NULL
+                THEN EXTRACT(EPOCH FROM (${jobRunsTable.finishedAt} - ${jobRunsTable.startedAt}))
+                ELSE NULL
+              END
+            )
+          `,
+          maxDuration: sql<number>`
+            MAX(
+              CASE 
+                WHEN ${jobRunsTable.status} = 'completed' 
+                  AND ${jobRunsTable.startedAt} IS NOT NULL 
+                  AND ${jobRunsTable.finishedAt} IS NOT NULL
+                THEN EXTRACT(EPOCH FROM (${jobRunsTable.finishedAt} - ${jobRunsTable.startedAt}))
+                ELSE NULL
+              END
+            )
+          `,
         })
         .from(jobRunsTable)
         .where(and(gte(jobRunsTable.createdAt, dateFrom), lte(jobRunsTable.createdAt, dateTo)))
@@ -42,6 +64,8 @@ export const POST = createAuthenticatedApiRoute({
         failures: Number(item.failures),
         errorRate: item.totalRuns > 0 ? (Number(item.failures) / Number(item.totalRuns)) * 100 : 0,
         avgDuration: Number(item.avgDuration) || 0,
+        minDuration: Number(item.minDuration) || 0,
+        maxDuration: Number(item.maxDuration) || 0,
       }));
     } catch (error) {
       console.error("Error fetching queue performance data:", error);

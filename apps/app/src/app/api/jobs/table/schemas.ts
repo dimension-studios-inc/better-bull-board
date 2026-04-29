@@ -7,12 +7,17 @@ export const getJobsTableInput = z.object({
       createdAt: z.number(),
       jobId: z.string(),
       id: z.string(),
+      durationMs: z.number().nullable().optional(),
     })
     .nullish(),
   search: z.string().optional(),
   status: z.string().optional(),
   queue: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  createdFrom: z.string().optional(),
+  createdTo: z.string().optional(),
+  sortBy: z.enum(["createdAt", "durationMs"]).optional(),
+  sortDirection: z.enum(["asc", "desc"]).optional(),
   limit: z.number().min(1).max(100).optional(),
 });
 
@@ -30,6 +35,7 @@ export const getJobsTableOutput = z.object({
       enqueuedAt: z.coerce.date().nullable(),
       startedAt: z.coerce.date().nullable(),
       finishedAt: z.coerce.date().nullable(),
+      durationMs: z.number().nullable(),
       errorMessage: z.string().nullable(),
       tags: z.array(z.string()).nullable(),
     }),
@@ -39,6 +45,7 @@ export const getJobsTableOutput = z.object({
       createdAt: z.coerce.date(),
       jobId: z.string(),
       id: z.string(),
+      durationMs: z.number().nullable().optional(),
     })
     .nullable(),
   prevCursor: z
@@ -46,6 +53,7 @@ export const getJobsTableOutput = z.object({
       createdAt: z.coerce.date(),
       jobId: z.string(),
       id: z.string(),
+      durationMs: z.number().nullable().optional(),
     })
     .nullable(),
 });

@@ -22,10 +22,17 @@ export function RunsFilters({
   startEndContent,
 }: {
   filters: TRunFilters;
-  setFilters: (filters: Partial<Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "cursor">>) => void;
+  setFilters: (
+    filters: Partial<
+      Pick<
+        TRunFilters,
+        "queue" | "status" | "search" | "tags" | "createdFrom" | "createdTo" | "sortBy" | "sortDirection" | "cursor"
+      >
+    >,
+  ) => void;
   runs?: {
-    nextCursor: { createdAt: Date; jobId: string; id: string } | null;
-    prevCursor: { createdAt: Date; jobId: string; id: string } | null;
+    nextCursor: { createdAt: Date; jobId: string; id: string; durationMs?: number | null } | null;
+    prevCursor: { createdAt: Date; jobId: string; id: string; durationMs?: number | null } | null;
   };
   startEndContent?: React.ReactNode;
 }) {
@@ -99,6 +106,22 @@ export function RunsFilters({
       });
     }
 
+    if (filters.createdFrom) {
+      activeFilters.push({
+        key: "createdFrom",
+        label: `Created from ${filters.createdFrom}`,
+        value: filters.createdFrom,
+      });
+    }
+
+    if (filters.createdTo) {
+      activeFilters.push({
+        key: "createdTo",
+        label: `Created to ${filters.createdTo}`,
+        value: filters.createdTo,
+      });
+    }
+
     return activeFilters;
   };
 
@@ -124,6 +147,16 @@ export function RunsFilters({
 
     if (filterKey === "tags") {
       setFilters({ cursor: null, tags: [] });
+      return;
+    }
+
+    if (filterKey === "createdFrom") {
+      setFilters({ cursor: null, createdFrom: "" });
+      return;
+    }
+
+    if (filterKey === "createdTo") {
+      setFilters({ cursor: null, createdTo: "" });
       return;
     }
 
@@ -258,6 +291,24 @@ export function RunsFilters({
                       popoverContentClassName="w-80"
                     />
                     <div className="text-xs text-muted-foreground">Start typing to search (2+ chars).</div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Created</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="date"
+                      value={filters.createdFrom}
+                      onChange={(event) => setFilters({ createdFrom: event.target.value })}
+                      aria-label="Created from"
+                    />
+                    <Input
+                      type="date"
+                      value={filters.createdTo}
+                      onChange={(event) => setFilters({ createdTo: event.target.value })}
+                      aria-label="Created to"
+                    />
                   </div>
                 </div>
               </div>
