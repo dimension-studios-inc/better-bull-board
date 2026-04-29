@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryStates } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
@@ -24,6 +25,10 @@ export function RunsTable() {
     status: parseAsString.withDefault("all"),
     search: parseAsString.withDefault(""),
     tags: parseAsString.withDefault(""),
+    createdFrom: parseAsString.withDefault(""),
+    createdTo: parseAsString.withDefault(""),
+    sortBy: parseAsString.withDefault("createdAt"),
+    sortDirection: parseAsString.withDefault("desc"),
     cursor: parseAsString.withDefault(""),
   });
 
@@ -33,6 +38,8 @@ export function RunsTable() {
     () => ({
       ...urlFilters,
       tags: urlFilters.tags ? urlFilters.tags.split(",").filter(Boolean) : [],
+      sortBy: urlFilters.sortBy === "durationMs" ? "durationMs" : "createdAt",
+      sortDirection: urlFilters.sortDirection === "asc" ? "asc" : "desc",
       cursor: JSON.parse(Buffer.from(urlFilters.cursor, "base64").toString("utf-8") || "null") ?? null,
       limit: 15,
     }),
@@ -50,9 +57,16 @@ export function RunsTable() {
   });
 
   const handleFiltersChange = (
-    newFilters: Partial<Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "cursor">>,
+    newFilters: Partial<
+      Pick<
+        TRunFilters,
+        "queue" | "status" | "search" | "tags" | "createdFrom" | "createdTo" | "sortBy" | "sortDirection" | "cursor"
+      >
+    >,
   ) => {
-    const urlUpdate: Record<string, unknown> = {};
+    const urlUpdate: Record<string, unknown> = Object.keys(newFilters).some((key) => key !== "cursor")
+      ? { cursor: "" }
+      : {};
 
     for (const [key, value] of Object.entries(newFilters)) {
       if (key === "tags" && Array.isArray(value)) {
@@ -124,6 +138,19 @@ export function RunsTable() {
     router.push(`/runs/${runId}`);
   };
 
+  const handleDurationSort = () => {
+    handleFiltersChange({
+      sortBy: "durationMs",
+      sortDirection: filters.sortBy === "durationMs" && filters.sortDirection === "desc" ? "asc" : "desc",
+    });
+  };
+
+  const getDurationSortIcon = () => {
+    if (filters.sortBy !== "durationMs") return <ArrowUpDown className="size-3.5 text-muted-foreground" />;
+    if (filters.sortDirection === "asc") return <ArrowUp className="size-3.5" />;
+    return <ArrowDown className="size-3.5" />;
+  };
+
   return (
     <div className="space-y-4">
       <RunsFilters
@@ -154,7 +181,12 @@ export function RunsTable() {
               <TableHead style={{ width: "120px" }}>Queue</TableHead>
               <TableHead style={{ width: "180px" }}>Tags</TableHead>
               <TableHead style={{ width: "120px" }}>Status</TableHead>
-              <TableHead style={{ width: "120px" }}>Duration</TableHead>
+              <TableHead style={{ width: "120px" }}>
+                <button type="button" className="flex items-center gap-1 font-medium" onClick={handleDurationSort}>
+                  Duration
+                  {getDurationSortIcon()}
+                </button>
+              </TableHead>
               <TableHead style={{ width: "140px" }}>Created</TableHead>
               <TableHead style={{ width: "140px" }}>Finished</TableHead>
               <TableHead style={{ width: "140px" }}>Error</TableHead>

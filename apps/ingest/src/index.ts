@@ -9,6 +9,7 @@ import { startDashboardRollups } from "./repeats/dashboard-rollups";
 import { autoIngestQueues } from "./repeats/queues";
 import { autoReconcileJobs } from "./repeats/reconcile-jobs";
 import { startJobStreamIngestion } from "./sync/job-stream";
+import { autoResolveBufferedJobLogs } from "./sync/log-buffer";
 import { startJobLogStreamIngestion } from "./sync/log-stream";
 
 const main = async () => {
@@ -24,6 +25,7 @@ const main = async () => {
   startJobLogStreamIngestion().catch((error) => {
     logger.error("Failed to start job log stream ingestion", { error });
   });
+  autoResolveBufferedJobLogs();
   clearData();
   startDashboardRollups();
   autoIngestQueues();
@@ -52,6 +54,7 @@ const h = monitorEventLoopDelay({ resolution: 20 });
 h.enable();
 setInterval(() => {
   const p99 = h.percentile(99) / 1e6; // ms
+  h.reset();
   if (p99 > 100) logger.warn("Event loop p99", p99, "ms");
 }, 2000);
 

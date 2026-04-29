@@ -3,7 +3,7 @@ import { db } from "@better-bull-board/db/server";
 import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update";
 import { logger } from "@rharkor/logger";
 import { getTableName, sql } from "drizzle-orm";
-import { redis } from "~/lib/redis";
+import { publishIngestEvent } from "~/lib/ingest-events";
 import type { JobRunInsert } from "./job-format";
 
 export const upsertJobRuns = async (runs: JobRunInsert[]) => {
@@ -50,8 +50,12 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
           "maxAttempts",
           "queue",
           "name",
-          "tags",
         ]),
+        tags: sql.raw(`CASE
+          WHEN COALESCE(cardinality(excluded.${jobRunsTable.tags.name}), 0) > 0
+            THEN excluded.${jobRunsTable.tags.name}
+          ELSE ${tableName}.${jobRunsTable.tags.name}
+        END`),
         status: sql.raw(`CASE
           WHEN ${tableName}.${jobRunsTable.status.name} IN ('completed', 'failed')
             AND excluded.${jobRunsTable.status.name} NOT IN ('completed', 'failed')
@@ -65,8 +69,11 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
       status: jobRunsTable.status,
     });
 
-  await redis.publish("bbb:ingest:events:job-refresh", "1");
-  await Promise.all(inserted.map((jobRun) => redis.publish("bbb:ingest:events:single-job-refresh", jobRun.id)));
+  publishIngestEvent("bbb:ingest:events:job-refresh", "1");
+  for (const jobRun of inserted) {
+    publishIngestEvent("bbb:ingest:events:single-job-refresh", jobRun.id, { jobRunId: jobRun.id });
+  }
+
   return inserted;
 };
 

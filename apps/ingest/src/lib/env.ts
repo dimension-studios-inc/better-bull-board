@@ -48,6 +48,18 @@ export const env = createEnv({
       .string()
       .optional()
       .transform((value) => (value ? parseInt(value, 10) : 30_000)),
+    JOB_LOG_BUFFER_FLUSH_INTERVAL_MS: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 10_000)),
+    JOB_LOG_BUFFER_BATCH_SIZE: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 1000)),
+    JOB_LOG_BUFFER_ORPHAN_WARN_AFTER_MS: z
+      .string()
+      .optional()
+      .transform((value) => (value ? parseInt(value, 10) : 3_600_000)),
     JOB_RECONCILE_INTERVAL_MS: z
       .string()
       .optional()

@@ -1,13 +1,15 @@
-import { jobLogsTable } from "@better-bull-board/db/schemas/job/schema";
-import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
-import { DrizzleQueryError } from "drizzle-orm";
-import { DatabaseError } from "pg";
 import { z } from "zod/v4";
 import { env } from "~/lib/env";
 import { instanceId } from "~/lib/instance";
 import { redis } from "~/lib/redis";
-import { getJobFromBullId } from "~/utils";
+import { persistLogEvents } from "~/sync/log-buffer";
+
+const streamRedis = redis.duplicate();
+
+streamRedis.on("error", (error) => {
+  logger.error("Job log stream Redis connection error", { error });
+});
 
 type StreamMessage = {
   id: string;
@@ -73,79 +75,19 @@ const ackAndDelete = async (ids: string[]) => {
   await redis.call("XDEL", env.JOB_LOG_SYNC_STREAM_KEY, ...ids);
 };
 
-async function withDeadlockRetry<T>(fn: () => Promise<T>, tries = 5): Promise<T> {
-  let lastErr: unknown;
-  for (let i = 0; i < tries; i++) {
-    try {
-      return await fn();
-    } catch (error: unknown) {
-      if (error instanceof DrizzleQueryError && error.cause instanceof DatabaseError && error.cause.code === "40P01") {
-        lastErr = error;
-        const backoff = 25 * (i + 1) + Math.floor(Math.random() * 50);
-        await new Promise((resolve) => setTimeout(resolve, backoff));
-        continue;
-      }
-      throw error;
-    }
-  }
-  throw lastErr;
-}
-
 const insertLogs = async (events: Array<{ event: LogSyncEvent; id: string }>) => {
-  const byRunId = new Map<
-    string,
-    Array<{
-      level: LogSyncEvent["level"];
-      logSeq: number;
-      message: string;
-      ts: Date;
-    }>
-  >();
-  const resolvedIds: string[] = [];
-  const unresolvedIds: string[] = [];
-
-  for (const item of events) {
-    const jobRunId = await getJobFromBullId(item.event.jobId, new Date(item.event.jobTimestamp), item.event.queueName);
-    if (!jobRunId) {
-      unresolvedIds.push(item.id);
-      continue;
-    }
-
-    const rows = byRunId.get(jobRunId) ?? [];
-    rows.push({
-      level: item.event.level,
-      message: item.event.message,
-      ts: new Date(item.event.logTimestamp),
-      logSeq: item.event.logSeq,
-    });
-    byRunId.set(jobRunId, rows);
-    resolvedIds.push(item.id);
-  }
-
-  for (const jobRunId of Array.from(byRunId.keys()).sort()) {
-    const rows = byRunId.get(jobRunId) ?? [];
-    for (let i = 0; i < rows.length; i += 100) {
-      const chunk = rows.slice(i, i + 100);
-      await withDeadlockRetry(async () => {
-        await db
-          .insert(jobLogsTable)
-          .values(chunk.map((row) => ({ ...row, jobRunId })))
-          .onConflictDoNothing({
-            target: [jobLogsTable.jobRunId, jobLogsTable.ts, jobLogsTable.logSeq],
-          });
-      });
-    }
-    await redis.publish("bbb:ingest:events:job-log-refresh", jobRunId);
-  }
-
-  if (unresolvedIds.length > 0) {
-    logger.debug("Leaving job log stream messages pending until parent job row exists", {
-      count: unresolvedIds.length,
-      sample: unresolvedIds.slice(0, 5),
-    });
-  }
-
-  return resolvedIds;
+  return persistLogEvents(
+    events.map(({ event, id }) => ({
+      id,
+      queue: event.queueName,
+      jobId: event.jobId,
+      jobTimestamp: new Date(event.jobTimestamp),
+      logTimestamp: new Date(event.logTimestamp),
+      logSeq: event.logSeq,
+      level: event.level,
+      message: event.message,
+    })),
+  );
 };
 
 const processMessages = async (messages: StreamMessage[]) => {
@@ -184,7 +126,7 @@ const processMessages = async (messages: StreamMessage[]) => {
 
 const readPendingMessages = async () => {
   try {
-    const response = await redis.call(
+    const response = await streamRedis.call(
       "XAUTOCLAIM",
       env.JOB_LOG_SYNC_STREAM_KEY,
       env.JOB_LOG_SYNC_CONSUMER_GROUP,
@@ -202,7 +144,7 @@ const readPendingMessages = async () => {
 };
 
 const readNewMessages = async () => {
-  const response = await redis.call(
+  const response = await streamRedis.call(
     "XREADGROUP",
     "GROUP",
     env.JOB_LOG_SYNC_CONSUMER_GROUP,
