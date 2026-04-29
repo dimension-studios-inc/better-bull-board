@@ -50,8 +50,12 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
           "maxAttempts",
           "queue",
           "name",
-          "tags",
         ]),
+        tags: sql.raw(`CASE
+          WHEN COALESCE(cardinality(excluded.${jobRunsTable.tags.name}), 0) > 0
+            THEN excluded.${jobRunsTable.tags.name}
+          ELSE ${tableName}.${jobRunsTable.tags.name}
+        END`),
         status: sql.raw(`CASE
           WHEN ${tableName}.${jobRunsTable.status.name} IN ('completed', 'failed')
             AND excluded.${jobRunsTable.status.name} NOT IN ('completed', 'failed')

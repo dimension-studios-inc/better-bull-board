@@ -8,6 +8,7 @@ import { clearData } from "./repeats/clear-data";
 import { autoIngestQueues } from "./repeats/queues";
 import { autoReconcileJobs } from "./repeats/reconcile-jobs";
 import { startJobStreamIngestion } from "./sync/job-stream";
+import { autoResolveBufferedJobLogs } from "./sync/log-buffer";
 import { startJobLogStreamIngestion } from "./sync/log-stream";
 
 const main = async () => {
@@ -23,6 +24,7 @@ const main = async () => {
   startJobLogStreamIngestion().catch((error) => {
     logger.error("Failed to start job log stream ingestion", { error });
   });
+  autoResolveBufferedJobLogs();
   clearData();
   autoIngestQueues();
   autoReconcileJobs();
