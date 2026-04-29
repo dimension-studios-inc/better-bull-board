@@ -5,6 +5,12 @@ import { instanceId } from "~/lib/instance";
 import { redis } from "~/lib/redis";
 import { persistLogEvents } from "~/sync/log-buffer";
 
+const streamRedis = redis.duplicate();
+
+streamRedis.on("error", (error) => {
+  logger.error("Job log stream Redis connection error", { error });
+});
+
 type StreamMessage = {
   id: string;
   fields: string[];
@@ -120,7 +126,7 @@ const processMessages = async (messages: StreamMessage[]) => {
 
 const readPendingMessages = async () => {
   try {
-    const response = await redis.call(
+    const response = await streamRedis.call(
       "XAUTOCLAIM",
       env.JOB_LOG_SYNC_STREAM_KEY,
       env.JOB_LOG_SYNC_CONSUMER_GROUP,
@@ -138,7 +144,7 @@ const readPendingMessages = async () => {
 };
 
 const readNewMessages = async () => {
-  const response = await redis.call(
+  const response = await streamRedis.call(
     "XREADGROUP",
     "GROUP",
     env.JOB_LOG_SYNC_CONSUMER_GROUP,

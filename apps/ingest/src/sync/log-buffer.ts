@@ -5,8 +5,8 @@ import { and, DrizzleQueryError, eq, inArray, or, sql } from "drizzle-orm";
 import { DatabaseError } from "pg";
 import { acquireLock, releaseLock } from "~/lib/distributed-lock";
 import { env } from "~/lib/env";
+import { publishIngestEvent } from "~/lib/ingest-events";
 import { instanceId } from "~/lib/instance";
-import { redis } from "~/lib/redis";
 
 export type LogEventForPersistence = {
   id?: string;
@@ -82,35 +82,38 @@ const resolveJobRunIds = async (events: LogEventForPersistence[]) => {
 const insertResolvedLogs = async (events: ResolvedLogEvent[]) => {
   if (events.length === 0) return;
 
-  const byRunId = new Map<string, LogEventForPersistence[]>();
-  for (const event of events) {
-    const rows = byRunId.get(event.jobRunId) ?? [];
-    rows.push(event);
-    byRunId.set(event.jobRunId, rows);
+  const sorted = [...events].sort((a, b) => {
+    const runCompare = a.jobRunId.localeCompare(b.jobRunId);
+    if (runCompare !== 0) return runCompare;
+
+    const timestampCompare = a.logTimestamp.getTime() - b.logTimestamp.getTime();
+    if (timestampCompare !== 0) return timestampCompare;
+
+    return a.logSeq - b.logSeq;
+  });
+
+  for (let i = 0; i < sorted.length; i += 500) {
+    const chunk = sorted.slice(i, i + 500);
+    await withDeadlockRetry(async () => {
+      await db
+        .insert(jobLogsTable)
+        .values(
+          chunk.map((row) => ({
+            jobRunId: row.jobRunId,
+            level: row.level,
+            message: row.message,
+            ts: row.logTimestamp,
+            logSeq: row.logSeq,
+          })),
+        )
+        .onConflictDoNothing({
+          target: [jobLogsTable.jobRunId, jobLogsTable.ts, jobLogsTable.logSeq],
+        });
+    });
   }
 
-  for (const jobRunId of Array.from(byRunId.keys()).sort()) {
-    const rows = byRunId.get(jobRunId) ?? [];
-    for (let i = 0; i < rows.length; i += 100) {
-      const chunk = rows.slice(i, i + 100);
-      await withDeadlockRetry(async () => {
-        await db
-          .insert(jobLogsTable)
-          .values(
-            chunk.map((row) => ({
-              jobRunId,
-              level: row.level,
-              message: row.message,
-              ts: row.logTimestamp,
-              logSeq: row.logSeq,
-            })),
-          )
-          .onConflictDoNothing({
-            target: [jobLogsTable.jobRunId, jobLogsTable.ts, jobLogsTable.logSeq],
-          });
-      });
-    }
-    await redis.publish("bbb:ingest:events:job-log-refresh", jobRunId);
+  for (const jobRunId of new Set(sorted.map((event) => event.jobRunId))) {
+    publishIngestEvent("bbb:ingest:events:job-log-refresh", jobRunId, { jobRunId });
   }
 };
 

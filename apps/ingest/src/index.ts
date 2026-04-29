@@ -52,6 +52,7 @@ const h = monitorEventLoopDelay({ resolution: 20 });
 h.enable();
 setInterval(() => {
   const p99 = h.percentile(99) / 1e6; // ms
+  h.reset();
   if (p99 > 100) logger.warn("Event loop p99", p99, "ms");
 }, 2000);
 
