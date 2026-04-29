@@ -5,6 +5,12 @@ import { redis } from "~/lib/redis";
 import { formatJobRun, parseJobSyncEvent } from "./job-format";
 import { safeUpsertJobRuns } from "./job-upsert";
 
+const streamRedis = redis.duplicate();
+
+streamRedis.on("error", (error) => {
+  logger.error("Job stream Redis connection error", { error });
+});
+
 type StreamMessage = {
   id: string;
   fields: string[];
@@ -97,7 +103,7 @@ const processMessages = async (messages: StreamMessage[]) => {
 
 const readPendingMessages = async () => {
   try {
-    const response = await redis.call(
+    const response = await streamRedis.call(
       "XAUTOCLAIM",
       env.JOB_SYNC_STREAM_KEY,
       env.JOB_SYNC_CONSUMER_GROUP,
@@ -115,7 +121,7 @@ const readPendingMessages = async () => {
 };
 
 const readNewMessages = async () => {
-  const response = await redis.call(
+  const response = await streamRedis.call(
     "XREADGROUP",
     "GROUP",
     env.JOB_SYNC_CONSUMER_GROUP,
