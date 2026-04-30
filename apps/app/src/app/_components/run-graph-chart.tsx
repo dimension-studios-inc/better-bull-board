@@ -1,15 +1,16 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { getRunGraphApiRoute } from "~/app/api/dashboard/run-graph/schemas";
+import type { z } from "zod";
+import type { dashboardRunGraphOutput } from "~/app/api/dashboard/summary/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { apiFetch } from "~/lib/utils/client";
 
 interface RunGraphChartProps {
   days: number;
+  runGraphData: z.output<typeof dashboardRunGraphOutput>[] | undefined;
+  isLoading: boolean;
 }
 
 const CustomTooltip =
@@ -37,15 +38,7 @@ const CustomTooltip =
     return null;
   };
 
-export function RunGraphChart({ days }: RunGraphChartProps) {
-  const { data: runGraphData, isLoading } = useQuery({
-    queryKey: ["dashboard/run-graph", days],
-    queryFn: apiFetch({
-      apiRoute: getRunGraphApiRoute,
-      body: { days },
-    }),
-  });
-
+export function RunGraphChart({ days, runGraphData, isLoading }: RunGraphChartProps) {
   const chartData =
     runGraphData?.map((item) => ({
       timestamp: item.timestamp,
