@@ -1,21 +1,22 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { getQueuePerformanceApiRoute } from "~/app/api/dashboard/queue-performance/schemas";
+import type { z } from "zod";
+import type { dashboardQueuePerformanceOutput } from "~/app/api/dashboard/summary/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { apiFetch } from "~/lib/utils/client";
+
+type QueuePerformance = z.output<typeof dashboardQueuePerformanceOutput>;
 
 interface QueuePerformanceTableProps {
-  days: number;
+  queuePerformance: QueuePerformance[] | undefined;
+  isLoading: boolean;
 }
 
-type QueuePerformance = NonNullable<ReturnType<typeof getQueuePerformanceApiRoute.outputSchema.parse>>[number];
 type SortKey = keyof Pick<
   QueuePerformance,
   "queue" | "totalRuns" | "successes" | "failures" | "errorRate" | "avgDuration" | "minDuration" | "maxDuration"
@@ -33,19 +34,11 @@ const sortableColumns: { key: SortKey; label: string; align?: "right" }[] = [
   { key: "maxDuration", label: "Max Duration", align: "right" },
 ];
 
-export function QueuePerformanceTable({ days }: QueuePerformanceTableProps) {
+export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerformanceTableProps) {
   const router = useRouter();
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: "totalRuns",
     direction: "desc",
-  });
-
-  const { data: queuePerformance, isLoading } = useQuery({
-    queryKey: ["dashboard/queue-performance", days],
-    queryFn: apiFetch({
-      apiRoute: getQueuePerformanceApiRoute,
-      body: { days },
-    }),
   });
 
   const formatDuration = (seconds: number) => {

@@ -1,14 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { getTopQueuesDurationApiRoute } from "~/app/api/dashboard/top-queues-duration/schemas";
+import type { z } from "zod";
+import type { dashboardTopQueuesDurationOutput } from "~/app/api/dashboard/summary/schemas";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { apiFetch } from "~/lib/utils/client";
 
 interface QueueDurationChartProps {
-  days: number;
+  queueDuration: z.output<typeof dashboardTopQueuesDurationOutput>[] | undefined;
+  isLoading: boolean;
 }
 
 const CustomTooltip = ({
@@ -31,15 +31,7 @@ const CustomTooltip = ({
   return null;
 };
 
-export function QueueDurationChart({ days }: QueueDurationChartProps) {
-  const { data: queueDuration, isLoading } = useQuery({
-    queryKey: ["dashboard/top-queues-duration", days],
-    queryFn: apiFetch({
-      apiRoute: getTopQueuesDurationApiRoute,
-      body: { days, limit: 10 },
-    }),
-  });
-
+export function QueueDurationChart({ queueDuration, isLoading }: QueueDurationChartProps) {
   const formatDuration = (seconds: number) => {
     if (seconds < 60) return `${seconds.toFixed(1)}s`;
     if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`;
@@ -56,7 +48,7 @@ export function QueueDurationChart({ days }: QueueDurationChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Average Duration by Queues</CardTitle>
+        <CardTitle>Average Duration by Queue</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
