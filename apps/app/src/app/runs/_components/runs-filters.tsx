@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Pause, Play, Plus, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { getTagsApiRoute } from "~/app/api/tags/schemas";
@@ -13,27 +13,26 @@ import { Input } from "~/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import useDebounce from "~/hooks/use-debounce";
 import { apiFetch } from "~/lib/utils/client";
-import type { TRunFilters } from "./types";
+import type { TRunFilters, TRunFilterUpdate } from "./types";
 
 export function RunsFilters({
   filters,
   setFilters,
   runs,
+  isFetching,
+  liveUpdatesPaused,
+  onLiveUpdatesPausedChange,
   startEndContent,
 }: {
   filters: TRunFilters;
-  setFilters: (
-    filters: Partial<
-      Pick<
-        TRunFilters,
-        "queue" | "status" | "search" | "tags" | "createdFrom" | "createdTo" | "sortBy" | "sortDirection" | "cursor"
-      >
-    >,
-  ) => void;
+  setFilters: (filters: TRunFilterUpdate) => void;
   runs?: {
     nextCursor: { createdAt: Date; jobId: string; id: string; durationMs?: number | null } | null;
     prevCursor: { createdAt: Date; jobId: string; id: string; durationMs?: number | null } | null;
   };
+  isFetching?: boolean;
+  liveUpdatesPaused: boolean;
+  onLiveUpdatesPausedChange: (paused: boolean) => void;
   startEndContent?: React.ReactNode;
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -173,6 +172,7 @@ export function RunsFilters({
           ...runs.nextCursor,
           createdAt: runs.nextCursor.createdAt.getTime(),
         },
+        cursorDirection: "next",
       });
     }
   };
@@ -184,9 +184,10 @@ export function RunsFilters({
           ...runs.prevCursor,
           createdAt: runs.prevCursor.createdAt.getTime(),
         },
+        cursorDirection: "prev",
       });
     } else {
-      setFilters({ cursor: null });
+      setFilters({ cursor: null, cursorDirection: "next" });
     }
   };
 
@@ -340,17 +341,33 @@ export function RunsFilters({
         {startEndContent}
       </div>
       <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onLiveUpdatesPausedChange(!liveUpdatesPaused)}
+          className="size-9 p-0"
+          aria-pressed={liveUpdatesPaused}
+          aria-label={liveUpdatesPaused ? "Resume live updates" : "Pause live updates"}
+          title={liveUpdatesPaused ? "Resume live updates" : "Pause live updates"}
+        >
+          {liveUpdatesPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+        </Button>
         <Button asChild size="sm" className="gap-1">
           <Link href="/runs/create">
             <Plus className="h-4 w-4" />
             Create Run
           </Link>
         </Button>
-        <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={!runs?.prevCursor && !filters.cursor}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePrevPage}
+          disabled={isFetching || (!runs?.prevCursor && !filters.cursor)}
+        >
           <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
-        <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!runs?.nextCursor}>
+        <Button variant="outline" size="sm" onClick={handleNextPage} disabled={isFetching || !runs?.nextCursor}>
           Next
           <ChevronRight className="h-4 w-4" />
         </Button>
