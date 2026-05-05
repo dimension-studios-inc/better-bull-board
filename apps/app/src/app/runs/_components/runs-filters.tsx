@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Pause, Play, Plus, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { getTagsApiRoute } from "~/app/api/tags/schemas";
@@ -20,6 +20,8 @@ export function RunsFilters({
   setFilters,
   runs,
   isFetching,
+  liveUpdatesPaused,
+  onLiveUpdatesPausedChange,
   startEndContent,
 }: {
   filters: TRunFilters;
@@ -29,6 +31,8 @@ export function RunsFilters({
     prevCursor: { createdAt: Date; jobId: string; id: string; durationMs?: number | null } | null;
   };
   isFetching?: boolean;
+  liveUpdatesPaused: boolean;
+  onLiveUpdatesPausedChange: (paused: boolean) => void;
   startEndContent?: React.ReactNode;
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -337,6 +341,17 @@ export function RunsFilters({
         {startEndContent}
       </div>
       <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onLiveUpdatesPausedChange(!liveUpdatesPaused)}
+          className="size-9 p-0"
+          aria-pressed={liveUpdatesPaused}
+          aria-label={liveUpdatesPaused ? "Resume live updates" : "Pause live updates"}
+          title={liveUpdatesPaused ? "Resume live updates" : "Pause live updates"}
+        >
+          {liveUpdatesPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+        </Button>
         <Button asChild size="sm" className="gap-1">
           <Link href="/runs/create">
             <Plus className="h-4 w-4" />

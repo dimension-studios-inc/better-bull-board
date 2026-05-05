@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
@@ -36,6 +36,7 @@ const formatRunTimestamp = (value: Date) => ({
 
 export function RunsTable() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [urlFilters, setUrlFilters] = useQueryStates({
     queue: parseAsString.withDefault("all"),
     status: parseAsString.withDefault("all"),
@@ -50,6 +51,7 @@ export function RunsTable() {
   });
 
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  const [liveUpdatesPaused, setLiveUpdatesPaused] = useState(false);
   const cursorHistoryRef = useRef<TRunFilters["cursor"][]>([]);
   const cursorCreatedAt = urlFilters.cursor?.createdAt;
   const cursorJobId = urlFilters.cursor?.jobId;
@@ -97,13 +99,16 @@ export function RunsTable() {
 
   const debouncedFilters = useDebounce(filters, 300);
   const queryFilters = filters.cursor || filters.cursorDirection === "prev" ? filters : debouncedFilters;
+  const liveQueryKey = useMemo(() => ["jobs/table", queryFilters] as const, [queryFilters]);
 
   const { data: runs, isFetching } = useQuery({
-    queryKey: ["jobs/table", queryFilters],
+    queryKey: liveUpdatesPaused ? (["jobs/table-paused", queryFilters] as const) : liveQueryKey,
     queryFn: apiFetch({
       apiRoute: getJobsTableApiRoute,
       body: queryFilters,
     }),
+    initialData: liveUpdatesPaused ? () => queryClient.getQueryData(liveQueryKey) : undefined,
+    staleTime: liveUpdatesPaused ? Number.POSITIVE_INFINITY : undefined,
   });
 
   const handleFiltersChange = (newFilters: TRunFilterUpdate) => {
@@ -118,7 +123,7 @@ export function RunsTable() {
       const previousCursor = cursorHistoryRef.current.pop();
 
       if (previousCursor !== undefined) {
-        newFilters = { cursor: previousCursor, cursorDirection: previousCursor ? "next" : "prev" };
+        newFilters = { cursor: previousCursor, cursorDirection: "next" };
       }
     }
 
@@ -210,6 +215,8 @@ export function RunsTable() {
         setFilters={handleFiltersChange}
         runs={runs}
         isFetching={isFetching}
+        liveUpdatesPaused={liveUpdatesPaused}
+        onLiveUpdatesPausedChange={setLiveUpdatesPaused}
         startEndContent={
           selectedJobs.length > 0 && (
             <BulkActions selectedJobs={selectedJobs} onClearSelection={() => setSelectedJobIds(new Set())} />
