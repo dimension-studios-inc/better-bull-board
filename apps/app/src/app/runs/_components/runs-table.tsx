@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
+import { format, formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -27,6 +27,11 @@ const parseAsCursor = createParser<NonNullable<TRunFilters["cursor"]>>({
     }
   },
   serialize: (value) => Buffer.from(JSON.stringify(value)).toString("base64"),
+});
+
+const formatRunTimestamp = (value: Date) => ({
+  absolute: format(value, "MMM d, yyyy HH:mm:ss"),
+  relative: formatDistanceToNowStrict(value, { addSuffix: true }),
 });
 
 export function RunsTable() {
@@ -289,16 +294,24 @@ export function RunsTable() {
                       : "-"}
                   </TableCell>
                   <TableCell className="truncate">
-                    {formatDistanceToNowStrict(new Date(run.createdAt), {
-                      addSuffix: true,
-                    })}
+                    <time dateTime={run.createdAt.toISOString()} title={run.createdAt.toLocaleString()}>
+                      <span className="block truncate">{formatRunTimestamp(run.createdAt).relative}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {formatRunTimestamp(run.createdAt).absolute}
+                      </span>
+                    </time>
                   </TableCell>
                   <TableCell className="truncate">
-                    {run.finishedAt
-                      ? formatDistanceToNowStrict(new Date(run.finishedAt), {
-                          addSuffix: true,
-                        })
-                      : "-"}
+                    {run.finishedAt ? (
+                      <time dateTime={run.finishedAt.toISOString()} title={run.finishedAt.toLocaleString()}>
+                        <span className="block truncate">{formatRunTimestamp(run.finishedAt).relative}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {formatRunTimestamp(run.finishedAt).absolute}
+                        </span>
+                      </time>
+                    ) : (
+                      "-"
+                    )}
                   </TableCell>
                   <TableCell
                     className={cn("max-w-48 truncate text-xs", {
