@@ -4,32 +4,30 @@ import { sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getTagsApiRoute } from "./schemas";
 
+const MIN_TAG_SEARCH_LENGTH = 3;
+
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getTagsApiRoute,
   async handler(input) {
-    const { search } = input;
+    const search = input.search?.trim();
 
-    // Use a subquery to unnest tags first, then filter on the unnested values
-    // We can't use unnest() in WHERE, so we unnest in a subquery and filter in the outer query
+    if (!search || search.length < MIN_TAG_SEARCH_LENGTH) {
+      return { tags: [] };
+    }
+
     const tags = await db.execute(
-      search
-        ? sql`
-          SELECT DISTINCT unnested_tag AS tag
-          FROM (
-            SELECT unnest(jr.tags) AS unnested_tag
+      sql`
+          WITH matching_runs AS (
+            SELECT jr.tags
             FROM ${jobRunsTable} jr
-          ) AS unnested_tags
-          WHERE unnested_tag ILIKE ${`%${search}%`}
-          ORDER BY unnested_tag
-          LIMIT 100
-        `
-        : sql`
-          SELECT DISTINCT unnested_tag AS tag
-          FROM (
-            SELECT unnest(jr.tags) AS unnested_tag
-            FROM ${jobRunsTable} jr
-          ) AS unnested_tags
-          ORDER BY unnested_tag
+            WHERE cardinality(jr.tags) > 0
+              AND public.job_runs_tags_search_text(jr.tags) ILIKE ${`%${search}%`}
+          )
+          SELECT DISTINCT unnested_tags.tag
+          FROM matching_runs
+          CROSS JOIN LATERAL unnest(matching_runs.tags) AS unnested_tags(tag)
+          WHERE unnested_tags.tag ILIKE ${`%${search}%`}
+          ORDER BY unnested_tags.tag
           LIMIT 100
         `,
     );
