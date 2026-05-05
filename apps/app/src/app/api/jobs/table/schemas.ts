@@ -10,6 +10,7 @@ export const getJobsTableInput = z.object({
       durationMs: z.number().nullable().optional(),
     })
     .nullish(),
+  cursorDirection: z.enum(["next", "prev"]).optional(),
   search: z.string().optional(),
   status: z.string().optional(),
   queue: z.string().optional(),

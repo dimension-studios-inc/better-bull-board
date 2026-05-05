@@ -5,8 +5,8 @@ import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { parseAsString, useQueryStates } from "nuqs";
-import { useEffect, useMemo, useState } from "react";
+import { createParser, parseAsString, useQueryStates } from "nuqs";
+import { useMemo, useRef, useState } from "react";
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -16,7 +16,18 @@ import { apiFetch, cn } from "~/lib/utils/client";
 import { BulkActions } from "./bulk-actions";
 import { RunActions } from "./run-actions";
 import { RunsFilters } from "./runs-filters";
-import type { TRunFilters } from "./types";
+import type { TRunFilters, TRunFilterUpdate } from "./types";
+
+const parseAsCursor = createParser<NonNullable<TRunFilters["cursor"]>>({
+  parse: (value) => {
+    try {
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"));
+    } catch {
+      return null;
+    }
+  },
+  serialize: (value) => Buffer.from(JSON.stringify(value)).toString("base64"),
+});
 
 export function RunsTable() {
   const router = useRouter();
@@ -29,64 +40,100 @@ export function RunsTable() {
     createdTo: parseAsString.withDefault(""),
     sortBy: parseAsString.withDefault("createdAt"),
     sortDirection: parseAsString.withDefault("desc"),
-    cursor: parseAsString.withDefault(""),
+    cursor: parseAsCursor,
+    cursorDirection: parseAsString.withDefault("next"),
   });
 
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  const cursorHistoryRef = useRef<TRunFilters["cursor"][]>([]);
+  const cursorCreatedAt = urlFilters.cursor?.createdAt;
+  const cursorJobId = urlFilters.cursor?.jobId;
+  const cursorId = urlFilters.cursor?.id;
+  const cursorDurationMs = urlFilters.cursor?.durationMs;
 
   const filters: TRunFilters = useMemo(
     () => ({
-      ...urlFilters,
+      queue: urlFilters.queue,
+      status: urlFilters.status,
+      search: urlFilters.search,
+      createdFrom: urlFilters.createdFrom,
+      createdTo: urlFilters.createdTo,
       tags: urlFilters.tags ? urlFilters.tags.split(",").filter(Boolean) : [],
       sortBy: urlFilters.sortBy === "durationMs" ? "durationMs" : "createdAt",
       sortDirection: urlFilters.sortDirection === "asc" ? "asc" : "desc",
-      cursor: JSON.parse(Buffer.from(urlFilters.cursor, "base64").toString("utf-8") || "null") ?? null,
+      cursor:
+        cursorCreatedAt && cursorJobId && cursorId
+          ? {
+              createdAt: cursorCreatedAt,
+              jobId: cursorJobId,
+              id: cursorId,
+              durationMs: cursorDurationMs,
+            }
+          : null,
+      cursorDirection: urlFilters.cursorDirection === "prev" ? "prev" : "next",
       limit: 15,
     }),
-    [urlFilters],
+    [
+      urlFilters.queue,
+      urlFilters.status,
+      urlFilters.search,
+      urlFilters.tags,
+      urlFilters.createdFrom,
+      urlFilters.createdTo,
+      urlFilters.sortBy,
+      urlFilters.sortDirection,
+      cursorCreatedAt,
+      cursorJobId,
+      cursorId,
+      cursorDurationMs,
+      urlFilters.cursorDirection,
+    ],
   );
 
   const debouncedFilters = useDebounce(filters, 300);
+  const queryFilters = filters.cursor || filters.cursorDirection === "prev" ? filters : debouncedFilters;
 
-  const { data: runs } = useQuery({
-    queryKey: ["jobs/table", debouncedFilters],
+  const { data: runs, isFetching } = useQuery({
+    queryKey: ["jobs/table", queryFilters],
     queryFn: apiFetch({
       apiRoute: getJobsTableApiRoute,
-      body: debouncedFilters,
+      body: queryFilters,
     }),
   });
 
-  const handleFiltersChange = (
-    newFilters: Partial<
-      Pick<
-        TRunFilters,
-        "queue" | "status" | "search" | "tags" | "createdFrom" | "createdTo" | "sortBy" | "sortDirection" | "cursor"
-      >
-    >,
-  ) => {
-    const urlUpdate: Record<string, unknown> = Object.keys(newFilters).some((key) => key !== "cursor")
-      ? { cursor: "" }
-      : {};
+  const handleFiltersChange = (newFilters: TRunFilterUpdate) => {
+    const isPaginationOnly = Object.keys(newFilters).every((key) => key === "cursor" || key === "cursorDirection");
+    const urlUpdate: Record<string, unknown> = isPaginationOnly ? {} : { cursor: null, cursorDirection: "next" };
+
+    if (isPaginationOnly && newFilters.cursorDirection === "next") {
+      cursorHistoryRef.current.push(filters.cursor);
+    }
+
+    if (isPaginationOnly && newFilters.cursorDirection === "prev") {
+      const previousCursor = cursorHistoryRef.current.pop();
+
+      if (previousCursor !== undefined) {
+        newFilters = { cursor: previousCursor, cursorDirection: previousCursor ? "next" : "prev" };
+      }
+    }
+
+    if (!isPaginationOnly) {
+      cursorHistoryRef.current = [];
+    }
 
     for (const [key, value] of Object.entries(newFilters)) {
       if (key === "tags" && Array.isArray(value)) {
         urlUpdate[key] = value.length > 0 ? value.join(",") : "";
-      } else if (key === "cursor") {
-        urlUpdate[key] = Buffer.from(JSON.stringify(value || null)).toString("base64");
       } else {
         urlUpdate[key] = value;
       }
     }
 
+    setSelectedJobIds(new Set());
     setUrlFilters(urlUpdate);
   };
 
   const jobs = runs?.jobs || [];
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Clear selection when filters change
-  useEffect(() => {
-    setSelectedJobIds(new Set());
-  }, [debouncedFilters]);
 
   const selectedJobs = useMemo(() => {
     return jobs.filter((job) => selectedJobIds.has(job.jobId));
@@ -157,6 +204,7 @@ export function RunsTable() {
         filters={filters}
         setFilters={handleFiltersChange}
         runs={runs}
+        isFetching={isFetching}
         startEndContent={
           selectedJobs.length > 0 && (
             <BulkActions selectedJobs={selectedJobs} onClearSelection={() => setSelectedJobIds(new Set())} />

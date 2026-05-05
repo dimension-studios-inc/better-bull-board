@@ -39,6 +39,17 @@ export const jobRunsTable = pgTable(
   },
   (t) => [
     uniqueIndex("ux_job_runs_queue_jobid_enqueuedat").on(t.queue, t.jobId, t.enqueuedAt), // Job ids can overlap across queues.
+    index("ix_job_runs_created_at_job_id_id").on(t.createdAt, t.jobId, t.id),
+    index("ix_job_runs_queue_created_at_job_id_id").on(t.queue, t.createdAt, t.jobId, t.id),
+    index("ix_job_runs_status_created_at_job_id_id").on(t.status, t.createdAt, t.jobId, t.id),
+    index("ix_job_runs_queue_status_created_at_job_id_id").on(t.queue, t.status, t.createdAt, t.jobId, t.id),
+    index("ix_job_runs_duration_created_at_job_id_id").using(
+      "btree",
+      sql`COALESCE(${t.durationMs}, 0)`,
+      t.createdAt,
+      t.jobId,
+      t.id,
+    ),
     index("ix_job_runs_queue_created_at").on(t.queue, t.createdAt),
     index("ix_job_runs_created_at").on(t.createdAt),
     index("ix_job_runs_job").on(t.jobId),

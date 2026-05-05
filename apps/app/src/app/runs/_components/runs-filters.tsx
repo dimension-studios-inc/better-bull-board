@@ -13,27 +13,22 @@ import { Input } from "~/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import useDebounce from "~/hooks/use-debounce";
 import { apiFetch } from "~/lib/utils/client";
-import type { TRunFilters } from "./types";
+import type { TRunFilters, TRunFilterUpdate } from "./types";
 
 export function RunsFilters({
   filters,
   setFilters,
   runs,
+  isFetching,
   startEndContent,
 }: {
   filters: TRunFilters;
-  setFilters: (
-    filters: Partial<
-      Pick<
-        TRunFilters,
-        "queue" | "status" | "search" | "tags" | "createdFrom" | "createdTo" | "sortBy" | "sortDirection" | "cursor"
-      >
-    >,
-  ) => void;
+  setFilters: (filters: TRunFilterUpdate) => void;
   runs?: {
     nextCursor: { createdAt: Date; jobId: string; id: string; durationMs?: number | null } | null;
     prevCursor: { createdAt: Date; jobId: string; id: string; durationMs?: number | null } | null;
   };
+  isFetching?: boolean;
   startEndContent?: React.ReactNode;
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -173,6 +168,7 @@ export function RunsFilters({
           ...runs.nextCursor,
           createdAt: runs.nextCursor.createdAt.getTime(),
         },
+        cursorDirection: "next",
       });
     }
   };
@@ -184,9 +180,10 @@ export function RunsFilters({
           ...runs.prevCursor,
           createdAt: runs.prevCursor.createdAt.getTime(),
         },
+        cursorDirection: "prev",
       });
     } else {
-      setFilters({ cursor: null });
+      setFilters({ cursor: null, cursorDirection: "next" });
     }
   };
 
@@ -346,11 +343,16 @@ export function RunsFilters({
             Create Run
           </Link>
         </Button>
-        <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={!runs?.prevCursor && !filters.cursor}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePrevPage}
+          disabled={isFetching || (!runs?.prevCursor && !filters.cursor)}
+        >
           <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
-        <Button variant="outline" size="sm" onClick={handleNextPage} disabled={!runs?.nextCursor}>
+        <Button variant="outline" size="sm" onClick={handleNextPage} disabled={isFetching || !runs?.nextCursor}>
           Next
           <ChevronRight className="h-4 w-4" />
         </Button>
