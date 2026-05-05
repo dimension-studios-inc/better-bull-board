@@ -28,6 +28,24 @@ const jobTableColumns = {
 
 type JobCursor = { createdAt: Date; jobId: string; id: string; durationMs?: number | null };
 
+const parseCreatedBoundary = ({
+  fallbackTime,
+  isUpperBoundary = false,
+  value,
+}: {
+  fallbackTime: string;
+  isUpperBoundary?: boolean;
+  value: string;
+}) => {
+  const date = new Date(value.includes("T") ? value : `${value}T${fallbackTime}`);
+
+  if (isUpperBoundary && /T\d{2}:\d{2}$/.test(value)) {
+    date.setSeconds(59, 999);
+  }
+
+  return date;
+};
+
 const toCursor = (job: JobCursor) => ({
   createdAt: job.createdAt,
   jobId: job.jobId,
@@ -159,13 +177,18 @@ export const POST = createAuthenticatedApiRoute({
       }
 
       if (createdFrom) {
-        conditions.push(gte(jobRunsTable.createdAt, new Date(createdFrom)));
+        conditions.push(
+          gte(jobRunsTable.createdAt, parseCreatedBoundary({ value: createdFrom, fallbackTime: "00:00" })),
+        );
       }
 
       if (createdTo) {
-        const createdToDate = new Date(createdTo);
-        createdToDate.setHours(23, 59, 59, 999);
-        conditions.push(lte(jobRunsTable.createdAt, createdToDate));
+        conditions.push(
+          lte(
+            jobRunsTable.createdAt,
+            parseCreatedBoundary({ value: createdTo, fallbackTime: "23:59:59.999", isUpperBoundary: true }),
+          ),
+        );
       }
 
       if (cursor) {
