@@ -113,6 +113,20 @@
       "when": 1777046700000,
       "tag": "0015_job_log_buffer",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1777046800000,
+      "tag": "0016_job_runs_keyset_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1777046900000,
+      "tag": "0017_tag_search_trgm",
+      "breakpoints": true
     }
   ]
 }

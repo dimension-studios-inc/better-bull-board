@@ -15,6 +15,8 @@ import useDebounce from "~/hooks/use-debounce";
 import { apiFetch } from "~/lib/utils/client";
 import type { TRunFilters, TRunFilterUpdate } from "./types";
 
+const MIN_TAG_SEARCH_LENGTH = 3;
+
 export function RunsFilters({
   filters,
   setFilters,
@@ -51,7 +53,7 @@ export function RunsFilters({
       apiRoute: getTagsApiRoute,
       body: { search: debouncedTagsSearch },
     }),
-    enabled: tagsOpen && debouncedTagsSearch.length >= 2,
+    enabled: tagsOpen && debouncedTagsSearch.length >= MIN_TAG_SEARCH_LENGTH,
   });
 
   const statusOptions: ComboboxOption[] = [
@@ -280,7 +282,11 @@ export function RunsFilters({
                       }}
                       options={tagsOptions.filter((option) => !filters.tags.includes(option.value))}
                       placeholder="Type to search tags..."
-                      noOptionsMessage={debouncedTagsSearch.length < 2 ? "Type at least 2 characters" : "No tags found"}
+                      noOptionsMessage={
+                        debouncedTagsSearch.length < MIN_TAG_SEARCH_LENGTH
+                          ? "Type at least 3 characters"
+                          : "No tags found"
+                      }
                       searchPlaceholder="Search tags..."
                       search={tagsSearch}
                       setSearch={setTagsSearch}
@@ -291,7 +297,7 @@ export function RunsFilters({
                       isFetching={isTagsFetching}
                       popoverContentClassName="w-80"
                     />
-                    <div className="text-xs text-muted-foreground">Start typing to search (2+ chars).</div>
+                    <div className="text-xs text-muted-foreground">Start typing to search (3+ chars).</div>
                   </div>
                 </div>
 
