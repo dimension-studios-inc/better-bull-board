@@ -17,6 +17,11 @@ import type { TRunFilters, TRunFilterUpdate } from "./types";
 
 const MIN_TAG_SEARCH_LENGTH = 3;
 
+const formatCreatedFilterLabel = (value: string) => value.replace("T", " ");
+
+const getCreatedInputValue = (value: string, fallbackTime: string) =>
+  value && !value.includes("T") ? `${value}T${fallbackTime}` : value;
+
 export function RunsFilters({
   filters,
   setFilters,
@@ -110,7 +115,7 @@ export function RunsFilters({
     if (filters.createdFrom) {
       activeFilters.push({
         key: "createdFrom",
-        label: `Created from ${filters.createdFrom}`,
+        label: `Created from ${formatCreatedFilterLabel(filters.createdFrom)}`,
         value: filters.createdFrom,
       });
     }
@@ -118,7 +123,7 @@ export function RunsFilters({
     if (filters.createdTo) {
       activeFilters.push({
         key: "createdTo",
-        label: `Created to ${filters.createdTo}`,
+        label: `Created to ${formatCreatedFilterLabel(filters.createdTo)}`,
         value: filters.createdTo,
       });
     }
@@ -305,14 +310,16 @@ export function RunsFilters({
                   <label className="text-sm font-medium mb-2 block">Created</label>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
-                      type="date"
-                      value={filters.createdFrom}
+                      type="datetime-local"
+                      step={1}
+                      value={getCreatedInputValue(filters.createdFrom, "00:00")}
                       onChange={(event) => setFilters({ createdFrom: event.target.value })}
                       aria-label="Created from"
                     />
                     <Input
-                      type="date"
-                      value={filters.createdTo}
+                      type="datetime-local"
+                      step={1}
+                      value={getCreatedInputValue(filters.createdTo, "23:59")}
                       onChange={(event) => setFilters({ createdTo: event.target.value })}
                       aria-label="Created to"
                     />
