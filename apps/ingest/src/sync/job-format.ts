@@ -77,6 +77,8 @@ export const formatJobRun = ({
     throw new Error("Job ID is required");
   }
 
+  const enqueuedAt = new Date(job.timestamp);
+
   const formatted: JobRunInsert = {
     workerId,
     jobId: job.id,
@@ -88,7 +90,7 @@ export const formatJobRun = ({
     delayMs: job.opts.delay,
     backoff: job.opts.backoff,
     data: job.data,
-    enqueuedAt: new Date(job.timestamp),
+    enqueuedAt,
     startedAt: job.processedOn ? new Date(job.processedOn) : undefined,
     finishedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
     errorMessage: job.failedReason,
@@ -98,7 +100,7 @@ export const formatJobRun = ({
     repeatJobKey: job.repeatJobKey,
     result: job.returnvalue,
     tags,
-    createdAt: new Date(),
+    createdAt: enqueuedAt,
   };
 
   return jobRunsInsertSchema.parse(formatted);
