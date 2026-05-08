@@ -39,6 +39,7 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
           "errorStack",
           "result",
           "backoff",
+          "createdAt",
           "data",
           "priority",
           "delayMs",
