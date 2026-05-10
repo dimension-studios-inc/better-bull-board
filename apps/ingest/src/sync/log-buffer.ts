@@ -241,7 +241,7 @@ export const resolveBufferedJobLogs = async () => {
   if (oldestAgeMs >= env.JOB_LOG_BUFFER_ORPHAN_WARN_AFTER_MS) {
     logger.warn("Job log buffer contains old unresolved logs", logPayload);
   } else {
-    logger.info("Resolved buffered job logs", logPayload);
+    logger.debug("Resolved buffered job logs", logPayload);
   }
 };
 
