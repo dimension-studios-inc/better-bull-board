@@ -70,7 +70,7 @@ spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: 20Gi   # bump default storage for production
+          storage: 50Gi   # bump default storage for production
 ---
 apiVersion: v1
 kind: Service

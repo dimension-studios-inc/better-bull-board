@@ -4,6 +4,7 @@ import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update";
 import { logger } from "@rharkor/logger";
 import { DrizzleQueryError, getTableName, sql } from "drizzle-orm";
 import { DatabaseError } from "pg";
+import { env } from "~/lib/env";
 import { publishIngestEvent } from "~/lib/ingest-events";
 import type { JobRunInsert } from "./job-format";
 
@@ -31,11 +32,29 @@ async function withDeadlockRetry<T>(fn: () => Promise<T>, tries = 5): Promise<T>
   throw lastErr;
 }
 
+const getRetentionCutoff = () =>
+  env.AUTO_DELETE_POSTGRES_DATA ? Date.now() - env.AUTO_DELETE_POSTGRES_DATA : undefined;
+
+const getRunTimestamp = (run: JobRunInsert) => {
+  const timestamp = run.createdAt ?? run.enqueuedAt;
+  return timestamp ? new Date(timestamp).getTime() : undefined;
+};
+
+const isWithinRetention = (run: JobRunInsert, cutoff: number | undefined) => {
+  if (!cutoff) return true;
+
+  const timestamp = getRunTimestamp(run);
+  return timestamp === undefined || timestamp >= cutoff;
+};
+
 export const upsertJobRuns = async (runs: JobRunInsert[]) => {
   if (runs.length === 0) return [];
 
+  const retentionCutoff = getRetentionCutoff();
   const deduped = new Map<string, JobRunInsert>();
   for (const run of runs) {
+    if (!isWithinRetention(run, retentionCutoff)) continue;
+
     const key = `${run.queue}-${run.jobId}-${run.enqueuedAt?.getTime?.() ?? run.enqueuedAt}`;
     deduped.set(key, run);
   }
@@ -49,6 +68,7 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
     const be = b.enqueuedAt ? new Date(b.enqueuedAt).getTime() : 0;
     return ae - be;
   });
+  if (values.length === 0) return [];
 
   const tableName = getTableName(jobRunsTable);
   const statusUpdateSql = `CASE
