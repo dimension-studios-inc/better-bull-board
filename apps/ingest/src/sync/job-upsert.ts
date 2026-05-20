@@ -3,14 +3,33 @@ import { db } from "@better-bull-board/db/server";
 import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update";
 import { logger } from "@rharkor/logger";
 import { getTableName, sql } from "drizzle-orm";
+import { env } from "~/lib/env";
 import { publishIngestEvent } from "~/lib/ingest-events";
 import type { JobRunInsert } from "./job-format";
+
+const getRetentionCutoff = () =>
+  env.AUTO_DELETE_POSTGRES_DATA ? Date.now() - env.AUTO_DELETE_POSTGRES_DATA : undefined;
+
+const getRunTimestamp = (run: JobRunInsert) => {
+  const timestamp = run.createdAt ?? run.enqueuedAt;
+  return timestamp ? new Date(timestamp).getTime() : undefined;
+};
+
+const isWithinRetention = (run: JobRunInsert, cutoff: number | undefined) => {
+  if (!cutoff) return true;
+
+  const timestamp = getRunTimestamp(run);
+  return timestamp === undefined || timestamp >= cutoff;
+};
 
 export const upsertJobRuns = async (runs: JobRunInsert[]) => {
   if (runs.length === 0) return [];
 
+  const retentionCutoff = getRetentionCutoff();
   const deduped = new Map<string, JobRunInsert>();
   for (const run of runs) {
+    if (!isWithinRetention(run, retentionCutoff)) continue;
+
     const key = `${run.queue}-${run.jobId}-${run.enqueuedAt?.getTime?.() ?? run.enqueuedAt}`;
     deduped.set(key, run);
   }
@@ -23,6 +42,7 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
     if (queueCompare !== 0) return queueCompare;
     return a.jobId.localeCompare(b.jobId);
   });
+  if (values.length === 0) return [];
 
   const tableName = getTableName(jobRunsTable);
   const inserted = await db
