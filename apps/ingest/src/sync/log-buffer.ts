@@ -166,7 +166,7 @@ export const persistLogEvents = async (events: LogEventForPersistence[]) => {
   await bufferUnresolvedLogs(unresolved);
 
   if (unresolved.length > 0) {
-    logger.info("Buffered unresolved job logs", {
+    logger.debug("Buffered unresolved job logs", {
       resolved: resolved.length,
       unresolved: unresolved.length,
       sample: unresolved.slice(0, 5).map((event) => ({
