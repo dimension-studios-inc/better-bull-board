@@ -16,6 +16,13 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+pool.on("error", (err) => {
+  logger.error("[DB Pool] Idle client error", {
+    message: err.message,
+    stack: err.stack,
+  });
+});
+
 const origQuery = pool.query.bind(pool);
 // biome-ignore lint/suspicious/noExplicitAny: _
 pool.query = async (...args: any[]) => {
