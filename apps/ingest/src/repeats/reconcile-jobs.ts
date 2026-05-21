@@ -8,10 +8,10 @@ import { acquireLock, releaseLock } from "~/lib/distributed-lock";
 import { env } from "~/lib/env";
 import { instanceId } from "~/lib/instance";
 import { redis } from "~/lib/redis";
-import { bullStateToPersistedStatus, formatJobRun, isTerminalStatus, type JobRunInsert } from "~/sync/job-format";
+import { bullStateToPersistedStatus, formatJobRun, type JobRunInsert } from "~/sync/job-format";
 import { safeUpsertJobRuns } from "~/sync/job-upsert";
 
-const JOB_TYPES: JobType[] = ["waiting", "active", "delayed", "prioritized", "waiting-children", "completed", "failed"];
+const JOB_TYPES: JobType[] = ["waiting", "active", "delayed", "prioritized", "waiting-children"];
 const NON_TERMINAL_STATUSES = ["waiting", "active", "delayed", "prioritized", "waiting-children", "unknown"] as const;
 const JOB_RECONCILE_CONCURRENCY = 5;
 
@@ -106,7 +106,6 @@ const reconcileMissingNonTerminalRows = async (queue: Queue, queueName: string) 
       continue;
     }
 
-    if (isTerminalStatus(row.status)) continue;
     await db.update(jobRunsTable).set({ status: "unknown" }).where(eq(jobRunsTable.id, row.id));
     await redis.publish("bbb:ingest:events:single-job-refresh", row.id);
     await redis.publish("bbb:ingest:events:job-refresh", "1");
