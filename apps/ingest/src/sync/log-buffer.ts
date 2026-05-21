@@ -99,11 +99,17 @@ const insertResolvedLogs = async (events: ResolvedLogEvent[]) => {
   if (events.length === 0) return;
 
   const sorted = [...events].sort((a, b) => {
-    const runCompare = a.jobRunId.localeCompare(b.jobRunId);
-    if (runCompare !== 0) return runCompare;
+    const queueCompare = a.queue.localeCompare(b.queue);
+    if (queueCompare !== 0) return queueCompare;
 
-    const timestampCompare = a.logTimestamp.getTime() - b.logTimestamp.getTime();
-    if (timestampCompare !== 0) return timestampCompare;
+    const jobCompare = a.jobId.localeCompare(b.jobId);
+    if (jobCompare !== 0) return jobCompare;
+
+    const jobTimestampCompare = a.jobTimestamp.getTime() - b.jobTimestamp.getTime();
+    if (jobTimestampCompare !== 0) return jobTimestampCompare;
+
+    const logTimestampCompare = a.logTimestamp.getTime() - b.logTimestamp.getTime();
+    if (logTimestampCompare !== 0) return logTimestampCompare;
 
     return a.logSeq - b.logSeq;
   });
