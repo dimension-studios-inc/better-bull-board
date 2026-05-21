@@ -12,10 +12,28 @@ interface HealthCheckResult {
   error?: string;
 }
 
+const HEALTH_CHECK_TIMEOUT_MS = 2_000;
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, service: string): Promise<T> => {
+  let timeout: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          reject(new Error(`${service} health check timed out after ${timeoutMs}ms`));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+};
+
 async function checkRedis(): Promise<HealthCheckResult> {
   const start = Date.now();
   try {
-    await redis.ping();
+    await withTimeout(redis.ping(), HEALTH_CHECK_TIMEOUT_MS, "redis");
     return {
       service: "redis",
       status: "healthy",
@@ -34,8 +52,7 @@ async function checkRedis(): Promise<HealthCheckResult> {
 async function checkDatabase(): Promise<HealthCheckResult> {
   const start = Date.now();
   try {
-    // Simple query to test PostgreSQL connection
-    await db.execute(sql`SELECT 1`);
+    await withTimeout(db.execute(sql`SELECT 1`), HEALTH_CHECK_TIMEOUT_MS, "postgresql");
     return {
       service: "postgresql",
       status: "healthy",
@@ -51,6 +68,23 @@ async function checkDatabase(): Promise<HealthCheckResult> {
   }
 }
 
+function handleLiveCheck(): {
+  response: string;
+  statusCode: number;
+} {
+  return {
+    response: JSON.stringify(
+      {
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+      },
+      null,
+      2,
+    ),
+    statusCode: 200,
+  };
+}
+
 async function handleHealthCheck(): Promise<{
   response: string;
   statusCode: number;
@@ -58,13 +92,11 @@ async function handleHealthCheck(): Promise<{
   const startTime = Date.now();
 
   try {
-    // Run all health checks in parallel
     const [redisResult, dbResult] = await Promise.all([checkRedis(), checkDatabase()]);
 
     const results = [redisResult, dbResult];
     const totalResponseTime = Date.now() - startTime;
 
-    // Check if all services are healthy
     const allHealthy = results.every((result) => result.status === "healthy");
 
     const response = {
@@ -73,8 +105,6 @@ async function handleHealthCheck(): Promise<{
       totalResponseTime,
       services: results,
     };
-
-    // Return 200 if all healthy, 503 if any service is unhealthy
     return {
       response: JSON.stringify(response, null, 2),
       statusCode: allHealthy ? 200 : 503,
@@ -110,7 +140,15 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
-  if (req.method === "GET" && url.pathname === "/health") {
+  if (req.method === "GET" && url.pathname === "/live") {
+    const { response, statusCode } = handleLiveCheck();
+    res.setHeader("Content-Type", "application/json");
+    res.writeHead(statusCode);
+    res.end(response);
+    return;
+  }
+
+  if (req.method === "GET" && (url.pathname === "/health" || url.pathname === "/ready")) {
     handleHealthCheck()
       .then(({ response, statusCode }) => {
         res.setHeader("Content-Type", "application/json");
@@ -143,7 +181,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
     JSON.stringify(
       {
         error: "Not found",
-        message: "Only /health endpoint is available",
+        message: "Only /live, /ready, and /health endpoints are available",
       },
       null,
       2,

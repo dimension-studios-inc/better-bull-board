@@ -4,6 +4,7 @@ import { instanceId } from "~/lib/instance";
 import { redis } from "~/lib/redis";
 import { formatJobRun, parseJobSyncEvent } from "./job-format";
 import { safeUpsertJobRuns } from "./job-upsert";
+import { cleanupStaleConsumers } from "./stream-consumers";
 
 const streamRedis = redis.duplicate();
 
@@ -139,6 +140,11 @@ const readNewMessages = async () => {
 
 export const startJobStreamIngestion = async () => {
   await ensureGroup();
+  await cleanupStaleConsumers({
+    client: redis,
+    group: env.JOB_SYNC_CONSUMER_GROUP,
+    stream: env.JOB_SYNC_STREAM_KEY,
+  });
   logger.log("📥 Job stream ingestion started", {
     stream: env.JOB_SYNC_STREAM_KEY,
     group: env.JOB_SYNC_CONSUMER_GROUP,

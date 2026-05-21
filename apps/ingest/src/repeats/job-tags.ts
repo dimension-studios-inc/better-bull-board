@@ -20,6 +20,7 @@ export const refreshRecentJobTags = async () => {
     owner: instanceId,
     ttlMs: JOB_TAGS_REFRESH_LOCK_TTL_MS,
     run: async () => {
+      const start = Date.now();
       await db.transaction(async (tx) => {
         await tx.execute(sql`
           INSERT INTO "job_tags" ("tag", "tag_lower", "last_seen_at", "updated_at")
@@ -47,6 +48,9 @@ export const refreshRecentJobTags = async () => {
             WHERE "last_seen_at" < ${deleteBefore}
           `);
         }
+      });
+      logger.debug("Job tags refresh completed", {
+        elapsedMs: Date.now() - start,
       });
     },
   });

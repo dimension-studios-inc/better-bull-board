@@ -5,6 +5,7 @@ import { Queue } from "bullmq";
 import { and, eq, notInArray } from "drizzle-orm";
 import type Redis from "ioredis";
 import type { Cluster } from "ioredis";
+import { mapWithConcurrency } from "~/lib/concurrency";
 import { withLock } from "~/lib/distributed-lock";
 import { instanceId } from "~/lib/instance";
 import { redis } from "~/lib/redis";
@@ -12,22 +13,31 @@ import { getChangedKeys } from "~/utils";
 
 const maxCount = 150000;
 const maxTime = 40000;
+const QUEUE_INGEST_CONCURRENCY = 5;
 
 // Store interval ID for cleanup
 let queueIngestionInterval: NodeJS.Timeout | null = null;
+let queueIngestionRunning = false;
 
 // https://github.com/taskforcesh/taskforce-connector/blob/722b0e649452468d617ce239fb5dc534705a7d48/lib/queue-factory.ts#L27
 const scanForQueues = async (node: Redis | Cluster, startTime: number) => {
   let cursor = "0";
   const keys = [];
+  let scanCount = 0;
   do {
     const [nextCursor, scannedKeys] = await node.scan(cursor, "MATCH", "*:*:id", "COUNT", maxCount, "TYPE", "string");
     cursor = nextCursor;
+    scanCount += 1;
 
     keys.push(...scannedKeys);
   } while (Date.now() - startTime < maxTime && cursor !== "0");
 
-  return keys;
+  return {
+    complete: cursor === "0",
+    elapsedMs: Date.now() - startTime,
+    keys,
+    scanCount,
+  };
 };
 
 export const ingestQueues = async () => {
@@ -41,28 +51,50 @@ export const ingestQueues = async () => {
 };
 
 const ingestQueuesUnsafe = async () => {
+  const start = Date.now();
   try {
-    const allQueuesKeys = await scanForQueues(redis, Date.now());
+    const scan = await scanForQueues(redis, Date.now());
     // <namespace>:<queueName>:id
-    const allQueuesNames = allQueuesKeys.map((key) => key.split(":")[1]).filter((queueName) => queueName !== undefined);
+    const allQueuesNames = Array.from(
+      new Set(scan.keys.map((key) => key.split(":")[1]).filter((queueName) => queueName !== undefined)),
+    ).sort();
 
-    //* Delete all missing queues from database
-    await db.delete(queuesTable).where(notInArray(queuesTable.name, allQueuesNames));
+    logger.debug("Queue discovery completed", {
+      complete: scan.complete,
+      elapsedMs: scan.elapsedMs,
+      keyCount: scan.keys.length,
+      queueCount: allQueuesNames.length,
+      scanCount: scan.scanCount,
+    });
 
-    //* Upserting queues in database
-    await Promise.all(
-      allQueuesNames.map(async (queueName) => {
-        try {
-          // First upsert the queue
-          const queue = await upsertQueue(queueName);
-          // Then upsert the job schedulers
-          await upsertJobSchedulers(queueName, queue.id);
-        } catch (error) {
-          logger.error(`Error processing queue ${queueName}:`, error);
-          // Continue processing other queues even if one fails
-        }
-      }),
-    );
+    if (scan.complete) {
+      if (allQueuesNames.length > 0) {
+        await db.delete(queuesTable).where(notInArray(queuesTable.name, allQueuesNames));
+      } else {
+        await db.delete(queuesTable);
+      }
+    } else {
+      logger.warn("Skipping missing queue deletion after incomplete Redis queue scan", {
+        elapsedMs: scan.elapsedMs,
+        keyCount: scan.keys.length,
+        queueCount: allQueuesNames.length,
+        scanCount: scan.scanCount,
+      });
+    }
+
+    await mapWithConcurrency(allQueuesNames, QUEUE_INGEST_CONCURRENCY, async (queueName) => {
+      try {
+        const queue = await upsertQueue(queueName);
+        await upsertJobSchedulers(queueName, queue.id);
+      } catch (error) {
+        logger.error(`Error processing queue ${queueName}:`, error);
+      }
+    });
+
+    logger.debug("Queue ingestion completed", {
+      elapsedMs: Date.now() - start,
+      queueCount: allQueuesNames.length,
+    });
   } catch (error) {
     logger.error("Error in queue ingestion:", error);
     throw error;
@@ -75,14 +107,25 @@ export const autoIngestQueues = async () => {
     clearInterval(queueIngestionInterval);
   }
 
-  queueIngestionInterval = setInterval(() => {
-    ingestQueues().catch((error) => {
-      logger.error("Error in queue ingestion:", error);
-    });
-  }, 60_000);
+  const run = async () => {
+    if (queueIngestionRunning) {
+      logger.warn("Skipping queue ingestion tick because previous tick is still running");
+      return;
+    }
 
-  // Run initial ingestion
-  ingestQueues().catch((error) => {
+    queueIngestionRunning = true;
+    try {
+      await ingestQueues();
+    } catch (error) {
+      logger.error("Error in queue ingestion:", error);
+    } finally {
+      queueIngestionRunning = false;
+    }
+  };
+
+  queueIngestionInterval = setInterval(run, 60_000);
+
+  run().catch((error) => {
     logger.error("Error in initial queue ingestion:", error);
   });
 
