@@ -4,6 +4,7 @@ import { env } from "~/lib/env";
 import { instanceId } from "~/lib/instance";
 import { redis } from "~/lib/redis";
 import { persistLogEvents } from "~/sync/log-buffer";
+import { cleanupStaleConsumers } from "~/sync/stream-consumers";
 
 const streamRedis = redis.duplicate();
 
@@ -162,6 +163,11 @@ const readNewMessages = async () => {
 
 export const startJobLogStreamIngestion = async () => {
   await ensureGroup();
+  await cleanupStaleConsumers({
+    client: redis,
+    group: env.JOB_LOG_SYNC_CONSUMER_GROUP,
+    stream: env.JOB_LOG_SYNC_STREAM_KEY,
+  });
   logger.log("📥 Job log stream ingestion started", {
     stream: env.JOB_LOG_SYNC_STREAM_KEY,
     group: env.JOB_LOG_SYNC_CONSUMER_GROUP,

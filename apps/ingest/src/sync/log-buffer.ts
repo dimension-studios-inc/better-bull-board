@@ -24,11 +24,21 @@ type ResolvedLogEvent = LogEventForPersistence & {
 };
 
 let logBufferInterval: NodeJS.Timeout | null = null;
+let resolvedLogInsertChain = Promise.resolve();
 
 const getJobKey = (item: Pick<LogEventForPersistence, "jobId" | "jobTimestamp" | "queue">) =>
   `${item.queue}:${item.jobId}:${item.jobTimestamp.getTime()}`;
 
-async function withDeadlockRetry<T>(fn: () => Promise<T>, tries = 5): Promise<T> {
+const serializeResolvedLogInsert = async <T>(fn: () => Promise<T>) => {
+  const run = resolvedLogInsertChain.then(fn, fn);
+  resolvedLogInsertChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+};
+
+async function withDeadlockRetry<T>(fn: () => Promise<T>, label: string, tries = 5): Promise<T> {
   let lastErr: unknown;
   for (let i = 0; i < tries; i++) {
     try {
@@ -36,7 +46,13 @@ async function withDeadlockRetry<T>(fn: () => Promise<T>, tries = 5): Promise<T>
     } catch (error: unknown) {
       if (error instanceof DrizzleQueryError && error.cause instanceof DatabaseError && error.cause.code === "40P01") {
         lastErr = error;
+        if (i === tries - 1) break;
         const backoff = 25 * (i + 1) + Math.floor(Math.random() * 50);
+        logger.warn(`Retrying ${label} after Postgres deadlock`, {
+          attempt: i + 1,
+          backoff,
+          maxAttempts: tries,
+        });
         await new Promise((resolve) => setTimeout(resolve, backoff));
         continue;
       }
@@ -92,25 +108,27 @@ const insertResolvedLogs = async (events: ResolvedLogEvent[]) => {
     return a.logSeq - b.logSeq;
   });
 
-  for (let i = 0; i < sorted.length; i += 500) {
-    const chunk = sorted.slice(i, i + 500);
-    await withDeadlockRetry(async () => {
-      await db
-        .insert(jobLogsTable)
-        .values(
-          chunk.map((row) => ({
-            jobRunId: row.jobRunId,
-            level: row.level,
-            message: row.message,
-            ts: row.logTimestamp,
-            logSeq: row.logSeq,
-          })),
-        )
-        .onConflictDoNothing({
-          target: [jobLogsTable.jobRunId, jobLogsTable.ts, jobLogsTable.logSeq],
-        });
-    });
-  }
+  await serializeResolvedLogInsert(async () => {
+    for (let i = 0; i < sorted.length; i += 500) {
+      const chunk = sorted.slice(i, i + 500);
+      await withDeadlockRetry(async () => {
+        await db
+          .insert(jobLogsTable)
+          .values(
+            chunk.map((row) => ({
+              jobRunId: row.jobRunId,
+              level: row.level,
+              message: row.message,
+              ts: row.logTimestamp,
+              logSeq: row.logSeq,
+            })),
+          )
+          .onConflictDoNothing({
+            target: [jobLogsTable.jobRunId, jobLogsTable.ts, jobLogsTable.logSeq],
+          });
+      }, "job_logs insert");
+    }
+  });
 
   for (const jobRunId of new Set(sorted.map((event) => event.jobRunId))) {
     publishIngestEvent("bbb:ingest:events:job-log-refresh", jobRunId, { jobRunId });
@@ -143,7 +161,7 @@ const bufferUnresolvedLogs = async (events: LogEventForPersistence[]) => {
           jobLogBufferTable.logSeq,
         ],
       });
-  });
+  }, "job_log_buffer insert");
 };
 
 export const persistLogEvents = async (events: LogEventForPersistence[]) => {
