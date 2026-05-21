@@ -19,6 +19,7 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
     owner: instanceId,
     ttlMs: DASHBOARD_ROLLUP_LOCK_TTL_MS,
     run: async () => {
+      const start = Date.now();
       await db.transaction(async (tx) => {
         await tx.execute(sql`
           DELETE FROM "dashboard_queue_hourly_stats"
@@ -83,6 +84,9 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
           DELETE FROM "dashboard_queue_hourly_stats"
           WHERE "bucket_start" < ${deleteBefore}
         `);
+      });
+      logger.debug("Dashboard rollups refresh completed", {
+        elapsedMs: Date.now() - start,
       });
     },
   });

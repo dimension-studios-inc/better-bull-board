@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server";
 import { logger } from "@rharkor/logger";
 import { type Job, type JobType, Queue } from "bullmq";
 import { and, eq, inArray } from "drizzle-orm";
+import { mapWithConcurrency } from "~/lib/concurrency";
 import { acquireLock, releaseLock } from "~/lib/distributed-lock";
 import { env } from "~/lib/env";
 import { instanceId } from "~/lib/instance";
@@ -12,14 +13,11 @@ import { safeUpsertJobRuns } from "~/sync/job-upsert";
 
 const JOB_TYPES: JobType[] = ["waiting", "active", "delayed", "prioritized", "waiting-children", "completed", "failed"];
 const NON_TERMINAL_STATUSES = ["waiting", "active", "delayed", "prioritized", "waiting-children", "unknown"] as const;
+const JOB_RECONCILE_CONCURRENCY = 5;
 
 let reconcileInterval: NodeJS.Timeout | null = null;
+let reconcileRunning = false;
 let queueCursor = 0;
-
-const inspectUnexpectedJob = (job: unknown) => ({
-  type: typeof job,
-  value: job,
-});
 
 const isBullMqJob = (job: Job | undefined): job is Job => Boolean(job?.id && typeof job.getState === "function");
 
@@ -46,13 +44,10 @@ const reconcileRetainedBullMqJobs = async (queue: Queue, queueName: string) => {
     const jobs = await queue.getJobs(JOB_TYPES, start, start + env.JOB_RECONCILE_PAGE_SIZE - 1, true);
     if (jobs.length === 0) break;
 
+    let unexpectedCount = 0;
     for (const job of jobs) {
       if (!isBullMqJob(job)) {
-        logger.warn("Skipping unexpected BullMQ job during reconciliation", {
-          queueName,
-          start,
-          job: inspectUnexpectedJob(job),
-        });
+        unexpectedCount += 1;
         continue;
       }
 
@@ -66,6 +61,15 @@ const reconcileRetainedBullMqJobs = async (queue: Queue, queueName: string) => {
           state,
         }),
       );
+    }
+
+    if (unexpectedCount > 0) {
+      logger.debug("Skipped unexpected BullMQ jobs during reconciliation", {
+        pageSize: jobs.length,
+        queueName,
+        start,
+        unexpectedCount,
+      });
     }
 
     if (jobs.length < env.JOB_RECONCILE_PAGE_SIZE) break;
@@ -110,6 +114,7 @@ const reconcileMissingNonTerminalRows = async (queue: Queue, queueName: string) 
 };
 
 const reconcileQueue = async (queueName: string) => {
+  const start = Date.now();
   const lockKey = `bbb:job-reconcile-lock:${queueName}`;
   const owner = `${instanceId}:${Date.now()}`;
   const acquired = await acquireLock({ key: lockKey, owner, ttlMs: env.JOB_RECONCILE_INTERVAL_MS * 2 });
@@ -119,6 +124,10 @@ const reconcileQueue = async (queueName: string) => {
   try {
     await reconcileRetainedBullMqJobs(queue, queueName);
     await reconcileMissingNonTerminalRows(queue, queueName);
+    logger.debug("Job reconciliation queue completed", {
+      elapsedMs: Date.now() - start,
+      queueName,
+    });
   } catch (error) {
     logger.error(`Error reconciling queue ${queueName}`, { error });
   } finally {
@@ -128,8 +137,13 @@ const reconcileQueue = async (queueName: string) => {
 };
 
 export const reconcileJobs = async () => {
+  const start = Date.now();
   const queueNames = selectQueueBatch(await getQueueNames());
-  await Promise.all(queueNames.map((queueName) => reconcileQueue(queueName)));
+  await mapWithConcurrency(queueNames, JOB_RECONCILE_CONCURRENCY, reconcileQueue);
+  logger.debug("Job reconciliation tick completed", {
+    elapsedMs: Date.now() - start,
+    queueCount: queueNames.length,
+  });
 };
 
 export const autoReconcileJobs = () => {
@@ -137,13 +151,25 @@ export const autoReconcileJobs = () => {
     clearInterval(reconcileInterval);
   }
 
-  reconcileInterval = setInterval(() => {
-    reconcileJobs().catch((error) => {
-      logger.error("Error in job reconciliation", { error });
-    });
-  }, env.JOB_RECONCILE_INTERVAL_MS);
+  const run = async () => {
+    if (reconcileRunning) {
+      logger.warn("Skipping job reconciliation tick because previous tick is still running");
+      return;
+    }
 
-  reconcileJobs().catch((error) => {
+    reconcileRunning = true;
+    try {
+      await reconcileJobs();
+    } catch (error) {
+      logger.error("Error in job reconciliation", { error });
+    } finally {
+      reconcileRunning = false;
+    }
+  };
+
+  reconcileInterval = setInterval(run, env.JOB_RECONCILE_INTERVAL_MS);
+
+  run().catch((error) => {
     logger.error("Error in initial job reconciliation", { error });
   });
 
