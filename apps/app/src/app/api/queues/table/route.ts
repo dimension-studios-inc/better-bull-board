@@ -1,9 +1,41 @@
 import { jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
-import { and, asc, desc, eq, gte, ilike, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, ilike, inArray, lt, or, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
+
+type CursorDirection = "next" | "prev";
+type QueueCursor = { waitingJobs: number; name: string };
+
+const waitingJobsExpression = sql<number>`(
+  SELECT COUNT(*)::int
+  FROM ${jobRunsTable}
+  WHERE ${jobRunsTable.queue} = ${queuesTable.name}
+  AND ${jobRunsTable.status} = 'waiting'
+)`;
+
+const getCursorComparison = (cursor: QueueCursor, direction: CursorDirection) => {
+  if (direction === "prev") {
+    return or(
+      gt(waitingJobsExpression, cursor.waitingJobs),
+      and(eq(waitingJobsExpression, cursor.waitingJobs), lt(queuesTable.name, cursor.name)),
+    );
+  }
+
+  return or(
+    lt(waitingJobsExpression, cursor.waitingJobs),
+    and(eq(waitingJobsExpression, cursor.waitingJobs), gt(queuesTable.name, cursor.name)),
+  );
+};
+
+const getSortOrder = (direction: CursorDirection) => {
+  if (direction === "prev") {
+    return [asc(waitingJobsExpression), desc(queuesTable.name)];
+  }
+
+  return [desc(waitingJobsExpression), asc(queuesTable.name)];
+};
 
 function fillChartData(
   dateFrom: Date,
@@ -41,15 +73,18 @@ function fillChartData(
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getQueuesTableApiRoute,
   async handler(input) {
-    const { cursor, search, timePeriod } = input;
+    const { search, timePeriod } = input;
+    const cursorDirection = input.cursorDirection ?? "next";
+    const cursor = input.cursor;
     const limit = input.limit ?? 20;
 
-    const getRows = async (direction: "next" | "prev") => {
+    const getRows = async (direction: CursorDirection) => {
       return db
         .select({
           id: queuesTable.id,
           name: queuesTable.name,
           isPaused: queuesTable.isPaused,
+          waitingJobs: waitingJobsExpression.as("waiting_jobs"),
           patterns: sql<string[] | null | undefined>`array_agg(${jobSchedulersTable.pattern})`.as("patterns"),
           everys: sql<number[] | null | undefined>`array_agg(${jobSchedulersTable.every})`.as("everys"),
         })
@@ -57,24 +92,30 @@ export const POST = createAuthenticatedApiRoute({
         .leftJoin(jobSchedulersTable, eq(jobSchedulersTable.queueId, queuesTable.id))
         .where(
           and(
-            cursor ? (direction === "prev" ? lt(queuesTable.name, cursor) : gte(queuesTable.name, cursor)) : undefined,
+            cursor ? getCursorComparison(cursor, direction) : undefined,
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
           ),
         )
         .groupBy(queuesTable.id)
-        .orderBy(direction === "prev" ? desc(queuesTable.name) : asc(queuesTable.name))
+        .orderBy(...getSortOrder(direction))
         .limit(limit + 1);
     };
 
-    const rows = await getRows("next");
-    const previousRows = cursor ? await getRows("prev") : [];
+    const rows = await getRows(cursorDirection);
+    const hasExtra = rows.length > limit;
+
+    if (hasExtra) {
+      rows.pop();
+    }
+
+    const queueRows = cursorDirection === "prev" ? rows.reverse() : rows;
 
     const [total] = await db
       .select({ count: sql<number>`COUNT(*)` })
       .from(queuesTable)
       .where(search ? ilike(queuesTable.name, `%${search}%`) : undefined);
 
-    const queueNames = rows.map((row) => row.name);
+    const queueNames = queueRows.map((row) => row.name);
     const timePeriodDays = Number(timePeriod);
     const dateFrom = new Date(Date.now() - timePeriodDays * 24 * 60 * 60 * 1000);
     const dateTo = new Date();
@@ -186,14 +227,16 @@ export const POST = createAuthenticatedApiRoute({
 
     const statsMap = new Map(queueStats.map((stat) => [stat.queueName, stat]));
 
-    const nextCursor = rows.length > limit ? (rows.pop()?.name ?? null) : null;
-    const prevCursor = previousRows.length > limit ? (previousRows.at(-2)?.name ?? null) : null;
+    const firstRow = queueRows[0];
+    const lastRow = queueRows.at(-1);
+    const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra;
+    const hasOlderPage = cursorDirection === "prev" ? Boolean(cursor) : hasExtra;
 
     return {
-      queues: rows.map((row) => {
+      queues: queueRows.map((row) => {
         const stats = statsMap.get(row.name) ?? {
           queueName: row.name,
-          waitingJobs: 0,
+          waitingJobs: Number(row.waitingJobs ?? 0),
           activeJobs: 0,
           failedJobs: 0,
           completedJobs: 0,
@@ -212,8 +255,8 @@ export const POST = createAuthenticatedApiRoute({
           chartData: stats.chartData,
         };
       }),
-      nextCursor,
-      prevCursor,
+      nextCursor: hasOlderPage && lastRow ? { name: lastRow.name, waitingJobs: Number(lastRow.waitingJobs) } : null,
+      prevCursor: hasNewerPage && firstRow ? { name: firstRow.name, waitingJobs: Number(firstRow.waitingJobs) } : null,
       total: Number(total?.count ?? 0),
     };
   },
