@@ -6,7 +6,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createParser, parseAsString, useQueryStates } from "nuqs";
-import { useRef } from "react";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -32,7 +31,6 @@ const parseAsCursor = createParser<QueueCursor>({
 
 export function QueuesTable() {
   const router = useRouter();
-  const cursorHistoryRef = useRef<(QueueCursor | null)[]>([]);
   const [urlState, setUrlState] = useQueryStates({
     search: parseAsString.withDefault(""),
     timePeriod: parseAsString.withDefault("1"),
@@ -62,19 +60,11 @@ export function QueuesTable() {
 
   const handleNextPage = () => {
     if (data?.nextCursor) {
-      cursorHistoryRef.current.push(options.cursor);
       setUrlState({ cursor: data.nextCursor, cursorDirection: "next" });
     }
   };
 
   const handlePrevPage = () => {
-    const previousCursor = cursorHistoryRef.current.pop();
-
-    if (previousCursor !== undefined) {
-      setUrlState({ cursor: previousCursor, cursorDirection: "next" });
-      return;
-    }
-
     if (data?.prevCursor) {
       setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" });
     } else {
@@ -84,13 +74,11 @@ export function QueuesTable() {
 
   const handleSearchChange = (search: string) => {
     // Reset pagination when search changes
-    cursorHistoryRef.current = [];
     setUrlState({ cursor: null, cursorDirection: "next", search });
   };
 
   const handleTimePeriodChange = (timePeriod: TimePeriod) => {
     // Reset pagination when time period changes
-    cursorHistoryRef.current = [];
     setUrlState({ cursor: null, cursorDirection: "next", timePeriod });
   };
 
@@ -110,12 +98,7 @@ export function QueuesTable() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevPage}
-            disabled={isLoading || (!data?.prevCursor && !options.cursor)}
-          >
+          <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={isLoading || !data?.prevCursor}>
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
