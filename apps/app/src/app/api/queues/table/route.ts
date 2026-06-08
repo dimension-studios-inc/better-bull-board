@@ -8,12 +8,17 @@ import { getQueuesTableApiRoute } from "./schemas";
 type CursorDirection = "next" | "prev";
 type QueueCursor = { waitingJobs: number; name: string };
 
-const waitingJobsExpression = sql<number>`(
-  SELECT COUNT(*)::int
-  FROM ${jobRunsTable}
-  WHERE ${jobRunsTable.queue} = ${queuesTable.name}
-  AND ${jobRunsTable.status} = 'waiting'
-)`;
+const waitingJobCounts = db
+  .select({
+    queue: jobRunsTable.queue,
+    waitingJobs: sql<number>`COUNT(*)::int`.as("waiting_jobs"),
+  })
+  .from(jobRunsTable)
+  .where(eq(jobRunsTable.status, "waiting"))
+  .groupBy(jobRunsTable.queue)
+  .as("waiting_job_counts");
+
+const waitingJobsExpression = sql<number>`COALESCE(${waitingJobCounts.waitingJobs}, 0)`;
 
 const getCursorComparison = (cursor: QueueCursor, direction: CursorDirection) => {
   if (direction === "prev") {
@@ -89,6 +94,7 @@ export const POST = createAuthenticatedApiRoute({
           everys: sql<number[] | null | undefined>`array_agg(${jobSchedulersTable.every})`.as("everys"),
         })
         .from(queuesTable)
+        .leftJoin(waitingJobCounts, eq(waitingJobCounts.queue, queuesTable.name))
         .leftJoin(jobSchedulersTable, eq(jobSchedulersTable.queueId, queuesTable.id))
         .where(
           and(
@@ -96,7 +102,7 @@ export const POST = createAuthenticatedApiRoute({
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
           ),
         )
-        .groupBy(queuesTable.id)
+        .groupBy(queuesTable.id, waitingJobCounts.waitingJobs)
         .orderBy(...getSortOrder(direction))
         .limit(limit + 1);
     };
