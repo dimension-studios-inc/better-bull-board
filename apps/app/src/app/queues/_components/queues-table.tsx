@@ -5,7 +5,7 @@ import { formatDuration } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { parseAsString, useQueryStates } from "nuqs";
+import { createParser, parseAsString, useQueryStates } from "nuqs";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -17,16 +17,32 @@ import { QueueActions } from "./queue-actions";
 import { QueueMiniChart } from "./queue-mini-chart";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
+type QueueCursor = { waitingJobs: number; name: string };
+
+const parseAsCursor = createParser<QueueCursor>({
+  parse: (value) => {
+    try {
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"));
+    } catch {
+      return null;
+    }
+  },
+  serialize: (value) => Buffer.from(JSON.stringify(value)).toString("base64"),
+});
+
 export function QueuesTable() {
   const router = useRouter();
   const [urlState, setUrlState] = useQueryStates({
     search: parseAsString.withDefault(""),
     timePeriod: parseAsString.withDefault("1"),
-    cursor: parseAsString.withDefault(""),
+    cursor: parseAsCursor,
+    cursorDirection: parseAsString.withDefault("next"),
   });
 
+  const cursorDirection: "next" | "prev" = urlState.cursorDirection === "prev" ? "prev" : "next";
   const options = {
-    cursor: urlState.cursor || null,
+    cursor: urlState.cursor,
+    cursorDirection,
     search: urlState.search,
     timePeriod: urlState.timePeriod as TimePeriod,
   };
@@ -45,26 +61,26 @@ export function QueuesTable() {
 
   const handleNextPage = () => {
     if (data?.nextCursor) {
-      setUrlState({ cursor: data.nextCursor });
+      setUrlState({ cursor: data.nextCursor, cursorDirection: "next" });
     }
   };
 
   const handlePrevPage = () => {
     if (data?.prevCursor) {
-      setUrlState({ cursor: data.prevCursor });
+      setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" });
     } else {
-      setUrlState({ cursor: null });
+      setUrlState({ cursor: null, cursorDirection: "next" });
     }
   };
 
   const handleSearchChange = (search: string) => {
     // Reset pagination when search changes
-    setUrlState({ cursor: null, search });
+    setUrlState({ cursor: null, cursorDirection: "next", search });
   };
 
   const handleTimePeriodChange = (timePeriod: TimePeriod) => {
     // Reset pagination when time period changes
-    setUrlState({ cursor: null, timePeriod });
+    setUrlState({ cursor: null, cursorDirection: "next", timePeriod });
   };
 
   const selectedQueueStats = data?.queues.length === 1 ? data.queues[0] : undefined;
@@ -101,12 +117,7 @@ export function QueuesTable() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevPage}
-            disabled={isLoading || (!data?.prevCursor && !options.cursor)}
-          >
+          <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={isLoading || !data?.prevCursor}>
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
