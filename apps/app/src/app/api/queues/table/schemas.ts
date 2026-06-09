@@ -2,7 +2,13 @@ import z from "zod";
 import { registerApiRoute } from "~/lib/utils/client";
 
 export const getQueuesTableInput = z.object({
-  cursor: z.string().nullish(),
+  cursor: z
+    .object({
+      waitingJobs: z.number(),
+      name: z.string(),
+    })
+    .nullish(),
+  cursorDirection: z.enum(["next", "prev"]).optional(),
   search: z.string().optional(),
   timePeriod: z.enum(["1", "3", "7", "30"]).optional().default("1"),
   limit: z.number().min(1).max(100).optional(),
@@ -27,8 +33,18 @@ export const getQueuesTableOutput = z.object({
       ),
     }),
   ),
-  nextCursor: z.string().nullable(),
-  prevCursor: z.string().nullable(),
+  nextCursor: z
+    .object({
+      waitingJobs: z.number(),
+      name: z.string(),
+    })
+    .nullable(),
+  prevCursor: z
+    .object({
+      waitingJobs: z.number(),
+      name: z.string(),
+    })
+    .nullable(),
   total: z.number(),
 });
 
