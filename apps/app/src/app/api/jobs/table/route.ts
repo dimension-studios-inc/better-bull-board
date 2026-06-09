@@ -37,7 +37,9 @@ const parseCreatedBoundary = ({
   isUpperBoundary?: boolean;
   value: string;
 }) => {
-  const date = new Date(value.includes("T") ? value : `${value}T${fallbackTime}`);
+  const valueWithTime = value.includes("T") ? value : `${value}T${fallbackTime}`;
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(valueWithTime);
+  const date = new Date(hasTimezone ? valueWithTime : `${valueWithTime}Z`);
 
   if (isUpperBoundary && /T\d{2}:\d{2}$/.test(value)) {
     date.setSeconds(59, 999);
