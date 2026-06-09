@@ -10,6 +10,7 @@ import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { Skeleton } from "~/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { apiFetch, cn, smartFormatDuration } from "~/lib/utils/client";
 import { QueueActions } from "./queue-actions";
@@ -66,6 +67,8 @@ export function QueuesTable() {
     setUrlState({ cursor: null, timePeriod });
   };
 
+  const selectedQueueStats = data?.queues.length === 1 ? data.queues[0] : undefined;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
@@ -80,6 +83,22 @@ export function QueuesTable() {
               className="pl-10"
             />
           </div>
+          {options.search && (isLoading || selectedQueueStats) && (
+            <div className="flex h-9 items-center gap-3 rounded-md border px-3 text-xs text-muted-foreground">
+              {isLoading ? (
+                <Skeleton className="h-4 w-32" />
+              ) : (
+                <>
+                  <span className="whitespace-nowrap">
+                    <span className="font-mono text-foreground">{selectedQueueStats?.waitingJobs ?? 0}</span> waiting
+                  </span>
+                  <span className="whitespace-nowrap">
+                    <span className="font-mono text-foreground">{selectedQueueStats?.activeJobs ?? 0}</span> active
+                  </span>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button
