@@ -11,6 +11,7 @@ import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
 import { Badge } from "~/components/ui/badge";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import useDebounce from "~/hooks/use-debounce";
 import { apiFetch, cn } from "~/lib/utils/client";
 import { BulkActions } from "./bulk-actions";
@@ -345,12 +346,35 @@ export function RunsTable() {
                         "-"
                       )}
                     </TableCell>
-                    <TableCell
-                      className={cn("max-w-48 truncate text-xs", {
-                        "text-red-600": run.status === "failed" && run.errorMessage,
-                      })}
-                    >
-                      {run.status === "failed" && run.errorMessage ? run.errorMessage : "-"}
+                    <TableCell className="max-w-48">
+                      {run.status === "failed" && run.errorMessage ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="block w-full truncate text-left font-mono text-xs text-red-600 underline decoration-red-400/40 decoration-dotted underline-offset-4 transition-colors hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 dark:text-red-400 dark:hover:text-red-300"
+                            >
+                              {run.errorMessage}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="left"
+                            align="start"
+                            sideOffset={8}
+                            withoutArrow
+                            className="max-h-80 max-w-xl overflow-auto rounded-lg border border-red-500/20 bg-background p-0 text-foreground shadow-xl"
+                          >
+                            <div className="border-b border-red-500/10 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                              Error details
+                            </div>
+                            <pre className="whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed text-red-700 dark:text-red-300">
+                              {run.errorMessage}
+                            </pre>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
