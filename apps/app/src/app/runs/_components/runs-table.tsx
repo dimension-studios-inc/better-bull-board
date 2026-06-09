@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -30,10 +30,41 @@ const parseAsCursor = createParser<NonNullable<TRunFilters["cursor"]>>({
   serialize: (value) => Buffer.from(JSON.stringify(value)).toString("base64"),
 });
 
+const formatUtcTimestamp = (value: Date) => `${value.toISOString().slice(0, 19).replace("T", " ")} UTC`;
+
 const formatRunTimestamp = (value: Date) => ({
-  absolute: format(value, "MMM d, yyyy HH:mm:ss"),
+  absolute: formatUtcTimestamp(value),
   relative: formatDistanceToNowStrict(value, { addSuffix: true }),
 });
+
+type RunTimestampProps = {
+  value: Date;
+};
+
+function RunTimestamp({ value }: RunTimestampProps) {
+  const timestamp = formatRunTimestamp(value);
+
+  return (
+    <time dateTime={value.toISOString()} title={timestamp.absolute}>
+      <span className="block truncate">{timestamp.relative}</span>
+      <span className="block truncate text-xs text-muted-foreground">{timestamp.absolute}</span>
+    </time>
+  );
+}
+
+const isInteractiveRowTarget = (target: EventTarget | null) =>
+  target instanceof Element && !!target.closest("a,button,input,select,textarea,[role='checkbox']");
+
+const openRunInNewPage = (runPath: string) => {
+  window.open(runPath, "_blank", "noopener,noreferrer");
+};
+
+const handleRowAuxClick = (event: React.MouseEvent<HTMLTableRowElement>, runPath: string) => {
+  if (event.button !== 1 || isInteractiveRowTarget(event.target)) return;
+
+  event.preventDefault();
+  openRunInNewPage(runPath);
+};
 
 export function RunsTable() {
   const router = useRouter();
@@ -192,13 +223,6 @@ export function RunsTable() {
     }
   };
 
-  const isInteractiveRowTarget = (target: EventTarget | null) =>
-    target instanceof Element && !!target.closest("a,button,input,select,textarea,[role='checkbox']");
-
-  const openRunInNewPage = (runPath: string) => {
-    window.open(runPath, "_blank", "noopener,noreferrer");
-  };
-
   const handleRowClick = (event: React.MouseEvent<HTMLTableRowElement>, runPath: string) => {
     if (isInteractiveRowTarget(event.target)) return;
 
@@ -208,13 +232,6 @@ export function RunsTable() {
     }
 
     router.push(runPath);
-  };
-
-  const handleRowAuxClick = (event: React.MouseEvent<HTMLTableRowElement>, runPath: string) => {
-    if (event.button !== 1 || isInteractiveRowTarget(event.target)) return;
-
-    event.preventDefault();
-    openRunInNewPage(runPath);
   };
 
   const handleDurationSort = () => {
@@ -269,8 +286,8 @@ export function RunsTable() {
                   {getDurationSortIcon()}
                 </button>
               </TableHead>
-              <TableHead style={{ width: "140px" }}>Created</TableHead>
-              <TableHead style={{ width: "140px" }}>Finished</TableHead>
+              <TableHead style={{ width: "170px" }}>Created</TableHead>
+              <TableHead style={{ width: "170px" }}>Finished</TableHead>
               <TableHead style={{ width: "140px" }}>Error</TableHead>
               <TableHead style={{ width: "90px" }}>Actions</TableHead>
             </TableRow>
@@ -327,21 +344,11 @@ export function RunsTable() {
                         : "-"}
                     </TableCell>
                     <TableCell className="truncate">
-                      <time dateTime={run.createdAt.toISOString()} title={run.createdAt.toLocaleString()}>
-                        <span className="block truncate">{formatRunTimestamp(run.createdAt).relative}</span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {formatRunTimestamp(run.createdAt).absolute}
-                        </span>
-                      </time>
+                      <RunTimestamp value={run.createdAt} />
                     </TableCell>
                     <TableCell className="truncate">
                       {run.finishedAt ? (
-                        <time dateTime={run.finishedAt.toISOString()} title={run.finishedAt.toLocaleString()}>
-                          <span className="block truncate">{formatRunTimestamp(run.finishedAt).relative}</span>
-                          <span className="block truncate text-xs text-muted-foreground">
-                            {formatRunTimestamp(run.finishedAt).absolute}
-                          </span>
-                        </time>
+                        <RunTimestamp value={run.finishedAt} />
                       ) : (
                         "-"
                       )}
