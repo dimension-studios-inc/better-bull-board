@@ -5,12 +5,15 @@ export const getQueuesTableInput = z.object({
   cursor: z
     .object({
       waitingJobs: z.number(),
+      activeJobs: z.number().optional(),
       name: z.string(),
     })
     .nullish(),
   cursorDirection: z.enum(["next", "prev"]).optional(),
   search: z.string().optional(),
   timePeriod: z.enum(["1", "3", "7", "30"]).optional().default("1"),
+  sortBy: z.enum(["waitingJobs", "activeJobs"]).optional().default("waitingJobs"),
+  sortDirection: z.enum(["asc", "desc"]).optional().default("desc"),
   limit: z.number().min(1).max(100).optional(),
 });
 
@@ -36,12 +39,14 @@ export const getQueuesTableOutput = z.object({
   nextCursor: z
     .object({
       waitingJobs: z.number(),
+      activeJobs: z.number(),
       name: z.string(),
     })
     .nullable(),
   prevCursor: z
     .object({
       waitingJobs: z.number(),
+      activeJobs: z.number(),
       name: z.string(),
     })
     .nullable(),

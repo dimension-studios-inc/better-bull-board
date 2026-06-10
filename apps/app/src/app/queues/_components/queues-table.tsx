@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDuration } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createParser, parseAsString, useQueryStates } from "nuqs";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
@@ -17,7 +17,14 @@ import { QueueActions } from "./queue-actions";
 import { QueueMiniChart } from "./queue-mini-chart";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
-type QueueCursor = { waitingJobs: number; name: string };
+type QueueCursor = { waitingJobs: number; activeJobs?: number; name: string };
+type SortBy = "waitingJobs" | "activeJobs";
+type SortDirection = "asc" | "desc";
+
+const sortableQueueColumns: { key: SortBy; label: string }[] = [
+  { key: "waitingJobs", label: "Waiting Jobs" },
+  { key: "activeJobs", label: "Active Jobs" },
+];
 
 const parseAsCursor = createParser<QueueCursor>({
   parse: (value) => {
@@ -37,13 +44,19 @@ export function QueuesTable() {
     timePeriod: parseAsString.withDefault("1"),
     cursor: parseAsCursor,
     cursorDirection: parseAsString.withDefault("next"),
+    sortBy: parseAsString.withDefault("waitingJobs"),
+    sortDirection: parseAsString.withDefault("desc"),
   });
 
   const cursorDirection: "next" | "prev" = urlState.cursorDirection === "prev" ? "prev" : "next";
+  const sortBy: SortBy = urlState.sortBy === "activeJobs" ? "activeJobs" : "waitingJobs";
+  const sortDirection: SortDirection = urlState.sortDirection === "asc" ? "asc" : "desc";
   const options = {
     cursor: urlState.cursor,
     cursorDirection,
     search: urlState.search,
+    sortBy,
+    sortDirection,
     timePeriod: urlState.timePeriod as TimePeriod,
   };
 
@@ -81,6 +94,21 @@ export function QueuesTable() {
   const handleTimePeriodChange = (timePeriod: TimePeriod) => {
     // Reset pagination when time period changes
     setUrlState({ cursor: null, cursorDirection: "next", timePeriod });
+  };
+
+  const handleSort = (nextSortBy: SortBy) => {
+    setUrlState({
+      cursor: null,
+      cursorDirection: "next",
+      sortBy: nextSortBy,
+      sortDirection: sortBy === nextSortBy && sortDirection === "desc" ? "asc" : "desc",
+    });
+  };
+
+  const getSortIcon = (key: SortBy) => {
+    if (sortBy !== key) return <ArrowUpDown className="size-3.5 text-muted-foreground" />;
+    if (sortDirection === "asc") return <ArrowUp className="size-3.5" />;
+    return <ArrowDown className="size-3.5" />;
   };
 
   const selectedQueueStats = data?.queues.length === 1 ? data.queues[0] : undefined;
@@ -134,8 +162,18 @@ export function QueuesTable() {
               <TableHead style={{ width: "200px" }}>Queue Name</TableHead>
               <TableHead style={{ width: "120px" }}>Status</TableHead>
               <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
-              <TableHead style={{ width: "120px" }}>Waiting Jobs</TableHead>
-              <TableHead style={{ width: "120px" }}>Active Jobs</TableHead>
+              {sortableQueueColumns.map((column) => (
+                <TableHead key={column.key} style={{ width: "120px" }}>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 font-medium"
+                    onClick={() => handleSort(column.key)}
+                  >
+                    {column.label}
+                    {getSortIcon(column.key)}
+                  </button>
+                </TableHead>
+              ))}
               <TableHead style={{ width: "240px" }}>Pressure</TableHead>
               <TableHead style={{ width: "70px" }}>Trend</TableHead>
               <TableHead style={{ width: "90px" }}></TableHead>
