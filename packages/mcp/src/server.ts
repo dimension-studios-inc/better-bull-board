@@ -1,4 +1,19 @@
-import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core";
+import {
+  getJobById,
+  getJobByIdInputSchema,
+  getJobByIdOutputSchema,
+  getSystemOverview,
+  listJobLogs,
+  listJobLogsInputSchema,
+  listJobLogsOutputSchema,
+  listJobs,
+  listJobsInputSchema,
+  listJobsOutputSchema,
+  listQueues,
+  listQueuesInputSchema,
+  listQueuesOutputSchema,
+  systemOverviewSchema,
+} from "@better-bull-board/core";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
@@ -13,6 +28,79 @@ const formatOverview = (overview: z.infer<typeof systemOverviewSchema>) =>
     `- Total queues: ${overview.totalQueues}`,
     `- Active queues: ${overview.activeQueues}`,
     `- Queues with schedulers: ${overview.queuesWithSchedulers}`,
+  ].join("\n");
+
+const formatQueues = (result: z.infer<typeof listQueuesOutputSchema>) =>
+  [
+    "# Better Bull Board Queues",
+    "",
+    `Total matching queues: ${result.total}`,
+    result.nextCursor ? "Next page available: yes" : "Next page available: no",
+    "",
+    ...result.queues.map(
+      (queue) =>
+        `- ${queue.name}: ${queue.waitingJobs} waiting, ${queue.activeJobs} active, ${
+          queue.isPaused ? "paused" : "running"
+        }`,
+    ),
+  ].join("\n");
+
+const formatJobs = (result: z.infer<typeof listJobsOutputSchema>) =>
+  [
+    "# Better Bull Board Jobs",
+    "",
+    result.nextCursor ? "Next page available: yes" : "Next page available: no",
+    "",
+    ...result.jobs.map((job) =>
+      [
+        `- ${job.id}`,
+        `  jobId: ${job.jobId}`,
+        `  queue: ${job.queue}`,
+        `  name: ${job.name ?? "(none)"}`,
+        `  status: ${job.status}`,
+        `  createdAt: ${job.createdAt.toISOString()}`,
+        job.durationMs === null ? undefined : `  durationMs: ${job.durationMs}`,
+        job.errorMessage ? `  error: ${job.errorMessage}` : undefined,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    ),
+  ].join("\n");
+
+const formatJob = (result: z.infer<typeof getJobByIdOutputSchema>) => {
+  const { job } = result;
+
+  if (!job) {
+    return "Job run not found.";
+  }
+
+  return [
+    "# Better Bull Board Job",
+    "",
+    `id: ${job.id}`,
+    `jobId: ${job.jobId}`,
+    `queue: ${job.queue}`,
+    `name: ${job.name ?? "(none)"}`,
+    `status: ${job.status}`,
+    `attempt: ${job.attempt}/${job.maxAttempts}`,
+    `createdAt: ${new Date(job.createdAt).toISOString()}`,
+    job.enqueuedAt ? `enqueuedAt: ${new Date(job.enqueuedAt).toISOString()}` : undefined,
+    job.startedAt ? `startedAt: ${new Date(job.startedAt).toISOString()}` : undefined,
+    job.finishedAt ? `finishedAt: ${new Date(job.finishedAt).toISOString()}` : undefined,
+    job.durationMs === null ? undefined : `durationMs: ${job.durationMs}`,
+    job.errorMessage ? `error: ${job.errorMessage}` : undefined,
+  ]
+    .filter(Boolean)
+    .join("\n");
+};
+
+const formatLogs = (result: z.infer<typeof listJobLogsOutputSchema>) =>
+  [
+    "# Better Bull Board Job Logs",
+    "",
+    `Total matching logs: ${result.total}`,
+    "",
+    ...result.logs.map((log) => `- ${new Date(log.ts).toISOString()} [${log.level}] #${log.logSeq}: ${log.message}`),
   ].join("\n");
 
 export const createBetterBullBoardMcpServer = () => {
@@ -42,6 +130,106 @@ export const createBetterBullBoardMcpServer = () => {
       return {
         content: [{ type: "text", text: formatOverview(overview) }],
         structuredContent: overview,
+      };
+    },
+  );
+
+  server.registerTool(
+    "bbb_list_queues",
+    {
+      title: "List Better Bull Board Queues",
+      description:
+        "List queues with waiting and active job counts. Supports search, cursor pagination, and a maximum page size of 100.",
+      inputSchema: listQueuesInputSchema,
+      outputSchema: listQueuesOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      const result = await listQueues(input);
+
+      return {
+        content: [{ type: "text", text: formatQueues(result) }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  server.registerTool(
+    "bbb_list_jobs",
+    {
+      title: "List Better Bull Board Jobs",
+      description:
+        "List job runs with filters for queue, status, tags, search text, created date bounds, sorting, and cursor pagination. This does not return job payload data.",
+      inputSchema: listJobsInputSchema,
+      outputSchema: listJobsOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      const result = await listJobs(input);
+
+      return {
+        content: [{ type: "text", text: formatJobs(result) }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  server.registerTool(
+    "bbb_get_job",
+    {
+      title: "Get Better Bull Board Job",
+      description:
+        "Read one job run by Better Bull Board run id, including payload/result/error fields when present. Use bbb_list_jobs first when you only know a queue or BullMQ job id.",
+      inputSchema: getJobByIdInputSchema,
+      outputSchema: getJobByIdOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      const result = await getJobById(input);
+
+      return {
+        content: [{ type: "text", text: formatJob(result) }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  server.registerTool(
+    "bbb_list_job_logs",
+    {
+      title: "List Better Bull Board Job Logs",
+      description:
+        "List logs for a Better Bull Board job run id. Supports level filtering, message substring search, limit, and offset pagination.",
+      inputSchema: listJobLogsInputSchema,
+      outputSchema: listJobLogsOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      const result = await listJobLogs(input);
+
+      return {
+        content: [{ type: "text", text: formatLogs(result) }],
+        structuredContent: result,
       };
     },
   );
