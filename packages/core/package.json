@@ -1,0 +1,35 @@
+{
+  "name": "@better-bull-board/core",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rm -rf dist",
+    "dev": "tsdown --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@better-bull-board/db": "*",
+    "@better-bull-board/typescript-config": "*",
+    "drizzle-orm": "*",
+    "tsdown": "^0.21.9",
+    "typescript": "^6.0.3",
+    "zod": "^4.3.6"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./*": {
+      "types": "./dist/*.d.mts",
+      "import": "./dist/*.mjs"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^25.6.0"
+  }
+}

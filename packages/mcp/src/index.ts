@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+
+import "dotenv/config";
+
+import { createServer, type ServerResponse } from "node:http";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { isAuthorized } from "./auth";
+import { env } from "./env";
+import { createBetterBullBoardMcpServer } from "./server";
+
+const sendJson = (res: ServerResponse, statusCode: number, body: unknown) => {
+  res.writeHead(statusCode, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(body));
+};
+
+const httpServer = createServer(async (req, res) => {
+  if (req.url !== "/mcp") {
+    sendJson(res, 404, { error: "Not found" });
+    return;
+  }
+
+  if (req.method !== "POST") {
+    sendJson(res, 405, { error: "Method not allowed" });
+    return;
+  }
+
+  if (!isAuthorized({ headers: req.headers, token: env.BBB_MCP_TOKEN })) {
+    sendJson(res, 401, { error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const server = createBetterBullBoardMcpServer();
+    const transport = new StreamableHTTPServerTransport({
+      enableJsonResponse: true,
+      sessionIdGenerator: undefined,
+    });
+
+    res.on("close", () => {
+      transport.close();
+    });
+
+    await server.connect(transport);
+    await transport.handleRequest(req, res);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        message: "MCP request failed",
+        error: error instanceof Error ? error.message : "Unknown error",
+      }),
+    );
+
+    if (!res.headersSent) {
+      sendJson(res, 500, { error: "Internal server error" });
+    } else {
+      res.end();
+    }
+  }
+});
+
+httpServer.on("error", (error) => {
+  console.error(
+    JSON.stringify({
+      level: "error",
+      message: "Better Bull Board MCP server failed to listen",
+      error: error instanceof Error ? error.message : "Unknown error",
+    }),
+  );
+  process.exit(1);
+});
+
+httpServer.listen(env.BBB_MCP_PORT, env.BBB_MCP_HOST, () => {
+  console.error(
+    JSON.stringify({
+      level: "info",
+      message: "Better Bull Board MCP server listening",
+      host: env.BBB_MCP_HOST,
+      port: env.BBB_MCP_PORT,
+      path: "/mcp",
+    }),
+  );
+});

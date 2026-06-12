@@ -1,0 +1,43 @@
+{
+  "name": "@better-bull-board/mcp",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "bin": {
+    "better-bull-board-mcp": "dist/index.mjs"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rm -rf dist",
+    "dev": "npx -y dotenv-cli -e .env -- tsx watch src/index.ts",
+    "start": "node dist/index.mjs",
+    "type-check": "tsc --noEmit"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@better-bull-board/core": "*",
+    "@better-bull-board/db": "*",
+    "@better-bull-board/typescript-config": "*",
+    "@modelcontextprotocol/sdk": "^1.23.3",
+    "@t3-oss/env-core": "^0.13.11",
+    "dotenv": "^17.4.2",
+    "tsdown": "^0.21.9",
+    "typescript": "^6.0.3",
+    "zod": "^4.3.6"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./*": {
+      "types": "./dist/*.d.mts",
+      "import": "./dist/*.mjs"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0"
+  }
+}
