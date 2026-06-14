@@ -7,7 +7,7 @@ import {
   listJobLogsOutputSchema,
   listJobs,
   listJobsInputSchema,
-  listJobsOutputSchema,
+  type listJobsOutputSchema,
 } from "@better-bull-board/core/jobs";
 import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview";
 import { listQueues, listQueuesInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queues";
@@ -15,6 +15,67 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 const emptyInputSchema = z.object({}).strict();
+
+const mcpListJobsOutputSchema = z.object({
+  jobs: z.array(
+    z.object({
+      id: z.string(),
+      jobId: z.string(),
+      queue: z.string(),
+      name: z.string().nullable(),
+      status: z.string(),
+      attempt: z.number(),
+      maxAttempts: z.number(),
+      createdAt: z.number(),
+      enqueuedAt: z.number().nullable(),
+      startedAt: z.number().nullable(),
+      finishedAt: z.number().nullable(),
+      durationMs: z.number().nullable(),
+      errorMessage: z.string().nullable(),
+      tags: z.array(z.string()).nullable(),
+    }),
+  ),
+  nextCursor: z
+    .object({
+      createdAt: z.number(),
+      jobId: z.string(),
+      id: z.string(),
+      durationMs: z.number().nullable().optional(),
+    })
+    .nullable(),
+  prevCursor: z
+    .object({
+      createdAt: z.number(),
+      jobId: z.string(),
+      id: z.string(),
+      durationMs: z.number().nullable().optional(),
+    })
+    .nullable(),
+});
+
+const toTimestamp = (value: Date | null) => value?.getTime() ?? null;
+
+const serializeListJobs = (result: z.infer<typeof listJobsOutputSchema>): z.infer<typeof mcpListJobsOutputSchema> => ({
+  jobs: result.jobs.map((job) => ({
+    ...job,
+    createdAt: job.createdAt.getTime(),
+    enqueuedAt: toTimestamp(job.enqueuedAt),
+    startedAt: toTimestamp(job.startedAt),
+    finishedAt: toTimestamp(job.finishedAt),
+  })),
+  nextCursor: result.nextCursor
+    ? {
+        ...result.nextCursor,
+        createdAt: result.nextCursor.createdAt.getTime(),
+      }
+    : null,
+  prevCursor: result.prevCursor
+    ? {
+        ...result.prevCursor,
+        createdAt: result.prevCursor.createdAt.getTime(),
+      }
+    : null,
+});
 
 const formatOverview = (overview: z.infer<typeof systemOverviewSchema>) =>
   [
@@ -163,7 +224,7 @@ export const createBetterBullBoardMcpServer = () => {
       description:
         "List job runs with filters for queue, status, tags, search text, created date bounds, sorting, and cursor pagination. This does not return job payload data.",
       inputSchema: listJobsInputSchema,
-      outputSchema: listJobsOutputSchema,
+      outputSchema: mcpListJobsOutputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -173,10 +234,11 @@ export const createBetterBullBoardMcpServer = () => {
     },
     async (input) => {
       const result = await listJobs(input);
+      const serializedResult = serializeListJobs(result);
 
       return {
         content: [{ type: "text", text: formatJobs(result) }],
-        structuredContent: result,
+        structuredContent: serializedResult,
       };
     },
   );
