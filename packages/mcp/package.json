@@ -15,12 +15,15 @@
   },
   "license": "ISC",
   "dependencies": {
+    "@better-bull-board/client": "*",
     "@better-bull-board/core": "*",
     "@better-bull-board/db": "*",
     "@better-bull-board/typescript-config": "*",
     "@modelcontextprotocol/sdk": "^1.23.3",
     "@t3-oss/env-core": "^0.13.11",
+    "bullmq": "^5.76.0",
     "dotenv": "^17.4.2",
+    "ioredis": "^5.10.1",
     "tsdown": "^0.21.9",
     "typescript": "^6.0.3",
     "zod": "^4.3.6"

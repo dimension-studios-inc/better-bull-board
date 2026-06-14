@@ -8,6 +8,18 @@ import { isAuthorized } from "./auth";
 import { env } from "./env";
 import { createBetterBullBoardMcpServer } from "./server";
 
+if (!env.BBB_MCP_TOKEN) {
+  console.error(
+    JSON.stringify({
+      level: "error",
+      message: "BBB_MCP_TOKEN is required when running the standalone Better Bull Board MCP server",
+    }),
+  );
+  process.exit(1);
+}
+
+const mcpToken = env.BBB_MCP_TOKEN;
+
 const sendJson = (res: ServerResponse, statusCode: number, body: unknown) => {
   res.writeHead(statusCode, { "Content-Type": "application/json" });
   res.end(JSON.stringify(body));
@@ -24,7 +36,7 @@ const httpServer = createServer(async (req, res) => {
     return;
   }
 
-  if (!isAuthorized({ headers: req.headers, token: env.BBB_MCP_TOKEN })) {
+  if (!isAuthorized({ headers: req.headers, token: mcpToken })) {
     sendJson(res, 401, { error: "Unauthorized" });
     return;
   }

@@ -36,7 +36,7 @@ const handleMcpRequest = async (request: Request) => {
     return unauthorized(request);
   }
 
-  const server = createBetterBullBoardMcpServer();
+  const server = createBetterBullBoardMcpServer({ scopes: authInfo.scopes });
   const transport = new WebStandardStreamableHTTPServerTransport({
     enableJsonResponse: true,
     sessionIdGenerator: undefined,

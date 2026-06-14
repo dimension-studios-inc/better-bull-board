@@ -20,6 +20,10 @@
       "types": "./dist/jobs.d.mts",
       "import": "./dist/jobs.mjs"
     },
+    "./mutations": {
+      "types": "./dist/mutations.d.mts",
+      "import": "./dist/mutations.mjs"
+    },
     "./overview": {
       "types": "./dist/overview.d.mts",
       "import": "./dist/overview.mjs"

@@ -9,12 +9,25 @@ import {
   listJobsInputSchema,
   type listJobsOutputSchema,
 } from "@better-bull-board/core/jobs";
+import {
+  jobMutationInputSchema,
+  mutationResultSchema,
+  queueMutationInputSchema,
+} from "@better-bull-board/core/mutations";
 import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview";
 import { listQueues, listQueuesInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queues";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { cancelJob, deleteQueue, pauseQueue, replayJob, resumeQueue } from "./actions";
+import { MCP_READ_SCOPE, MCP_WRITE_SCOPE } from "./scopes";
 
 const emptyInputSchema = z.object({}).strict();
+
+type BetterBullBoardMcpServerOptions = {
+  scopes?: string[];
+};
+
+const defaultScopes = [MCP_READ_SCOPE, MCP_WRITE_SCOPE];
 
 const mcpListJobsOutputSchema = z.object({
   jobs: z.array(
@@ -161,7 +174,17 @@ const formatLogs = (result: z.infer<typeof listJobLogsOutputSchema>) =>
     ...result.logs.map((log) => `- ${new Date(log.ts).toISOString()} [${log.level}] #${log.logSeq}: ${log.message}`),
   ].join("\n");
 
-export const createBetterBullBoardMcpServer = () => {
+const formatMutationResult = (title: string, result: z.infer<typeof mutationResultSchema>) =>
+  [`# ${title}`, "", result.message].join("\n");
+
+export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServerOptions = {}) => {
+  const scopes = new Set(options.scopes ?? defaultScopes);
+  const requireWriteAccess = () => {
+    if (!scopes.has(MCP_WRITE_SCOPE)) {
+      throw new Error("This MCP access token does not include the bbb:write scope required for this tool.");
+    }
+  };
+
   const server = new McpServer({
     name: "better-bull-board-mcp-server",
     version: "0.1.0",
@@ -288,6 +311,134 @@ export const createBetterBullBoardMcpServer = () => {
 
       return {
         content: [{ type: "text", text: formatLogs(result) }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  server.registerTool(
+    "bbb_cancel_job",
+    {
+      title: "Cancel Better Bull Board Job",
+      description:
+        "Cancel a BullMQ job by queue name and BullMQ job id, then mark the tracked job run as failed when it has not already completed or failed. Requires bbb:write.",
+      inputSchema: jobMutationInputSchema,
+      outputSchema: mutationResultSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      requireWriteAccess();
+      const result = await cancelJob(input);
+
+      return {
+        content: [{ type: "text", text: formatMutationResult("Better Bull Board Job Cancelled", result) }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  server.registerTool(
+    "bbb_replay_job",
+    {
+      title: "Replay Better Bull Board Job",
+      description:
+        "Replay a BullMQ job by queue name and BullMQ job id. Retries the job when possible, otherwise enqueues a new copy from the Redis job payload/options. Requires bbb:write.",
+      inputSchema: jobMutationInputSchema,
+      outputSchema: mutationResultSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      requireWriteAccess();
+      const result = await replayJob(input);
+
+      return {
+        content: [{ type: "text", text: formatMutationResult("Better Bull Board Job Replayed", result) }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  server.registerTool(
+    "bbb_pause_queue",
+    {
+      title: "Pause Better Bull Board Queue",
+      description: "Pause a BullMQ queue by queue name and update the tracked queue state. Requires bbb:write.",
+      inputSchema: queueMutationInputSchema,
+      outputSchema: mutationResultSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      requireWriteAccess();
+      const result = await pauseQueue(input);
+
+      return {
+        content: [{ type: "text", text: formatMutationResult("Better Bull Board Queue Paused", result) }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  server.registerTool(
+    "bbb_resume_queue",
+    {
+      title: "Resume Better Bull Board Queue",
+      description: "Resume a BullMQ queue by queue name and update the tracked queue state. Requires bbb:write.",
+      inputSchema: queueMutationInputSchema,
+      outputSchema: mutationResultSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      requireWriteAccess();
+      const result = await resumeQueue(input);
+
+      return {
+        content: [{ type: "text", text: formatMutationResult("Better Bull Board Queue Resumed", result) }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  server.registerTool(
+    "bbb_delete_queue",
+    {
+      title: "Delete Better Bull Board Queue",
+      description:
+        "Permanently obliterate a BullMQ queue by queue name and remove the tracked queue row. This is destructive and requires bbb:write.",
+      inputSchema: queueMutationInputSchema,
+      outputSchema: mutationResultSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      requireWriteAccess();
+      const result = await deleteQueue(input);
+
+      return {
+        content: [{ type: "text", text: formatMutationResult("Better Bull Board Queue Deleted", result) }],
         structuredContent: result,
       };
     },

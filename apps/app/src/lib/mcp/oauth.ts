@@ -1,9 +1,9 @@
 import { createHash, randomBytes } from "node:crypto";
 import { mcpOAuthAuthorizationCodesTable, mcpOAuthClientsTable, mcpOAuthTokensTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
+import { MCP_READ_SCOPE, MCP_SUPPORTED_SCOPES } from "@better-bull-board/mcp/scopes";
 import { and, eq, gt, isNull } from "drizzle-orm";
 
-export const MCP_READ_SCOPE = "bbb:read";
 export const MCP_ACCESS_TOKEN_TTL_SECONDS = 60 * 60;
 const MCP_REFRESH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
 const MCP_AUTHORIZATION_CODE_TTL_SECONDS = 60 * 10;
@@ -56,13 +56,20 @@ const validateRedirectUri = (redirectUri: string) => {
 };
 
 const parseScopes = (scope?: string | null) => {
-  const scopes = (scope ?? MCP_READ_SCOPE).split(/\s+/).filter(Boolean);
+  const requestedScopes = new Set((scope ?? MCP_READ_SCOPE).split(/\s+/).filter(Boolean));
+  const unsupportedScopes = [...requestedScopes].filter(
+    (requestedScope) => !MCP_SUPPORTED_SCOPES.includes(requestedScope as (typeof MCP_SUPPORTED_SCOPES)[number]),
+  );
 
-  if (!scopes.includes(MCP_READ_SCOPE)) {
-    throw new OAuthError("invalid_scope", "Only bbb:read is supported");
+  if (unsupportedScopes.length > 0) {
+    throw new OAuthError("invalid_scope", `Unsupported scope: ${unsupportedScopes.join(" ")}`);
   }
 
-  return MCP_READ_SCOPE;
+  if (!requestedScopes.has(MCP_READ_SCOPE)) {
+    throw new OAuthError("invalid_scope", "bbb:read is required");
+  }
+
+  return MCP_SUPPORTED_SCOPES.filter((supportedScope) => requestedScopes.has(supportedScope)).join(" ");
 };
 
 const requireString = (formData: FormData, key: string) => {
@@ -119,6 +126,7 @@ export const normalizeClientRegistration = async (body: unknown) => {
     typeof metadata.token_endpoint_auth_method === "string" ? metadata.token_endpoint_auth_method : "none";
   const clientName =
     typeof metadata.client_name === "string" && metadata.client_name.length > 0 ? metadata.client_name : "MCP Client";
+  const scope = parseScopes(typeof metadata.scope === "string" ? metadata.scope : undefined);
 
   if (!grantTypes.includes("authorization_code")) {
     throw new OAuthError("invalid_client_metadata", "authorization_code grant is required");
@@ -141,7 +149,7 @@ export const normalizeClientRegistration = async (body: unknown) => {
     grantTypes,
     responseTypes,
     tokenEndpointAuthMethod,
-    scope: MCP_READ_SCOPE,
+    scope,
     metadata,
   });
 
@@ -153,7 +161,7 @@ export const normalizeClientRegistration = async (body: unknown) => {
     grant_types: grantTypes,
     response_types: responseTypes,
     token_endpoint_auth_method: tokenEndpointAuthMethod,
-    scope: MCP_READ_SCOPE,
+    scope,
   };
 };
 

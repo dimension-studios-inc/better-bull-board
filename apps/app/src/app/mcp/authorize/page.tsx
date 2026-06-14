@@ -1,3 +1,4 @@
+import { MCP_WRITE_SCOPE } from "@better-bull-board/mcp/scopes";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Button } from "~/components/ui/button";
@@ -37,6 +38,8 @@ export default async function McpAuthorizePage({
     expectedResource: resource,
   });
   const authorizeUrl = `/api/mcp/oauth/authorize?${url.searchParams.toString()}`;
+  const requestedScopes = authorization.scope.split(/\s+/);
+  const requestsWrite = requestedScopes.includes(MCP_WRITE_SCOPE);
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -45,7 +48,8 @@ export default async function McpAuthorizePage({
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold">Authorize MCP access</h1>
             <p className="text-sm text-muted-foreground">
-              {authorization.client.clientName} wants read-only access to Better Bull Board.
+              {authorization.client.clientName} wants {requestsWrite ? "read and write" : "read-only"} access to Better
+              Bull Board.
             </p>
           </div>
 
@@ -56,7 +60,11 @@ export default async function McpAuthorizePage({
             </div>
             <div>
               <div className="font-medium">Requested access</div>
-              <div className="text-muted-foreground">Read queues, jobs, logs, and system overview.</div>
+              <div className="text-muted-foreground">
+                {requestsWrite
+                  ? "Read queues, jobs, logs, and system overview. Pause, resume, delete queues, cancel jobs, and replay jobs."
+                  : "Read queues, jobs, logs, and system overview."}
+              </div>
             </div>
           </div>
 
