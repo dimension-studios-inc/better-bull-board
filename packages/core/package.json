@@ -1,8 +1,5 @@
 {
   "name": "@better-bull-board/core",
-  "main": "dist/index.mjs",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.mts",
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
@@ -19,13 +16,17 @@
     "zod": "^4.3.6"
   },
   "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
+    "./jobs": {
+      "types": "./dist/jobs.d.mts",
+      "import": "./dist/jobs.mjs"
     },
-    "./*": {
-      "types": "./dist/*.d.mts",
-      "import": "./dist/*.mjs"
+    "./overview": {
+      "types": "./dist/overview.d.mts",
+      "import": "./dist/overview.mjs"
+    },
+    "./queues": {
+      "types": "./dist/queues.d.mts",
+      "import": "./dist/queues.mjs"
     }
   },
   "type": "module",

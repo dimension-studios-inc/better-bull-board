@@ -1,4 +1,4 @@
-import { listJobLogs } from "@better-bull-board/core";
+import { listJobLogs } from "@better-bull-board/core/jobs";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobLogsApiRoute } from "./schemas";
 

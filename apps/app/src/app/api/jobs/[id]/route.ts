@@ -1,4 +1,4 @@
-import { getJobById } from "@better-bull-board/core";
+import { getJobById } from "@better-bull-board/core/jobs";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getJobByIdApiRoute } from "./schemas";
 

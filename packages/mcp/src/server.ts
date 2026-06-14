@@ -2,18 +2,15 @@ import {
   getJobById,
   getJobByIdInputSchema,
   getJobByIdOutputSchema,
-  getSystemOverview,
   listJobLogs,
   listJobLogsInputSchema,
   listJobLogsOutputSchema,
   listJobs,
   listJobsInputSchema,
   listJobsOutputSchema,
-  listQueues,
-  listQueuesInputSchema,
-  listQueuesOutputSchema,
-  systemOverviewSchema,
-} from "@better-bull-board/core";
+} from "@better-bull-board/core/jobs";
+import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview";
+import { listQueues, listQueuesInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queues";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 

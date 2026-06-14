@@ -1,4 +1,4 @@
-import { listJobsInputSchema, listJobsOutputSchema } from "@better-bull-board/core";
+import { listJobsInputSchema, listJobsOutputSchema } from "@better-bull-board/core/jobs";
 import { registerApiRoute } from "~/lib/utils/client";
 
 export const getJobsTableInput = listJobsInputSchema;
