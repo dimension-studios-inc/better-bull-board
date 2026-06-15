@@ -1,4 +1,4 @@
-import { dashboardQueueHourlyStatsTable } from "@better-bull-board/db";
+import { dashboardQueueHourlyStatsTable, jobRunsTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
 import { sql } from "drizzle-orm";
@@ -56,11 +56,21 @@ const getDashboardWindow = (days: number): DashboardWindow => {
 const getStats = async ({ bucketFrom, dateTo }: DashboardWindow) => {
   const result = await db.execute(sql`
       SELECT
-        COALESCE(SUM("active_runs"), 0)::bigint AS "running_tasks",
-        COALESCE(SUM("waiting_runs"), 0)::bigint AS "waiting_in_queue",
-        COALESCE(SUM("completed_runs") FILTER (WHERE "bucket_start" >= ${bucketFrom} AND "bucket_start" <= ${dateTo}), 0)::bigint AS "successes",
-        COALESCE(SUM("failed_runs") FILTER (WHERE "bucket_start" >= ${bucketFrom} AND "bucket_start" <= ${dateTo}), 0)::bigint AS "failures"
+        (
+          SELECT COUNT(*)
+          FROM ${jobRunsTable}
+          WHERE ${jobRunsTable.status} = 'active'
+        )::bigint AS "running_tasks",
+        (
+          SELECT COUNT(*)
+          FROM ${jobRunsTable}
+          WHERE ${jobRunsTable.status} = 'waiting'
+        )::bigint AS "waiting_in_queue",
+        COALESCE(SUM("completed_runs"), 0)::bigint AS "successes",
+        COALESCE(SUM("failed_runs"), 0)::bigint AS "failures"
       FROM ${dashboardQueueHourlyStatsTable}
+      WHERE "bucket_start" >= ${bucketFrom}
+        AND "bucket_start" <= ${dateTo}
     `);
   const stats = (result.rows as StatsRow[])[0];
 
