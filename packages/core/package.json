@@ -1,0 +1,52 @@
+{
+  "name": "@better-bull-board/core",
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rm -rf dist",
+    "dev": "tsdown --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@better-bull-board/db": "*",
+    "@better-bull-board/typescript-config": "*",
+    "drizzle-orm": "*",
+    "tsdown": "^0.21.9",
+    "typescript": "^6.0.3",
+    "zod": "^4.3.6"
+  },
+  "exports": {
+    "./job-schemas": {
+      "types": "./dist/job-schemas.d.mts",
+      "import": "./dist/job-schemas.mjs"
+    },
+    "./mutation-schemas": {
+      "types": "./dist/mutation-schemas.d.mts",
+      "import": "./dist/mutation-schemas.mjs"
+    },
+    "./queue-schemas": {
+      "types": "./dist/queue-schemas.d.mts",
+      "import": "./dist/queue-schemas.mjs"
+    },
+    "./jobs": {
+      "types": "./dist/jobs.d.mts",
+      "import": "./dist/jobs.mjs"
+    },
+    "./mutations": {
+      "types": "./dist/mutations.d.mts",
+      "import": "./dist/mutations.mjs"
+    },
+    "./overview": {
+      "types": "./dist/overview.d.mts",
+      "import": "./dist/overview.mjs"
+    },
+    "./queues": {
+      "types": "./dist/queues.d.mts",
+      "import": "./dist/queues.mjs"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^25.6.0"
+  }
+}

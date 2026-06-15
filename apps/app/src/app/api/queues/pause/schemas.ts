@@ -1,18 +1,9 @@
-import { z } from "zod";
+import { mutationResultSchema, queueMutationInputSchema } from "@better-bull-board/core/mutation-schemas";
 import { registerApiRoute } from "~/lib/utils/client";
-
-export const pauseQueueInput = z.object({
-  queueName: z.string(),
-});
-
-export const pauseQueueOutput = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
 
 export const pauseQueueApiRoute = registerApiRoute({
   route: "/api/queues/pause",
   method: "POST",
-  inputSchema: pauseQueueInput,
-  outputSchema: pauseQueueOutput,
+  inputSchema: queueMutationInputSchema,
+  outputSchema: mutationResultSchema,
 });

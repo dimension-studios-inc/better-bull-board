@@ -28,7 +28,9 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (data.success) {
-        window.location.href = "/";
+        const searchParams = new URLSearchParams(window.location.search);
+        const nextPath = searchParams.get("next");
+        window.location.href = nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/";
       } else {
         setError(data.error || "Login failed");
       }

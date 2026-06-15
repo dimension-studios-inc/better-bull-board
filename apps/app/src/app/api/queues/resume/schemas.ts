@@ -1,18 +1,9 @@
-import { z } from "zod";
+import { mutationResultSchema, queueMutationInputSchema } from "@better-bull-board/core/mutation-schemas";
 import { registerApiRoute } from "~/lib/utils/client";
-
-export const resumeQueueInput = z.object({
-  queueName: z.string(),
-});
-
-export const resumeQueueOutput = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
 
 export const resumeQueueApiRoute = registerApiRoute({
   route: "/api/queues/resume",
   method: "POST",
-  inputSchema: resumeQueueInput,
-  outputSchema: resumeQueueOutput,
+  inputSchema: queueMutationInputSchema,
+  outputSchema: mutationResultSchema,
 });

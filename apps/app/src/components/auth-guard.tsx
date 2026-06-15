@@ -11,11 +11,11 @@ export async function AuthGuard({ children, pathname }: AuthGuardProps) {
   const user = await getAuthenticatedUser();
 
   if (!user && pathname !== "/login") {
-    redirect("/login");
+    redirect(`/login?next=${encodeURIComponent(pathname)}`);
   }
 
-  if (pathname === "/login") {
-    // If on login page, render without sidebar
+  if (pathname === "/login" || pathname === "/mcp/authorize") {
+    // If on login or MCP approval page, render without sidebar
     return <>{children}</>;
   }
 

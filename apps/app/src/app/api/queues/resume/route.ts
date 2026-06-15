@@ -1,30 +1,16 @@
-import { ingestQueues } from "@better-bull-board/ingest/repeats/queues";
-import { logger } from "@rharkor/logger";
-import { Queue } from "bullmq";
-import { redis } from "~/lib/redis";
+import { resumeQueue } from "~/lib/queue-mutations";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { resumeQueueApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({
   apiRoute: resumeQueueApiRoute,
   async handler(input) {
-    const { queueName } = input;
-
     try {
-      const queue = new Queue(queueName, { connection: redis });
-      await queue.resume();
-
-      logger.debug("Reloading queues");
-      await ingestQueues();
-
-      return {
-        success: true,
-        message: `Queue ${queueName} has been resumed successfully`,
-      };
+      return await resumeQueue(input);
     } catch (error) {
       return {
         success: false,
-        message: `Failed to resume queue ${queueName}: ${error instanceof Error ? error.message : "Unknown error"}`,
+        message: `Failed to resume queue ${input.queueName}: ${error instanceof Error ? error.message : "Unknown error"}`,
       };
     }
   },
