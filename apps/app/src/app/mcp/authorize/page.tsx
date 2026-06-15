@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { getAuthenticatedUser } from "~/lib/auth/server";
-import { getMcpResource, validateAuthorizationRequest } from "~/lib/mcp/oauth";
+import { getMcpResource, getOriginFromHeaders, validateAuthorizationRequest } from "~/lib/mcp/oauth";
 
 export const runtime = "nodejs";
+
+const authorizePath = "/api/mcp/oauth/authorize";
 
 export default async function McpAuthorizePage({
   searchParams,
@@ -16,10 +18,9 @@ export default async function McpAuthorizePage({
   const user = await getAuthenticatedUser();
   const params = await searchParams;
   const headerStore = await headers();
-  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "localhost";
-  const protocol = headerStore.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const resource = getMcpResource(`${protocol}://${host}`);
-  const url = new URL("/api/mcp/oauth/authorize", "http://localhost");
+  const origin = getOriginFromHeaders(headerStore);
+  const resource = getMcpResource(origin);
+  const url = new URL(authorizePath, origin);
 
   for (const [key, value] of Object.entries(params)) {
     if (typeof value === "string") {
@@ -31,13 +32,13 @@ export default async function McpAuthorizePage({
   }
 
   if (!user) {
-    redirect(`/login?next=${encodeURIComponent(`/api/mcp/oauth/authorize?${url.searchParams.toString()}`)}`);
+    redirect(`/login?next=${encodeURIComponent(`${authorizePath}?${url.searchParams.toString()}`)}`);
   }
 
   const authorization = await validateAuthorizationRequest(url, {
     expectedResource: resource,
   });
-  const authorizeUrl = `/api/mcp/oauth/authorize?${url.searchParams.toString()}`;
+  const authorizeUrl = `${authorizePath}?${url.searchParams.toString()}`;
   const requestedScopes = authorization.scope.split(/\s+/);
   const requestsWrite = requestedScopes.includes(MCP_WRITE_SCOPE);
 

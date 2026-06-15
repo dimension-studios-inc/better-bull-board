@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "~/lib/auth/server";
-import { getMcpResource, OAuthError, validateAuthorizationRequest } from "~/lib/mcp/oauth";
+import { getMcpResource, getOrigin, OAuthError, validateAuthorizationRequest } from "~/lib/mcp/oauth";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const resource = getMcpResource(url.origin);
+  const origin = getOrigin(request);
+  const resource = getMcpResource(origin);
 
   if (!url.searchParams.has("resource")) {
     url.searchParams.set("resource", resource);
@@ -17,12 +18,12 @@ export async function GET(request: Request) {
     const user = await getAuthenticatedUser();
 
     if (!user) {
-      const loginUrl = new URL("/login", url.origin);
+      const loginUrl = new URL("/login", origin);
       loginUrl.searchParams.set("next", `${url.pathname}${url.search}`);
       return NextResponse.redirect(loginUrl);
     }
 
-    const authorizeUrl = new URL("/mcp/authorize", url.origin);
+    const authorizeUrl = new URL("/mcp/authorize", origin);
     authorizeUrl.search = url.search;
     return NextResponse.redirect(authorizeUrl);
   } catch (error) {

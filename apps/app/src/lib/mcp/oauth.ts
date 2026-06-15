@@ -20,9 +20,28 @@ export class OAuthError extends Error {
   }
 }
 
+const firstHeaderValue = (value: string | null) => value?.split(",")[0]?.trim() || null;
+
+const inferProtocol = (host: string) =>
+  host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+
+const isHttpProtocol = (protocol: string | null) => protocol === "http" || protocol === "https";
+
+export const getOriginFromHeaders = (headers: Headers, fallbackOrigin = "http://localhost") => {
+  const host = firstHeaderValue(headers.get("x-forwarded-host")) ?? firstHeaderValue(headers.get("host"));
+
+  if (!host) {
+    return fallbackOrigin;
+  }
+
+  const forwardedProtocol = firstHeaderValue(headers.get("x-forwarded-proto"));
+  const protocol = isHttpProtocol(forwardedProtocol) ? forwardedProtocol : inferProtocol(host);
+
+  return `${protocol}://${host}`;
+};
+
 export const getOrigin = (request: Request) => {
-  const url = new URL(request.url);
-  return url.origin;
+  return getOriginFromHeaders(request.headers, new URL(request.url).origin);
 };
 
 export const getMcpResource = (origin: string) => `${origin}/mcp`;

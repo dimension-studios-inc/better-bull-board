@@ -4,6 +4,7 @@ import {
   createAuthorizationCode,
   createOAuthErrorRedirect,
   getMcpResource,
+  getOrigin,
   validateAuthorizationRequest,
 } from "~/lib/mcp/oauth";
 
@@ -23,10 +24,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing authorization request" }, { status: 400 });
   }
 
-  const requestUrl = new URL(request.url);
-  const authorizeUrl = new URL(rawAuthorizeUrl, requestUrl.origin);
+  const origin = getOrigin(request);
+  const resource = getMcpResource(origin);
+  const authorizeUrl = new URL(rawAuthorizeUrl, origin);
   const authorization = await validateAuthorizationRequest(authorizeUrl, {
-    expectedResource: getMcpResource(requestUrl.origin),
+    expectedResource: resource,
   });
 
   if (formData.get("decision") !== "approve") {
