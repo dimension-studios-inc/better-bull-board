@@ -8,6 +8,12 @@
 - **Jobs**: via Redis Streams ingestion and periodic reconciliation
 - **Jobs Logs**: via ingestion
 
+## MCP for agents
+
+Better Bull Board exposes an MCP server for agent access to queues, jobs, logs, and system health. Agents can use it to answer operational questions like which queues are busiest, why jobs are failing, or what is currently running. With write access, agents can also pause and resume queues, cancel jobs, replay jobs, and delete queues.
+
+See the [MCP guide](packages/mcp/README.md) for setup instructions, Cursor/Codex examples, and common prompts.
+
 ## How does this work?
 There's two main notions in this project:
 
