@@ -1,18 +1,9 @@
-import { z } from "zod";
+import { mutationResultSchema, queueMutationInputSchema } from "@better-bull-board/core/mutation-schemas";
 import { registerApiRoute } from "~/lib/utils/client";
-
-export const deleteQueueInput = z.object({
-  queueName: z.string(),
-});
-
-export const deleteQueueOutput = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
 
 export const deleteQueueApiRoute = registerApiRoute({
   route: "/api/queues/delete",
   method: "POST",
-  inputSchema: deleteQueueInput,
-  outputSchema: deleteQueueOutput,
+  inputSchema: queueMutationInputSchema,
+  outputSchema: mutationResultSchema,
 });

@@ -1,5 +1,5 @@
+import { replayJob } from "~/lib/queue-mutations";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
-import { replayJobHandler } from "../replay/handler";
 import { bulkReplayJobsApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({
@@ -9,7 +9,7 @@ export const POST = createAuthenticatedApiRoute({
 
     // Don't use promise.all to avoid race conditions
     for (const job of jobs) {
-      await replayJobHandler(job);
+      await replayJob(job);
     }
 
     return {

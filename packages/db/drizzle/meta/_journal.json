@@ -134,6 +134,13 @@
       "when": 1777047000000,
       "tag": "0018_cron_refreshed_job_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1777047100000,
+      "tag": "0019_mcp_oauth",
+      "breakpoints": true
     }
   ]
 }
