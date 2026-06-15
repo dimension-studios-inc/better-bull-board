@@ -2,7 +2,7 @@ import { jobMutationInputSchema, mutationResultSchema } from "@better-bull-board
 import z from "zod";
 import { registerApiRoute } from "~/lib/utils/client";
 
-export const bulkCancelJobsInput = z.object({
+const bulkCancelJobsInput = z.object({
   jobs: z.array(jobMutationInputSchema),
 });
 

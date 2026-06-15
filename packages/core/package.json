@@ -24,6 +24,10 @@
       "types": "./dist/mutation-schemas.d.mts",
       "import": "./dist/mutation-schemas.mjs"
     },
+    "./queue-schemas": {
+      "types": "./dist/queue-schemas.d.mts",
+      "import": "./dist/queue-schemas.mjs"
+    },
     "./jobs": {
       "types": "./dist/jobs.d.mts",
       "import": "./dist/jobs.mjs"

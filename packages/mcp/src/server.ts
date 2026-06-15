@@ -13,7 +13,8 @@ import {
   queueMutationInputSchema,
 } from "@better-bull-board/core/mutation-schemas";
 import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview";
-import { listQueues, listQueuesInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queues";
+import { listQueuesInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas";
+import { listQueues } from "@better-bull-board/core/queues";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { cancelJob, deleteQueue, pauseQueue, replayJob, resumeQueue } from "./actions";

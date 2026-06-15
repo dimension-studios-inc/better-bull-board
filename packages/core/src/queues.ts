@@ -1,48 +1,11 @@
 import { jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { and, asc, desc, eq, gt, ilike, inArray, lt, or, sql } from "drizzle-orm";
-import { z } from "zod";
+import type { z } from "zod";
+import { listQueuesInputSchema, listQueuesOutputSchema } from "./queue-schemas";
 
 type CursorDirection = "next" | "prev";
 type QueueCursor = { waitingJobs: number; name: string };
-
-export const listQueuesInputSchema = z.object({
-  cursor: z
-    .object({
-      waitingJobs: z.number(),
-      name: z.string(),
-    })
-    .nullish(),
-  cursorDirection: z.enum(["next", "prev"]).optional(),
-  search: z.string().optional(),
-  limit: z.number().min(1).max(100).optional(),
-});
-
-export const listQueuesOutputSchema = z.object({
-  queues: z.array(
-    z.object({
-      name: z.string(),
-      isPaused: z.boolean(),
-      patterns: z.array(z.string()),
-      everys: z.array(z.number()),
-      waitingJobs: z.number(),
-      activeJobs: z.number(),
-    }),
-  ),
-  nextCursor: z
-    .object({
-      waitingJobs: z.number(),
-      name: z.string(),
-    })
-    .nullable(),
-  prevCursor: z
-    .object({
-      waitingJobs: z.number(),
-      name: z.string(),
-    })
-    .nullable(),
-  total: z.number(),
-});
 
 const waitingJobCounts = db
   .select({

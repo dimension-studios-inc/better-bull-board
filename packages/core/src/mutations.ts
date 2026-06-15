@@ -73,6 +73,31 @@ const withQueue = async <Result>(
   }
 };
 
+const withResolvedQueue = async <Result>(
+  input: QueueMutationInput,
+  dependencies: QueueDependencies,
+  callback: (queue: QueueAdapter, queueName: string) => Promise<Result>,
+) => {
+  const { queueName } = queueMutationInputSchema.parse(input);
+  const resolvedQueueName = await resolveTrackedQueueName(queueName);
+
+  await withQueue(resolvedQueueName, dependencies, (queue) => callback(queue, resolvedQueueName));
+
+  return resolvedQueueName;
+};
+
+const updateTrackedQueuePausedState = async (queueName: string, isPaused: boolean) => {
+  const [updatedQueue] = await db
+    .update(queuesTable)
+    .set({ isPaused })
+    .where(eq(queuesTable.name, queueName))
+    .returning({ name: queuesTable.name });
+
+  if (!updatedQueue) {
+    throw new Error(`Queue ${queueName} not found`);
+  }
+};
+
 const mutationResult = (message: string): MutationResult =>
   mutationResultSchema.parse({
     success: true,
@@ -156,20 +181,9 @@ export const pauseQueue = async (
   input: QueueMutationInput,
   dependencies: QueueDependencies,
 ): Promise<MutationResult> => {
-  const { queueName } = queueMutationInputSchema.parse(input);
-  const resolvedQueueName = await resolveTrackedQueueName(queueName);
-
-  await withQueue(resolvedQueueName, dependencies, async (queue) => {
+  const resolvedQueueName = await withResolvedQueue(input, dependencies, async (queue, queueName) => {
     await queue.pause();
-    const [updatedQueue] = await db
-      .update(queuesTable)
-      .set({ isPaused: true })
-      .where(eq(queuesTable.name, resolvedQueueName))
-      .returning({ name: queuesTable.name });
-
-    if (!updatedQueue) {
-      throw new Error(`Queue ${resolvedQueueName} not found`);
-    }
+    await updateTrackedQueuePausedState(queueName, true);
   });
 
   return mutationResult(`Queue ${resolvedQueueName} has been paused successfully`);
@@ -179,20 +193,9 @@ export const resumeQueue = async (
   input: QueueMutationInput,
   dependencies: QueueDependencies,
 ): Promise<MutationResult> => {
-  const { queueName } = queueMutationInputSchema.parse(input);
-  const resolvedQueueName = await resolveTrackedQueueName(queueName);
-
-  await withQueue(resolvedQueueName, dependencies, async (queue) => {
+  const resolvedQueueName = await withResolvedQueue(input, dependencies, async (queue, queueName) => {
     await queue.resume();
-    const [updatedQueue] = await db
-      .update(queuesTable)
-      .set({ isPaused: false })
-      .where(eq(queuesTable.name, resolvedQueueName))
-      .returning({ name: queuesTable.name });
-
-    if (!updatedQueue) {
-      throw new Error(`Queue ${resolvedQueueName} not found`);
-    }
+    await updateTrackedQueuePausedState(queueName, false);
   });
 
   return mutationResult(`Queue ${resolvedQueueName} has been resumed successfully`);
@@ -202,12 +205,9 @@ export const deleteQueue = async (
   input: QueueMutationInput,
   dependencies: QueueDependencies,
 ): Promise<MutationResult> => {
-  const { queueName } = queueMutationInputSchema.parse(input);
-  const resolvedQueueName = await resolveTrackedQueueName(queueName);
-
-  await withQueue(resolvedQueueName, dependencies, async (queue) => {
+  const resolvedQueueName = await withResolvedQueue(input, dependencies, async (queue, queueName) => {
     await queue.obliterate({ force: true });
-    await db.delete(queuesTable).where(eq(queuesTable.name, resolvedQueueName));
+    await db.delete(queuesTable).where(eq(queuesTable.name, queueName));
   });
 
   return mutationResult(`Queue ${resolvedQueueName} has been deleted successfully`);

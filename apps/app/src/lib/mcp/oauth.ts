@@ -4,7 +4,7 @@ import { db } from "@better-bull-board/db/server";
 import { MCP_READ_SCOPE, MCP_SUPPORTED_SCOPES } from "@better-bull-board/mcp/scopes";
 import { and, eq, gt, isNull } from "drizzle-orm";
 
-export const MCP_ACCESS_TOKEN_TTL_SECONDS = 60 * 60;
+const MCP_ACCESS_TOKEN_TTL_SECONDS = 60 * 60;
 const MCP_REFRESH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30;
 const MCP_AUTHORIZATION_CODE_TTL_SECONDS = 60 * 10;
 
@@ -46,7 +46,7 @@ export const getOrigin = (request: Request) => {
 
 export const getMcpResource = (origin: string) => `${origin}/mcp`;
 
-export const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
+const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
 const randomToken = (bytes = 32) => randomBytes(bytes).toString("base64url");
 
@@ -184,15 +184,12 @@ export const normalizeClientRegistration = async (body: unknown) => {
   };
 };
 
-export const getClient = async (clientId: string) => {
+const getClient = async (clientId: string) => {
   const [client] = await db.select().from(mcpOAuthClientsTable).where(eq(mcpOAuthClientsTable.clientId, clientId));
   return client ?? null;
 };
 
-export const validateClientSecret = (
-  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
-  clientSecret?: string,
-) => {
+const validateClientSecret = (client: NonNullable<Awaited<ReturnType<typeof getClient>>>, clientSecret?: string) => {
   if (client.tokenEndpointAuthMethod === "none") {
     return;
   }
@@ -200,6 +197,19 @@ export const validateClientSecret = (
   if (!client.clientSecretHash || !clientSecret || hashToken(clientSecret) !== client.clientSecretHash) {
     throw new OAuthError("invalid_client", "Invalid client credentials", 401);
   }
+};
+
+const getAuthenticatedClient = async (formData: FormData) => {
+  const clientId = requireString(formData, "client_id");
+  const client = await getClient(clientId);
+
+  if (!client) {
+    throw new OAuthError("invalid_client", "Unknown OAuth client", 401);
+  }
+
+  validateClientSecret(client, formData.get("client_secret")?.toString());
+
+  return { clientId };
 };
 
 export const validateAuthorizationRequest = async (url: URL, options?: { expectedResource?: string }) => {
@@ -328,14 +338,7 @@ const issueTokens = async ({
 };
 
 export const exchangeAuthorizationCode = async (formData: FormData) => {
-  const clientId = requireString(formData, "client_id");
-  const client = await getClient(clientId);
-  if (!client) {
-    throw new OAuthError("invalid_client", "Unknown OAuth client", 401);
-  }
-
-  validateClientSecret(client, formData.get("client_secret")?.toString());
-
+  const { clientId } = await getAuthenticatedClient(formData);
   const code = requireString(formData, "code");
   const redirectUri = requireString(formData, "redirect_uri");
   const codeVerifier = requireString(formData, "code_verifier");
@@ -377,14 +380,7 @@ export const exchangeAuthorizationCode = async (formData: FormData) => {
 };
 
 export const exchangeRefreshToken = async (formData: FormData) => {
-  const clientId = requireString(formData, "client_id");
-  const client = await getClient(clientId);
-  if (!client) {
-    throw new OAuthError("invalid_client", "Unknown OAuth client", 401);
-  }
-
-  validateClientSecret(client, formData.get("client_secret")?.toString());
-
+  const { clientId } = await getAuthenticatedClient(formData);
   const refreshToken = requireString(formData, "refresh_token");
   return db.transaction(async (tx) => {
     const now = new Date();

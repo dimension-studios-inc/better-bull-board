@@ -17,7 +17,6 @@
   "dependencies": {
     "@better-bull-board/client": "*",
     "@better-bull-board/core": "*",
-    "@better-bull-board/db": "*",
     "@better-bull-board/typescript-config": "*",
     "@modelcontextprotocol/sdk": "^1.23.3",
     "@t3-oss/env-core": "^0.13.11",

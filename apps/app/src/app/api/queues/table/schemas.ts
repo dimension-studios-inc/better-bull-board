@@ -1,28 +1,14 @@
+import { listQueuesInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas";
 import z from "zod";
 import { registerApiRoute } from "~/lib/utils/client";
 
-export const getQueuesTableInput = z.object({
-  cursor: z
-    .object({
-      waitingJobs: z.number(),
-      name: z.string(),
-    })
-    .nullish(),
-  cursorDirection: z.enum(["next", "prev"]).optional(),
-  search: z.string().optional(),
+const getQueuesTableInput = listQueuesInputSchema.extend({
   timePeriod: z.enum(["1", "3", "7", "30"]).optional().default("1"),
-  limit: z.number().min(1).max(100).optional(),
 });
 
-export const getQueuesTableOutput = z.object({
+const getQueuesTableOutput = listQueuesOutputSchema.extend({
   queues: z.array(
-    z.object({
-      name: z.string(),
-      isPaused: z.boolean(),
-      patterns: z.array(z.string()),
-      everys: z.array(z.number()),
-      waitingJobs: z.number(),
-      activeJobs: z.number(),
+    listQueuesOutputSchema.shape.queues.element.extend({
       pressure: z.number(),
       chartData: z.array(
         z.object({
@@ -33,19 +19,6 @@ export const getQueuesTableOutput = z.object({
       ),
     }),
   ),
-  nextCursor: z
-    .object({
-      waitingJobs: z.number(),
-      name: z.string(),
-    })
-    .nullable(),
-  prevCursor: z
-    .object({
-      waitingJobs: z.number(),
-      name: z.string(),
-    })
-    .nullable(),
-  total: z.number(),
 });
 
 export const getQueuesTableApiRoute = registerApiRoute({
