@@ -6,7 +6,9 @@ import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
 
 type CursorDirection = "next" | "prev";
-type QueueCursor = { waitingJobs: number; name: string };
+type QueueSortBy = "waitingJobs" | "activeJobs";
+type SortDirection = "asc" | "desc";
+type QueueCursor = { waitingJobs: number; activeJobs?: number; name: string };
 
 const waitingJobCounts = db
   .select({
@@ -20,26 +22,60 @@ const waitingJobCounts = db
 
 const waitingJobsExpression = sql<number>`COALESCE(${waitingJobCounts.waitingJobs}, 0)`;
 
-const getCursorComparison = (cursor: QueueCursor, direction: CursorDirection) => {
-  if (direction === "prev") {
-    return or(
-      gt(waitingJobsExpression, cursor.waitingJobs),
-      and(eq(waitingJobsExpression, cursor.waitingJobs), lt(queuesTable.name, cursor.name)),
-    );
-  }
+const activeJobCounts = db
+  .select({
+    queue: jobRunsTable.queue,
+    activeJobs: sql<number>`COUNT(*)::int`.as("active_jobs"),
+  })
+  .from(jobRunsTable)
+  .where(eq(jobRunsTable.status, "active"))
+  .groupBy(jobRunsTable.queue)
+  .as("active_job_counts");
 
-  return or(
-    lt(waitingJobsExpression, cursor.waitingJobs),
-    and(eq(waitingJobsExpression, cursor.waitingJobs), gt(queuesTable.name, cursor.name)),
-  );
+const activeJobsExpression = sql<number>`COALESCE(${activeJobCounts.activeJobs}, 0)`;
+
+const getSortExpression = (sortBy: QueueSortBy) => {
+  if (sortBy === "activeJobs") return activeJobsExpression;
+  return waitingJobsExpression;
 };
 
-const getSortOrder = (direction: CursorDirection) => {
-  if (direction === "prev") {
-    return [asc(waitingJobsExpression), desc(queuesTable.name)];
+const getCursorValue = (cursor: QueueCursor, sortBy: QueueSortBy) => {
+  if (sortBy === "activeJobs") return cursor.activeJobs ?? 0;
+  return cursor.waitingJobs;
+};
+
+const getOrderDirection = (cursorDirection: CursorDirection, sortDirection: SortDirection) => {
+  if (cursorDirection === "next") return sortDirection;
+  return sortDirection === "desc" ? "asc" : "desc";
+};
+
+const getCursorComparison = (
+  cursor: QueueCursor,
+  cursorDirection: CursorDirection,
+  sortBy: QueueSortBy,
+  sortDirection: SortDirection,
+) => {
+  const sortExpression = getSortExpression(sortBy);
+  const cursorValue = getCursorValue(cursor, sortBy);
+  const nameComparison =
+    cursorDirection === "next" ? gt(queuesTable.name, cursor.name) : lt(queuesTable.name, cursor.name);
+  const tiedSortComparison = and(eq(sortExpression, cursorValue), nameComparison);
+  const shouldUseGreaterThan = cursorDirection === "next" ? sortDirection === "asc" : sortDirection === "desc";
+
+  if (shouldUseGreaterThan) {
+    return or(gt(sortExpression, cursorValue), tiedSortComparison);
   }
 
-  return [desc(waitingJobsExpression), asc(queuesTable.name)];
+  return or(lt(sortExpression, cursorValue), tiedSortComparison);
+};
+
+const getSortOrder = (cursorDirection: CursorDirection, sortBy: QueueSortBy, sortDirection: SortDirection) => {
+  const sortExpression = getSortExpression(sortBy);
+  const orderDirection = getOrderDirection(cursorDirection, sortDirection);
+  const sortOrder = orderDirection === "asc" ? asc(sortExpression) : desc(sortExpression);
+  const nameOrder = cursorDirection === "next" ? asc(queuesTable.name) : desc(queuesTable.name);
+
+  return [sortOrder, nameOrder];
 };
 
 function fillChartData(
@@ -78,7 +114,7 @@ function fillChartData(
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getQueuesTableApiRoute,
   async handler(input) {
-    const { search, timePeriod } = input;
+    const { search, timePeriod, sortBy, sortDirection } = input;
     const cursorDirection = input.cursorDirection ?? "next";
     const cursor = input.cursor;
     const limit = input.limit ?? 20;
@@ -90,20 +126,22 @@ export const POST = createAuthenticatedApiRoute({
           name: queuesTable.name,
           isPaused: queuesTable.isPaused,
           waitingJobs: waitingJobsExpression.as("waiting_jobs"),
+          activeJobs: activeJobsExpression.as("active_jobs"),
           patterns: sql<string[] | null | undefined>`array_agg(${jobSchedulersTable.pattern})`.as("patterns"),
           everys: sql<number[] | null | undefined>`array_agg(${jobSchedulersTable.every})`.as("everys"),
         })
         .from(queuesTable)
         .leftJoin(waitingJobCounts, eq(waitingJobCounts.queue, queuesTable.name))
+        .leftJoin(activeJobCounts, eq(activeJobCounts.queue, queuesTable.name))
         .leftJoin(jobSchedulersTable, eq(jobSchedulersTable.queueId, queuesTable.id))
         .where(
           and(
-            cursor ? getCursorComparison(cursor, direction) : undefined,
+            cursor ? getCursorComparison(cursor, direction, sortBy, sortDirection) : undefined,
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
           ),
         )
-        .groupBy(queuesTable.id, waitingJobCounts.waitingJobs)
-        .orderBy(...getSortOrder(direction))
+        .groupBy(queuesTable.id, waitingJobCounts.waitingJobs, activeJobCounts.activeJobs)
+        .orderBy(...getSortOrder(direction, sortBy, sortDirection))
         .limit(limit + 1);
     };
 
@@ -261,8 +299,22 @@ export const POST = createAuthenticatedApiRoute({
           chartData: stats.chartData,
         };
       }),
-      nextCursor: hasOlderPage && lastRow ? { name: lastRow.name, waitingJobs: Number(lastRow.waitingJobs) } : null,
-      prevCursor: hasNewerPage && firstRow ? { name: firstRow.name, waitingJobs: Number(firstRow.waitingJobs) } : null,
+      nextCursor:
+        hasOlderPage && lastRow
+          ? {
+              name: lastRow.name,
+              waitingJobs: Number(lastRow.waitingJobs),
+              activeJobs: Number(lastRow.activeJobs),
+            }
+          : null,
+      prevCursor:
+        hasNewerPage && firstRow
+          ? {
+              name: firstRow.name,
+              waitingJobs: Number(firstRow.waitingJobs),
+              activeJobs: Number(firstRow.activeJobs),
+            }
+          : null,
       total: Number(total?.count ?? 0),
     };
   },
