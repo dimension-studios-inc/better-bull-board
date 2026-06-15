@@ -16,6 +16,10 @@
     "zod": "^4.3.6"
   },
   "exports": {
+    "./job-schemas": {
+      "types": "./dist/job-schemas.d.mts",
+      "import": "./dist/job-schemas.mjs"
+    },
     "./jobs": {
       "types": "./dist/jobs.d.mts",
       "import": "./dist/jobs.mjs"

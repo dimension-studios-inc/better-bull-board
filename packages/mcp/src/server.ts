@@ -1,14 +1,12 @@
 import {
-  getJobById,
   getJobByIdInputSchema,
   getJobByIdOutputSchema,
-  listJobLogs,
   listJobLogsInputSchema,
   listJobLogsOutputSchema,
-  listJobs,
   listJobsInputSchema,
   type listJobsOutputSchema,
-} from "@better-bull-board/core/jobs";
+} from "@better-bull-board/core/job-schemas";
+import { getJobById, listJobLogs, listJobs } from "@better-bull-board/core/jobs";
 import {
   jobMutationInputSchema,
   mutationResultSchema,
