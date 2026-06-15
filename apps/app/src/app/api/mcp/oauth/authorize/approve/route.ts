@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         description: "The authorization request was denied",
         state: authorization.state,
       }),
+      303,
     );
   }
 
@@ -58,5 +59,5 @@ export async function POST(request: Request) {
     redirectUri.searchParams.set("state", authorization.state);
   }
 
-  return NextResponse.redirect(redirectUri);
+  return NextResponse.redirect(redirectUri, 303);
 }
