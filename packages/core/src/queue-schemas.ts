@@ -4,11 +4,14 @@ export const listQueuesInputSchema = z.object({
   cursor: z
     .object({
       waitingJobs: z.number(),
+      activeJobs: z.number().optional(),
       name: z.string(),
     })
     .nullish(),
   cursorDirection: z.enum(["next", "prev"]).optional(),
   search: z.string().optional(),
+  sortBy: z.enum(["waitingJobs", "activeJobs"]).optional().default("waitingJobs"),
+  sortDirection: z.enum(["asc", "desc"]).optional().default("desc"),
   limit: z.number().min(1).max(100).optional(),
 });
 
@@ -26,12 +29,14 @@ export const listQueuesOutputSchema = z.object({
   nextCursor: z
     .object({
       waitingJobs: z.number(),
+      activeJobs: z.number(),
       name: z.string(),
     })
     .nullable(),
   prevCursor: z
     .object({
       waitingJobs: z.number(),
+      activeJobs: z.number(),
       name: z.string(),
     })
     .nullable(),

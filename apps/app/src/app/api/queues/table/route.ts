@@ -42,7 +42,7 @@ function fillChartData(
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getQueuesTableApiRoute,
   async handler(input) {
-    const { search, timePeriod } = input;
+    const { search, timePeriod, sortBy, sortDirection } = input;
     const cursorDirection = input.cursorDirection ?? "next";
     const cursor = input.cursor;
     const limit = input.limit ?? 20;
@@ -51,6 +51,8 @@ export const POST = createAuthenticatedApiRoute({
       search,
       cursor,
       cursorDirection,
+      sortBy,
+      sortDirection,
       limit,
     });
     const queueRows = queuePage.queues;
