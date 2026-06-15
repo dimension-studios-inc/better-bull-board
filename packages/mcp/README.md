@@ -47,7 +47,7 @@ Your MCP client should discover the OAuth metadata, open Better Bull Board in th
 
 For local development, click:
 
-[![Add to Cursor](https://img.shields.io/badge/Add%20to-Cursor-1f1f1f?style=for-the-badge)](https://cursor.com/en/install-mcp?name=better-bull-board&config=eyJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjMwMDAvbWNwIn0%3D)
+[![Add to Cursor](https://camo.githubusercontent.com/ae8711b98f6b99feccfa4c47b29a82aaee09b04829d6d29e6ed410468a4e8296/68747470733a2f2f637572736f722e636f6d2f646565706c696e6b2f6d63702d696e7374616c6c2d6461726b2e737667)](https://cursor.com/en/install-mcp?name=better-bull-board&config=eyJ1cmwiOiJodHRwOi8vMTI3LjAuMC4xOjMwMDAvbWNwIn0%3D)
 
 For a hosted Better Bull Board instance, go to `Cursor Settings` -> `MCP` -> `New MCP Server`, choose a remote or streamable HTTP server, and use:
 
