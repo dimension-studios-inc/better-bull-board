@@ -20,6 +20,10 @@
       "types": "./dist/job-schemas.d.mts",
       "import": "./dist/job-schemas.mjs"
     },
+    "./mutation-schemas": {
+      "types": "./dist/mutation-schemas.d.mts",
+      "import": "./dist/mutation-schemas.mjs"
+    },
     "./jobs": {
       "types": "./dist/jobs.d.mts",
       "import": "./dist/jobs.mjs"

@@ -2,9 +2,9 @@
 
 import "dotenv/config";
 
+import { timingSafeEqual } from "node:crypto";
 import { createServer, type ServerResponse } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { isAuthorized } from "./auth";
 import { env } from "./env";
 import { createBetterBullBoardMcpServer } from "./server";
 
@@ -25,6 +25,19 @@ const sendJson = (res: ServerResponse, statusCode: number, body: unknown) => {
   res.end(JSON.stringify(body));
 };
 
+const isAuthorized = (authorization: string | undefined) => {
+  const bearerPrefix = "Bearer ";
+
+  if (!authorization?.startsWith(bearerPrefix)) {
+    return false;
+  }
+
+  const actualToken = Buffer.from(authorization.slice(bearerPrefix.length));
+  const expectedToken = Buffer.from(mcpToken);
+
+  return actualToken.length === expectedToken.length && timingSafeEqual(actualToken, expectedToken);
+};
+
 const httpServer = createServer(async (req, res) => {
   if (req.url !== "/mcp") {
     sendJson(res, 404, { error: "Not found" });
@@ -36,7 +49,7 @@ const httpServer = createServer(async (req, res) => {
     return;
   }
 
-  if (!isAuthorized({ headers: req.headers, token: mcpToken })) {
+  if (!isAuthorized(req.headers.authorization)) {
     sendJson(res, 401, { error: "Unauthorized" });
     return;
   }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const jobStatusValues = [
+const jobStatusValues = [
   "active",
   "completed",
   "failed",
@@ -11,7 +11,7 @@ export const jobStatusValues = [
   "unknown",
 ] as const;
 
-export const logLevelValues = ["log", "debug", "info", "warn", "error"] as const;
+const logLevelValues = ["log", "debug", "info", "warn", "error"] as const;
 
 export const listJobsInputSchema = z.object({
   cursor: z

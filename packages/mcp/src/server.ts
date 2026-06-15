@@ -11,7 +11,7 @@ import {
   jobMutationInputSchema,
   mutationResultSchema,
   queueMutationInputSchema,
-} from "@better-bull-board/core/mutations";
+} from "@better-bull-board/core/mutation-schemas";
 import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview";
 import { listQueues, listQueuesInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queues";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

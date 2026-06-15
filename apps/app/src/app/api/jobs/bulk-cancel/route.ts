@@ -1,5 +1,5 @@
+import { cancelJob } from "~/lib/queue-mutations";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
-import { cancelJobHandler } from "../cancel/handler";
 import { bulkCancelJobsApiRoute } from "./schemas";
 
 export const POST = createAuthenticatedApiRoute({
@@ -9,7 +9,7 @@ export const POST = createAuthenticatedApiRoute({
 
     // Don't use promise.all to avoid race conditions
     for (const job of jobs) {
-      await cancelJobHandler(job);
+      await cancelJob(job);
     }
 
     return {

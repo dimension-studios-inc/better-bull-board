@@ -1,30 +1,13 @@
 import { jobRunsTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { and, eq, inArray } from "drizzle-orm";
-import { z } from "zod";
-
-export const jobMutationInputSchema = z
-  .object({
-    jobId: z.string().min(1),
-    queueName: z.string().min(1),
-  })
-  .strict();
-
-export const queueMutationInputSchema = z
-  .object({
-    queueName: z.string().min(1),
-  })
-  .strict();
-
-export const mutationResultSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
+import type { z } from "zod";
+import { jobMutationInputSchema, mutationResultSchema, queueMutationInputSchema } from "./mutation-schemas";
 
 export type MutationResult = z.infer<typeof mutationResultSchema>;
 
-export type JobMutationInput = z.input<typeof jobMutationInputSchema>;
-export type QueueMutationInput = z.input<typeof queueMutationInputSchema>;
+type JobMutationInput = z.input<typeof jobMutationInputSchema>;
+type QueueMutationInput = z.input<typeof queueMutationInputSchema>;
 
 type CancelJobDependencies<RedisConnection> = {
   redis: RedisConnection;
