@@ -1,6 +1,6 @@
 import { jobRunsTable, queuesTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 export const jobMutationInputSchema = z
@@ -51,6 +51,31 @@ export type QueueDependencies = {
   createQueue: (queueName: string) => QueueAdapter;
 };
 
+const getQueueNameCandidates = (queueName: string) => {
+  if (queueName.startsWith("{") && queueName.endsWith("}")) {
+    return [queueName, queueName.slice(1, -1)];
+  }
+
+  return [queueName, `{${queueName}}`];
+};
+
+const resolveTrackedQueueName = async (queueName: string) => {
+  const candidates = getQueueNameCandidates(queueName);
+  const rows = await db
+    .select({ name: queuesTable.name })
+    .from(queuesTable)
+    .where(inArray(queuesTable.name, candidates));
+
+  const exactMatch = rows.find((row) => row.name === queueName);
+  const resolvedName = exactMatch?.name ?? rows[0]?.name;
+
+  if (!resolvedName) {
+    throw new Error(`Queue ${queueName} not found`);
+  }
+
+  return resolvedName;
+};
+
 const withQueue = async <Result>(
   queueName: string,
   dependencies: QueueDependencies,
@@ -76,22 +101,23 @@ export const cancelJob = async <RedisConnection>(
   dependencies: CancelJobDependencies<RedisConnection>,
 ): Promise<MutationResult> => {
   const { jobId, queueName } = jobMutationInputSchema.parse(input);
+  const resolvedQueueName = await resolveTrackedQueueName(queueName);
 
   await dependencies.cancelBullMqJob({
     redis: dependencies.redis,
     jobId,
-    queueName,
+    queueName: resolvedQueueName,
   });
 
   await db.transaction(async (tx) => {
     const [job] = await tx
       .select()
       .from(jobRunsTable)
-      .where(and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, queueName)))
+      .where(and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, resolvedQueueName)))
       .limit(1);
 
     if (!job) {
-      throw new Error(`Job ${jobId} not found in queue ${queueName}`);
+      throw new Error(`Job ${jobId} not found in queue ${resolvedQueueName}`);
     }
 
     if (job.status === "completed" || job.status === "failed") {
@@ -104,11 +130,11 @@ export const cancelJob = async <RedisConnection>(
         status: "failed",
         errorMessage: "Job cancelled",
       })
-      .where(and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, queueName)))
+      .where(and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.queue, resolvedQueueName)))
       .returning();
 
     if (!updated) {
-      throw new Error(`Updated job ${jobId} not found in queue ${queueName}`);
+      throw new Error(`Updated job ${jobId} not found in queue ${resolvedQueueName}`);
     }
   });
 
@@ -117,12 +143,13 @@ export const cancelJob = async <RedisConnection>(
 
 export const replayJob = async (input: JobMutationInput, dependencies: QueueDependencies): Promise<MutationResult> => {
   const { jobId, queueName } = jobMutationInputSchema.parse(input);
+  const resolvedQueueName = await resolveTrackedQueueName(queueName);
 
-  await withQueue(queueName, dependencies, async (queue) => {
+  await withQueue(resolvedQueueName, dependencies, async (queue) => {
     const job = await queue.getJob(jobId);
 
     if (!job) {
-      throw new Error(`Job ${jobId} was not found in Redis queue ${queueName}`);
+      throw new Error(`Job ${jobId} was not found in Redis queue ${resolvedQueueName}`);
     }
 
     try {
@@ -147,13 +174,22 @@ export const pauseQueue = async (
   dependencies: QueueDependencies,
 ): Promise<MutationResult> => {
   const { queueName } = queueMutationInputSchema.parse(input);
+  const resolvedQueueName = await resolveTrackedQueueName(queueName);
 
-  await withQueue(queueName, dependencies, async (queue) => {
+  await withQueue(resolvedQueueName, dependencies, async (queue) => {
     await queue.pause();
-    await db.update(queuesTable).set({ isPaused: true }).where(eq(queuesTable.name, queueName));
+    const [updatedQueue] = await db
+      .update(queuesTable)
+      .set({ isPaused: true })
+      .where(eq(queuesTable.name, resolvedQueueName))
+      .returning({ name: queuesTable.name });
+
+    if (!updatedQueue) {
+      throw new Error(`Queue ${resolvedQueueName} not found`);
+    }
   });
 
-  return mutationResult(`Queue ${queueName} has been paused successfully`);
+  return mutationResult(`Queue ${resolvedQueueName} has been paused successfully`);
 };
 
 export const resumeQueue = async (
@@ -161,13 +197,22 @@ export const resumeQueue = async (
   dependencies: QueueDependencies,
 ): Promise<MutationResult> => {
   const { queueName } = queueMutationInputSchema.parse(input);
+  const resolvedQueueName = await resolveTrackedQueueName(queueName);
 
-  await withQueue(queueName, dependencies, async (queue) => {
+  await withQueue(resolvedQueueName, dependencies, async (queue) => {
     await queue.resume();
-    await db.update(queuesTable).set({ isPaused: false }).where(eq(queuesTable.name, queueName));
+    const [updatedQueue] = await db
+      .update(queuesTable)
+      .set({ isPaused: false })
+      .where(eq(queuesTable.name, resolvedQueueName))
+      .returning({ name: queuesTable.name });
+
+    if (!updatedQueue) {
+      throw new Error(`Queue ${resolvedQueueName} not found`);
+    }
   });
 
-  return mutationResult(`Queue ${queueName} has been resumed successfully`);
+  return mutationResult(`Queue ${resolvedQueueName} has been resumed successfully`);
 };
 
 export const deleteQueue = async (
@@ -175,11 +220,12 @@ export const deleteQueue = async (
   dependencies: QueueDependencies,
 ): Promise<MutationResult> => {
   const { queueName } = queueMutationInputSchema.parse(input);
+  const resolvedQueueName = await resolveTrackedQueueName(queueName);
 
-  await withQueue(queueName, dependencies, async (queue) => {
+  await withQueue(resolvedQueueName, dependencies, async (queue) => {
     await queue.obliterate({ force: true });
-    await db.delete(queuesTable).where(eq(queuesTable.name, queueName));
+    await db.delete(queuesTable).where(eq(queuesTable.name, resolvedQueueName));
   });
 
-  return mutationResult(`Queue ${queueName} has been deleted successfully`);
+  return mutationResult(`Queue ${resolvedQueueName} has been deleted successfully`);
 };
