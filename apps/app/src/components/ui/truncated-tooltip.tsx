@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "~/lib/utils/client";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
