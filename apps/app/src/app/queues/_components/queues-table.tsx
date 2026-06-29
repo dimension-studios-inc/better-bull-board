@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDuration } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Info, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createParser, parseAsString, useQueryStates } from "nuqs";
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
@@ -12,14 +12,18 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { apiFetch, cn, smartFormatDuration } from "~/lib/utils/client";
 import { QueueActions } from "./queue-actions";
 import { QueueMiniChart } from "./queue-mini-chart";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
-type QueueCursor = { waitingJobs: number; activeJobs?: number; name: string };
-type SortBy = "waitingJobs" | "activeJobs";
+type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string };
+type SortBy = "waitingJobs" | "activeJobs" | "pressure";
 type SortDirection = "asc" | "desc";
+
+const PRESSURE_DESCRIPTION =
+  "Average time completed or failed jobs spend waiting before starting in the selected time period.";
 
 const sortableQueueColumns: { key: SortBy; label: string }[] = [
   { key: "waitingJobs", label: "Waiting Jobs" },
@@ -49,7 +53,8 @@ export function QueuesTable() {
   });
 
   const cursorDirection: "next" | "prev" = urlState.cursorDirection === "prev" ? "prev" : "next";
-  const sortBy: SortBy = urlState.sortBy === "activeJobs" ? "activeJobs" : "waitingJobs";
+  const sortBy: SortBy =
+    urlState.sortBy === "activeJobs" || urlState.sortBy === "pressure" ? urlState.sortBy : "waitingJobs";
   const sortDirection: SortDirection = urlState.sortDirection === "asc" ? "asc" : "desc";
   const options = {
     cursor: urlState.cursor,
@@ -174,7 +179,30 @@ export function QueuesTable() {
                   </button>
                 </TableHead>
               ))}
-              <TableHead style={{ width: "240px" }}>Pressure</TableHead>
+              <TableHead style={{ width: "240px" }}>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 font-medium"
+                    onClick={() => handleSort("pressure")}
+                  >
+                    Pressure
+                    {getSortIcon("pressure")}
+                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        aria-label="What pressure means"
+                      >
+                        <Info className="size-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-64 text-left">{PRESSURE_DESCRIPTION}</TooltipContent>
+                  </Tooltip>
+                </div>
+              </TableHead>
               <TableHead style={{ width: "70px" }}>Trend</TableHead>
               <TableHead style={{ width: "90px" }}></TableHead>
             </TableRow>
