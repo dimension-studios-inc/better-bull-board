@@ -18,8 +18,8 @@ import { QueueActions } from "./queue-actions";
 import { QueueMiniChart } from "./queue-mini-chart";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
-type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string };
-type SortBy = "waitingJobs" | "activeJobs" | "pressure";
+type QueueCursor = { waitingJobs: number; activeJobs?: number; name: string };
+type SortBy = "waitingJobs" | "activeJobs";
 type SortDirection = "asc" | "desc";
 
 const PRESSURE_DESCRIPTION =
@@ -53,8 +53,7 @@ export function QueuesTable() {
   });
 
   const cursorDirection: "next" | "prev" = urlState.cursorDirection === "prev" ? "prev" : "next";
-  const sortBy: SortBy =
-    urlState.sortBy === "activeJobs" || urlState.sortBy === "pressure" ? urlState.sortBy : "waitingJobs";
+  const sortBy: SortBy = urlState.sortBy === "activeJobs" ? "activeJobs" : "waitingJobs";
   const sortDirection: SortDirection = urlState.sortDirection === "asc" ? "asc" : "desc";
   const options = {
     cursor: urlState.cursor,
@@ -181,14 +180,7 @@ export function QueuesTable() {
               ))}
               <TableHead style={{ width: "240px" }}>
                 <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    className="flex items-center gap-1 font-medium"
-                    onClick={() => handleSort("pressure")}
-                  >
-                    Pressure
-                    {getSortIcon("pressure")}
-                  </button>
+                  <span>Pressure</span>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
