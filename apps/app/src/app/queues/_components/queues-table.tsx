@@ -18,12 +18,12 @@ import { QueueActions } from "./queue-actions";
 import { QueueMiniChart } from "./queue-mini-chart";
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
 
-type QueueCursor = { waitingJobs: number; activeJobs?: number; name: string };
-type SortBy = "waitingJobs" | "activeJobs";
+type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string };
+type SortBy = "waitingJobs" | "activeJobs" | "pressure";
 type SortDirection = "asc" | "desc";
 
 const PRESSURE_DESCRIPTION =
-  "Average time jobs spend waiting before starting, based on the latest completed or failed jobs in the selected time period.";
+  "Average time completed or failed jobs spend waiting before starting in the selected time period.";
 
 const sortableQueueColumns: { key: SortBy; label: string }[] = [
   { key: "waitingJobs", label: "Waiting Jobs" },
@@ -53,7 +53,8 @@ export function QueuesTable() {
   });
 
   const cursorDirection: "next" | "prev" = urlState.cursorDirection === "prev" ? "prev" : "next";
-  const sortBy: SortBy = urlState.sortBy === "activeJobs" ? "activeJobs" : "waitingJobs";
+  const sortBy: SortBy =
+    urlState.sortBy === "activeJobs" || urlState.sortBy === "pressure" ? urlState.sortBy : "waitingJobs";
   const sortDirection: SortDirection = urlState.sortDirection === "asc" ? "asc" : "desc";
   const options = {
     cursor: urlState.cursor,
@@ -179,8 +180,15 @@ export function QueuesTable() {
                 </TableHead>
               ))}
               <TableHead style={{ width: "240px" }}>
-                <div className="flex items-center gap-1">
-                  Pressure
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 font-medium"
+                    onClick={() => handleSort("pressure")}
+                  >
+                    Pressure
+                    {getSortIcon("pressure")}
+                  </button>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
