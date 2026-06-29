@@ -12,6 +12,7 @@ import { Badge } from "~/components/ui/badge";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
+import { TruncatedTooltip } from "~/components/ui/truncated-tooltip";
 import useDebounce from "~/hooks/use-debounce";
 import { apiFetch, cn } from "~/lib/utils/client";
 import { BulkActions } from "./bulk-actions";
@@ -276,8 +277,8 @@ export function RunsTable() {
                   />
                 </div>
               </TableHead>
-              <TableHead style={{ width: "260px" }}>Job ID</TableHead>
-              <TableHead style={{ width: "120px" }}>Queue</TableHead>
+              <TableHead style={{ width: "120px" }}>Job ID</TableHead>
+              <TableHead style={{ width: "260px" }}>Queue</TableHead>
               <TableHead style={{ width: "180px" }}>Tags</TableHead>
               <TableHead style={{ width: "120px" }}>Status</TableHead>
               <TableHead style={{ width: "120px" }}>
@@ -324,10 +325,11 @@ export function RunsTable() {
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs">
-                      {run.jobId.slice(0, 32)}
-                      {run.jobId.length > 32 && "..."}
+                      <TruncatedTooltip value={run.jobId} />
                     </TableCell>
-                    <TableCell className="truncate">{run.queue}</TableCell>
+                    <TableCell>
+                      <TruncatedTooltip value={run.queue} />
+                    </TableCell>
                     <TableCell className="overflow-hidden">
                       {run.tags?.map((tag) => (
                         <Badge key={tag} variant="outline">
@@ -347,11 +349,7 @@ export function RunsTable() {
                       <RunTimestamp value={run.createdAt} />
                     </TableCell>
                     <TableCell className="truncate">
-                      {run.finishedAt ? (
-                        <RunTimestamp value={run.finishedAt} />
-                      ) : (
-                        "-"
-                      )}
+                      {run.finishedAt ? <RunTimestamp value={run.finishedAt} /> : "-"}
                     </TableCell>
                     <TableCell className="max-w-48">
                       {run.status === "failed" && run.errorMessage ? (

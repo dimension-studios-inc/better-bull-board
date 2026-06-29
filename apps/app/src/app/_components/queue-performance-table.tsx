@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { TruncatedTooltip } from "~/components/ui/truncated-tooltip";
 
 type QueuePerformance = z.output<typeof dashboardQueuePerformanceOutput>;
 
@@ -128,8 +129,8 @@ export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerf
                       }
                     }}
                   >
-                    <TableCell className="font-medium max-w-48 truncate" title={queue.queue}>
-                      {queue.queue}
+                    <TableCell className="max-w-48 font-medium">
+                      <TruncatedTooltip value={queue.queue} />
                     </TableCell>
                     <TableCell className="text-right font-mono">{queue.totalRuns.toLocaleString()}</TableCell>
                     <TableCell className="text-right font-mono text-green-600">
