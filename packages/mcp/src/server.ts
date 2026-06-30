@@ -13,7 +13,7 @@ import {
   queueMutationInputSchema,
 } from "@better-bull-board/core/mutation-schemas";
 import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview";
-import { listQueuesInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas";
+import { listQueuesBaseInputSchema, type listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas";
 import { listQueues } from "@better-bull-board/core/queues";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -21,6 +21,47 @@ import { cancelJob, deleteQueue, pauseQueue, replayJob, resumeQueue } from "./ac
 import { MCP_READ_SCOPE, MCP_WRITE_SCOPE } from "./scopes";
 
 const emptyInputSchema = z.object({}).strict();
+
+const mcpListQueuesInputSchema = listQueuesBaseInputSchema
+  .omit({ pressureDateFrom: true, pressureDateTo: true })
+  .extend({
+    cursor: z
+      .object({
+        waitingJobs: z.number(),
+        activeJobs: z.number().optional(),
+        name: z.string(),
+      })
+      .nullish(),
+    sortBy: z.enum(["waitingJobs", "activeJobs"]).optional().default("waitingJobs"),
+  });
+
+const mcpListQueuesOutputSchema = z.object({
+  queues: z.array(
+    z.object({
+      name: z.string(),
+      isPaused: z.boolean(),
+      patterns: z.array(z.string()),
+      everys: z.array(z.number()),
+      waitingJobs: z.number(),
+      activeJobs: z.number(),
+    }),
+  ),
+  nextCursor: z
+    .object({
+      waitingJobs: z.number(),
+      activeJobs: z.number(),
+      name: z.string(),
+    })
+    .nullable(),
+  prevCursor: z
+    .object({
+      waitingJobs: z.number(),
+      activeJobs: z.number(),
+      name: z.string(),
+    })
+    .nullable(),
+  total: z.number(),
+});
 
 type BetterBullBoardMcpServerOptions = {
   scopes?: string[];
@@ -100,7 +141,28 @@ const formatOverview = (overview: z.infer<typeof systemOverviewSchema>) =>
     `- Queues with schedulers: ${overview.queuesWithSchedulers}`,
   ].join("\n");
 
-const formatQueues = (result: z.infer<typeof listQueuesOutputSchema>) =>
+const serializeQueues = (
+  result: z.infer<typeof listQueuesOutputSchema>,
+): z.infer<typeof mcpListQueuesOutputSchema> => ({
+  queues: result.queues.map(({ pressure: _pressure, ...queue }) => queue),
+  nextCursor: result.nextCursor
+    ? {
+        name: result.nextCursor.name,
+        waitingJobs: result.nextCursor.waitingJobs,
+        activeJobs: result.nextCursor.activeJobs,
+      }
+    : null,
+  prevCursor: result.prevCursor
+    ? {
+        name: result.prevCursor.name,
+        waitingJobs: result.prevCursor.waitingJobs,
+        activeJobs: result.prevCursor.activeJobs,
+      }
+    : null,
+  total: result.total,
+});
+
+const formatQueues = (result: z.infer<typeof mcpListQueuesOutputSchema>) =>
   [
     "# Better Bull Board Queues",
     "",
@@ -220,8 +282,8 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       title: "List Better Bull Board Queues",
       description:
         "List queues with waiting and active job counts. Supports search, cursor pagination, and a maximum page size of 100.",
-      inputSchema: listQueuesInputSchema,
-      outputSchema: listQueuesOutputSchema,
+      inputSchema: mcpListQueuesInputSchema,
+      outputSchema: mcpListQueuesOutputSchema,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -231,10 +293,11 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
     },
     async (input) => {
       const result = await listQueues(input);
+      const serializedResult = serializeQueues(result);
 
       return {
-        content: [{ type: "text", text: formatQueues(result) }],
-        structuredContent: result,
+        content: [{ type: "text", text: formatQueues(serializedResult) }],
+        structuredContent: serializedResult,
       };
     },
   );
