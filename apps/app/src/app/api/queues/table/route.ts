@@ -1,30 +1,16 @@
 import { listQueues } from "@better-bull-board/core/queues";
-import { jobRunsTable } from "@better-bull-board/db";
+import { dashboardQueueHourlyStatsTable, jobRunsTable } from "@better-bull-board/db";
 import { db } from "@better-bull-board/db/server";
 import { addDays, addHours, startOfDay, startOfHour } from "date-fns";
-import { and, gte, inArray, isNotNull, lt, sql } from "drizzle-orm";
+import { and, gte, inArray, lt, sql } from "drizzle-orm";
 import { createAuthenticatedApiRoute } from "~/lib/utils/server";
 import { getQueuesTableApiRoute } from "./schemas";
 
-const pressureAverageExpression = sql<
-  number | null
->`ROUND(AVG(EXTRACT(EPOCH FROM (${jobRunsTable.startedAt} - ${jobRunsTable.enqueuedAt})) * 1000))`;
-const pressureFilters = (dateFrom: Date, dateTo: Date) =>
-  and(
-    inArray(jobRunsTable.status, ["completed", "failed"]),
-    isNotNull(jobRunsTable.enqueuedAt),
-    isNotNull(jobRunsTable.startedAt),
-    gte(jobRunsTable.createdAt, dateFrom),
-    lt(jobRunsTable.createdAt, dateTo),
-  );
+type ChartDataPoint = { timestamp: string; completed: number; failed: number };
+type ChartStep = "hour" | "day";
 
-function fillChartData(
-  dateFrom: Date,
-  dateTo: Date,
-  stepKind: string,
-  chartData: { timestamp: string; completed: number; failed: number }[],
-) {
-  const filled: { timestamp: string; completed: number; failed: number }[] = [];
+function fillChartData(dateFrom: Date, dateTo: Date, stepKind: ChartStep, chartData: ChartDataPoint[]) {
+  const filled: ChartDataPoint[] = [];
   const map = new Map(chartData.map((d) => [new Date(d.timestamp).toISOString().slice(0, 19).replace("T", " "), d]));
 
   for (let d = new Date(dateFrom); d <= dateTo; d = stepKind === "hour" ? addHours(d, 1) : addDays(d, 1)) {
@@ -33,12 +19,8 @@ function fillChartData(
         ? startOfHour(d).toISOString().slice(0, 19).replace("T", " ")
         : startOfDay(d).toISOString().slice(0, 19).replace("T", " ");
 
-    if (map.has(ts)) {
-      const data = map.get(ts) as {
-        timestamp: string;
-        completed: number;
-        failed: number;
-      };
+    const data = map.get(ts);
+    if (data) {
       filled.push({
         ...data,
         completed: Number(data.completed),
@@ -61,6 +43,8 @@ export const POST = createAuthenticatedApiRoute({
     const timePeriodDays = Number(timePeriod);
     const dateFrom = new Date(Date.now() - timePeriodDays * 24 * 60 * 60 * 1000);
     const dateTo = new Date();
+    const pressureDateFrom = startOfHour(dateFrom);
+    const pressureDateTo = startOfHour(dateTo);
 
     const queuePage = await listQueues({
       search,
@@ -69,6 +53,8 @@ export const POST = createAuthenticatedApiRoute({
       sortBy,
       sortDirection,
       limit,
+      pressureDateFrom,
+      pressureDateTo,
     });
     const queueRows = queuePage.queues;
     const queueNames = queueRows.map((row) => row.name);
@@ -78,21 +64,28 @@ export const POST = createAuthenticatedApiRoute({
     // Performance logging
     const performanceStart = Date.now();
 
-    // Single optimized query to get all queue counts at once
-    const countsStart = Date.now();
-    const allCounts =
+    const pressureStart = Date.now();
+    const allPressureData =
       queueNames.length > 0
         ? await db
             .select({
-              name: jobRunsTable.queue,
-              pressure: pressureAverageExpression.as("pressure"),
+              queueName: dashboardQueueHourlyStatsTable.queue,
+              pressure: sql<number | null>`ROUND(
+                SUM(${dashboardQueueHourlyStatsTable.pressureTotalMs})::numeric
+                / NULLIF(SUM(${dashboardQueueHourlyStatsTable.pressureCount}), 0)
+              )`.as("pressure"),
             })
-            .from(jobRunsTable)
-            .where(and(inArray(jobRunsTable.queue, queueNames), pressureFilters(dateFrom, dateTo)))
-            .groupBy(jobRunsTable.queue)
+            .from(dashboardQueueHourlyStatsTable)
+            .where(
+              and(
+                inArray(dashboardQueueHourlyStatsTable.queue, queueNames),
+                gte(dashboardQueueHourlyStatsTable.bucketStart, pressureDateFrom),
+                lt(dashboardQueueHourlyStatsTable.bucketStart, pressureDateTo),
+              ),
+            )
+            .groupBy(dashboardQueueHourlyStatsTable.queue)
         : [];
-
-    const countsTime = Date.now() - countsStart;
+    const pressureTime = Date.now() - pressureStart;
 
     // Single optimized query to get all chart data at once
     const chartStart = Date.now();
@@ -126,7 +119,9 @@ export const POST = createAuthenticatedApiRoute({
     const processStart = Date.now();
 
     // Create maps for efficient lookup
-    const countsMap = new Map(allCounts.map((count) => [count.name, count]));
+    const pressureMap = new Map(
+      allPressureData.map((pressure) => [pressure.queueName, Number(pressure.pressure ?? 0)]),
+    );
 
     const chartDataMap = new Map<string, { timestamp: string; completed: number; failed: number }[]>();
     for (const chart of allChartData) {
@@ -141,12 +136,11 @@ export const POST = createAuthenticatedApiRoute({
     }
 
     const queueStats = queueNames.map((queueName) => {
-      const counts = countsMap.get(queueName);
       const chartData = chartDataMap.get(queueName) ?? [];
 
       return {
         queueName,
-        pressure: Number(counts?.pressure ?? 0),
+        pressure: pressureMap.get(queueName) ?? 0,
         chartData: fillChartData(dateFrom, dateTo, interval, chartData),
       };
     });
@@ -155,7 +149,7 @@ export const POST = createAuthenticatedApiRoute({
     const totalTime = Date.now() - performanceStart;
     if (totalTime > 1000) {
       console.log(
-        `[Performance] Total queue stats calculation completed in ${totalTime}ms (Counts: ${countsTime}ms, Chart: ${chartTime}ms, Process: ${processTime}ms)`,
+        `[Performance] Total queue stats calculation completed in ${totalTime}ms (Pressure: ${pressureTime}ms, Chart: ${chartTime}ms, Process: ${processTime}ms)`,
       );
     }
 

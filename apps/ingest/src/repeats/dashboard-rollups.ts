@@ -39,6 +39,8 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
             "duration_count",
             "duration_min_ms",
             "duration_max_ms",
+            "pressure_total_ms",
+            "pressure_count",
             "updated_at"
           )
           SELECT
@@ -62,6 +64,19 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
             MAX("duration_ms") FILTER (
               WHERE "status" = 'completed'::"job_status" AND "duration_ms" IS NOT NULL
             )::integer AS "duration_max_ms",
+            COALESCE(
+              SUM(EXTRACT(EPOCH FROM ("started_at" - "enqueued_at")) * 1000) FILTER (
+                WHERE "status" IN ('completed'::"job_status", 'failed'::"job_status")
+                  AND "enqueued_at" IS NOT NULL
+                  AND "started_at" IS NOT NULL
+              ),
+              0
+            )::bigint AS "pressure_total_ms",
+            COUNT(*) FILTER (
+              WHERE "status" IN ('completed'::"job_status", 'failed'::"job_status")
+                AND "enqueued_at" IS NOT NULL
+                AND "started_at" IS NOT NULL
+            )::bigint AS "pressure_count",
             now()
           FROM "job_runs"
           WHERE "created_at" >= date_trunc('hour', now() - interval '1 hour')::timestamp
@@ -77,6 +92,8 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
             "duration_count" = EXCLUDED."duration_count",
             "duration_min_ms" = EXCLUDED."duration_min_ms",
             "duration_max_ms" = EXCLUDED."duration_max_ms",
+            "pressure_total_ms" = EXCLUDED."pressure_total_ms",
+            "pressure_count" = EXCLUDED."pressure_count",
             "updated_at" = now()
         `);
 

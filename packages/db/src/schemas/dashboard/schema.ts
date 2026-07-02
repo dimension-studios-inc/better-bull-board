@@ -15,6 +15,8 @@ export const dashboardQueueHourlyStatsTable = pgTable(
     durationCount: bigint("duration_count", { mode: "number" }).notNull().default(0),
     durationMinMs: integer("duration_min_ms"),
     durationMaxMs: integer("duration_max_ms"),
+    pressureTotalMs: bigint("pressure_total_ms", { mode: "number" }).notNull().default(0),
+    pressureCount: bigint("pressure_count", { mode: "number" }).notNull().default(0),
     updatedAt: timestamp("updated_at", { precision: 3, mode: "date" }).notNull().default(sql`now()`),
   },
   (t) => [primaryKey({ name: "pk_dashboard_queue_hourly_stats", columns: [t.bucketStart, t.queue] })],
