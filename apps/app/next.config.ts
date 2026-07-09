@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/healthz", destination: "/health" },
       { source: "/ping", destination: "/health" },
+      { source: "/health/live", destination: "/live" },
     ];
   },
   logging: process.env.ENV === "development" ? false : undefined,
