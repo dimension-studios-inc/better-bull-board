@@ -2,6 +2,7 @@ import { jobLogsTable, jobRunsTable, jobStatusEnum } from "@better-bull-board/db
 import { db } from "@better-bull-board/db/server";
 import { and, arrayOverlaps, asc, desc, eq, gt, gte, ilike, lt, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import { withListJobsConcurrencyLimit } from "./list-jobs-limit";
 
 export {
   getJobByIdInputSchema,
@@ -155,102 +156,103 @@ const getCursorComparison = ({
   );
 };
 
-export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) => {
-  const parsed = listJobsInputSchema.parse(input);
-  const { cursor, cursorDirection = "next", search, queue, status, tags, createdFrom, createdTo } = parsed;
-  const limit = parsed.limit ?? 20;
-  const sortBy = parsed.sortBy ?? "createdAt";
-  const sortDirection = parsed.sortDirection ?? "desc";
-  const durationSortExpression = sql<number>`COALESCE(${jobRunsTable.durationMs}, 0)`;
+export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) =>
+  withListJobsConcurrencyLimit(async () => {
+    const parsed = listJobsInputSchema.parse(input);
+    const { cursor, cursorDirection = "next", search, queue, status, tags, createdFrom, createdTo } = parsed;
+    const limit = parsed.limit ?? 20;
+    const sortBy = parsed.sortBy ?? "createdAt";
+    const sortDirection = parsed.sortDirection ?? "desc";
+    const durationSortExpression = sql<number>`COALESCE(${jobRunsTable.durationMs}, 0)`;
 
-  const conditions = [];
+    const conditions = [];
 
-  if (search) {
-    const searchConditions = [
-      ilike(jobRunsTable.name, `%${search}%`),
-      ilike(jobRunsTable.queue, `%${search}%`),
-      ilike(jobRunsTable.jobId, `%${search}%`),
-      ilike(jobRunsTable.errorMessage, `%${search}%`),
-    ];
-    if (z.uuid().safeParse(search).success) {
-      searchConditions.push(eq(jobRunsTable.id, search));
+    if (search) {
+      const searchConditions = [
+        ilike(jobRunsTable.name, `%${search}%`),
+        ilike(jobRunsTable.queue, `%${search}%`),
+        ilike(jobRunsTable.jobId, `%${search}%`),
+        ilike(jobRunsTable.errorMessage, `%${search}%`),
+      ];
+      if (z.uuid().safeParse(search).success) {
+        searchConditions.push(eq(jobRunsTable.id, search));
+      }
+      conditions.push(or(...searchConditions));
     }
-    conditions.push(or(...searchConditions));
-  }
 
-  if (queue && queue !== "all") {
-    conditions.push(eq(jobRunsTable.queue, queue));
-  }
+    if (queue && queue !== "all") {
+      conditions.push(eq(jobRunsTable.queue, queue));
+    }
 
-  if (
-    status &&
-    status !== "all" &&
-    jobStatusEnum.enumValues.includes(status as (typeof jobStatusEnum.enumValues)[number])
-  ) {
-    conditions.push(eq(jobRunsTable.status, status as (typeof jobStatusEnum.enumValues)[number]));
-  }
+    if (
+      status &&
+      status !== "all" &&
+      jobStatusEnum.enumValues.includes(status as (typeof jobStatusEnum.enumValues)[number])
+    ) {
+      conditions.push(eq(jobRunsTable.status, status as (typeof jobStatusEnum.enumValues)[number]));
+    }
 
-  if (tags && tags.length > 0) {
-    conditions.push(arrayOverlaps(jobRunsTable.tags, tags));
-  }
+    if (tags && tags.length > 0) {
+      conditions.push(arrayOverlaps(jobRunsTable.tags, tags));
+    }
 
-  if (createdFrom) {
-    conditions.push(gte(jobRunsTable.createdAt, parseCreatedBoundary({ value: createdFrom, fallbackTime: "00:00" })));
-  }
+    if (createdFrom) {
+      conditions.push(gte(jobRunsTable.createdAt, parseCreatedBoundary({ value: createdFrom, fallbackTime: "00:00" })));
+    }
 
-  if (createdTo) {
-    conditions.push(
-      lte(
-        jobRunsTable.createdAt,
-        parseCreatedBoundary({ value: createdTo, fallbackTime: "23:59:59.999", isUpperBoundary: true }),
-      ),
-    );
-  }
+    if (createdTo) {
+      conditions.push(
+        lte(
+          jobRunsTable.createdAt,
+          parseCreatedBoundary({ value: createdTo, fallbackTime: "23:59:59.999", isUpperBoundary: true }),
+        ),
+      );
+    }
 
-  if (cursor) {
-    conditions.push(
-      getCursorComparison({
-        cursor,
-        cursorDirection,
-        durationSortExpression,
-        sortBy,
-        sortDirection,
-      }),
-    );
-  }
+    if (cursor) {
+      conditions.push(
+        getCursorComparison({
+          cursor,
+          cursorDirection,
+          durationSortExpression,
+          sortBy,
+          sortDirection,
+        }),
+      );
+    }
 
-  const rows = await db
-    .select(jobTableColumns)
-    .from(jobRunsTable)
-    .where(and(...conditions))
-    .orderBy(
-      ...getSortOrder({
-        cursorDirection,
-        durationSortExpression,
-        sortBy,
-        sortDirection,
-      }),
-    )
-    .limit(limit + 1);
+    const rows = await db
+      .select(jobTableColumns)
+      .from(jobRunsTable)
+      .where(and(...conditions))
+      .orderBy(
+        ...getSortOrder({
+          cursorDirection,
+          durationSortExpression,
+          sortBy,
+          sortDirection,
+        }),
+      )
+      .limit(limit + 1);
 
-  const hasExtra = rows.length > limit;
+    const hasExtra = rows.length > limit;
 
-  if (hasExtra) {
-    rows.pop();
-  }
+    if (hasExtra) {
+      rows.pop();
+    }
 
-  const jobs = cursorDirection === "prev" ? rows.reverse() : rows;
-  const firstJob = jobs[0];
-  const lastJob = jobs.at(-1);
-  const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra;
-  const hasOlderPage = cursorDirection === "prev" ? Boolean(cursor) : hasExtra;
+    const jobs = cursorDirection === "prev" ? rows.reverse() : rows;
+    const firstJob = jobs[0];
+    const lastJob = jobs.at(-1);
+    const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra;
+    const hasOlderPage = cursorDirection === "prev" ? Boolean(cursor) : hasExtra;
 
-  return listJobsOutputSchema.parse({
-    jobs,
-    nextCursor: hasOlderPage && lastJob ? toCursor(lastJob) : null,
-    prevCursor: hasNewerPage && firstJob ? toCursor(firstJob) : null,
+    return listJobsOutputSchema.parse({
+      jobs,
+      nextCursor: hasOlderPage && lastJob ? toCursor(lastJob) : null,
+      prevCursor: hasNewerPage && firstJob ? toCursor(firstJob) : null,
+    });
   });
-};
 
 export const getJobById = async (input: z.input<typeof getJobByIdInputSchema>) => {
   const { id } = getJobByIdInputSchema.parse(input);

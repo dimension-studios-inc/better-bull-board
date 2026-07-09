@@ -1,4 +1,5 @@
 import { logger } from "@rharkor/logger";
+import { HttpError } from "@better-bull-board/core/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import type { output, ZodType } from "zod";
 import { getAuthenticatedUser } from "../auth/server";
@@ -29,7 +30,15 @@ export const createApiRoute = <IS extends ZodType, OS extends ZodType>({
     if (parsed instanceof NextResponse) {
       return parsed;
     }
-    const data = await handler(parsed as IS extends ZodType ? output<IS> : undefined, req);
+    const data = await handler(parsed as IS extends ZodType ? output<IS> : undefined, req).catch((error) => {
+      if (error instanceof HttpError) {
+        return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      }
+      throw error;
+    });
+    if (data instanceof NextResponse) {
+      return data;
+    }
     const validated = await outputSchema.parseAsync(data).catch((error) => {
       logger.error(error);
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -79,7 +88,15 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
     if (parsed instanceof NextResponse) {
       return parsed;
     }
-    const data = await handler(parsed as IS extends ZodType ? output<IS> : undefined, req, ctx);
+    const data = await handler(parsed as IS extends ZodType ? output<IS> : undefined, req, ctx).catch((error) => {
+      if (error instanceof HttpError) {
+        return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      }
+      throw error;
+    });
+    if (data instanceof NextResponse) {
+      return data;
+    }
     const validated = await outputSchema.parseAsync(data).catch((error) => {
       logger.error(error);
       return NextResponse.json({ error: error.message }, { status: 500 });

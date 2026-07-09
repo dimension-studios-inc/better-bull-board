@@ -16,6 +16,10 @@
     "zod": "^4.3.6"
   },
   "exports": {
+    "./errors": {
+      "types": "./dist/errors.d.mts",
+      "import": "./dist/errors.mjs"
+    },
     "./job-schemas": {
       "types": "./dist/job-schemas.d.mts",
       "import": "./dist/job-schemas.mjs"

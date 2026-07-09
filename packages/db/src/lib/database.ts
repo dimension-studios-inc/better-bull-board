@@ -12,8 +12,16 @@ if (!process.env.DATABASE_URL) {
 
 const RESULT_SIZE_THRESHOLD = 500 * 1024; // 500 KB
 
+const poolMax = Number(process.env.DATABASE_POOL_MAX ?? 20);
+const connectionTimeoutMillis = Number(process.env.DATABASE_POOL_CONNECTION_TIMEOUT_MS ?? 5_000);
+const statementTimeoutMs = Number(process.env.DATABASE_STATEMENT_TIMEOUT_MS ?? 30_000);
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: Number.isFinite(poolMax) && poolMax > 0 ? poolMax : 20,
+  connectionTimeoutMillis:
+    Number.isFinite(connectionTimeoutMillis) && connectionTimeoutMillis > 0 ? connectionTimeoutMillis : 5_000,
+  options: `-c statement_timeout=${Number.isFinite(statementTimeoutMs) && statementTimeoutMs > 0 ? statementTimeoutMs : 30_000}`,
 });
 
 pool.on("error", (err) => {
