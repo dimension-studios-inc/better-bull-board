@@ -8,6 +8,7 @@ import { getQueuesTableApiRoute } from "./schemas";
 
 type ChartDataPoint = { timestamp: string; completed: number; failed: number };
 type ChartStep = "hour" | "day";
+type ChartDataRow = ChartDataPoint & { queueName: string };
 
 function fillChartData(dateFrom: Date, dateTo: Date, stepKind: ChartStep, chartData: ChartDataPoint[]) {
   const filled: ChartDataPoint[] = [];
@@ -60,14 +61,16 @@ export const POST = createAuthenticatedApiRoute({
     const queueNames = queueRows.map((row) => row.name);
 
     const interval = timePeriodDays <= 7 ? "hour" : "day";
+    const currentHourStart = startOfHour(dateTo);
+    const chartDateFrom = interval === "hour" ? startOfHour(dateFrom) : startOfDay(dateFrom);
 
     // Performance logging
     const performanceStart = Date.now();
 
     const pressureStart = Date.now();
-    const allPressureData =
+    const allPressureDataPromise: Promise<{ queueName: string; pressure: number | null }[]> =
       queueNames.length > 0
-        ? await db
+        ? db
             .select({
               queueName: dashboardQueueHourlyStatsTable.queue,
               pressure: sql<number | null>`ROUND(
@@ -84,14 +87,37 @@ export const POST = createAuthenticatedApiRoute({
               ),
             )
             .groupBy(dashboardQueueHourlyStatsTable.queue)
-        : [];
-    const pressureTime = Date.now() - pressureStart;
+        : Promise.resolve([]);
 
-    // Single optimized query to get all chart data at once
+    // Completed hours come from compact rollups; only the current partial hour reads job_runs.
     const chartStart = Date.now();
-    const allChartData =
+    const historicalChartDataPromise: Promise<ChartDataRow[]> =
       queueNames.length > 0
-        ? await db
+        ? db
+            .select({
+              queueName: dashboardQueueHourlyStatsTable.queue,
+              timestamp:
+                interval === "hour"
+                  ? sql<string>`${dashboardQueueHourlyStatsTable.bucketStart}`.as("timestamp")
+                  : sql<string>`date_trunc('day', ${dashboardQueueHourlyStatsTable.bucketStart})`.as("timestamp"),
+              completed: sql<number>`SUM(${dashboardQueueHourlyStatsTable.completedRuns})`,
+              failed: sql<number>`SUM(${dashboardQueueHourlyStatsTable.failedRuns})`,
+            })
+            .from(dashboardQueueHourlyStatsTable)
+            .where(
+              and(
+                inArray(dashboardQueueHourlyStatsTable.queue, queueNames),
+                gte(dashboardQueueHourlyStatsTable.bucketStart, chartDateFrom),
+                lt(dashboardQueueHourlyStatsTable.bucketStart, currentHourStart),
+              ),
+            )
+            .groupBy(dashboardQueueHourlyStatsTable.queue, sql`timestamp`)
+            .orderBy(dashboardQueueHourlyStatsTable.queue, sql`timestamp`)
+        : Promise.resolve([]);
+
+    const currentHourChartDataPromise: Promise<ChartDataRow[]> =
+      queueNames.length > 0
+        ? db
             .select({
               queueName: jobRunsTable.queue,
               timestamp:
@@ -105,13 +131,21 @@ export const POST = createAuthenticatedApiRoute({
             .where(
               and(
                 inArray(jobRunsTable.queue, queueNames),
-                gte(jobRunsTable.createdAt, dateFrom),
+                gte(jobRunsTable.createdAt, currentHourStart),
                 lt(jobRunsTable.createdAt, dateTo),
               ),
             )
             .groupBy(jobRunsTable.queue, sql`timestamp`)
             .orderBy(jobRunsTable.queue, sql`timestamp`)
-        : [];
+        : Promise.resolve([]);
+
+    const [allPressureData, historicalChartData, currentHourChartData] = await Promise.all([
+      allPressureDataPromise,
+      historicalChartDataPromise,
+      currentHourChartDataPromise,
+    ]);
+
+    const pressureTime = Date.now() - pressureStart;
 
     const chartTime = Date.now() - chartStart;
 
@@ -123,20 +157,22 @@ export const POST = createAuthenticatedApiRoute({
       allPressureData.map((pressure) => [pressure.queueName, Number(pressure.pressure ?? 0)]),
     );
 
-    const chartDataMap = new Map<string, { timestamp: string; completed: number; failed: number }[]>();
-    for (const chart of allChartData) {
-      if (!chartDataMap.has(chart.queueName)) {
-        chartDataMap.set(chart.queueName, []);
-      }
-      chartDataMap.get(chart.queueName)?.push({
-        timestamp: chart.timestamp,
-        completed: Number(chart.completed),
-        failed: Number(chart.failed),
+    const chartDataMap = new Map<string, Map<string, ChartDataPoint>>();
+    for (const chart of [...historicalChartData, ...currentHourChartData]) {
+      const chartData = chartDataMap.get(chart.queueName) ?? new Map<string, ChartDataPoint>();
+      const timestamp = new Date(chart.timestamp).toISOString().slice(0, 19).replace("T", " ");
+      const previous = chartData.get(timestamp);
+
+      chartData.set(timestamp, {
+        timestamp,
+        completed: Number(previous?.completed ?? 0) + Number(chart.completed),
+        failed: Number(previous?.failed ?? 0) + Number(chart.failed),
       });
+      chartDataMap.set(chart.queueName, chartData);
     }
 
     const queueStats = queueNames.map((queueName) => {
-      const chartData = chartDataMap.get(queueName) ?? [];
+      const chartData = [...(chartDataMap.get(queueName)?.values() ?? [])];
 
       return {
         queueName,
