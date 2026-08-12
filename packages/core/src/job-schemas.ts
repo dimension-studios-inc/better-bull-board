@@ -53,9 +53,10 @@ export const listJobsOutputSchema = z.object({
       tags: z.array(z.string()).nullable(),
     }),
   ),
+  // Epoch ms, matching listJobsInputSchema.cursor so a returned cursor can be sent straight back
   nextCursor: z
     .object({
-      createdAt: z.coerce.date(),
+      createdAt: z.number(),
       jobId: z.string(),
       id: z.string(),
       durationMs: z.number().nullable().optional(),
@@ -63,7 +64,7 @@ export const listJobsOutputSchema = z.object({
     .nullable(),
   prevCursor: z
     .object({
-      createdAt: z.coerce.date(),
+      createdAt: z.number(),
       jobId: z.string(),
       id: z.string(),
       durationMs: z.number().nullable().optional(),

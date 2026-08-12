@@ -1,6 +1,6 @@
 import { jwtVerify, SignJWT } from "jose";
 import type { ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { env } from "../env";
 import { COOKIE_NAME } from "./client";
 
@@ -56,10 +56,15 @@ export async function verifyToken(token: string): Promise<User | null> {
  * Extract token from request headers or cookies
  */
 export async function getTokenFromRequest(): Promise<string | null> {
+  // Bearer first, so non-browser clients (CLIs, scripts) don't have to send a cookie
+  const authHeader = (await headers()).get("authorization");
+  const bearerToken = authHeader?.match(/^bearer\s+(.+)$/i)?.[1]?.trim();
+  if (bearerToken) {
+    return bearerToken;
+  }
+
   const cookieStore = await cookies();
-  // Try Authorization header first
-  const authHeader = cookieStore.get(COOKIE_NAME);
-  return authHeader?.value ?? null;
+  return cookieStore.get(COOKIE_NAME)?.value ?? null;
 }
 
 /**
