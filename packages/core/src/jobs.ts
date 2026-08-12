@@ -65,7 +65,7 @@ const parseCreatedBoundary = ({
 };
 
 const toCursor = (job: JobCursor) => ({
-  createdAt: job.createdAt,
+  createdAt: job.createdAt.getTime(),
   jobId: job.jobId,
   id: job.id,
   durationMs: job.durationMs ?? null,

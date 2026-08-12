@@ -34,8 +34,8 @@ export function RunsFilters({
   filters: TRunFilters;
   setFilters: (filters: TRunFilterUpdate) => void;
   runs?: {
-    nextCursor: { createdAt: Date; jobId: string; id: string; durationMs?: number | null } | null;
-    prevCursor: { createdAt: Date; jobId: string; id: string; durationMs?: number | null } | null;
+    nextCursor: { createdAt: number; jobId: string; id: string; durationMs?: number | null } | null;
+    prevCursor: { createdAt: number; jobId: string; id: string; durationMs?: number | null } | null;
   };
   isFetching?: boolean;
   liveUpdatesPaused: boolean;
@@ -175,10 +175,7 @@ export function RunsFilters({
   const handleNextPage = () => {
     if (runs?.nextCursor) {
       setFilters({
-        cursor: {
-          ...runs.nextCursor,
-          createdAt: runs.nextCursor.createdAt.getTime(),
-        },
+        cursor: runs.nextCursor,
         cursorDirection: "next",
       });
     }
@@ -187,10 +184,7 @@ export function RunsFilters({
   const handlePrevPage = () => {
     if (runs?.prevCursor) {
       setFilters({
-        cursor: {
-          ...runs.prevCursor,
-          createdAt: runs.prevCursor.createdAt.getTime(),
-        },
+        cursor: runs.prevCursor,
         cursorDirection: "prev",
       });
     } else {

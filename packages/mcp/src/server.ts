@@ -116,18 +116,8 @@ const serializeListJobs = (result: z.infer<typeof listJobsOutputSchema>): z.infe
     startedAt: toTimestamp(job.startedAt),
     finishedAt: toTimestamp(job.finishedAt),
   })),
-  nextCursor: result.nextCursor
-    ? {
-        ...result.nextCursor,
-        createdAt: result.nextCursor.createdAt.getTime(),
-      }
-    : null,
-  prevCursor: result.prevCursor
-    ? {
-        ...result.prevCursor,
-        createdAt: result.prevCursor.createdAt.getTime(),
-      }
-    : null,
+  nextCursor: result.nextCursor,
+  prevCursor: result.prevCursor,
 });
 
 const formatOverview = (overview: z.infer<typeof systemOverviewSchema>) =>
