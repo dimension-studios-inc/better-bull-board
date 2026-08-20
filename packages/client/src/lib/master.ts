@@ -1,4 +1,4 @@
-import type Redis from "ioredis";
+import type Redis from "ioredis"
 
 async function acquireLock({
   lockKey,
@@ -6,13 +6,13 @@ async function acquireLock({
   id,
   redis,
 }: {
-  lockKey: string;
-  lockTtlMs: number;
-  id: string;
-  redis: Redis;
+  lockKey: string
+  lockTtlMs: number
+  id: string
+  redis: Redis
 }) {
   // SET key value NX PX ttl
-  return (await redis.set(lockKey, id, "PX", lockTtlMs, "NX")) === "OK";
+  return (await redis.set(lockKey, id, "PX", lockTtlMs, "NX")) === "OK"
 }
 
 async function renewLock({
@@ -21,20 +21,20 @@ async function renewLock({
   id,
   redis,
 }: {
-  lockKey: string;
-  lockTtlMs: number;
-  id: string;
-  redis: Redis;
+  lockKey: string
+  lockTtlMs: number
+  id: string
+  redis: Redis
 }) {
   // Only renew if we still own it
-  const owner = await redis.get(lockKey);
+  const owner = await redis.get(lockKey)
   if (owner === id) {
-    await redis.pexpire(lockKey, lockTtlMs);
-    return true;
+    await redis.pexpire(lockKey, lockTtlMs)
+    return true
   } else if (owner === null) {
-    return acquireLock({ lockKey, lockTtlMs, id, redis });
+    return acquireLock({ lockKey, lockTtlMs, id, redis })
   }
-  return false;
+  return false
 }
 
 export const onlyMaster = async ({
@@ -44,26 +44,26 @@ export const onlyMaster = async ({
   lockTtlMs,
   redis,
 }: {
-  id: string;
-  lockKey: string;
-  lockTtlMs: number;
-  lockRenewMs: number;
-  redis: Redis;
+  id: string
+  lockKey: string
+  lockTtlMs: number
+  lockRenewMs: number
+  redis: Redis
 }) => {
-  let isMaster = false;
+  let isMaster = false
 
   //* First we need to acquire the lock
-  const lockAcquired = await acquireLock({ lockKey, lockTtlMs, id, redis });
+  const lockAcquired = await acquireLock({ lockKey, lockTtlMs, id, redis })
   if (!lockAcquired) {
-    isMaster = false;
+    isMaster = false
   } else {
-    isMaster = true;
+    isMaster = true
   }
 
   //* Then we need to renew the lock
   setInterval(async () => {
-    isMaster = await renewLock({ lockKey, lockTtlMs, id, redis });
-  }, lockRenewMs);
+    isMaster = await renewLock({ lockKey, lockTtlMs, id, redis })
+  }, lockRenewMs)
 
-  return () => isMaster;
-};
+  return () => isMaster
+}

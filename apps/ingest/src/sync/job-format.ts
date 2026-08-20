@@ -1,6 +1,6 @@
-import { jobRunsInsertSchema } from "@better-bull-board/db/schemas/job/schema";
-import type { Job } from "bullmq";
-import { z } from "zod/v4";
+import { jobRunsInsertSchema } from "@better-bull-board/db/schemas/job/schema"
+import type { Job } from "bullmq"
+import { z } from "zod/v4"
 
 export const jobSyncEventSchema = z.object({
   version: z.literal(1),
@@ -13,16 +13,16 @@ export const jobSyncEventSchema = z.object({
     .optional(),
   tags: z.array(z.string()).optional(),
   job: z.record(z.string(), z.unknown()),
-});
+})
 
-export type JobSyncEvent = z.infer<typeof jobSyncEventSchema>;
-export type JobRunInsert = z.infer<typeof jobRunsInsertSchema>;
-export type JobSnapshot = ReturnType<Job["toJSON"]>;
-export type PersistedJobStatus = JobRunInsert["status"];
+export type JobSyncEvent = z.infer<typeof jobSyncEventSchema>
+export type JobRunInsert = z.infer<typeof jobRunsInsertSchema>
+export type JobSnapshot = ReturnType<Job["toJSON"]>
+export type PersistedJobStatus = JobRunInsert["status"]
 
-const terminalStatuses = new Set<PersistedJobStatus>(["completed", "failed"]);
+const terminalStatuses = new Set<PersistedJobStatus>(["completed", "failed"])
 
-export const isTerminalStatus = (status: PersistedJobStatus) => terminalStatuses.has(status);
+export const isTerminalStatus = (status: PersistedJobStatus) => terminalStatuses.has(status)
 
 export const bullStateToPersistedStatus = (state?: string): PersistedJobStatus | undefined => {
   switch (state) {
@@ -33,30 +33,30 @@ export const bullStateToPersistedStatus = (state?: string): PersistedJobStatus |
     case "delayed":
     case "prioritized":
     case "waiting-children":
-      return state;
+      return state
     case "wait":
     case "paused":
-      return "waiting";
+      return "waiting"
     default:
-      return undefined;
+      return undefined
   }
-};
+}
 
 export const getStatusFromSnapshot = ({
   job,
   phase,
   state,
 }: {
-  job: JobSnapshot;
-  phase?: JobSyncEvent["phase"];
-  state?: string;
+  job: JobSnapshot
+  phase?: JobSyncEvent["phase"]
+  state?: string
 }): PersistedJobStatus => {
-  const persistedState = bullStateToPersistedStatus(state);
-  if (persistedState) return persistedState;
-  if (job.finishedOn) return job.failedReason ? "failed" : "completed";
-  if (phase === "waiting") return "waiting";
-  return "active";
-};
+  const persistedState = bullStateToPersistedStatus(state)
+  if (persistedState) return persistedState
+  if (job.finishedOn) return job.failedReason ? "failed" : "completed"
+  if (phase === "waiting") return "waiting"
+  return "active"
+}
 
 export const formatJobRun = ({
   job,
@@ -66,18 +66,18 @@ export const formatJobRun = ({
   phase,
   state,
 }: {
-  job: JobSnapshot;
-  queueName: string;
-  workerId?: string;
-  tags?: string[];
-  phase?: JobSyncEvent["phase"];
-  state?: string;
+  job: JobSnapshot
+  queueName: string
+  workerId?: string
+  tags?: string[]
+  phase?: JobSyncEvent["phase"]
+  state?: string
 }) => {
   if (!job.id) {
-    throw new Error("Job ID is required");
+    throw new Error("Job ID is required")
   }
 
-  const enqueuedAt = new Date(job.timestamp);
+  const enqueuedAt = new Date(job.timestamp)
 
   const formatted: JobRunInsert = {
     workerId,
@@ -101,15 +101,15 @@ export const formatJobRun = ({
     result: job.returnvalue,
     tags,
     createdAt: enqueuedAt,
-  };
+  }
 
-  return jobRunsInsertSchema.parse(formatted);
-};
+  return jobRunsInsertSchema.parse(formatted)
+}
 
 export const parseJobSyncEvent = (raw: string) => {
-  const parsed = jobSyncEventSchema.parse(JSON.parse(raw));
+  const parsed = jobSyncEventSchema.parse(JSON.parse(raw))
   return {
     ...parsed,
     job: parsed.job as JobSnapshot,
-  };
-};
+  }
+}

@@ -1,6 +1,6 @@
-import { sql } from "drizzle-orm";
-import { index, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { sql } from "drizzle-orm"
+import { index, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core"
+import { createInsertSchema, createSelectSchema } from "drizzle-zod"
 
 export const jobTagsTable = pgTable(
   "job_tags",
@@ -15,7 +15,7 @@ export const jobTagsTable = pgTable(
     index("ix_job_tags_tag_lower_pattern").using("btree", sql`${t.tagLower} text_pattern_ops`),
     index("ix_job_tags_tag_lower_trgm").using("gin", sql`${t.tagLower} gin_trgm_ops`),
   ],
-);
+)
 
-export const jobTagsInsertSchema = createInsertSchema(jobTagsTable);
-export const jobTagsSelectSchema = createSelectSchema(jobTagsTable);
+export const jobTagsInsertSchema = createInsertSchema(jobTagsTable)
+export const jobTagsSelectSchema = createSelectSchema(jobTagsTable)

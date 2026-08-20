@@ -1,32 +1,32 @@
-import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
-import { db } from "@better-bull-board/db/server";
-import { logger } from "@rharkor/logger";
-import { and, eq } from "drizzle-orm";
-import { redis } from "./lib/redis";
+import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema"
+import { db } from "@better-bull-board/db/server"
+import { logger } from "@rharkor/logger"
+import { and, eq } from "drizzle-orm"
+import { redis } from "./lib/redis"
 
-const CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
-const CACHE_KEY_PREFIX = "bbb:job-run-id:";
+const CACHE_TTL_SECONDS = 5 * 60 // 5 minutes
+const CACHE_KEY_PREFIX = "bbb:job-run-id:"
 
 const getCachedValue = async (jobId: string, enqueuedAt: Date, queue: string): Promise<string | null> => {
   try {
-    const key = `${CACHE_KEY_PREFIX}${queue}:${jobId}:${enqueuedAt.getTime()}`;
-    const cached = await redis.get(key);
+    const key = `${CACHE_KEY_PREFIX}${queue}:${jobId}:${enqueuedAt.getTime()}`
+    const cached = await redis.get(key)
 
     if (cached === null) {
-      return null;
+      return null
     }
 
-    return cached;
+    return cached
   } catch (error) {
-    logger.warn("Failed to get cached value from Redis", { jobId, error });
-    return null;
+    logger.warn("Failed to get cached value from Redis", { jobId, error })
+    return null
   }
-};
+}
 
 const setCachedValue = async (jobId: string, enqueuedAt: Date, queue: string, value: string): Promise<void> => {
   try {
-    const key = `${CACHE_KEY_PREFIX}${queue}:${jobId}:${enqueuedAt.getTime()}`;
-    await redis.setex(key, CACHE_TTL_SECONDS, value);
+    const key = `${CACHE_KEY_PREFIX}${queue}:${jobId}:${enqueuedAt.getTime()}`
+    await redis.setex(key, CACHE_TTL_SECONDS, value)
   } catch (error) {
     logger.warn("Failed to set cached value in Redis", {
       jobId,
@@ -34,73 +34,73 @@ const setCachedValue = async (jobId: string, enqueuedAt: Date, queue: string, va
       queue,
       value,
       error,
-    });
+    })
   }
-};
+}
 
 export const getJobFromBullId = async (jobId: string, enqueuedAt: Date, queue: string) => {
   // Check cache first
-  const cachedResult = await getCachedValue(jobId, enqueuedAt, queue);
+  const cachedResult = await getCachedValue(jobId, enqueuedAt, queue)
   if (cachedResult !== null) {
-    return cachedResult;
+    return cachedResult
   }
 
   const [jobRun] = await db
     .select({ id: jobRunsTable.id })
     .from(jobRunsTable)
     .where(and(eq(jobRunsTable.jobId, jobId), eq(jobRunsTable.enqueuedAt, enqueuedAt), eq(jobRunsTable.queue, queue)))
-    .limit(1);
+    .limit(1)
 
-  let result: string | undefined;
+  let result: string | undefined
 
   if (!jobRun) {
-    result = undefined;
+    result = undefined
   } else {
-    const jobRunId = jobRun.id;
+    const jobRunId = jobRun.id
     if (!jobRunId) {
-      logger.warn("Invalid job run data", { jobId, enqueuedAt, queue });
-      result = undefined;
+      logger.warn("Invalid job run data", { jobId, enqueuedAt, queue })
+      result = undefined
     } else {
-      result = jobRunId;
+      result = jobRunId
     }
   }
 
-  if (result) await setCachedValue(jobId, enqueuedAt, queue, result);
+  if (result) await setCachedValue(jobId, enqueuedAt, queue, result)
 
-  return result;
-};
+  return result
+}
 
 function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (typeof a !== typeof b) return false;
-  if (typeof a !== "object" || a === null || b === null) return false;
+  if (a === b) return true
+  if (typeof a !== typeof b) return false
+  if (typeof a !== "object" || a === null || b === null) return false
 
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b as Record<string, unknown>);
-  if (aKeys.length !== bKeys.length) return false;
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b as Record<string, unknown>)
+  if (aKeys.length !== bKeys.length) return false
 
   return aKeys.every((k) =>
     deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k as keyof typeof b]),
-  );
+  )
 }
 
 export function getChangedKeys<T extends Record<string, unknown>>(newObj: T, oldObj: Partial<T>): (keyof T)[] {
   return Object.keys(newObj).filter((key) => {
-    const k = key as keyof T;
-    const newVal = newObj[k];
-    const oldVal = oldObj[k];
+    const k = key as keyof T
+    const newVal = newObj[k]
+    const oldVal = oldObj[k]
 
     if (typeof newVal === "object" && newVal !== null) {
-      return !deepEqual(newVal, oldVal);
+      return !deepEqual(newVal, oldVal)
     }
-    return newVal !== oldVal;
-  }) as (keyof T)[];
+    return newVal !== oldVal
+  }) as (keyof T)[]
 }
 
 export function chunk<T>(arr: T[], size: number): T[][] {
-  const res: T[][] = [];
+  const res: T[][] = []
   for (let i = 0; i < arr.length; i += size) {
-    res.push(arr.slice(i, i + size));
+    res.push(arr.slice(i, i + size))
   }
-  return res;
+  return res
 }

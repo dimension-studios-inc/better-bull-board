@@ -10,4 +10,4 @@ export const COLORS = [
   "#f9a8d4", // pink-300
   "#38bdf8", // light-blue-300
   "#a5b4fc", // indigo-300
-];
+]

@@ -1,6 +1,6 @@
-import { listQueuesBaseInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas";
-import z from "zod";
-import { registerApiRoute } from "~/lib/utils/client";
+import { listQueuesBaseInputSchema, listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas"
+import z from "zod"
+import { registerApiRoute } from "~/lib/utils/client"
 
 const getQueuesTableInput = listQueuesBaseInputSchema
   .omit({ pressureDateFrom: true, pressureDateTo: true })
@@ -13,9 +13,9 @@ const getQueuesTableInput = listQueuesBaseInputSchema
         code: "custom",
         message: "Pressure cursor is required when sorting by pressure",
         path: ["cursor", "pressure"],
-      });
+      })
     }
-  });
+  })
 
 const getQueuesTableOutput = listQueuesOutputSchema.extend({
   queues: z.array(
@@ -30,11 +30,11 @@ const getQueuesTableOutput = listQueuesOutputSchema.extend({
       ),
     }),
   ),
-});
+})
 
 export const getQueuesTableApiRoute = registerApiRoute({
   route: "/api/queues/table",
   method: "POST",
   inputSchema: getQueuesTableInput,
   outputSchema: getQueuesTableOutput,
-});
+})

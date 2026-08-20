@@ -1,29 +1,29 @@
-"use client";
+"use client"
 
-import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { getQueuesNameApiRoute } from "~/app/api/queues/name/schemas";
-import { Combobox, type ComboboxOption } from "~/components/ui/combobox";
-import useDebounce from "~/hooks/use-debounce";
-import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
-import { apiFetch } from "~/lib/utils/client";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
+import { useMemo } from "react"
+import { getQueuesNameApiRoute } from "~/app/api/queues/name/schemas"
+import { Combobox, type ComboboxOption } from "~/components/ui/combobox"
+import useDebounce from "~/hooks/use-debounce"
+import { useInfiniteScroll } from "~/hooks/use-infinite-scroll"
+import { apiFetch } from "~/lib/utils/client"
 
-const getCustomQueueOptionLabel = (queueName: string) => `Use custom queue "${queueName}"`;
+const getCustomQueueOptionLabel = (queueName: string) => `Use custom queue "${queueName}"`
 
 interface QueueSelectorProps {
-  value: string;
-  onValueChange: (value: string) => void;
-  search: string;
-  setSearch: (search: string) => void;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  placeholder?: string;
-  className?: string;
-  popoverContentClassName?: string;
-  renderValue?: (value: string) => string;
-  includeAllOption?: boolean;
-  allOptionLabel?: string;
-  allowCustomValue?: boolean;
+  value: string
+  onValueChange: (value: string) => void
+  search: string
+  setSearch: (search: string) => void
+  open: boolean
+  setOpen: (open: boolean) => void
+  placeholder?: string
+  className?: string
+  popoverContentClassName?: string
+  renderValue?: (value: string) => string
+  includeAllOption?: boolean
+  allOptionLabel?: string
+  allowCustomValue?: boolean
 }
 
 export function QueueSelector({
@@ -41,7 +41,7 @@ export function QueueSelector({
   allOptionLabel = "All Queues",
   allowCustomValue = false,
 }: QueueSelectorProps) {
-  const debouncedSearch = useDebounce(search, 250);
+  const debouncedSearch = useDebounce(search, 250)
   const {
     data: queues,
     isLoading,
@@ -61,7 +61,7 @@ export function QueueSelector({
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
     placeholderData: keepPreviousData,
-  });
+  })
 
   const { loaderRef } = useInfiniteScroll({
     fetchNextPage: fetchNextPage,
@@ -69,47 +69,47 @@ export function QueueSelector({
     isFetchingNextPage,
     watchState: [open],
     enabled: open,
-  });
+  })
 
   const queueOptions: ComboboxOption[] = useMemo(() => {
-    const options = includeAllOption ? [{ value: "all", label: allOptionLabel }] : [];
-    const normalizedSearch = search.trim().toLowerCase();
+    const options = includeAllOption ? [{ value: "all", label: allOptionLabel }] : []
+    const normalizedSearch = search.trim().toLowerCase()
 
     if (queues?.pages) {
       queues.pages.forEach((page) => {
         if (page?.queues) {
           page.queues.forEach((queue) => {
             if (normalizedSearch && !queue.name.toLowerCase().includes(normalizedSearch)) {
-              return;
+              return
             }
 
-            options.push({ value: queue.name, label: queue.name });
-          });
+            options.push({ value: queue.name, label: queue.name })
+          })
         }
-      });
+      })
     }
-    const customQueueName = search.trim();
-    const hasCustomQueueName = options.some((option) => option.value === customQueueName);
+    const customQueueName = search.trim()
+    const hasCustomQueueName = options.some((option) => option.value === customQueueName)
 
     if (allowCustomValue && customQueueName && !hasCustomQueueName) {
       options.push({
         value: customQueueName,
         label: getCustomQueueOptionLabel(customQueueName),
-      });
+      })
     }
 
-    return options;
-  }, [queues, includeAllOption, allOptionLabel, allowCustomValue, search]);
+    return options
+  }, [queues, includeAllOption, allOptionLabel, allowCustomValue, search])
 
   const defaultRenderValue = (value: string) => {
-    const option = queueOptions?.find((opt) => opt.value === value);
+    const option = queueOptions?.find((opt) => opt.value === value)
     if (!option) {
-      if (isLoading) return "Loading...";
-      return allowCustomValue ? value : "";
+      if (isLoading) return "Loading..."
+      return allowCustomValue ? value : ""
     }
 
-    return option.label === getCustomQueueOptionLabel(option.value) ? option.value : option.label;
-  };
+    return option.label === getCustomQueueOptionLabel(option.value) ? option.value : option.label
+  }
 
   return (
     <Combobox
@@ -134,5 +134,5 @@ export function QueueSelector({
       }}
       popoverContentClassName={popoverContentClassName}
     />
-  );
+  )
 }

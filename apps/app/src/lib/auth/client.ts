@@ -1,1 +1,1 @@
-export const COOKIE_NAME = "bbb-token";
+export const COOKIE_NAME = "bbb-token"

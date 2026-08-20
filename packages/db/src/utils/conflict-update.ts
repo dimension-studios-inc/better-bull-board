@@ -1,5 +1,5 @@
-import { type Column, sql } from "drizzle-orm";
-import type { PgTable, PgUpdateSetSource } from "drizzle-orm/pg-core";
+import { type Column, sql } from "drizzle-orm"
+import type { PgTable, PgUpdateSetSource } from "drizzle-orm/pg-core"
 
 export function conflictUpdateSet<TTable extends PgTable>(
   table: TTable,
@@ -10,5 +10,5 @@ export function conflictUpdateSet<TTable extends PgTable>(
     ...columns.map((k) => ({
       [k]: sql.raw(`excluded.${(table[k] as Column).name}`),
     })),
-  ) as PgUpdateSetSource<TTable>;
+  ) as PgUpdateSetSource<TTable>
 }

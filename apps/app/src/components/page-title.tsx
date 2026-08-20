@@ -1,27 +1,27 @@
-"use client";
+"use client"
 
-import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
+import { ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Button } from "./ui/button"
 
 export function PageTitle({
   title,
   description,
   withBackButton,
 }: {
-  title: string;
-  description: string;
-  withBackButton?: boolean;
+  title: string
+  description: string
+  withBackButton?: boolean
 }) {
-  const router = useRouter();
+  const router = useRouter()
 
   const handleGoBack = () => {
     if (window.history.length > 1) {
-      router.back();
+      router.back()
     } else {
-      router.push("/runs");
+      router.push("/runs")
     }
-  };
+  }
 
   return (
     <div>
@@ -35,5 +35,5 @@ export function PageTitle({
       </div>
       <p className="text-muted-foreground">{description}</p>
     </div>
-  );
+  )
 }

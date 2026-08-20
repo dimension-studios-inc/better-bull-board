@@ -1,78 +1,78 @@
-import { sql } from "drizzle-orm";
-import { NextResponse } from "next/server";
-import { healthDb } from "~/lib/health-db";
-import { redis } from "~/lib/redis";
+import { sql } from "drizzle-orm"
+import { NextResponse } from "next/server"
+import { healthDb } from "~/lib/health-db"
+import { redis } from "~/lib/redis"
 
-export const HEALTH_CHECK_TIMEOUT_MS = 2_000;
+export const HEALTH_CHECK_TIMEOUT_MS = 2_000
 
 interface HealthCheckResult {
-  service: string;
-  status: "healthy" | "unhealthy";
-  responseTime?: number;
-  error?: string;
+  service: string
+  status: "healthy" | "unhealthy"
+  responseTime?: number
+  error?: string
 }
 
 const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, service: string): Promise<T> => {
-  let timeout: NodeJS.Timeout | undefined;
+  let timeout: NodeJS.Timeout | undefined
   try {
     return await Promise.race([
       promise,
       new Promise<never>((_, reject) => {
         timeout = setTimeout(() => {
-          reject(new Error(`${service} health check timed out after ${timeoutMs}ms`));
-        }, timeoutMs);
+          reject(new Error(`${service} health check timed out after ${timeoutMs}ms`))
+        }, timeoutMs)
       }),
-    ]);
+    ])
   } finally {
-    if (timeout) clearTimeout(timeout);
+    if (timeout) clearTimeout(timeout)
   }
-};
+}
 
 async function checkRedis(): Promise<HealthCheckResult> {
-  const start = Date.now();
+  const start = Date.now()
   try {
-    await withTimeout(redis.ping(), HEALTH_CHECK_TIMEOUT_MS, "redis");
+    await withTimeout(redis.ping(), HEALTH_CHECK_TIMEOUT_MS, "redis")
     return {
       service: "redis",
       status: "healthy",
       responseTime: Date.now() - start,
-    };
+    }
   } catch (error) {
     return {
       service: "redis",
       status: "unhealthy",
       responseTime: Date.now() - start,
       error: error instanceof Error ? error.message : "Unknown error",
-    };
+    }
   }
 }
 
 async function checkDatabase(): Promise<HealthCheckResult> {
-  const start = Date.now();
+  const start = Date.now()
   try {
-    await withTimeout(healthDb.execute(sql`SELECT 1`), HEALTH_CHECK_TIMEOUT_MS, "postgresql");
+    await withTimeout(healthDb.execute(sql`SELECT 1`), HEALTH_CHECK_TIMEOUT_MS, "postgresql")
     return {
       service: "postgresql",
       status: "healthy",
       responseTime: Date.now() - start,
-    };
+    }
   } catch (error) {
     return {
       service: "postgresql",
       status: "unhealthy",
       responseTime: Date.now() - start,
       error: error instanceof Error ? error.message : "Unknown error",
-    };
+    }
   }
 }
 
 export async function buildHealthResponse() {
-  const startTime = Date.now();
+  const startTime = Date.now()
 
   try {
-    const [redisResult, dbResult] = await Promise.all([checkRedis(), checkDatabase()]);
-    const results = [redisResult, dbResult];
-    const allHealthy = results.every((result) => result.status === "healthy");
+    const [redisResult, dbResult] = await Promise.all([checkRedis(), checkDatabase()])
+    const results = [redisResult, dbResult]
+    const allHealthy = results.every((result) => result.status === "healthy")
 
     return NextResponse.json(
       {
@@ -82,7 +82,7 @@ export async function buildHealthResponse() {
         services: results,
       },
       { status: allHealthy ? 200 : 503 },
-    );
+    )
   } catch (error) {
     return NextResponse.json(
       {
@@ -93,6 +93,6 @@ export async function buildHealthResponse() {
         services: [],
       },
       { status: 503 },
-    );
+    )
   }
 }
