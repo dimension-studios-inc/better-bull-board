@@ -6,6 +6,9 @@ export const GET = createAuthenticatedApiRoute({
   apiRoute: getJobByIdApiRoute,
   async handler(_input, _req, ctx) {
     const { id } = await ctx.params;
+    if (typeof id !== "string") {
+      throw new Error("Job run not found");
+    }
     const result = await getJobById({ id });
 
     if (!result.job) {
