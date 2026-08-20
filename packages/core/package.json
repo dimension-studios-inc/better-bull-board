@@ -11,8 +11,8 @@
     "@better-bull-board/db": "*",
     "@better-bull-board/typescript-config": "*",
     "drizzle-orm": "*",
-    "tsdown": "^0.21.9",
-    "typescript": "^6.0.3",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2",
     "zod": "^4.3.6"
   },
   "exports": {
