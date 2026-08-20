@@ -1,7 +1,8 @@
 /// <reference types="node" />
 declare module "redlock" {
   import { EventEmitter } from "node:events";
-  import type { Cluster as IORedisCluster, Redis as IORedisClient } from "ioredis";
+  import type { Redis as IORedisClient, Cluster as IORedisCluster } from "ioredis";
+
   declare type Client = IORedisClient | IORedisCluster;
   export declare type ClientExecutionResult =
     | {
