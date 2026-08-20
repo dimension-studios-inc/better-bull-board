@@ -31,7 +31,7 @@ envsubst < k8s/02-secrets-configmap.yaml.template > k8s/02-secrets-configmap.yam
 kubectl apply -f k8s/
 ```
 
-Point `k8s/04-app.yaml` and `k8s/05-ingest.yaml` at your registry if you are not using the public ECR images. Postgres uses `public.ecr.aws/n5q7l0s4/better-bull-board-postgres:latest`; rebuild that image only when `docker/db` changes — see [Docker images](docker-build.md).
+Point `k8s/04-app.yaml` and `k8s/05-ingest.yaml` at your registry if you are not using the public ECR images. Postgres uses `public.ecr.aws/n5q7l0s4/better-bull-board-postgres:latest`; rebuild that image only when `.docker/db` changes — see [Docker images](docker-build.md).
 
 ## Verify
 
