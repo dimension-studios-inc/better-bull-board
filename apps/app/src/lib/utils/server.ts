@@ -1,8 +1,12 @@
-import { logger } from "@rharkor/logger";
 import { HttpError } from "@better-bull-board/core/errors";
+import { logger } from "@rharkor/logger";
 import { type NextRequest, NextResponse } from "next/server";
 import type { output, ZodType } from "zod";
 import { getAuthenticatedUser } from "../auth/server";
+
+type AppRouteContext = {
+  params: Promise<Record<string, string | string[]>>;
+};
 
 export const createApiRoute = <IS extends ZodType, OS extends ZodType>({
   apiRoute,
@@ -61,14 +65,12 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
   handler: (
     input: IS extends ZodType ? output<IS> : undefined,
     req: NextRequest,
-    // biome-ignore lint/suspicious/noExplicitAny: hard to type
-    ctx: RouteContext<any>,
+    ctx: AppRouteContext,
   ) => Promise<output<OS>>;
 }) => {
   const inputSchema = apiRoute.inputSchema as IS;
   const outputSchema = apiRoute.outputSchema as OS;
-  // biome-ignore lint/suspicious/noExplicitAny: hard to type
-  return async (req: NextRequest, ctx: RouteContext<any>) => {
+  return async (req: NextRequest, ctx: AppRouteContext) => {
     // Check authentication first
     const user = await getAuthenticatedUser();
     if (!user) {
