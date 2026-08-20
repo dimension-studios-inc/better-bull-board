@@ -1,5 +1,5 @@
-import { logger } from "@rharkor/logger";
-import { redis } from "~/lib/redis";
+import { logger } from "@rharkor/logger"
+import { redis } from "~/lib/redis"
 
 export const publishIngestEvent = (channel: string, message: string, context?: Record<string, unknown>) => {
   void redis.publish(channel, message).catch((error) => {
@@ -8,6 +8,6 @@ export const publishIngestEvent = (channel: string, message: string, context?: R
       message,
       ...context,
       error,
-    });
-  });
-};
+    })
+  })
+}

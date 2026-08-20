@@ -1,7 +1,7 @@
-import { logger } from "@rharkor/logger";
+import { logger } from "@rharkor/logger"
 
 const main = async () => {
-  await logger.init();
-};
+  await logger.init()
+}
 
-main().then(() => process.exit(0));
+main().then(() => process.exit(0))

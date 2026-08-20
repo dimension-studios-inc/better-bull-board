@@ -1,7 +1,7 @@
-import { QueueStats } from "~/app/queues/_components/queue-stats";
-import { QueuesTable } from "~/app/queues/_components/queues-table";
-import { PageContainer } from "~/components/page-container";
-import { PageTitle } from "~/components/page-title";
+import { QueueStats } from "~/app/queues/_components/queue-stats"
+import { QueuesTable } from "~/app/queues/_components/queues-table"
+import { PageContainer } from "~/components/page-container"
+import { PageTitle } from "~/components/page-title"
 
 export default function QueuesPage() {
   return (
@@ -10,5 +10,5 @@ export default function QueuesPage() {
       <QueueStats />
       <QueuesTable />
     </PageContainer>
-  );
+  )
 }

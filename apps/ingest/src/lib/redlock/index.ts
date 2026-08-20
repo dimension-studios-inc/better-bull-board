@@ -1,5 +1,5 @@
-import Redlock from "redlock";
+import Redlock from "redlock"
 
-import { redis } from "~/lib/redis";
+import { redis } from "~/lib/redis"
 
-export const redlock = new Redlock([redis]);
+export const redlock = new Redlock([redis])

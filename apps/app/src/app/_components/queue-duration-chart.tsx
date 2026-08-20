@@ -1,49 +1,49 @@
-"use client";
+"use client"
 
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { z } from "zod";
-import type { dashboardTopQueuesDurationOutput } from "~/app/api/dashboard/summary/schemas";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Skeleton } from "~/components/ui/skeleton";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import type { z } from "zod"
+import type { dashboardTopQueuesDurationOutput } from "~/app/api/dashboard/summary/schemas"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { Skeleton } from "~/components/ui/skeleton"
 
 interface QueueDurationChartProps {
-  queueDuration: z.output<typeof dashboardTopQueuesDurationOutput>[] | undefined;
-  isLoading: boolean;
+  queueDuration: z.output<typeof dashboardTopQueuesDurationOutput>[] | undefined
+  isLoading: boolean
 }
 
 const CustomTooltip = ({
   active,
   payload,
 }: {
-  active: boolean;
+  active: boolean
   // biome-ignore lint/suspicious/noExplicitAny: _
-  payload: any;
+  payload: any
 }) => {
   if (active && payload?.length) {
-    const data = payload[0].payload;
+    const data = payload[0].payload
     return (
       <div className="bg-background border rounded p-3 shadow-lg text-sm">
         <p className="font-medium">{data.queue}</p>
         <p className="text-muted-foreground">{data.formattedValue}</p>
       </div>
-    );
+    )
   }
-  return null;
-};
+  return null
+}
 
 export function QueueDurationChart({ queueDuration, isLoading }: QueueDurationChartProps) {
   const formatDuration = (seconds: number) => {
-    if (seconds < 60) return `${seconds.toFixed(1)}s`;
-    if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`;
-    return `${(seconds / 3600).toFixed(1)}h`;
-  };
+    if (seconds < 60) return `${seconds.toFixed(1)}s`
+    if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`
+    return `${(seconds / 3600).toFixed(1)}h`
+  }
 
   const chartData =
     queueDuration?.map((item) => ({
       queue: item.queue,
       value: item.totalDuration,
       formattedValue: formatDuration(item.totalDuration),
-    })) || [];
+    })) || []
 
   return (
     <Card>
@@ -78,5 +78,5 @@ export function QueueDurationChart({ queueDuration, isLoading }: QueueDurationCh
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

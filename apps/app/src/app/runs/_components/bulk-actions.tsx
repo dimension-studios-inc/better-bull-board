@@ -1,12 +1,12 @@
-"use client";
+"use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { RotateCcw, Trash2, X } from "lucide-react";
-import { useState } from "react";
-import { bulkCancelJobsApiRoute } from "~/app/api/jobs/bulk-cancel/schemas";
-import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { RotateCcw, Trash2, X } from "lucide-react"
+import { useState } from "react"
+import { bulkCancelJobsApiRoute } from "~/app/api/jobs/bulk-cancel/schemas"
+import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas"
+import { Badge } from "~/components/ui/badge"
+import { Button } from "~/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -14,22 +14,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
-import { apiFetch } from "~/lib/utils/client";
+} from "~/components/ui/dialog"
+import { apiFetch } from "~/lib/utils/client"
 
 interface BulkActionsProps {
   selectedJobs: Array<{
-    jobId: string;
-    queue: string;
-    status: string;
-  }>;
-  onClearSelection: () => void;
+    jobId: string
+    queue: string
+    status: string
+  }>
+  onClearSelection: () => void
 }
 
 export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps) {
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [replayDialogOpen, setReplayDialogOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [replayDialogOpen, setReplayDialogOpen] = useState(false)
+  const queryClient = useQueryClient()
 
   const bulkCancelMutation = useMutation({
     mutationFn: apiFetch({
@@ -42,11 +42,11 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
       },
     }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
-      setCancelDialogOpen(false);
-      onClearSelection();
+      await queryClient.invalidateQueries({ queryKey: ["jobs/table"] })
+      setCancelDialogOpen(false)
+      onClearSelection()
     },
-  });
+  })
 
   const bulkReplayMutation = useMutation({
     mutationFn: apiFetch({
@@ -59,30 +59,30 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
       },
     }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
-      setReplayDialogOpen(false);
-      onClearSelection();
+      await queryClient.invalidateQueries({ queryKey: ["jobs/table"] })
+      setReplayDialogOpen(false)
+      onClearSelection()
     },
-  });
+  })
 
   const handleBulkCancel = () => {
-    bulkCancelMutation.mutate();
-  };
+    bulkCancelMutation.mutate()
+  }
 
   const handleBulkReplay = () => {
-    bulkReplayMutation.mutate();
-  };
+    bulkReplayMutation.mutate()
+  }
 
   // Filter jobs that can be cancelled
   const cancellableJobs = selectedJobs.filter(
     (job) => job.status === "active" || job.status === "waiting" || job.status === "delayed",
-  );
+  )
 
   // Filter jobs that can be retried
-  const replayableJobs = selectedJobs.filter((job) => job.status === "completed" || job.status === "failed");
+  const replayableJobs = selectedJobs.filter((job) => job.status === "completed" || job.status === "failed")
 
   if (selectedJobs.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -183,5 +183,5 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

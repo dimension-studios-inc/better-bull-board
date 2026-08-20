@@ -1,28 +1,28 @@
-"use client";
+"use client"
 
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import type { z } from "zod";
-import type { dashboardQueuePerformanceOutput } from "~/app/api/dashboard/summary/schemas";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { ScrollArea } from "~/components/ui/scroll-area";
-import { Skeleton } from "~/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { TruncatedTooltip } from "~/components/ui/truncated-tooltip";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useMemo, useState } from "react"
+import type { z } from "zod"
+import type { dashboardQueuePerformanceOutput } from "~/app/api/dashboard/summary/schemas"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { ScrollArea } from "~/components/ui/scroll-area"
+import { Skeleton } from "~/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
+import { TruncatedTooltip } from "~/components/ui/truncated-tooltip"
 
-type QueuePerformance = z.output<typeof dashboardQueuePerformanceOutput>;
+type QueuePerformance = z.output<typeof dashboardQueuePerformanceOutput>
 
 interface QueuePerformanceTableProps {
-  queuePerformance: QueuePerformance[] | undefined;
-  isLoading: boolean;
+  queuePerformance: QueuePerformance[] | undefined
+  isLoading: boolean
 }
 
 type SortKey = keyof Pick<
   QueuePerformance,
   "queue" | "totalRuns" | "successes" | "failures" | "errorRate" | "avgDuration" | "minDuration" | "maxDuration"
->;
-type SortDirection = "asc" | "desc";
+>
+type SortDirection = "asc" | "desc"
 
 const sortableColumns: { key: SortKey; label: string; align?: "right" }[] = [
   { key: "queue", label: "Queue" },
@@ -33,51 +33,51 @@ const sortableColumns: { key: SortKey; label: string; align?: "right" }[] = [
   { key: "avgDuration", label: "Avg Duration", align: "right" },
   { key: "minDuration", label: "Min Duration", align: "right" },
   { key: "maxDuration", label: "Max Duration", align: "right" },
-];
+]
 
 export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerformanceTableProps) {
-  const router = useRouter();
+  const router = useRouter()
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: "totalRuns",
     direction: "desc",
-  });
+  })
 
   const formatDuration = (seconds: number) => {
-    if (seconds < 60) return `${seconds.toFixed(1)}s`;
-    if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`;
-    return `${(seconds / 3600).toFixed(1)}h`;
-  };
+    if (seconds < 60) return `${seconds.toFixed(1)}s`
+    if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`
+    return `${(seconds / 3600).toFixed(1)}h`
+  }
 
   const sortedQueuePerformance = useMemo(() => {
     return [...(queuePerformance ?? [])].sort((a, b) => {
-      const direction = sort.direction === "asc" ? 1 : -1;
-      const aValue = a[sort.key];
-      const bValue = b[sort.key];
+      const direction = sort.direction === "asc" ? 1 : -1
+      const aValue = a[sort.key]
+      const bValue = b[sort.key]
 
       if (typeof aValue === "string" && typeof bValue === "string") {
-        return aValue.localeCompare(bValue) * direction;
+        return aValue.localeCompare(bValue) * direction
       }
 
-      return (Number(aValue) - Number(bValue)) * direction;
-    });
-  }, [queuePerformance, sort]);
+      return (Number(aValue) - Number(bValue)) * direction
+    })
+  }, [queuePerformance, sort])
 
   const handleSort = (key: SortKey) => {
     setSort((current) => ({
       key,
       direction: current.key === key && current.direction === "desc" ? "asc" : "desc",
-    }));
-  };
+    }))
+  }
 
   const handleQueueClick = (queue: string) => {
-    router.push(`/runs?queue=${encodeURIComponent(queue)}`);
-  };
+    router.push(`/runs?queue=${encodeURIComponent(queue)}`)
+  }
 
   const getSortIcon = (key: SortKey) => {
-    if (sort.key !== key) return <ArrowUpDown className="size-3.5 text-muted-foreground" />;
-    if (sort.direction === "asc") return <ArrowUp className="size-3.5" />;
-    return <ArrowDown className="size-3.5" />;
-  };
+    if (sort.key !== key) return <ArrowUpDown className="size-3.5 text-muted-foreground" />
+    if (sort.direction === "asc") return <ArrowUp className="size-3.5" />
+    return <ArrowDown className="size-3.5" />
+  }
 
   return (
     <Card>
@@ -124,8 +124,8 @@ export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerf
                     onClick={() => handleQueueClick(queue.queue)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        handleQueueClick(queue.queue);
+                        event.preventDefault()
+                        handleQueueClick(queue.queue)
                       }
                     }}
                   >
@@ -170,5 +170,5 @@ export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerf
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

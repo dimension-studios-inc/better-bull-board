@@ -1,7 +1,7 @@
-import { sql } from "drizzle-orm";
-import { index, integer, jsonb, pgTable, smallint, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { jobStatusEnum, logLevelEnum } from "./enum";
+import { sql } from "drizzle-orm"
+import { index, integer, jsonb, pgTable, smallint, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core"
+import { createInsertSchema, createSelectSchema } from "drizzle-zod"
+import { jobStatusEnum, logLevelEnum } from "./enum"
 
 export const jobRunsTable = pgTable(
   "job_runs",
@@ -62,10 +62,10 @@ export const jobRunsTable = pgTable(
       .where(sql`cardinality(${t.tags}) > 0`),
     index("ix_job_runs_data_gin").using("gin", t.data),
   ],
-);
+)
 
-export const jobRunsInsertSchema = createInsertSchema(jobRunsTable);
-export const jobRunsSelectSchema = createSelectSchema(jobRunsTable);
+export const jobRunsInsertSchema = createInsertSchema(jobRunsTable)
+export const jobRunsSelectSchema = createSelectSchema(jobRunsTable)
 
 // Many rows per run (append-only)
 export const jobLogsTable = pgTable(
@@ -87,10 +87,10 @@ export const jobLogsTable = pgTable(
     index("ix_job_logs_job_run_ts").on(t.jobRunId, t.ts),
     index("ix_job_logs_ts_brin").using("brin", t.ts), // cheap time-range scans
   ],
-);
+)
 
-export const jobLogsInsertSchema = createInsertSchema(jobLogsTable);
-export const jobLogsSelectSchema = createSelectSchema(jobLogsTable);
+export const jobLogsInsertSchema = createInsertSchema(jobLogsTable)
+export const jobLogsSelectSchema = createSelectSchema(jobLogsTable)
 
 // Ingest-internal buffer for log events that arrive before the parent job run exists.
 export const jobLogBufferTable = pgTable(
@@ -111,7 +111,7 @@ export const jobLogBufferTable = pgTable(
     index("ix_job_log_buffer_created_at").on(t.createdAt),
     index("ix_job_log_buffer_job").on(t.queue, t.jobId, t.jobTimestamp),
   ],
-);
+)
 
-export const jobLogBufferInsertSchema = createInsertSchema(jobLogBufferTable);
-export const jobLogBufferSelectSchema = createSelectSchema(jobLogBufferTable);
+export const jobLogBufferInsertSchema = createInsertSchema(jobLogBufferTable)
+export const jobLogBufferSelectSchema = createSelectSchema(jobLogBufferTable)

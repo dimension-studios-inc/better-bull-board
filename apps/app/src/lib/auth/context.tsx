@@ -1,58 +1,58 @@
-"use client";
+"use client"
 
-import { deleteCookie } from "cookies-next";
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
-import { COOKIE_NAME } from "./client";
+import { deleteCookie } from "cookies-next"
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react"
+import { COOKIE_NAME } from "./client"
 
 interface User {
-  email: string;
+  email: string
 }
 
 interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => Promise<void>;
+  user: User | null
+  loading: boolean
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  logout: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuth must be used within an AuthProvider")
   }
-  return context;
+  return context
 }
 
 interface AuthProviderProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const checkAuthStatus = useCallback(async () => {
     try {
-      const response = await fetch("/api/auth/me");
+      const response = await fetch("/api/auth/me")
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json()
         if (data.success && data.user) {
-          setUser(data.user);
+          setUser(data.user)
         }
       }
     } catch {
       // Ignore errors - user is not authenticated
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   // Check auth status on mount
   useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+    checkAuthStatus()
+  }, [checkAuthStatus])
 
   const login = async (email: string, password: string) => {
     try {
@@ -62,39 +62,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success) {
-        setUser(data.user);
-        return { success: true };
+        setUser(data.user)
+        return { success: true }
       } else {
-        return { success: false, error: data.error };
+        return { success: false, error: data.error }
       }
     } catch {
-      return { success: false, error: "Network error. Please try again." };
+      return { success: false, error: "Network error. Please try again." }
     }
-  };
+  }
 
   const logout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", { method: "POST" })
     } catch {
       // Ignore errors
     } finally {
       // Delete the cookie on client side
-      deleteCookie(COOKIE_NAME);
-      setUser(null);
+      deleteCookie(COOKIE_NAME)
+      setUser(null)
     }
-  };
+  }
 
   const value = {
     user,
     loading,
     login,
     logout,
-  };
+  }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

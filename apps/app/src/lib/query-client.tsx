@@ -1,6 +1,6 @@
-import { logger } from "@rharkor/logger";
-import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { logger } from "@rharkor/logger"
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 export const createQueryClient = (_redirect?: (path: string) => void) =>
   new QueryClient({
@@ -14,14 +14,14 @@ export const createQueryClient = (_redirect?: (path: string) => void) =>
     },
     queryCache: new QueryCache({
       onError: (error, query) => {
-        logger.error("Query error", error, query.queryKey);
-        toast.error("Unknown error");
+        logger.error("Query error", error, query.queryKey)
+        toast.error("Unknown error")
       },
     }),
     mutationCache: new MutationCache({
       onError: (error) => {
-        logger.error("Mutation error", error);
-        toast.error("Unknown error");
+        logger.error("Mutation error", error)
+        toast.error("Unknown error")
       },
     }),
-  });
+  })

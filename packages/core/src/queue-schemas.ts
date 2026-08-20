@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod"
 
 export const listQueuesBaseInputSchema = z.object({
   cursor: z
@@ -16,7 +16,7 @@ export const listQueuesBaseInputSchema = z.object({
   pressureDateFrom: z.date().optional(),
   pressureDateTo: z.date().optional(),
   limit: z.number().min(1).max(100).optional(),
-});
+})
 
 export const listQueuesInputSchema = listQueuesBaseInputSchema.superRefine((input, ctx) => {
   if (input.sortBy === "pressure") {
@@ -25,7 +25,7 @@ export const listQueuesInputSchema = listQueuesBaseInputSchema.superRefine((inpu
         code: "custom",
         message: "Pressure date from is required when sorting by pressure",
         path: ["pressureDateFrom"],
-      });
+      })
     }
 
     if (!input.pressureDateTo) {
@@ -33,7 +33,7 @@ export const listQueuesInputSchema = listQueuesBaseInputSchema.superRefine((inpu
         code: "custom",
         message: "Pressure date to is required when sorting by pressure",
         path: ["pressureDateTo"],
-      });
+      })
     }
 
     if (input.pressureDateFrom && input.pressureDateTo && input.pressureDateFrom >= input.pressureDateTo) {
@@ -41,7 +41,7 @@ export const listQueuesInputSchema = listQueuesBaseInputSchema.superRefine((inpu
         code: "custom",
         message: "Pressure date from must be before pressure date to",
         path: ["pressureDateFrom"],
-      });
+      })
     }
 
     if (input.cursor && input.cursor.pressure === undefined) {
@@ -49,10 +49,10 @@ export const listQueuesInputSchema = listQueuesBaseInputSchema.superRefine((inpu
         code: "custom",
         message: "Pressure cursor is required when sorting by pressure",
         path: ["cursor", "pressure"],
-      });
+      })
     }
   }
-});
+})
 
 export const listQueuesOutputSchema = z.object({
   queues: z.array(
@@ -83,4 +83,4 @@ export const listQueuesOutputSchema = z.object({
     })
     .nullable(),
   total: z.number(),
-});
+})

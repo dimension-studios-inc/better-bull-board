@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { RotateCcw, X } from "lucide-react";
-import { useState } from "react";
-import { cancelJobApiRoute } from "~/app/api/jobs/cancel/schemas";
-import { replayJobApiRoute } from "~/app/api/jobs/replay/schemas";
-import { Button } from "~/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { apiFetch } from "~/lib/utils/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { RotateCcw, X } from "lucide-react"
+import { useState } from "react"
+import { cancelJobApiRoute } from "~/app/api/jobs/cancel/schemas"
+import { replayJobApiRoute } from "~/app/api/jobs/replay/schemas"
+import { Button } from "~/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
+import { apiFetch } from "~/lib/utils/client"
 
 interface RunActionsProps {
-  jobId: string;
-  queueName: string;
-  status: string;
+  jobId: string
+  queueName: string
+  status: string
 }
 
 export function RunActions({ jobId, queueName, status }: RunActionsProps) {
-  const [cancelPopoverOpen, setCancelPopoverOpen] = useState(false);
-  const [replayPopoverOpen, setReplayPopoverOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [cancelPopoverOpen, setCancelPopoverOpen] = useState(false)
+  const [replayPopoverOpen, setReplayPopoverOpen] = useState(false)
+  const queryClient = useQueryClient()
 
   const cancelMutation = useMutation({
     mutationFn: apiFetch({
@@ -26,10 +26,10 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
       body: { jobId, queueName },
     }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
-      setCancelPopoverOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["jobs/table"] })
+      setCancelPopoverOpen(false)
     },
-  });
+  })
 
   const replayMutation = useMutation({
     mutationFn: apiFetch({
@@ -37,24 +37,24 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
       body: { jobId, queueName },
     }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["jobs/table"] });
-      setReplayPopoverOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["jobs/table"] })
+      setReplayPopoverOpen(false)
     },
-  });
+  })
 
   const handleCancel = () => {
-    cancelMutation.mutate();
-  };
+    cancelMutation.mutate()
+  }
 
   const handleReplay = () => {
-    replayMutation.mutate();
-  };
+    replayMutation.mutate()
+  }
 
-  const canCancel = status === "active" || status === "waiting" || status === "delayed";
-  const canReplay = status === "completed" || status === "failed";
+  const canCancel = status === "active" || status === "waiting" || status === "delayed"
+  const canReplay = status === "completed" || status === "failed"
 
   if (!canCancel && !canReplay) {
-    return null;
+    return null
   }
 
   return (
@@ -118,5 +118,5 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
         </Popover>
       )}
     </div>
-  );
+  )
 }

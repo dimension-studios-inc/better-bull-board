@@ -1,21 +1,21 @@
-"use client";
+"use client"
 
-import { Home, List, LogOut, Server } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Button } from "~/components/ui/button";
-import { useAuth } from "~/lib/auth/context";
-import { cn } from "~/lib/utils/client";
+import { Home, List, LogOut, Server } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Button } from "~/components/ui/button"
+import { useAuth } from "~/lib/auth/context"
+import { cn } from "~/lib/utils/client"
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Queues", href: "/queues", icon: Server },
   { name: "Runs", href: "/runs", icon: List },
-];
+]
 
 export function Sidebar() {
-  const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const pathname = usePathname()
+  const { logout, user } = useAuth()
 
   return (
     <div className="w-64 bg-sidebar border-r border-sidebar-border relative">
@@ -24,7 +24,7 @@ export function Sidebar() {
       </div>
       <nav className="px-4 space-y-2">
         {navigation.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href
           return (
             <Link
               key={item.name}
@@ -39,7 +39,7 @@ export function Sidebar() {
               <item.icon className="h-4 w-4" />
               {item.name}
             </Link>
-          );
+          )
         })}
       </nav>
 
@@ -52,5 +52,5 @@ export function Sidebar() {
         </Button>
       </div>
     </div>
-  );
+  )
 }

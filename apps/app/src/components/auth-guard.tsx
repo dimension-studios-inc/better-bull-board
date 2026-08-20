@@ -1,22 +1,22 @@
-import { redirect } from "next/navigation";
-import { Sidebar } from "~/components/sidebar";
-import { getAuthenticatedUser } from "~/lib/auth/server";
+import { redirect } from "next/navigation"
+import { Sidebar } from "~/components/sidebar"
+import { getAuthenticatedUser } from "~/lib/auth/server"
 
 interface AuthGuardProps {
-  children: React.ReactNode;
-  pathname: string;
+  children: React.ReactNode
+  pathname: string
 }
 
 export async function AuthGuard({ children, pathname }: AuthGuardProps) {
-  const user = await getAuthenticatedUser();
+  const user = await getAuthenticatedUser()
 
   if (!user && pathname !== "/login") {
-    redirect(`/login?next=${encodeURIComponent(pathname)}`);
+    redirect(`/login?next=${encodeURIComponent(pathname)}`)
   }
 
   if (pathname === "/login" || pathname === "/mcp/authorize") {
     // If on login or MCP approval page, render without sidebar
-    return <>{children}</>;
+    return <>{children}</>
   }
 
   // For authenticated users on other pages, render with full layout
@@ -25,5 +25,5 @@ export async function AuthGuard({ children, pathname }: AuthGuardProps) {
       <Sidebar />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>
-  );
+  )
 }

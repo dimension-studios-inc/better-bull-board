@@ -1,8 +1,8 @@
-import { jobLogsTable, jobRunsTable, jobStatusEnum } from "@better-bull-board/db";
-import { db } from "@better-bull-board/db/server";
-import { and, arrayOverlaps, asc, desc, eq, gt, gte, ilike, lt, lte, or, sql } from "drizzle-orm";
-import { z } from "zod";
-import { withListJobsConcurrencyLimit } from "./list-jobs-limit";
+import { jobLogsTable, jobRunsTable, jobStatusEnum } from "@better-bull-board/db"
+import { db } from "@better-bull-board/db/server"
+import { and, arrayOverlaps, asc, desc, eq, gt, gte, ilike, lt, lte, or, sql } from "drizzle-orm"
+import { z } from "zod"
+import { withListJobsConcurrencyLimit } from "./list-jobs-limit"
 
 export {
   getJobByIdInputSchema,
@@ -11,7 +11,7 @@ export {
   listJobLogsOutputSchema,
   listJobsInputSchema,
   listJobsOutputSchema,
-} from "./job-schemas";
+} from "./job-schemas"
 
 import {
   getJobByIdInputSchema,
@@ -20,12 +20,12 @@ import {
   listJobLogsOutputSchema,
   listJobsInputSchema,
   listJobsOutputSchema,
-} from "./job-schemas";
+} from "./job-schemas"
 
-type CursorDirection = "next" | "prev";
-type SortBy = "createdAt" | "durationMs";
-type SortDirection = "asc" | "desc";
-type JobCursor = { createdAt: Date; jobId: string; id: string; durationMs?: number | null };
+type CursorDirection = "next" | "prev"
+type SortBy = "createdAt" | "durationMs"
+type SortDirection = "asc" | "desc"
+type JobCursor = { createdAt: Date; jobId: string; id: string; durationMs?: number | null }
 
 const jobTableColumns = {
   id: jobRunsTable.id,
@@ -42,39 +42,39 @@ const jobTableColumns = {
   durationMs: jobRunsTable.durationMs,
   errorMessage: jobRunsTable.errorMessage,
   tags: jobRunsTable.tags,
-};
+}
 
 const parseCreatedBoundary = ({
   fallbackTime,
   isUpperBoundary = false,
   value,
 }: {
-  fallbackTime: string;
-  isUpperBoundary?: boolean;
-  value: string;
+  fallbackTime: string
+  isUpperBoundary?: boolean
+  value: string
 }) => {
-  const valueWithTime = value.includes("T") ? value : `${value}T${fallbackTime}`;
-  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(valueWithTime);
-  const date = new Date(hasTimezone ? valueWithTime : `${valueWithTime}Z`);
+  const valueWithTime = value.includes("T") ? value : `${value}T${fallbackTime}`
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(valueWithTime)
+  const date = new Date(hasTimezone ? valueWithTime : `${valueWithTime}Z`)
 
   if (isUpperBoundary && /T\d{2}:\d{2}$/.test(value)) {
-    date.setSeconds(59, 999);
+    date.setSeconds(59, 999)
   }
 
-  return date;
-};
+  return date
+}
 
 const toCursor = (job: JobCursor) => ({
   createdAt: job.createdAt.getTime(),
   jobId: job.jobId,
   id: job.id,
   durationMs: job.durationMs ?? null,
-});
+})
 
 const getOrderDirection = (cursorDirection: CursorDirection, sortDirection: SortDirection) => {
-  if (cursorDirection === "next") return sortDirection;
-  return sortDirection === "desc" ? "asc" : "desc";
-};
+  if (cursorDirection === "next") return sortDirection
+  return sortDirection === "desc" ? "asc" : "desc"
+}
 
 const getSortOrder = ({
   cursorDirection,
@@ -82,23 +82,23 @@ const getSortOrder = ({
   sortBy,
   sortDirection,
 }: {
-  cursorDirection: CursorDirection;
-  durationSortExpression: ReturnType<typeof sql<number>>;
-  sortBy: SortBy;
-  sortDirection: SortDirection;
+  cursorDirection: CursorDirection
+  durationSortExpression: ReturnType<typeof sql<number>>
+  sortBy: SortBy
+  sortDirection: SortDirection
 }) => {
-  const orderDirection = getOrderDirection(cursorDirection, sortDirection);
+  const orderDirection = getOrderDirection(cursorDirection, sortDirection)
 
   if (sortBy === "durationMs") {
     return orderDirection === "desc"
       ? [desc(durationSortExpression), desc(jobRunsTable.createdAt), desc(jobRunsTable.jobId), desc(jobRunsTable.id)]
-      : [asc(durationSortExpression), asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id)];
+      : [asc(durationSortExpression), asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id)]
   }
 
   return orderDirection === "desc"
     ? [desc(jobRunsTable.createdAt), desc(jobRunsTable.jobId), desc(jobRunsTable.id)]
-    : [asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id)];
-};
+    : [asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id)]
+}
 
 const getCreatedAtCursorComparison = ({
   createdAt,
@@ -106,10 +106,10 @@ const getCreatedAtCursorComparison = ({
   jobId,
   useLessThan,
 }: {
-  createdAt: Date;
-  id: string;
-  jobId: string;
-  useLessThan: boolean;
+  createdAt: Date
+  id: string
+  jobId: string
+  useLessThan: boolean
 }) =>
   useLessThan
     ? or(
@@ -121,7 +121,7 @@ const getCreatedAtCursorComparison = ({
         gt(jobRunsTable.createdAt, createdAt),
         and(eq(jobRunsTable.createdAt, createdAt), gt(jobRunsTable.jobId, jobId)),
         and(eq(jobRunsTable.createdAt, createdAt), eq(jobRunsTable.jobId, jobId), gt(jobRunsTable.id, id)),
-      );
+      )
 
 const getCursorComparison = ({
   cursor,
@@ -130,42 +130,42 @@ const getCursorComparison = ({
   sortBy,
   sortDirection,
 }: {
-  cursor: { createdAt: number; jobId: string; id: string; durationMs?: number | null };
-  cursorDirection: CursorDirection;
-  durationSortExpression: ReturnType<typeof sql<number>>;
-  sortBy: SortBy;
-  sortDirection: SortDirection;
+  cursor: { createdAt: number; jobId: string; id: string; durationMs?: number | null }
+  cursorDirection: CursorDirection
+  durationSortExpression: ReturnType<typeof sql<number>>
+  sortBy: SortBy
+  sortDirection: SortDirection
 }) => {
-  const createdAt = new Date(cursor.createdAt);
-  const useLessThan = cursorDirection === "next" ? sortDirection === "desc" : sortDirection === "asc";
+  const createdAt = new Date(cursor.createdAt)
+  const useLessThan = cursorDirection === "next" ? sortDirection === "desc" : sortDirection === "asc"
   const createdAtComparison = getCreatedAtCursorComparison({
     createdAt,
     id: cursor.id,
     jobId: cursor.jobId,
     useLessThan,
-  });
+  })
 
   if (sortBy !== "durationMs") {
-    return createdAtComparison;
+    return createdAtComparison
   }
 
-  const durationMs = cursor.durationMs ?? 0;
+  const durationMs = cursor.durationMs ?? 0
   return or(
     useLessThan ? lt(durationSortExpression, durationMs) : gt(durationSortExpression, durationMs),
     and(eq(durationSortExpression, durationMs), createdAtComparison),
-  );
-};
+  )
+}
 
 export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) =>
   withListJobsConcurrencyLimit(async () => {
-    const parsed = listJobsInputSchema.parse(input);
-    const { cursor, cursorDirection = "next", search, queue, status, tags, createdFrom, createdTo } = parsed;
-    const limit = parsed.limit ?? 20;
-    const sortBy = parsed.sortBy ?? "createdAt";
-    const sortDirection = parsed.sortDirection ?? "desc";
-    const durationSortExpression = sql<number>`COALESCE(${jobRunsTable.durationMs}, 0)`;
+    const parsed = listJobsInputSchema.parse(input)
+    const { cursor, cursorDirection = "next", search, queue, status, tags, createdFrom, createdTo } = parsed
+    const limit = parsed.limit ?? 20
+    const sortBy = parsed.sortBy ?? "createdAt"
+    const sortDirection = parsed.sortDirection ?? "desc"
+    const durationSortExpression = sql<number>`COALESCE(${jobRunsTable.durationMs}, 0)`
 
-    const conditions = [];
+    const conditions = []
 
     if (search) {
       const searchConditions = [
@@ -173,15 +173,15 @@ export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) 
         ilike(jobRunsTable.queue, `%${search}%`),
         ilike(jobRunsTable.jobId, `%${search}%`),
         ilike(jobRunsTable.errorMessage, `%${search}%`),
-      ];
+      ]
       if (z.uuid().safeParse(search).success) {
-        searchConditions.push(eq(jobRunsTable.id, search));
+        searchConditions.push(eq(jobRunsTable.id, search))
       }
-      conditions.push(or(...searchConditions));
+      conditions.push(or(...searchConditions))
     }
 
     if (queue && queue !== "all") {
-      conditions.push(eq(jobRunsTable.queue, queue));
+      conditions.push(eq(jobRunsTable.queue, queue))
     }
 
     if (
@@ -189,15 +189,15 @@ export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) 
       status !== "all" &&
       jobStatusEnum.enumValues.includes(status as (typeof jobStatusEnum.enumValues)[number])
     ) {
-      conditions.push(eq(jobRunsTable.status, status as (typeof jobStatusEnum.enumValues)[number]));
+      conditions.push(eq(jobRunsTable.status, status as (typeof jobStatusEnum.enumValues)[number]))
     }
 
     if (tags && tags.length > 0) {
-      conditions.push(arrayOverlaps(jobRunsTable.tags, tags));
+      conditions.push(arrayOverlaps(jobRunsTable.tags, tags))
     }
 
     if (createdFrom) {
-      conditions.push(gte(jobRunsTable.createdAt, parseCreatedBoundary({ value: createdFrom, fallbackTime: "00:00" })));
+      conditions.push(gte(jobRunsTable.createdAt, parseCreatedBoundary({ value: createdFrom, fallbackTime: "00:00" })))
     }
 
     if (createdTo) {
@@ -206,7 +206,7 @@ export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) 
           jobRunsTable.createdAt,
           parseCreatedBoundary({ value: createdTo, fallbackTime: "23:59:59.999", isUpperBoundary: true }),
         ),
-      );
+      )
     }
 
     if (cursor) {
@@ -218,7 +218,7 @@ export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) 
           sortBy,
           sortDirection,
         }),
-      );
+      )
     }
 
     const rows = await db
@@ -233,33 +233,33 @@ export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) 
           sortDirection,
         }),
       )
-      .limit(limit + 1);
+      .limit(limit + 1)
 
-    const hasExtra = rows.length > limit;
+    const hasExtra = rows.length > limit
 
     if (hasExtra) {
-      rows.pop();
+      rows.pop()
     }
 
-    const jobs = cursorDirection === "prev" ? rows.reverse() : rows;
-    const firstJob = jobs[0];
-    const lastJob = jobs.at(-1);
-    const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra;
-    const hasOlderPage = cursorDirection === "prev" ? Boolean(cursor) : hasExtra;
+    const jobs = cursorDirection === "prev" ? rows.reverse() : rows
+    const firstJob = jobs[0]
+    const lastJob = jobs.at(-1)
+    const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra
+    const hasOlderPage = cursorDirection === "prev" ? Boolean(cursor) : hasExtra
 
     return listJobsOutputSchema.parse({
       jobs,
       nextCursor: hasOlderPage && lastJob ? toCursor(lastJob) : null,
       prevCursor: hasNewerPage && firstJob ? toCursor(firstJob) : null,
-    });
-  });
+    })
+  })
 
 export const getJobById = async (input: z.input<typeof getJobByIdInputSchema>) => {
-  const { id } = getJobByIdInputSchema.parse(input);
-  const [jobRun] = await db.select().from(jobRunsTable).where(eq(jobRunsTable.id, id));
+  const { id } = getJobByIdInputSchema.parse(input)
+  const [jobRun] = await db.select().from(jobRunsTable).where(eq(jobRunsTable.id, id))
 
   if (!jobRun) {
-    throw new Error("Job run not found");
+    throw new Error("Job run not found")
   }
 
   return getJobByIdOutputSchema.parse({
@@ -270,22 +270,22 @@ export const getJobById = async (input: z.input<typeof getJobByIdInputSchema>) =
       startedAt: jobRun.startedAt?.getTime() ?? null,
       finishedAt: jobRun.finishedAt?.getTime() ?? null,
     },
-  });
-};
+  })
+}
 
 export const listJobLogs = async (input: z.input<typeof listJobLogsInputSchema>) => {
-  const { id, level, messageContains, limit = 100, offset = 0 } = listJobLogsInputSchema.parse(input);
-  const conditions = [eq(jobLogsTable.jobRunId, id)];
+  const { id, level, messageContains, limit = 100, offset = 0 } = listJobLogsInputSchema.parse(input)
+  const conditions = [eq(jobLogsTable.jobRunId, id)]
 
   if (level) {
-    conditions.push(eq(jobLogsTable.level, level));
+    conditions.push(eq(jobLogsTable.level, level))
   }
 
   if (messageContains) {
-    conditions.push(ilike(jobLogsTable.message, `%${messageContains}%`));
+    conditions.push(ilike(jobLogsTable.message, `%${messageContains}%`))
   }
 
-  const whereClause = and(...conditions);
+  const whereClause = and(...conditions)
 
   const [logs, [countRow]] = await Promise.all([
     db
@@ -296,7 +296,7 @@ export const listJobLogs = async (input: z.input<typeof listJobLogsInputSchema>)
       .limit(limit)
       .offset(offset),
     db.select({ count: sql<number>`count(*)` }).from(jobLogsTable).where(whereClause),
-  ]);
+  ])
 
   return listJobLogsOutputSchema.parse({
     logs: logs.map((log) => ({
@@ -304,5 +304,5 @@ export const listJobLogs = async (input: z.input<typeof listJobLogsInputSchema>)
       ts: log.ts.getTime(),
     })),
     total: Number(countRow?.count ?? 0),
-  });
-};
+  })
+}

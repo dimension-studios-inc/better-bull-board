@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import type { jobRunsTable } from "@better-bull-board/db";
+import type { jobRunsTable } from "@better-bull-board/db"
 import {
   AlertCircle,
   CalendarClock,
@@ -16,48 +16,48 @@ import {
   Settings,
   Tag,
   User,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { codeToHtml } from "shiki";
-import { Badge } from "~/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
-import { Separator } from "~/components/ui/separator";
-import { cn, smartFormatDuration } from "~/lib/utils/client";
+} from "lucide-react"
+import { useEffect, useState } from "react"
+import { codeToHtml } from "shiki"
+import { Badge } from "~/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible"
+import { Separator } from "~/components/ui/separator"
+import { cn, smartFormatDuration } from "~/lib/utils/client"
 
 interface RunDetailsDrawerProps {
-  run: typeof jobRunsTable.$inferSelect;
+  run: typeof jobRunsTable.$inferSelect
 }
 
 const getStatusIcon = (status: string) => {
   switch (status) {
     case "completed":
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
+      return <CheckCircle className="h-4 w-4 text-green-500" />
     case "failed":
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
+      return <AlertCircle className="h-4 w-4 text-red-500" />
     case "active":
-      return <Loader className="h-4 w-4 text-blue-500 animate-spin" />;
+      return <Loader className="h-4 w-4 text-blue-500 animate-spin" />
     case "waiting":
-      return <Clock className="h-4 w-4 text-yellow-500" />;
+      return <Clock className="h-4 w-4 text-yellow-500" />
     default:
-      return <CircleQuestionMarkIcon className="h-4 w-4 text-gray-500" />;
+      return <CircleQuestionMarkIcon className="h-4 w-4 text-gray-500" />
   }
-};
+}
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case "completed":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
     case "failed":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
     case "active":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
     case "waiting":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
   }
-};
+}
 
 const DetailItem = ({
   icon,
@@ -65,10 +65,10 @@ const DetailItem = ({
   value,
   className,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-  className?: string;
+  icon: React.ReactNode
+  label: string
+  value: React.ReactNode
+  className?: string
 }) => (
   <div className={cn("flex items-center space-x-3", className)}>
     <div className="shrink-0">{icon}</div>
@@ -77,11 +77,11 @@ const DetailItem = ({
       <div className="text-sm font-medium">{value}</div>
     </div>
   </div>
-);
+)
 
 const JsonCollapsible = ({ title, data, icon }: { title: string; data: unknown; icon: React.ReactNode }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [formattedData, setFormattedData] = useState<string>("");
+  const [isOpen, setIsOpen] = useState(false)
+  const [formattedData, setFormattedData] = useState<string>("")
 
   useEffect(() => {
     const formatMessage = async () => {
@@ -89,18 +89,18 @@ const JsonCollapsible = ({ title, data, icon }: { title: string; data: unknown; 
         const html = await codeToHtml(JSON.stringify(data, null, 2), {
           lang: "json",
           theme: "vitesse-light",
-        });
-        setFormattedData(html);
+        })
+        setFormattedData(html)
       } catch (error) {
-        console.error("Failed to format message:", error);
-        setFormattedData(JSON.stringify(data, null, 2));
+        console.error("Failed to format message:", error)
+        setFormattedData(JSON.stringify(data, null, 2))
       }
-    };
+    }
 
-    formatMessage();
-  }, [data]);
+    formatMessage()
+  }, [data])
 
-  if (!data) return null;
+  if (!data) return null
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -117,14 +117,14 @@ const JsonCollapsible = ({ title, data, icon }: { title: string; data: unknown; 
         />
       </CollapsibleContent>
     </Collapsible>
-  );
-};
+  )
+}
 
 export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
   const duration =
     run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")
       ? smartFormatDuration(run.finishedAt.getTime() - run.startedAt.getTime())
-      : null;
+      : null
 
   return (
     <Card className="h-[calc(100vh-12rem)]">
@@ -313,5 +313,5 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

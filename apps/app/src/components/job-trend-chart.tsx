@@ -1,23 +1,23 @@
-"use client";
+"use client"
 
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 interface JobTrendData {
   hourlyStats: Array<{
-    hour: string;
-    completed: number;
-    failed: number;
-    running: number;
-  }>;
+    hour: string
+    completed: number
+    failed: number
+    running: number
+  }>
   queueActivity: Array<{
-    name: string;
-    jobs: number;
-    rate: number;
-  }>;
+    name: string
+    jobs: number
+    rate: number
+  }>
 }
 
 interface JobTrendChartProps {
-  data: JobTrendData;
+  data: JobTrendData
 }
 
 export function JobTrendChart({ data }: JobTrendChartProps) {
@@ -33,5 +33,5 @@ export function JobTrendChart({ data }: JobTrendChartProps) {
         <Line type="monotone" dataKey="running" stroke="#3b82f6" strokeWidth={2} name="Running" />
       </LineChart>
     </ResponsiveContainer>
-  );
+  )
 }

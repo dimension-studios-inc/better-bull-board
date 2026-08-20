@@ -1,20 +1,20 @@
-import { getJobById } from "@better-bull-board/core/jobs";
-import { createAuthenticatedApiRoute } from "~/lib/utils/server";
-import { getJobByIdApiRoute } from "./schemas";
+import { getJobById } from "@better-bull-board/core/jobs"
+import { createAuthenticatedApiRoute } from "~/lib/utils/server"
+import { getJobByIdApiRoute } from "./schemas"
 
 export const GET = createAuthenticatedApiRoute({
   apiRoute: getJobByIdApiRoute,
   async handler(_input, _req, ctx) {
-    const { id } = await ctx.params;
+    const { id } = await ctx.params
     if (typeof id !== "string") {
-      throw new Error("Job run not found");
+      throw new Error("Job run not found")
     }
-    const result = await getJobById({ id });
+    const result = await getJobById({ id })
 
     if (!result.job) {
-      throw new Error("Job run not found");
+      throw new Error("Job run not found")
     }
 
-    return result;
+    return result
   },
-});
+})

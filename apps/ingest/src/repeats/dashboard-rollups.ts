@@ -1,30 +1,30 @@
-import { db } from "@better-bull-board/db/server";
-import { logger } from "@rharkor/logger";
-import { sql } from "drizzle-orm";
-import cron from "node-cron";
-import { withLock } from "~/lib/distributed-lock";
-import { env } from "~/lib/env";
-import { instanceId } from "~/lib/instance";
+import { db } from "@better-bull-board/db/server"
+import { logger } from "@rharkor/logger"
+import { sql } from "drizzle-orm"
+import cron from "node-cron"
+import { withLock } from "~/lib/distributed-lock"
+import { env } from "~/lib/env"
+import { instanceId } from "~/lib/instance"
 
-const DASHBOARD_ROLLUP_LOCK_KEY = "bbb:dashboard-rollups-lock";
-const DASHBOARD_ROLLUP_LOCK_TTL_MS = 1000 * 60 * 55;
-const DASHBOARD_ROLLUP_RETENTION_MS = 1000 * 60 * 60 * 24 * 30;
+const DASHBOARD_ROLLUP_LOCK_KEY = "bbb:dashboard-rollups-lock"
+const DASHBOARD_ROLLUP_LOCK_TTL_MS = 1000 * 60 * 55
+const DASHBOARD_ROLLUP_RETENTION_MS = 1000 * 60 * 60 * 24 * 30
 
 export const refreshLastCompletedDashboardRollupHour = async () => {
-  const retentionMs = env.AUTO_DELETE_POSTGRES_DATA ?? DASHBOARD_ROLLUP_RETENTION_MS;
-  const deleteBefore = new Date(Date.now() - retentionMs);
+  const retentionMs = env.AUTO_DELETE_POSTGRES_DATA ?? DASHBOARD_ROLLUP_RETENTION_MS
+  const deleteBefore = new Date(Date.now() - retentionMs)
 
   await withLock({
     key: DASHBOARD_ROLLUP_LOCK_KEY,
     owner: instanceId,
     ttlMs: DASHBOARD_ROLLUP_LOCK_TTL_MS,
     run: async () => {
-      const start = Date.now();
+      const start = Date.now()
       await db.transaction(async (tx) => {
         await tx.execute(sql`
           DELETE FROM "dashboard_queue_hourly_stats"
           WHERE "bucket_start" = date_trunc('hour', now() - interval '1 hour')::timestamp
-        `);
+        `)
 
         await tx.execute(sql`
           INSERT INTO "dashboard_queue_hourly_stats" (
@@ -95,26 +95,26 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
             "pressure_total_ms" = EXCLUDED."pressure_total_ms",
             "pressure_count" = EXCLUDED."pressure_count",
             "updated_at" = now()
-        `);
+        `)
 
         await tx.execute(sql`
           DELETE FROM "dashboard_queue_hourly_stats"
           WHERE "bucket_start" < ${deleteBefore}
-        `);
-      });
+        `)
+      })
       logger.debug("Dashboard rollups refresh completed", {
         elapsedMs: Date.now() - start,
-      });
+      })
     },
-  });
-};
+  })
+}
 
 export const startDashboardRollups = () => {
   cron.schedule("0 * * * *", () => {
     refreshLastCompletedDashboardRollupHour().catch((error) => {
-      logger.error("Failed to refresh dashboard rollups", { error });
-    });
-  });
+      logger.error("Failed to refresh dashboard rollups", { error })
+    })
+  })
 
-  logger.log("📊 Dashboard rollups scheduled hourly");
-};
+  logger.log("📊 Dashboard rollups scheduled hourly")
+}

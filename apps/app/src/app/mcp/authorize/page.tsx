@@ -1,46 +1,46 @@
-import { MCP_WRITE_SCOPE } from "@better-bull-board/mcp/scopes";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { getAuthenticatedUser } from "~/lib/auth/server";
-import { getMcpResource, getOriginFromHeaders, validateAuthorizationRequest } from "~/lib/mcp/oauth";
+import { MCP_WRITE_SCOPE } from "@better-bull-board/mcp/scopes"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { Button } from "~/components/ui/button"
+import { Card } from "~/components/ui/card"
+import { getAuthenticatedUser } from "~/lib/auth/server"
+import { getMcpResource, getOriginFromHeaders, validateAuthorizationRequest } from "~/lib/mcp/oauth"
 
-export const runtime = "nodejs";
+export const runtime = "nodejs"
 
-const authorizePath = "/api/mcp/oauth/authorize";
+const authorizePath = "/api/mcp/oauth/authorize"
 
 export default async function McpAuthorizePage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const user = await getAuthenticatedUser();
-  const params = await searchParams;
-  const headerStore = await headers();
-  const origin = getOriginFromHeaders(headerStore);
-  const resource = getMcpResource(origin);
-  const url = new URL(authorizePath, origin);
+  const user = await getAuthenticatedUser()
+  const params = await searchParams
+  const headerStore = await headers()
+  const origin = getOriginFromHeaders(headerStore)
+  const resource = getMcpResource(origin)
+  const url = new URL(authorizePath, origin)
 
   for (const [key, value] of Object.entries(params)) {
     if (typeof value === "string") {
-      url.searchParams.set(key, value);
+      url.searchParams.set(key, value)
     }
   }
   if (!url.searchParams.has("resource")) {
-    url.searchParams.set("resource", resource);
+    url.searchParams.set("resource", resource)
   }
 
   if (!user) {
-    redirect(`/login?next=${encodeURIComponent(`${authorizePath}?${url.searchParams.toString()}`)}`);
+    redirect(`/login?next=${encodeURIComponent(`${authorizePath}?${url.searchParams.toString()}`)}`)
   }
 
   const authorization = await validateAuthorizationRequest(url, {
     expectedResource: resource,
-  });
-  const authorizeUrl = `${authorizePath}?${url.searchParams.toString()}`;
-  const requestedScopes = authorization.scope.split(/\s+/);
-  const requestsWrite = requestedScopes.includes(MCP_WRITE_SCOPE);
+  })
+  const authorizeUrl = `${authorizePath}?${url.searchParams.toString()}`
+  const requestedScopes = authorization.scope.split(/\s+/)
+  const requestsWrite = requestedScopes.includes(MCP_WRITE_SCOPE)
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -81,5 +81,5 @@ export default async function McpAuthorizePage({
         </Card>
       </div>
     </div>
-  );
+  )
 }

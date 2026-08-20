@@ -1,7 +1,7 @@
-import { logger } from "@rharkor/logger";
-import { type WebSocket, WebSocketServer } from "ws";
-import { env } from "./env";
-import { redis } from "./redis";
+import { logger } from "@rharkor/logger"
+import { type WebSocket, WebSocketServer } from "ws"
+import { env } from "./env"
+import { redis } from "./redis"
 
 export interface WebSocketMessage {
   type:
@@ -11,207 +11,207 @@ export interface WebSocketMessage {
     | "job-log-refresh"
     | "job-refresh"
     | "queue-refresh"
-    | "job-scheduler-refresh";
+    | "job-scheduler-refresh"
   data: {
-    id?: string;
-    queueName?: string;
-    jobId?: string;
-    schedulerKey?: string;
-  };
+    id?: string
+    queueName?: string
+    jobId?: string
+    schedulerKey?: string
+  }
 }
 
 class BullBoardWebSocketServer {
-  private wss: WebSocketServer;
-  private clients: Set<WebSocket> = new Set();
-  private subscriber = redis.duplicate();
+  private wss: WebSocketServer
+  private clients: Set<WebSocket> = new Set()
+  private subscriber = redis.duplicate()
 
   // keep track of last sent events for throttling
-  private lastSent = new Map<string, number>();
-  private pending = new Map<string, WebSocketMessage>();
-  private timers = new Map<string, NodeJS.Timeout>();
-  private throttleMs = 1000; // 1s window
+  private lastSent = new Map<string, number>()
+  private pending = new Map<string, WebSocketMessage>()
+  private timers = new Map<string, NodeJS.Timeout>()
+  private throttleMs = 1000 // 1s window
 
   constructor() {
     this.wss = new WebSocketServer({
       port: env.WEBSOCKET_PORT,
       perMessageDeflate: false,
-    });
-    this.setupWebSocketServer();
-    this.setupRedisSubscriber();
+    })
+    this.setupWebSocketServer()
+    this.setupRedisSubscriber()
   }
 
   private setupWebSocketServer() {
     this.wss.on("connection", (ws) => {
-      this.clients.add(ws);
+      this.clients.add(ws)
 
       ws.on("close", () => {
-        this.clients.delete(ws);
-      });
+        this.clients.delete(ws)
+      })
 
       ws.on("error", (error) => {
-        logger.error("WebSocket client error", { error });
-        this.clients.delete(ws);
-      });
-    });
+        logger.error("WebSocket client error", { error })
+        this.clients.delete(ws)
+      })
+    })
 
     this.wss.on("listening", () => {
-      logger.log(`🚀 WebSocket server listening on port ${env.WEBSOCKET_PORT}`);
-    });
+      logger.log(`🚀 WebSocket server listening on port ${env.WEBSOCKET_PORT}`)
+    })
 
     this.wss.on("error", (error) => {
-      logger.error("WebSocket server error", { error });
-    });
+      logger.error("WebSocket server error", { error })
+    })
   }
 
   private async setupRedisSubscriber() {
     try {
-      await this.subscriber.connect().catch(() => {});
-      await this.subscriber.psubscribe("bbb:ingest:events:*");
+      await this.subscriber.connect().catch(() => {})
+      await this.subscriber.psubscribe("bbb:ingest:events:*")
 
-      logger.log(`📡 Subscribed to Redis channels: bbb:ingest:events:*`);
+      logger.log(`📡 Subscribed to Redis channels: bbb:ingest:events:*`)
 
       this.subscriber.on("pmessage", (_subscription, channel, message) => {
-        this.handleRedisMessage(channel, message);
-      });
+        this.handleRedisMessage(channel, message)
+      })
     } catch (error) {
-      logger.error("Failed to setup Redis subscriber for WebSocket", { error });
+      logger.error("Failed to setup Redis subscriber for WebSocket", { error })
     }
   }
 
   private handleRedisMessage(channel: string, message: string) {
     try {
-      let wsMessage: WebSocketMessage;
+      let wsMessage: WebSocketMessage
 
       switch (channel) {
         case "bbb:ingest:events:single-job-refresh":
           wsMessage = {
             type: "single-job-refresh",
             data: { jobId: message },
-          };
-          break;
+          }
+          break
         case "bbb:ingest:events:single-queue-refresh":
           wsMessage = {
             type: "single-queue-refresh",
             data: { queueName: message },
-          };
-          break;
+          }
+          break
         case "bbb:ingest:events:single-job-scheduler-refresh":
           wsMessage = {
             type: "single-job-scheduler-refresh",
             data: { schedulerKey: message },
-          };
-          break;
+          }
+          break
         case "bbb:ingest:events:job-log-refresh":
           wsMessage = {
             type: "job-log-refresh",
             data: { jobId: message },
-          };
-          break;
+          }
+          break
         case "bbb:ingest:events:job-refresh":
           wsMessage = {
             type: "job-refresh",
             data: { id: message },
-          };
-          break;
+          }
+          break
         case "bbb:ingest:events:queue-refresh":
           wsMessage = {
             type: "queue-refresh",
             data: { queueName: message },
-          };
-          break;
+          }
+          break
         case "bbb:ingest:events:job-scheduler-refresh":
           wsMessage = {
             type: "job-scheduler-refresh",
             data: { schedulerKey: message },
-          };
-          break;
+          }
+          break
         default:
-          logger.warn("Unknown Redis channel", { channel });
-          return;
+          logger.warn("Unknown Redis channel", { channel })
+          return
       }
 
-      this.broadcast(wsMessage);
+      this.broadcast(wsMessage)
     } catch (error) {
-      logger.error("Error handling Redis message", { error, channel, message });
+      logger.error("Error handling Redis message", { error, channel, message })
     }
   }
 
   private broadcast(message: WebSocketMessage) {
-    const key = `${message.type}:${JSON.stringify(message.data)}`;
-    const now = Date.now();
-    const last = this.lastSent.get(key) ?? 0;
+    const key = `${message.type}:${JSON.stringify(message.data)}`
+    const now = Date.now()
+    const last = this.lastSent.get(key) ?? 0
 
     if (now - last >= this.throttleMs) {
       // enough time passed → send immediately
-      this.sendToAll(message);
-      this.lastSent.set(key, now);
+      this.sendToAll(message)
+      this.lastSent.set(key, now)
     } else {
       // inside throttle window → queue as pending
-      this.pending.set(key, message);
+      this.pending.set(key, message)
 
       if (!this.timers.has(key)) {
-        const wait = this.throttleMs - (now - last);
+        const wait = this.throttleMs - (now - last)
         this.timers.set(
           key,
           setTimeout(() => {
-            const pendingMsg = this.pending.get(key);
+            const pendingMsg = this.pending.get(key)
             if (pendingMsg) {
-              this.sendToAll(pendingMsg);
-              this.lastSent.set(key, Date.now());
-              this.pending.delete(key);
+              this.sendToAll(pendingMsg)
+              this.lastSent.set(key, Date.now())
+              this.pending.delete(key)
             }
-            this.timers.delete(key);
+            this.timers.delete(key)
           }, wait),
-        );
+        )
       }
     }
   }
 
   private sendToAll(message: WebSocketMessage) {
-    const messageStr = JSON.stringify(message);
+    const messageStr = JSON.stringify(message)
 
     this.clients.forEach((client) => {
       if (client.readyState === client.OPEN) {
         try {
-          client.send(messageStr);
+          client.send(messageStr)
         } catch (error) {
-          logger.error("Error sending message to WebSocket client", { error });
-          this.clients.delete(client);
+          logger.error("Error sending message to WebSocket client", { error })
+          this.clients.delete(client)
         }
       } else {
-        this.clients.delete(client);
+        this.clients.delete(client)
       }
-    });
+    })
   }
 
   public getConnectionCount(): number {
-    return this.clients.size;
+    return this.clients.size
   }
 
   public async close() {
-    logger.log("Closing WebSocket server...");
+    logger.log("Closing WebSocket server...")
     // Close all client connections
     this.clients.forEach((client) => {
-      client.close();
-    });
-    this.clients.clear();
-    this.wss.close();
-    await this.subscriber.quit();
+      client.close()
+    })
+    this.clients.clear()
+    this.wss.close()
+    await this.subscriber.quit()
   }
 }
 
-export let websocketServer: BullBoardWebSocketServer | null = null;
+export let websocketServer: BullBoardWebSocketServer | null = null
 
 export const startWebSocketServer = () => {
   if (!websocketServer) {
-    websocketServer = new BullBoardWebSocketServer();
+    websocketServer = new BullBoardWebSocketServer()
   }
-  return websocketServer;
-};
+  return websocketServer
+}
 
 export const stopWebSocketServer = async () => {
   if (websocketServer) {
-    await websocketServer.close();
-    websocketServer = null;
+    await websocketServer.close()
+    websocketServer = null
   }
-};
+}

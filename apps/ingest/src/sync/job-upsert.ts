@@ -1,87 +1,87 @@
-import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
-import { db } from "@better-bull-board/db/server";
-import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update";
-import { logger } from "@rharkor/logger";
-import { DrizzleQueryError, getTableName, sql } from "drizzle-orm";
-import { DatabaseError } from "pg";
-import { env } from "~/lib/env";
-import { publishIngestEvent } from "~/lib/ingest-events";
-import type { JobRunInsert } from "./job-format";
+import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema"
+import { db } from "@better-bull-board/db/server"
+import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update"
+import { logger } from "@rharkor/logger"
+import { DrizzleQueryError, getTableName, sql } from "drizzle-orm"
+import { DatabaseError } from "pg"
+import { env } from "~/lib/env"
+import { publishIngestEvent } from "~/lib/ingest-events"
+import type { JobRunInsert } from "./job-format"
 
 async function withDeadlockRetry<T>(fn: () => Promise<T>, tries = 5): Promise<T> {
-  let lastErr: unknown;
+  let lastErr: unknown
   for (let i = 0; i < tries; i++) {
     try {
-      return await fn();
+      return await fn()
     } catch (error: unknown) {
       if (error instanceof DrizzleQueryError && error.cause instanceof DatabaseError && error.cause.code === "40P01") {
-        lastErr = error;
-        if (i === tries - 1) break;
-        const backoff = 25 * (i + 1) + Math.floor(Math.random() * 50);
+        lastErr = error
+        if (i === tries - 1) break
+        const backoff = 25 * (i + 1) + Math.floor(Math.random() * 50)
         logger.warn("Retrying job_runs upsert after Postgres deadlock", {
           attempt: i + 1,
           maxAttempts: tries,
           backoff,
-        });
-        await new Promise((resolve) => setTimeout(resolve, backoff));
-        continue;
+        })
+        await new Promise((resolve) => setTimeout(resolve, backoff))
+        continue
       }
-      throw error;
+      throw error
     }
   }
-  throw lastErr;
+  throw lastErr
 }
 
 const getRetentionCutoff = () =>
-  env.AUTO_DELETE_POSTGRES_DATA ? Date.now() - env.AUTO_DELETE_POSTGRES_DATA : undefined;
+  env.AUTO_DELETE_POSTGRES_DATA ? Date.now() - env.AUTO_DELETE_POSTGRES_DATA : undefined
 
 const getRunTimestamp = (run: JobRunInsert) => {
-  const timestamp = run.createdAt ?? run.enqueuedAt;
-  return timestamp ? new Date(timestamp).getTime() : undefined;
-};
+  const timestamp = run.createdAt ?? run.enqueuedAt
+  return timestamp ? new Date(timestamp).getTime() : undefined
+}
 
 const isWithinRetention = (run: JobRunInsert, cutoff: number | undefined) => {
-  if (!cutoff) return true;
+  if (!cutoff) return true
 
-  const timestamp = getRunTimestamp(run);
-  return timestamp === undefined || timestamp >= cutoff;
-};
+  const timestamp = getRunTimestamp(run)
+  return timestamp === undefined || timestamp >= cutoff
+}
 
 export const upsertJobRuns = async (runs: JobRunInsert[]) => {
-  if (runs.length === 0) return [];
+  if (runs.length === 0) return []
 
-  const retentionCutoff = getRetentionCutoff();
-  const deduped = new Map<string, JobRunInsert>();
+  const retentionCutoff = getRetentionCutoff()
+  const deduped = new Map<string, JobRunInsert>()
   for (const run of runs) {
-    if (!isWithinRetention(run, retentionCutoff)) continue;
+    if (!isWithinRetention(run, retentionCutoff)) continue
 
-    const key = `${run.queue}-${run.jobId}-${run.enqueuedAt?.getTime?.() ?? run.enqueuedAt}`;
-    deduped.set(key, run);
+    const key = `${run.queue}-${run.jobId}-${run.enqueuedAt?.getTime?.() ?? run.enqueuedAt}`
+    deduped.set(key, run)
   }
 
   const values = Array.from(deduped.values()).sort((a, b) => {
-    const queueCompare = a.queue.localeCompare(b.queue);
-    if (queueCompare !== 0) return queueCompare;
-    const jobCompare = a.jobId.localeCompare(b.jobId);
-    if (jobCompare !== 0) return jobCompare;
-    const ae = a.enqueuedAt ? new Date(a.enqueuedAt).getTime() : 0;
-    const be = b.enqueuedAt ? new Date(b.enqueuedAt).getTime() : 0;
-    return ae - be;
-  });
-  if (values.length === 0) return [];
+    const queueCompare = a.queue.localeCompare(b.queue)
+    if (queueCompare !== 0) return queueCompare
+    const jobCompare = a.jobId.localeCompare(b.jobId)
+    if (jobCompare !== 0) return jobCompare
+    const ae = a.enqueuedAt ? new Date(a.enqueuedAt).getTime() : 0
+    const be = b.enqueuedAt ? new Date(b.enqueuedAt).getTime() : 0
+    return ae - be
+  })
+  if (values.length === 0) return []
 
-  const tableName = getTableName(jobRunsTable);
+  const tableName = getTableName(jobRunsTable)
   const statusUpdateSql = `CASE
     WHEN ${tableName}.${jobRunsTable.status.name} IN ('completed', 'failed')
       AND excluded.${jobRunsTable.status.name} NOT IN ('completed', 'failed')
       THEN ${tableName}.${jobRunsTable.status.name}
     ELSE excluded.${jobRunsTable.status.name}
-  END`;
+  END`
   const tagsUpdateSql = `CASE
     WHEN COALESCE(cardinality(excluded.${jobRunsTable.tags.name}), 0) > 0
       THEN excluded.${jobRunsTable.tags.name}
     ELSE ${tableName}.${jobRunsTable.tags.name}
-  END`;
+  END`
   const setWhere = sql.raw(`(
     ${tableName}.${jobRunsTable.attempt.name} IS DISTINCT FROM excluded.${jobRunsTable.attempt.name}
     OR ${tableName}.${jobRunsTable.startedAt.name} IS DISTINCT FROM excluded.${jobRunsTable.startedAt.name}
@@ -104,7 +104,7 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
     OR ${tableName}.${jobRunsTable.name.name} IS DISTINCT FROM excluded.${jobRunsTable.name.name}
     OR ${tableName}.${jobRunsTable.tags.name} IS DISTINCT FROM (${tagsUpdateSql})
     OR ${tableName}.${jobRunsTable.status.name} IS DISTINCT FROM (${statusUpdateSql})
-  )`);
+  )`)
 
   const inserted = await withDeadlockRetry(() =>
     db
@@ -143,24 +143,24 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
         id: jobRunsTable.id,
         status: jobRunsTable.status,
       }),
-  );
+  )
 
-  publishIngestEvent("bbb:ingest:events:job-refresh", "1");
+  publishIngestEvent("bbb:ingest:events:job-refresh", "1")
   for (const jobRun of inserted) {
-    publishIngestEvent("bbb:ingest:events:single-job-refresh", jobRun.id, { jobRunId: jobRun.id });
+    publishIngestEvent("bbb:ingest:events:single-job-refresh", jobRun.id, { jobRunId: jobRun.id })
   }
 
-  return inserted;
-};
+  return inserted
+}
 
 export const safeUpsertJobRuns = async (runs: JobRunInsert[]) => {
   try {
-    return await upsertJobRuns(runs);
+    return await upsertJobRuns(runs)
   } catch (error) {
     logger.error("Error in batch job upsert", {
       error,
       batchSize: runs.length,
-    });
-    throw error;
+    })
+    throw error
   }
-};
+}

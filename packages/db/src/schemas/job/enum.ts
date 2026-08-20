@@ -1,4 +1,4 @@
-import { pgEnum } from "drizzle-orm/pg-core";
+import { pgEnum } from "drizzle-orm/pg-core"
 
 export const jobStatusEnum = pgEnum("job_status", [
   "active",
@@ -9,6 +9,6 @@ export const jobStatusEnum = pgEnum("job_status", [
   "prioritized",
   "waiting-children",
   "unknown",
-]);
+])
 
-export const logLevelEnum = pgEnum("log_level", ["log", "debug", "info", "warn", "error"]);
+export const logLevelEnum = pgEnum("log_level", ["log", "debug", "info", "warn", "error"])
