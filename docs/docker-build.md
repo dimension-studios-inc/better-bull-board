@@ -27,10 +27,10 @@ export ECR_PUBLIC_REGISTRY=public.ecr.aws/<alias>
 
 ## Postgres (manual)
 
-Not rebuilt by CI. Rebuild only when `docker/db` changes.
+Not rebuilt by CI. Rebuild only when `.docker/db` changes.
 
 ```bash
-docker build -f docker/db/Dockerfile -t better-bull-board-postgres docker/db
+docker build -f .docker/db/Dockerfile -t better-bull-board-postgres .docker/db
 docker tag better-bull-board-postgres:latest ${ECR_PUBLIC_REGISTRY}/better-bull-board-postgres:latest
 docker push ${ECR_PUBLIC_REGISTRY}/better-bull-board-postgres:latest
 ```

@@ -40,7 +40,7 @@ We are clearing the data from the following entities:
 ## Local development
 
 ```bash
-docker-compose -f docker/compose.local.yaml up -d
+docker-compose -f .docker/compose.local.yaml up -d
 npm run dev
 ```
 
