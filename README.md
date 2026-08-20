@@ -67,26 +67,18 @@ npm run dev
 
 ## Publishing
 
-### Publishing the Client Package
+`@better-bull-board/client` is published to npm from `main` by [`.github/workflows/publish.yml`](.github/workflows/publish.yml). Merging `develop` into `main` publishes that version if it is not already on npm; otherwise the job skips.
 
-To publish the `@better-bull-board/client` package to npm for others to use:
+1. Bump `version` in `packages/client/package.json` and merge that change to `develop`.
+2. Merge `develop` into `main` (or run **Publish** → **Run workflow** on `main`).
 
-1. Navigate to the client package directory:
-   ```bash
-   cd packages/client
-   ```
+Publishing uses [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) (GitHub OIDC). There is no `NPM_TOKEN`. Before the first successful run, add a GitHub Actions trusted publisher on the [package settings](https://www.npmjs.com/package/@better-bull-board/client?activeTab=settings):
 
-2. Build the package:
-   ```bash
-   npm run build
-   ```
-
-3. Publish to npm:
-   ```bash
-   npm publish
-   ```
-
-**Note**: Make sure you're logged in to npm (`npm login`) and have the appropriate permissions to publish under the `@better-bull-board` scope. You may also want to update the version in `package.json` before publishing.
+- Organization: `dimension-studios-inc`
+- Repository: `better-bull-board`
+- Workflow filename: `publish.yml`
+- Environment: leave empty
+- Allowed actions: `npm publish`
 
 ## DevOps Self-Hosting Guide
 
