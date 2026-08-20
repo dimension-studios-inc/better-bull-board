@@ -1,26 +1,26 @@
-"use client";
+"use client"
 
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { getDashboardSummaryApiRoute } from "~/app/api/dashboard/summary/schemas";
-import { type TimePeriod, TimePeriodSelector } from "~/components/time-period-selector";
-import { apiFetch } from "~/lib/utils/client";
-import { EnhancedStatsCards } from "./enhanced-stats-cards";
-import { QueueCountChart } from "./queue-count-chart";
-import { QueueDurationChart } from "./queue-duration-chart";
-import { QueuePerformanceTable } from "./queue-performance-table";
-import { RunGraphChart } from "./run-graph-chart";
+import { useQuery } from "@tanstack/react-query"
+import { useState } from "react"
+import { getDashboardSummaryApiRoute } from "~/app/api/dashboard/summary/schemas"
+import { type TimePeriod, TimePeriodSelector } from "~/components/time-period-selector"
+import { apiFetch } from "~/lib/utils/client"
+import { EnhancedStatsCards } from "./enhanced-stats-cards"
+import { QueueCountChart } from "./queue-count-chart"
+import { QueueDurationChart } from "./queue-duration-chart"
+import { QueuePerformanceTable } from "./queue-performance-table"
+import { RunGraphChart } from "./run-graph-chart"
 
 export function EnhancedDashboard() {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("1");
-  const days = parseInt(timePeriod, 10);
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("1")
+  const days = parseInt(timePeriod, 10)
   const { data: dashboardSummary, isLoading } = useQuery({
     queryKey: ["dashboard/summary", days],
     queryFn: apiFetch({
       apiRoute: getDashboardSummaryApiRoute,
       body: { days },
     }),
-  });
+  })
 
   return (
     <div className="space-y-6">
@@ -48,5 +48,5 @@ export function EnhancedDashboard() {
       {/* Run Graph */}
       <RunGraphChart days={days} runGraphData={dashboardSummary?.runGraph} isLoading={isLoading} />
     </div>
-  );
+  )
 }

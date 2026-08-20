@@ -1,11 +1,11 @@
-import { createBetterBullBoardMcpServer } from "@better-bull-board/mcp/server";
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { getMcpResource, getOrigin, verifyAccessToken } from "~/lib/mcp/oauth";
+import { createBetterBullBoardMcpServer } from "@better-bull-board/mcp/server"
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js"
+import { getMcpResource, getOrigin, verifyAccessToken } from "~/lib/mcp/oauth"
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
-const bearerPrefix = "Bearer ";
+const bearerPrefix = "Bearer "
 
 const unauthorized = (request: Request) =>
   Response.json(
@@ -16,41 +16,41 @@ const unauthorized = (request: Request) =>
         "WWW-Authenticate": `Bearer resource_metadata="${getOrigin(request)}/.well-known/oauth-protected-resource"`,
       },
     },
-  );
+  )
 
 const getBearerToken = (request: Request) => {
-  const authorization = request.headers.get("authorization");
+  const authorization = request.headers.get("authorization")
 
   if (!authorization?.startsWith(bearerPrefix)) {
-    return null;
+    return null
   }
 
-  return authorization.slice(bearerPrefix.length);
-};
+  return authorization.slice(bearerPrefix.length)
+}
 
 const handleMcpRequest = async (request: Request) => {
-  const token = getBearerToken(request);
-  const authInfo = token ? await verifyAccessToken(token, getMcpResource(getOrigin(request))) : null;
+  const token = getBearerToken(request)
+  const authInfo = token ? await verifyAccessToken(token, getMcpResource(getOrigin(request))) : null
 
   if (!authInfo) {
-    return unauthorized(request);
+    return unauthorized(request)
   }
 
-  const server = createBetterBullBoardMcpServer({ scopes: authInfo.scopes });
+  const server = createBetterBullBoardMcpServer({ scopes: authInfo.scopes })
   const transport = new WebStandardStreamableHTTPServerTransport({
     enableJsonResponse: true,
     sessionIdGenerator: undefined,
-  });
+  })
 
-  await server.connect(transport);
+  await server.connect(transport)
 
   try {
-    return await transport.handleRequest(request, { authInfo });
+    return await transport.handleRequest(request, { authInfo })
   } finally {
-    await server.close();
+    await server.close()
   }
-};
+}
 
-export const GET = handleMcpRequest;
-export const POST = handleMcpRequest;
-export const DELETE = handleMcpRequest;
+export const GET = handleMcpRequest
+export const POST = handleMcpRequest
+export const DELETE = handleMcpRequest

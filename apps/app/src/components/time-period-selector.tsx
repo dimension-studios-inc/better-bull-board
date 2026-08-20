@@ -1,15 +1,15 @@
-"use client";
+"use client"
 
-import { CalendarDays } from "lucide-react";
-import { useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { CalendarDays } from "lucide-react"
+import { useState } from "react"
+import { Button } from "~/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
 
-export type TimePeriod = "1" | "3" | "7" | "30";
+export type TimePeriod = "1" | "3" | "7" | "30"
 
 interface TimePeriodSelectorProps {
-  value: TimePeriod;
-  onChange: (period: TimePeriod) => void;
+  value: TimePeriod
+  onChange: (period: TimePeriod) => void
 }
 
 const timePeriodOptions: { value: TimePeriod; label: string }[] = [
@@ -17,12 +17,12 @@ const timePeriodOptions: { value: TimePeriod; label: string }[] = [
   { value: "3", label: "3 days" },
   { value: "7", label: "7 days" },
   { value: "30", label: "30 days" },
-];
+]
 
 export function TimePeriodSelector({ value, onChange }: TimePeriodSelectorProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
-  const selectedOption = timePeriodOptions.find((option) => option.value === value);
+  const selectedOption = timePeriodOptions.find((option) => option.value === value)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -41,8 +41,8 @@ export function TimePeriodSelector({ value, onChange }: TimePeriodSelectorProps)
               size="sm"
               className="w-full justify-start"
               onClick={() => {
-                onChange(option.value);
-                setOpen(false);
+                onChange(option.value)
+                setOpen(false)
               }}
             >
               {option.label}
@@ -51,5 +51,5 @@ export function TimePeriodSelector({ value, onChange }: TimePeriodSelectorProps)
         </div>
       </PopoverContent>
     </Popover>
-  );
+  )
 }

@@ -1,60 +1,60 @@
-"use client";
+"use client"
 
-import type { jobRunsTable } from "@better-bull-board/db";
-import { AlertCircle, AlertTriangle, ArrowLeft, Bug, CalendarClock, Clock, Info } from "lucide-react";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Separator } from "~/components/ui/separator";
-import { cn, smartFormatDuration } from "~/lib/utils/client";
+import type { jobRunsTable } from "@better-bull-board/db"
+import { AlertCircle, AlertTriangle, ArrowLeft, Bug, CalendarClock, Clock, Info } from "lucide-react"
+import { Badge } from "~/components/ui/badge"
+import { Button } from "~/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { Separator } from "~/components/ui/separator"
+import { cn, smartFormatDuration } from "~/lib/utils/client"
 
 interface LogEntry {
-  id: string;
-  jobRunId: string;
-  level: string;
-  message: string;
-  ts: number;
+  id: string
+  jobRunId: string
+  level: string
+  message: string
+  ts: number
 }
 
 interface LogDetailsDrawerProps {
-  log: LogEntry;
-  run: typeof jobRunsTable.$inferSelect;
-  onBack: () => void;
+  log: LogEntry
+  run: typeof jobRunsTable.$inferSelect
+  onBack: () => void
 }
 
 const getLevelIcon = (level: string) => {
   switch (level.toLowerCase()) {
     case "error":
-      return <AlertCircle className="size-4 text-red-500" />;
+      return <AlertCircle className="size-4 text-red-500" />
     case "warn":
     case "warning":
-      return <AlertTriangle className="size-4 text-yellow-500" />;
+      return <AlertTriangle className="size-4 text-yellow-500" />
     case "debug":
-      return <Bug className="size-4 text-purple-500" />;
+      return <Bug className="size-4 text-purple-500" />
     case "info":
-      return <Info className="size-4 text-blue-500" />;
+      return <Info className="size-4 text-blue-500" />
     default:
-      return <div className="size-4" />;
+      return <div className="size-4" />
   }
-};
+}
 
 const getLevelColor = (level: string) => {
   switch (level.toLowerCase()) {
     case "error":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
     case "warn":
     case "warning":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
     case "debug":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
     case "info":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
   }
-};
+}
 
-const formatRelativeTime = (ms: number): string => smartFormatDuration(Math.max(0, ms));
+const formatRelativeTime = (ms: number): string => smartFormatDuration(Math.max(0, ms))
 
 const DetailItem = ({
   icon,
@@ -62,10 +62,10 @@ const DetailItem = ({
   value,
   className,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-  className?: string;
+  icon: React.ReactNode
+  label: string
+  value: React.ReactNode
+  className?: string
 }) => (
   <div className={cn("flex items-center space-x-3", className)}>
     <div className="shrink-0">{icon}</div>
@@ -74,13 +74,13 @@ const DetailItem = ({
       <div className="text-sm font-medium">{value}</div>
     </div>
   </div>
-);
+)
 
 export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
-  const logDate = new Date(log.ts);
-  const scheduledTime = (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs;
-  const baseTime = Math.max(run.createdAt.getTime(), scheduledTime);
-  const relativeTime = Math.max(0, log.ts - baseTime);
+  const logDate = new Date(log.ts)
+  const scheduledTime = (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs
+  const baseTime = Math.max(run.createdAt.getTime(), scheduledTime)
+  const relativeTime = Math.max(0, log.ts - baseTime)
 
   return (
     <Card className="h-[calc(100vh-12rem)] overflow-hidden">
@@ -139,5 +139,5 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

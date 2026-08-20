@@ -1,42 +1,42 @@
-"use client";
+"use client"
 
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { z } from "zod";
-import type { dashboardTopQueuesCountOutput } from "~/app/api/dashboard/summary/schemas";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Skeleton } from "~/components/ui/skeleton";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import type { z } from "zod"
+import type { dashboardTopQueuesCountOutput } from "~/app/api/dashboard/summary/schemas"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { Skeleton } from "~/components/ui/skeleton"
 
 interface QueueCountChartProps {
-  queueCounts: z.output<typeof dashboardTopQueuesCountOutput>[] | undefined;
-  isLoading: boolean;
+  queueCounts: z.output<typeof dashboardTopQueuesCountOutput>[] | undefined
+  isLoading: boolean
 }
 
 const CustomTooltip = ({
   active,
   payload,
 }: {
-  active: boolean;
+  active: boolean
   // biome-ignore lint/suspicious/noExplicitAny: _
-  payload: any;
+  payload: any
 }) => {
   if (active && payload?.length) {
-    const data = payload[0].payload;
+    const data = payload[0].payload
     return (
       <div className="bg-background border rounded p-3 shadow-lg text-sm">
         <p className="font-medium">{data.queue}</p>
         <p className="text-muted-foreground">Runs: {data.value.toLocaleString()}</p>
       </div>
-    );
+    )
   }
-  return null;
-};
+  return null
+}
 
 export function QueueCountChart({ queueCounts, isLoading }: QueueCountChartProps) {
   const chartData =
     queueCounts?.map((item) => ({
       queue: item.queue,
       value: item.runCount,
-    })) || [];
+    })) || []
 
   return (
     <Card>
@@ -71,5 +71,5 @@ export function QueueCountChart({ queueCounts, isLoading }: QueueCountChartProps
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

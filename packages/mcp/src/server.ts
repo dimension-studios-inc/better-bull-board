@@ -5,22 +5,22 @@ import {
   listJobLogsOutputSchema,
   listJobsInputSchema,
   type listJobsOutputSchema,
-} from "@better-bull-board/core/job-schemas";
-import { getJobById, listJobLogs, listJobs } from "@better-bull-board/core/jobs";
+} from "@better-bull-board/core/job-schemas"
+import { getJobById, listJobLogs, listJobs } from "@better-bull-board/core/jobs"
 import {
   jobMutationInputSchema,
   mutationResultSchema,
   queueMutationInputSchema,
-} from "@better-bull-board/core/mutation-schemas";
-import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview";
-import { listQueuesBaseInputSchema, type listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas";
-import { listQueues } from "@better-bull-board/core/queues";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
-import { cancelJob, deleteQueue, pauseQueue, replayJob, resumeQueue } from "./actions";
-import { MCP_READ_SCOPE, MCP_WRITE_SCOPE } from "./scopes";
+} from "@better-bull-board/core/mutation-schemas"
+import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview"
+import { listQueuesBaseInputSchema, type listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas"
+import { listQueues } from "@better-bull-board/core/queues"
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+import { z } from "zod"
+import { cancelJob, deleteQueue, pauseQueue, replayJob, resumeQueue } from "./actions"
+import { MCP_READ_SCOPE, MCP_WRITE_SCOPE } from "./scopes"
 
-const emptyInputSchema = z.object({}).strict();
+const emptyInputSchema = z.object({}).strict()
 
 const mcpListQueuesInputSchema = listQueuesBaseInputSchema
   .omit({ pressureDateFrom: true, pressureDateTo: true })
@@ -33,7 +33,7 @@ const mcpListQueuesInputSchema = listQueuesBaseInputSchema
       })
       .nullish(),
     sortBy: z.enum(["waitingJobs", "activeJobs"]).optional().default("waitingJobs"),
-  });
+  })
 
 const mcpListQueuesOutputSchema = z.object({
   queues: z.array(
@@ -61,13 +61,13 @@ const mcpListQueuesOutputSchema = z.object({
     })
     .nullable(),
   total: z.number(),
-});
+})
 
 type BetterBullBoardMcpServerOptions = {
-  scopes?: string[];
-};
+  scopes?: string[]
+}
 
-const defaultScopes = [MCP_READ_SCOPE, MCP_WRITE_SCOPE];
+const defaultScopes = [MCP_READ_SCOPE, MCP_WRITE_SCOPE]
 
 const mcpListJobsOutputSchema = z.object({
   jobs: z.array(
@@ -104,9 +104,9 @@ const mcpListJobsOutputSchema = z.object({
       durationMs: z.number().nullable().optional(),
     })
     .nullable(),
-});
+})
 
-const toTimestamp = (value: Date | null) => value?.getTime() ?? null;
+const toTimestamp = (value: Date | null) => value?.getTime() ?? null
 
 const serializeListJobs = (result: z.infer<typeof listJobsOutputSchema>): z.infer<typeof mcpListJobsOutputSchema> => ({
   jobs: result.jobs.map((job) => ({
@@ -118,7 +118,7 @@ const serializeListJobs = (result: z.infer<typeof listJobsOutputSchema>): z.infe
   })),
   nextCursor: result.nextCursor,
   prevCursor: result.prevCursor,
-});
+})
 
 const formatOverview = (overview: z.infer<typeof systemOverviewSchema>) =>
   [
@@ -129,7 +129,7 @@ const formatOverview = (overview: z.infer<typeof systemOverviewSchema>) =>
     `- Total queues: ${overview.totalQueues}`,
     `- Active queues: ${overview.activeQueues}`,
     `- Queues with schedulers: ${overview.queuesWithSchedulers}`,
-  ].join("\n");
+  ].join("\n")
 
 const serializeQueues = (
   result: z.infer<typeof listQueuesOutputSchema>,
@@ -150,7 +150,7 @@ const serializeQueues = (
       }
     : null,
   total: result.total,
-});
+})
 
 const formatQueues = (result: z.infer<typeof mcpListQueuesOutputSchema>) =>
   [
@@ -165,7 +165,7 @@ const formatQueues = (result: z.infer<typeof mcpListQueuesOutputSchema>) =>
           queue.isPaused ? "paused" : "running"
         }`,
     ),
-  ].join("\n");
+  ].join("\n")
 
 const formatJobs = (result: z.infer<typeof listJobsOutputSchema>) =>
   [
@@ -187,13 +187,13 @@ const formatJobs = (result: z.infer<typeof listJobsOutputSchema>) =>
         .filter(Boolean)
         .join("\n"),
     ),
-  ].join("\n");
+  ].join("\n")
 
 const formatJob = (result: z.infer<typeof getJobByIdOutputSchema>) => {
-  const { job } = result;
+  const { job } = result
 
   if (!job) {
-    return "Job run not found.";
+    return "Job run not found."
   }
 
   return [
@@ -213,8 +213,8 @@ const formatJob = (result: z.infer<typeof getJobByIdOutputSchema>) => {
     job.errorMessage ? `error: ${job.errorMessage}` : undefined,
   ]
     .filter(Boolean)
-    .join("\n");
-};
+    .join("\n")
+}
 
 const formatLogs = (result: z.infer<typeof listJobLogsOutputSchema>) =>
   [
@@ -223,23 +223,23 @@ const formatLogs = (result: z.infer<typeof listJobLogsOutputSchema>) =>
     `Total matching logs: ${result.total}`,
     "",
     ...result.logs.map((log) => `- ${new Date(log.ts).toISOString()} [${log.level}] #${log.logSeq}: ${log.message}`),
-  ].join("\n");
+  ].join("\n")
 
 const formatMutationResult = (title: string, result: z.infer<typeof mutationResultSchema>) =>
-  [`# ${title}`, "", result.message].join("\n");
+  [`# ${title}`, "", result.message].join("\n")
 
 export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServerOptions = {}) => {
-  const scopes = new Set(options.scopes ?? defaultScopes);
+  const scopes = new Set(options.scopes ?? defaultScopes)
   const requireWriteAccess = () => {
     if (!scopes.has(MCP_WRITE_SCOPE)) {
-      throw new Error("This MCP access token does not include the bbb:write scope required for this tool.");
+      throw new Error("This MCP access token does not include the bbb:write scope required for this tool.")
     }
-  };
+  }
 
   const server = new McpServer({
     name: "better-bull-board-mcp-server",
     version: "0.1.0",
-  });
+  })
 
   server.registerTool(
     "bbb_get_system_overview",
@@ -257,14 +257,14 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async () => {
-      const overview = await getSystemOverview();
+      const overview = await getSystemOverview()
 
       return {
         content: [{ type: "text", text: formatOverview(overview) }],
         structuredContent: overview,
-      };
+      }
     },
-  );
+  )
 
   server.registerTool(
     "bbb_list_queues",
@@ -282,15 +282,15 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async (input) => {
-      const result = await listQueues(input);
-      const serializedResult = serializeQueues(result);
+      const result = await listQueues(input)
+      const serializedResult = serializeQueues(result)
 
       return {
         content: [{ type: "text", text: formatQueues(serializedResult) }],
         structuredContent: serializedResult,
-      };
+      }
     },
-  );
+  )
 
   server.registerTool(
     "bbb_list_jobs",
@@ -308,15 +308,15 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async (input) => {
-      const result = await listJobs(input);
-      const serializedResult = serializeListJobs(result);
+      const result = await listJobs(input)
+      const serializedResult = serializeListJobs(result)
 
       return {
         content: [{ type: "text", text: formatJobs(result) }],
         structuredContent: serializedResult,
-      };
+      }
     },
-  );
+  )
 
   server.registerTool(
     "bbb_get_job",
@@ -334,14 +334,14 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async (input) => {
-      const result = await getJobById(input);
+      const result = await getJobById(input)
 
       return {
         content: [{ type: "text", text: formatJob(result) }],
         structuredContent: result,
-      };
+      }
     },
-  );
+  )
 
   server.registerTool(
     "bbb_list_job_logs",
@@ -359,14 +359,14 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async (input) => {
-      const result = await listJobLogs(input);
+      const result = await listJobLogs(input)
 
       return {
         content: [{ type: "text", text: formatLogs(result) }],
         structuredContent: result,
-      };
+      }
     },
-  );
+  )
 
   server.registerTool(
     "bbb_cancel_job",
@@ -384,15 +384,15 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async (input) => {
-      requireWriteAccess();
-      const result = await cancelJob(input);
+      requireWriteAccess()
+      const result = await cancelJob(input)
 
       return {
         content: [{ type: "text", text: formatMutationResult("Better Bull Board Job Cancelled", result) }],
         structuredContent: result,
-      };
+      }
     },
-  );
+  )
 
   server.registerTool(
     "bbb_replay_job",
@@ -410,15 +410,15 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async (input) => {
-      requireWriteAccess();
-      const result = await replayJob(input);
+      requireWriteAccess()
+      const result = await replayJob(input)
 
       return {
         content: [{ type: "text", text: formatMutationResult("Better Bull Board Job Replayed", result) }],
         structuredContent: result,
-      };
+      }
     },
-  );
+  )
 
   server.registerTool(
     "bbb_pause_queue",
@@ -435,15 +435,15 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async (input) => {
-      requireWriteAccess();
-      const result = await pauseQueue(input);
+      requireWriteAccess()
+      const result = await pauseQueue(input)
 
       return {
         content: [{ type: "text", text: formatMutationResult("Better Bull Board Queue Paused", result) }],
         structuredContent: result,
-      };
+      }
     },
-  );
+  )
 
   server.registerTool(
     "bbb_resume_queue",
@@ -460,15 +460,15 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async (input) => {
-      requireWriteAccess();
-      const result = await resumeQueue(input);
+      requireWriteAccess()
+      const result = await resumeQueue(input)
 
       return {
         content: [{ type: "text", text: formatMutationResult("Better Bull Board Queue Resumed", result) }],
         structuredContent: result,
-      };
+      }
     },
-  );
+  )
 
   server.registerTool(
     "bbb_delete_queue",
@@ -486,15 +486,15 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       },
     },
     async (input) => {
-      requireWriteAccess();
-      const result = await deleteQueue(input);
+      requireWriteAccess()
+      const result = await deleteQueue(input)
 
       return {
         content: [{ type: "text", text: formatMutationResult("Better Bull Board Queue Deleted", result) }],
         structuredContent: result,
-      };
+      }
     },
-  );
+  )
 
-  return server;
-};
+  return server
+}

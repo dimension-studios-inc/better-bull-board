@@ -1,7 +1,7 @@
-import { jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db";
-import { db } from "@better-bull-board/db/server";
-import { count, eq, sql } from "drizzle-orm";
-import { z } from "zod";
+import { jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db"
+import { db } from "@better-bull-board/db/server"
+import { count, eq, sql } from "drizzle-orm"
+import { z } from "zod"
 
 export const systemOverviewSchema = z.object({
   activeJobs: z.number(),
@@ -9,11 +9,11 @@ export const systemOverviewSchema = z.object({
   totalQueues: z.number(),
   activeQueues: z.number(),
   queuesWithSchedulers: z.number(),
-});
+})
 
-export type SystemOverview = z.infer<typeof systemOverviewSchema>;
+export type SystemOverview = z.infer<typeof systemOverviewSchema>
 
-const toNumber = (value: number | string | null | undefined) => Number(value ?? 0);
+const toNumber = (value: number | string | null | undefined) => Number(value ?? 0)
 
 export const getSystemOverview = async (): Promise<SystemOverview> => {
   const [activeJobsResult, waitingJobsResult, queuesResult] = await Promise.all([
@@ -31,15 +31,15 @@ export const getSystemOverview = async (): Promise<SystemOverview> => {
       FROM ${queuesTable}
       LEFT JOIN scheduler_queues ON scheduler_queues.queue_id = ${queuesTable.id}
     `),
-  ]);
+  ])
 
   const queues = queuesResult.rows[0] as
     | {
-        total_queues: number | string | null;
-        active_queues: number | string | null;
-        queues_with_schedulers: number | string | null;
+        total_queues: number | string | null
+        active_queues: number | string | null
+        queues_with_schedulers: number | string | null
       }
-    | undefined;
+    | undefined
 
   return systemOverviewSchema.parse({
     activeJobs: toNumber(activeJobsResult[0]?.count),
@@ -47,5 +47,5 @@ export const getSystemOverview = async (): Promise<SystemOverview> => {
     totalQueues: toNumber(queues?.total_queues),
     activeQueues: toNumber(queues?.active_queues),
     queuesWithSchedulers: toNumber(queues?.queues_with_schedulers),
-  });
-};
+  })
+}

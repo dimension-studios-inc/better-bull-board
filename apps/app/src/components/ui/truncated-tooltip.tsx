@@ -1,10 +1,10 @@
-import { cn } from "~/lib/utils/client";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+import { cn } from "~/lib/utils/client"
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 
 type TruncatedTooltipProps = {
-  value: string;
-  className?: string;
-};
+  value: string
+  className?: string
+}
 
 export function TruncatedTooltip({ value, className }: TruncatedTooltipProps) {
   return (
@@ -20,5 +20,5 @@ export function TruncatedTooltip({ value, className }: TruncatedTooltipProps) {
         {value}
       </TooltipContent>
     </Tooltip>
-  );
+  )
 }

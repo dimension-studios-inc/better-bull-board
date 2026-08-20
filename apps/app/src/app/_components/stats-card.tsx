@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { useQuery } from "@tanstack/react-query";
-import { Activity, AlertCircle, CheckCircle } from "lucide-react";
-import { getJobsStatsApiRoute } from "~/app/api/jobs/stats/schemas";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { apiFetch, cn } from "~/lib/utils/client";
-import { Skeleton } from "../../components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query"
+import { Activity, AlertCircle, CheckCircle } from "lucide-react"
+import { getJobsStatsApiRoute } from "~/app/api/jobs/stats/schemas"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { apiFetch, cn } from "~/lib/utils/client"
+import { Skeleton } from "../../components/ui/skeleton"
 
 export function StatsCards() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["jobs/stats"],
     queryFn: apiFetch({ apiRoute: getJobsStatsApiRoute, body: { days: 24 } }),
-  });
+  })
 
   const cards = [
     {
@@ -35,7 +35,7 @@ export function StatsCards() {
       description: "Completed in last 24 hours",
       color: "text-green-600",
     },
-  ];
+  ]
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -56,5 +56,5 @@ export function StatsCards() {
         </Card>
       ))}
     </div>
-  );
+  )
 }

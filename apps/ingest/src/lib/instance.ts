@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
-import { hostname } from "node:os";
+import { randomUUID } from "node:crypto"
+import { hostname } from "node:os"
 
-export const instanceId = `${hostname()}-${process.pid}-${randomUUID()}`;
+export const instanceId = `${hostname()}-${process.pid}-${randomUUID()}`

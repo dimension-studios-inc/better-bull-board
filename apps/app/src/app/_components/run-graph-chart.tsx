@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { format } from "date-fns";
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { z } from "zod";
-import type { dashboardRunGraphOutput } from "~/app/api/dashboard/summary/schemas";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Skeleton } from "~/components/ui/skeleton";
+import { format } from "date-fns"
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import type { z } from "zod"
+import type { dashboardRunGraphOutput } from "~/app/api/dashboard/summary/schemas"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { Skeleton } from "~/components/ui/skeleton"
 
 interface RunGraphChartProps {
-  days: number;
-  runGraphData: z.output<typeof dashboardRunGraphOutput>[] | undefined;
-  isLoading: boolean;
+  days: number
+  runGraphData: z.output<typeof dashboardRunGraphOutput>[] | undefined
+  isLoading: boolean
 }
 
 const CustomTooltip =
@@ -19,13 +19,13 @@ const CustomTooltip =
     active,
     payload,
   }: {
-    active: boolean;
+    active: boolean
     // biome-ignore lint/suspicious/noExplicitAny: _
-    payload: any;
-    label?: string | number;
+    payload: any
+    label?: string | number
   }) => {
     if (active && payload?.length) {
-      const data = payload[0].payload;
+      const data = payload[0].payload
       return (
         <div className="bg-background border rounded p-1 shadow-sm">
           <p className="font-medium">
@@ -33,10 +33,10 @@ const CustomTooltip =
           </p>
           <p className="text-sm text-blue-600">Runs: {data.runCount.toLocaleString()}</p>
         </div>
-      );
+      )
     }
-    return null;
-  };
+    return null
+  }
 
 export function RunGraphChart({ days, runGraphData, isLoading }: RunGraphChartProps) {
   const chartData =
@@ -44,7 +44,7 @@ export function RunGraphChart({ days, runGraphData, isLoading }: RunGraphChartPr
       timestamp: item.timestamp,
       runCount: item.runCount,
       formattedTime: format(new Date(item.timestamp), days <= 7 ? "EEEEEE HH:mm" : "MMM dd"),
-    })) || [];
+    })) || []
 
   return (
     <Card>
@@ -83,5 +83,5 @@ export function RunGraphChart({ days, runGraphData, isLoading }: RunGraphChartPr
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

@@ -3,5 +3,5 @@
  * @returns A greeting
  */
 export const helloWorld = () => {
-  return "Hello World";
-};
+  return "Hello World"
+}

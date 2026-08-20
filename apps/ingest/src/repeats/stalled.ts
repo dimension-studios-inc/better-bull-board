@@ -1,14 +1,14 @@
-import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema";
-import { db } from "@better-bull-board/db/server";
-import { logger } from "@rharkor/logger";
-import { Queue } from "bullmq";
-import { and, eq, lte, or } from "drizzle-orm";
-import { redis } from "~/lib/redis";
+import { jobRunsTable } from "@better-bull-board/db/schemas/job/schema"
+import { db } from "@better-bull-board/db/server"
+import { logger } from "@rharkor/logger"
+import { Queue } from "bullmq"
+import { and, eq, lte, or } from "drizzle-orm"
+import { redis } from "~/lib/redis"
 
 export const stopStalledRuns = async () => {
   const refreshStalledRuns = async () => {
-    const now = new Date();
-    const canBeStalledBefore = new Date(now.getTime() - 1000 * 60 * 60 * 24); // 24 hours
+    const now = new Date()
+    const canBeStalledBefore = new Date(now.getTime() - 1000 * 60 * 60 * 24) // 24 hours
 
     //* Retrieve all jobs that are still running and have been running for more than 24 hours
     const stalledRuns = await db
@@ -19,24 +19,24 @@ export const stopStalledRuns = async () => {
           or(eq(jobRunsTable.status, "active"), eq(jobRunsTable.status, "waiting")),
           lte(jobRunsTable.createdAt, canBeStalledBefore),
         ),
-      );
+      )
 
     //* Verify their status in redis directly
-    stalledRuns.length && logger.debug(`Found ${stalledRuns.length} potential stalled runs (> 24h)`);
+    stalledRuns.length && logger.debug(`Found ${stalledRuns.length} potential stalled runs (> 24h)`)
     for (const _run of stalledRuns) {
-      const queue = new Queue(_run.queue, { connection: redis });
-      const job = await queue.getJob(_run.jobId);
+      const queue = new Queue(_run.queue, { connection: redis })
+      const job = await queue.getJob(_run.jobId)
       if (!job) {
-        logger.warn(`Run ${_run.jobId} is stalled, updating status`);
+        logger.warn(`Run ${_run.jobId} is stalled, updating status`)
         await db
           .update(jobRunsTable)
           .set({ status: "failed", errorMessage: "Job stalled" })
-          .where(eq(jobRunsTable.id, _run.id));
-        continue;
+          .where(eq(jobRunsTable.id, _run.id))
+        continue
       }
-      const jobStatus = await job.getState();
-      if (jobStatus === _run.status) continue;
-      logger.warn(`Run ${_run.id} is stalled, updating status`);
+      const jobStatus = await job.getState()
+      if (jobStatus === _run.status) continue
+      logger.warn(`Run ${_run.id} is stalled, updating status`)
       await redis.publish(
         "bbb:worker:job",
         JSON.stringify({
@@ -45,18 +45,18 @@ export const stopStalledRuns = async () => {
           tags: undefined,
           queueName: job?.queueName,
         }),
-      );
-      await queue.close();
+      )
+      await queue.close()
     }
-  };
+  }
 
   setInterval(
     () => {
-      refreshStalledRuns();
+      refreshStalledRuns()
     },
     1000 * 60 * 60, // every hour
-  );
-  refreshStalledRuns();
+  )
+  refreshStalledRuns()
 
-  logger.log(`🛑 Stopping stalled runs`);
-};
+  logger.log(`🛑 Stopping stalled runs`)
+}

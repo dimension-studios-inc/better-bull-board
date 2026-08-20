@@ -1,5 +1,5 @@
-import { buildHealthResponse } from "~/lib/health-checks";
+import { buildHealthResponse } from "~/lib/health-checks"
 
 export async function GET() {
-  return buildHealthResponse();
+  return buildHealthResponse()
 }
