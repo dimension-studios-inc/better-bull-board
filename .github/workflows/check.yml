@@ -34,6 +34,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # t3-env validates process.env when Next.js evaluates env.ts during `next build`.
       - name: Copy env example
         run: cp .env.example .env
 
@@ -42,3 +43,6 @@ jobs:
 
       - name: Run type check
         run: npm run type-check
+
+      - name: Build
+        run: npm run build
