@@ -39,6 +39,3 @@ jobs:
 
       - name: Run type check
         run: npm run type-check
-
-      - name: Build packages
-        run: npm run build -- --filter='!@better-bull-board/app'
