@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # Node 24 ships npm >= 11.5.1, required for trusted publishing.
       # Do not set registry-url: setup-node writes an empty _authToken and
