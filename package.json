@@ -9,10 +9,14 @@
     "type-check": "turbo run type-check",
     "setup": "turbo run build --filter='@better-bull-board/*'^...",
     "build:app": "turbo run build --filter=@better-bull-board/app --env-mode=loose",
-    "build:ingest": "turbo run build --filter=@better-bull-board/ingest --env-mode=loose"
+    "build:ingest": "turbo run build --filter=@better-bull-board/ingest --env-mode=loose",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.9",
+    "@commitlint/cli": "21.2.2",
+    "@commitlint/config-conventional": "21.2.2",
+    "lefthook": "2.1.10",
     "turbo": "2.10.11",
     "typescript": "7.0.2"
   },
