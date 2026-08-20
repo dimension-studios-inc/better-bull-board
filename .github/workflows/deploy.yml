@@ -1,0 +1,88 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: public.ecr.aws/n5q7l0s4
+  K8S_NAMESPACE: better-bull-board
+
+jobs:
+  build:
+    name: Build ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: better-bull-board-app
+            dockerfile: apps/app/Dockerfile
+          - image: better-bull-board-ingest
+            dockerfile: apps/ingest/Dockerfile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          mask-aws-account-id: "false"
+
+      - name: Login to Amazon ECR Public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          provenance: false
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:latest
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy:
+    name: Rollout
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    needs: build
+    steps:
+      - name: Setup kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_CONTENT }}" | base64 -d > ~/.kube/config
+
+      - name: Restart workloads
+        run: |
+          kubectl rollout restart deployment/bbb-app -n "$K8S_NAMESPACE"
+          kubectl rollout restart statefulset/bbb-ingest -n "$K8S_NAMESPACE"
+
+      - name: Wait for rollouts
+        run: |
+          kubectl rollout status deployment/bbb-app -n "$K8S_NAMESPACE" --timeout=5m
+          kubectl rollout status statefulset/bbb-ingest -n "$K8S_NAMESPACE" --timeout=5m
