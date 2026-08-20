@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+# A new push to a PR makes the in-flight run obsolete; don't pay for it twice.
+concurrency:
+  group: check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check
+    # Draft PRs: skip until ready_for_review (still in `on.pull_request.types`).
+    # workflow_dispatch has no pull_request payload, so draft is empty/falsy and this runs.
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Copy env example
+        run: cp .env.example .env
+
+      - name: Run biome check
+        run: npm run lint
+
+      - name: Run type check
+        run: npm run type-check
