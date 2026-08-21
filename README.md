@@ -41,11 +41,11 @@ We are clearing the data from the following entities:
 
 ```bash
 docker-compose -f .docker/compose.local.yaml up -d
-npm run dev
+pnpm dev
 ```
 
 ## Docs
 
 - [Kubernetes](docs/kubernetes.md) — cluster layout, `k8s/` manifests, self-hosting
 - [Docker images](docs/docker-build.md) — ECR repos, Postgres image, self-hosted app/ingest builds
-- [Publishing `@better-bull-board/client`](docs/publishing.md) — npm from `main`
+- [Publishing `@better-bull-board/client`](docs/publishing.md) — registry publish from `main`

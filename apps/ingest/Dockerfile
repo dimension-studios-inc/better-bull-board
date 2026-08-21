@@ -1,5 +1,6 @@
 #* ---- Base stage ----
 FROM node:24.19.0-alpine AS base
+RUN corepack enable
 WORKDIR /app
 
 ARG TURBO_TEAM
@@ -17,7 +18,10 @@ ENV PORT=8080
 
 #* ---- Turbo stage ----
 FROM base AS turbo
-RUN npm install turbo --global
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack prepare pnpm@11.22.0 --activate
+RUN pnpm add --global turbo@2.10.11
 
 
 #* ---- Prepare stage ----
@@ -29,7 +33,7 @@ RUN turbo prune @better-bull-board/ingest --docker
 #* ---- Installer stage ----
 FROM base AS installer
 COPY --from=prepare /app/out/json/ .
-RUN npm ci --omit=dev
+RUN pnpm install --frozen-lockfile --prod
 COPY --from=prepare /app/out/full/ .
 
 
@@ -37,7 +41,7 @@ COPY --from=prepare /app/out/full/ .
 FROM turbo AS builder
 ENV NODE_OPTIONS="--max-old-space-size=6144"
 COPY --from=installer /app .
-RUN npm run build:ingest
+RUN pnpm run build:ingest
 
 
 

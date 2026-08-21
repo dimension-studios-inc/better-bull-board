@@ -40,9 +40,10 @@ async function migratePostgreSQL(): Promise<void> {
     await db.transaction(async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('better-bull-board:migrations'))`)
 
-      // Run drizzle-kit migrate command
-      const { stderr } = await execAsync("npx drizzle-kit migrate", {
-        cwd: path.resolve(process.cwd(), "packages/db"),
+      const dbDir = path.resolve(process.cwd(), "packages/db")
+      const drizzleKit = path.join(dbDir, "node_modules", ".bin", "drizzle-kit")
+      const { stderr } = await execAsync(`"${drizzleKit}" migrate`, {
+        cwd: dbDir,
         env: {
           ...process.env,
           DATABASE_URL: process.env.DATABASE_URL,
@@ -50,10 +51,9 @@ async function migratePostgreSQL(): Promise<void> {
       })
 
       if (stderr) {
-        // Filter out npm notices and warnings
         const filteredStderr = stderr
           .split("\n")
-          .filter((line) => !line.trim().startsWith("npm notice") && !line.toLowerCase().includes("warning"))
+          .filter((line) => !line.toLowerCase().includes("warning"))
           .join("\n")
 
         if (filteredStderr.trim()) {

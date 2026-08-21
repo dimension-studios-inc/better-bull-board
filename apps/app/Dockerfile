@@ -1,6 +1,7 @@
 FROM node:24.19.0-alpine AS base
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
+RUN corepack enable
 WORKDIR /app
 ARG TURBO_TEAM
 ARG TURBO_TOKEN
@@ -13,7 +14,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME="0.0.0.0"
 
 FROM base AS turbo
-RUN npm install turbo --global
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack prepare pnpm@11.22.0 --activate
+RUN pnpm add --global turbo@2.10.11
 
 #* ---- Prepare stage ----
 FROM turbo AS prepare
@@ -23,7 +27,7 @@ RUN turbo prune @better-bull-board/app --docker
 #* ---- Installer stage ----
 FROM base AS installer
 COPY --from=prepare /app/out/json/ .
-RUN npm ci --omit=dev
+RUN pnpm install --frozen-lockfile --prod
 COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
@@ -58,7 +62,7 @@ ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
 ENV DATABASE_URL=$DATABASE_URL
 
 
-RUN npm run build:app
+RUN pnpm run build:app
 
 #* ---- Runner stage ----
 FROM base AS runner

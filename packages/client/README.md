@@ -5,7 +5,7 @@ Developer documentation for integrating Better Bull Board with your BullMQ worke
 ## Installation
 
 ```bash
-npm install @better-bull-board/client
+pnpm add @better-bull-board/client
 ```
 
 ## Usage

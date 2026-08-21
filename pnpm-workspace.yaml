@@ -1,0 +1,16 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+saveExact: true
+
+allowBuilds:
+  esbuild: true
+  lefthook: true
+  msgpackr-extract: true
+
+minimumReleaseAgeExclude:
+  - bullmq@6.2.0
+  - framer-motion@13.1.1
+  - motion-dom@13.1.1
+  - motion@13.1.1
