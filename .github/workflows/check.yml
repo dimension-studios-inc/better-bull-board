@@ -39,3 +39,6 @@ jobs:
 
       - name: Run type check
         run: npm run type-check
+
+      - name: Run knip
+        run: npm run knip

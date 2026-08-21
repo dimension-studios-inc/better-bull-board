@@ -2,8 +2,8 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns"
-import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { useMemo, useRef, useState } from "react"

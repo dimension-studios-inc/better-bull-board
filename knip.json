@@ -1,0 +1,24 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreWorkspaces": ["packages/_template"],
+  "workspaces": {
+    "apps/app": {
+      "entry": ["src/components/ui/**.{ts,tsx}"]
+    },
+    "apps/ingest": {
+      "entry": ["debug/index.ts"]
+    },
+    "packages/bull-demo": {
+      "entry": ["debug/*.ts"]
+    },
+    "packages/client": {
+      "entry": ["debug/index.ts"]
+    },
+    "packages/db": {
+      "entry": ["debug/index.ts"]
+    },
+    "packages/typescript-config": {
+      "ignoreUnresolved": ["next"]
+    }
+  }
+}
