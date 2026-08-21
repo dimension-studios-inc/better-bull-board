@@ -20,7 +20,7 @@
     "@better-bull-board/typescript-config": "*",
     "@modelcontextprotocol/sdk": "1.30.0",
     "@t3-oss/env-core": "0.13.11",
-    "bullmq": "5.76.0",
+    "bullmq": "5.81.3",
     "dotenv": "17.4.2",
     "ioredis": "5.10.1",
     "tsdown": "0.22.14",
