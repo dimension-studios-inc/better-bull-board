@@ -1,5 +1,5 @@
 import { logger } from "@rharkor/logger"
-import { Worker as BullMQWorker, type Job, Queue, QueueEvents, type RedisConnection, type WorkerOptions } from "bullmq"
+import { Worker as BullMQWorker, type Job, Queue, QueueEvents, type WorkerOptions } from "bullmq"
 import type Redis from "ioredis"
 import { emitJobSyncEvent } from "./lib/job-events"
 import { onlyMaster } from "./lib/master"
@@ -28,9 +28,8 @@ export class Worker<
        */
       getJobTags?: (job: Job<DataType, ResultType, NameType>) => (string | undefined)[]
     },
-    Connection?: typeof RedisConnection,
   ) {
-    super(name, processor, opts, Connection)
+    super(name, processor, opts)
     this.ioredis = opts.ioredis
     this.getJobTags = opts.getJobTags
     // this.startLivenessProbe();
@@ -114,7 +113,7 @@ export class Worker<
   }
 
   override async waitUntilReady() {
-    const redis = await super.waitUntilReady()
+    await super.waitUntilReady()
     let attempts = 0
     while (!this.hasWaitingJobsEventsInitialized && attempts < 20) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -123,7 +122,6 @@ export class Worker<
     if (!this.hasWaitingJobsEventsInitialized) {
       throw new Error("Waiting jobs events failed to initialize after 20 seconds")
     }
-    return redis
   }
 
   override async processJob(
