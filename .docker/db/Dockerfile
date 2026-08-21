@@ -1,4 +1,4 @@
-FROM postgres:17
+FROM postgres:18
 
 # Install PostGIS, pgvector, build deps, and pg_uuidv7 build deps
 RUN apt-get update && \
