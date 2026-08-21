@@ -9,15 +9,15 @@
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
-    "dev": "npx -y dotenv-cli -e .env -- tsx watch src/index.ts",
+    "dev": "dotenv -e .env -- tsx watch src/index.ts",
     "start": "node dist/index.mjs",
     "type-check": "tsc --noEmit"
   },
   "license": "ISC",
   "dependencies": {
-    "@better-bull-board/client": "*",
-    "@better-bull-board/core": "*",
-    "@better-bull-board/typescript-config": "*",
+    "@better-bull-board/client": "workspace:*",
+    "@better-bull-board/core": "workspace:*",
+    "@better-bull-board/typescript-config": "workspace:*",
     "@modelcontextprotocol/sdk": "1.30.0",
     "@t3-oss/env-core": "0.13.11",
     "bullmq": "6.2.0",
@@ -44,6 +44,7 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "25.9.5",
+    "dotenv-cli": "11.0.0",
     "tsx": "4.23.12"
   }
 }
