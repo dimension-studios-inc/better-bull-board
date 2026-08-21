@@ -45,10 +45,31 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
   --mount=type=cache,target=/root/.cache/turbo \
   pnpm run build:ingest
 
+#* ---- Runtime files stage ----
+FROM builder AS runtime-files
+
+RUN set -eux; \
+  mkdir -p /app/runtime/apps/ingest; \
+  cp -r /app/apps/ingest/dist /app/runtime/apps/ingest/dist; \
+  \
+  find /app/packages \
+  -type d -name dist \
+  -not -path "*/node_modules/*" \
+  -print0 \
+  | while IFS= read -r -d '' d; do \
+  pkg_dir="$(dirname "$d")"; \
+  rel="${pkg_dir#/app/}"; \
+  mkdir -p "/app/runtime/$rel"; \
+  cp -r "$d" "/app/runtime/$rel/"; \
+  done; \
+  \
+  # ingest runs `drizzle-kit migrate` from packages/db at startup
+  mkdir -p /app/runtime/packages/db; \
+  cp /app/packages/db/drizzle.config.ts /app/runtime/packages/db/drizzle.config.ts; \
+  cp -r /app/packages/db/drizzle /app/runtime/packages/db/drizzle; \
+  cp -r /app/packages/db/src /app/runtime/packages/db/src
+
 #* ---- Runtime stage ----
-# Keep the full built tree: ingest runs `drizzle-kit migrate` from packages/db
-# at startup, so the image needs that package's config, SQL, and bin — not
-# only dist output.
 FROM base AS runner
 WORKDIR /app
 
@@ -57,9 +78,11 @@ RUN addgroup --system --gid 1001 nodejs \
 
 ENV HOME=/home/nodeapp
 
-COPY --from=builder /app /app
+COPY --from=prepare /app/out/json/ .
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+  pnpm ci --ignore-scripts --prod
+COPY --from=runtime-files --chown=nodeapp:nodejs /app/runtime/ /app/
 
-RUN chown -R nodeapp:nodejs /app /home/nodeapp
 USER nodeapp
 
 CMD ["node", "apps/ingest/dist/index.mjs"]
