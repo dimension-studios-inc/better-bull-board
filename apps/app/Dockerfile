@@ -1,7 +1,6 @@
 FROM node:24.19.0-alpine AS base
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
-RUN corepack enable
 WORKDIR /app
 ARG TURBO_TEAM
 ARG TURBO_TOKEN
@@ -13,25 +12,32 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME="0.0.0.0"
 
-FROM base AS turbo
+# Pin matches package.json packageManager (base has no package.json yet).
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME/bin:$PATH"
-RUN corepack prepare pnpm@11.22.0 --activate
-RUN pnpm add --global turbo@2.10.11
+RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 
 #* ---- Prepare stage ----
-FROM turbo AS prepare
+FROM base AS prepare
 COPY . .
-RUN turbo prune @better-bull-board/app --docker
+RUN pnpm dlx turbo@2.10.11 prune @better-bull-board/app --docker
 
 #* ---- Installer stage ----
+# Install full dependencies (including devDependencies) because `next build` needs
+# type definitions, PostCSS plugins, and other build-time tooling. The final image
+# only copies Next's standalone output, so devDependencies never leak into runtime.
+# `--prod=false` is required because `NODE_ENV=production` (set in `base`) otherwise
+# makes pnpm skip devDependencies implicitly.
+# `--ignore-scripts` skips the root `lefthook install` prepare hook (git/lefthook
+# are not available in this image, and lefthook is a devDependency).
 FROM base AS installer
 COPY --from=prepare /app/out/json/ .
-RUN pnpm install --frozen-lockfile --prod
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+  pnpm ci --ignore-scripts --prod=false
 COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
-FROM turbo AS builder
+FROM base AS builder
 ENV NODE_OPTIONS="--max-old-space-size=6144"
 COPY --from=installer /app .
 
@@ -60,7 +66,6 @@ ARG WEBSOCKET_PORT=8081
 ENV WEBSOCKET_PORT=$WEBSOCKET_PORT
 ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
 ENV DATABASE_URL=$DATABASE_URL
-
 
 RUN pnpm run build:app
 
