@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import { healthDb } from "~/lib/health-db"
 import { redis } from "~/lib/redis"
 
-export const HEALTH_CHECK_TIMEOUT_MS = 2_000
+const HEALTH_CHECK_TIMEOUT_MS = 2_000
 
 interface HealthCheckResult {
   service: string

@@ -1,7 +1,7 @@
 import z from "zod"
 import { registerApiRoute } from "~/lib/utils/client"
 
-export const getQueuesStatsOutput = z.object({
+const getQueuesStatsOutput = z.object({
   total: z.number(),
   active: z.number(),
   withScheduler: z.number(),

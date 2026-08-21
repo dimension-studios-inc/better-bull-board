@@ -10,12 +10,6 @@ export interface User {
   email: string
 }
 
-export interface AuthResponse {
-  success: boolean
-  user?: User
-  error?: string
-}
-
 /**
  * Verify admin credentials
  */
@@ -43,7 +37,7 @@ export async function createToken(user: User): Promise<string> {
 /**
  * Verify and decode a JWT token
  */
-export async function verifyToken(token: string): Promise<User | null> {
+async function verifyToken(token: string): Promise<User | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET)
     return { email: payload.email as string }
@@ -55,7 +49,7 @@ export async function verifyToken(token: string): Promise<User | null> {
 /**
  * Extract token from request headers or cookies
  */
-export async function getTokenFromRequest(): Promise<string | null> {
+async function getTokenFromRequest(): Promise<string | null> {
   // Bearer first, so non-browser clients (CLIs, scripts) don't have to send a cookie
   const authHeader = (await headers()).get("authorization")
   const bearerToken = authHeader?.match(/^bearer\s+(.+)$/i)?.[1]?.trim()

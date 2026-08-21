@@ -1,13 +1,13 @@
 import z from "zod"
 import { registerApiRoute } from "~/lib/utils/client"
 
-export const getQueuesNameInput = z.object({
+const getQueuesNameInput = z.object({
   cursor: z.string().nullish(),
   search: z.string().optional(),
   limit: z.number().min(1).max(100).optional(),
 })
 
-export const getQueuesNameOutput = z.object({
+const getQueuesNameOutput = z.object({
   queues: z.array(
     z.object({
       id: z.string(),

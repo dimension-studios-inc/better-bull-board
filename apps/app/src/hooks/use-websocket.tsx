@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useRef, useState } from "react"
 
-export type WebSocketMessage = {
+type WebSocketMessage = {
   type:
     | "job-refresh"
     | "queue-refresh"
@@ -31,7 +31,7 @@ export interface UseWebSocketOptions {
   autoReconnect?: boolean
 }
 
-export const useWebSocket = (options: UseWebSocketOptions) => {
+const useWebSocket = (options: UseWebSocketOptions) => {
   const {
     WEBSOCKET_URL,
     onMessage,

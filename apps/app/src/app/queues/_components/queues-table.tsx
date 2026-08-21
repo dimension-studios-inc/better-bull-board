@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { formatDuration } from "date-fns"
-import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Info, Search } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas"
