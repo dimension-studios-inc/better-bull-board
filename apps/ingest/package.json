@@ -18,7 +18,7 @@
     "@t3-oss/env-core": "0.13.11",
     "bullmq": "5.76.0",
     "date-fns": "4.4.0",
-    "ioredis": "5.10.1",
+    "ioredis": "5.11.1",
     "node-cron": "4.2.1",
     "redlock": "5.0.0-beta.2",
     "tsdown": "0.22.14",
