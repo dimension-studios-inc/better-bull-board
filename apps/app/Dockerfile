@@ -15,7 +15,7 @@ ENV HOSTNAME="0.0.0.0"
 
 FROM base AS turbo
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME/bin:$PATH"
 RUN corepack prepare pnpm@11.22.0 --activate
 RUN pnpm add --global turbo@2.10.11
 
