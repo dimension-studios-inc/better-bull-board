@@ -3,5 +3,6 @@
   "extends": ["config:recommended", ":pinAllExceptPeerDependencies"],
   "baseBranchPatterns": ["develop"],
   "automerge": true,
-  "platformAutomerge": true
+  "platformAutomerge": true,
+  "minimumReleaseAge": "14 days"
 }
