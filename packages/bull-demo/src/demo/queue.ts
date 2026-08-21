@@ -1,5 +1,5 @@
-import { Queue } from "bullmq";
-import { redis } from "../lib/redis";
+import { Queue } from "bullmq"
+import { redis } from "../lib/redis"
 
 export const queue = new Queue("{demo-queue}", {
   connection: redis,
@@ -12,4 +12,4 @@ export const queue = new Queue("{demo-queue}", {
       age: 60 * 60 * 24 * 7, // keep up to 7 days
     },
   },
-});
+})

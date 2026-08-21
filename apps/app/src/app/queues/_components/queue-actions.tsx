@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pause, Play, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { deleteQueueApiRoute } from "~/app/api/queues/delete/schemas";
-import { pauseQueueApiRoute } from "~/app/api/queues/pause/schemas";
-import { resumeQueueApiRoute } from "~/app/api/queues/resume/schemas";
-import { Button } from "~/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { apiFetch } from "~/lib/utils/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Pause, Play, Trash2 } from "lucide-react"
+import { useState } from "react"
+import { deleteQueueApiRoute } from "~/app/api/queues/delete/schemas"
+import { pauseQueueApiRoute } from "~/app/api/queues/pause/schemas"
+import { resumeQueueApiRoute } from "~/app/api/queues/resume/schemas"
+import { Button } from "~/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
+import { apiFetch } from "~/lib/utils/client"
 
 interface QueueActionsProps {
-  queueName: string;
-  isPaused: boolean;
+  queueName: string
+  isPaused: boolean
 }
 
 export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
-  const [pausePopoverOpen, setPausePopoverOpen] = useState(false);
-  const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [pausePopoverOpen, setPausePopoverOpen] = useState(false)
+  const [deletePopoverOpen, setDeletePopoverOpen] = useState(false)
+  const queryClient = useQueryClient()
 
   const pauseMutation = useMutation({
     mutationFn: apiFetch({
@@ -26,10 +26,10 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
       body: { queueName },
     }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["queues/table"] });
-      setPausePopoverOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["queues/table"] })
+      setPausePopoverOpen(false)
     },
-  });
+  })
 
   const resumeMutation = useMutation({
     mutationFn: apiFetch({
@@ -37,10 +37,10 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
       body: { queueName },
     }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["queues/table"] });
-      setPausePopoverOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["queues/table"] })
+      setPausePopoverOpen(false)
     },
-  });
+  })
 
   const deleteMutation = useMutation({
     mutationFn: apiFetch({
@@ -48,22 +48,22 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
       body: { queueName },
     }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["queues/table"] });
-      setDeletePopoverOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["queues/table"] })
+      setDeletePopoverOpen(false)
     },
-  });
+  })
 
   const handlePauseResume = () => {
     if (isPaused) {
-      resumeMutation.mutate();
+      resumeMutation.mutate()
     } else {
-      pauseMutation.mutate();
+      pauseMutation.mutate()
     }
-  };
+  }
 
   const handleDelete = () => {
-    deleteMutation.mutate();
-  };
+    deleteMutation.mutate()
+  }
 
   return (
     <div className="flex gap-1">
@@ -128,5 +128,5 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
         </PopoverContent>
       </Popover>
     </div>
-  );
+  )
 }

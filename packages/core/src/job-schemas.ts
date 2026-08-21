@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod"
 
 const jobStatusValues = [
   "active",
@@ -9,9 +9,9 @@ const jobStatusValues = [
   "prioritized",
   "waiting-children",
   "unknown",
-] as const;
+] as const
 
-const logLevelValues = ["log", "debug", "info", "warn", "error"] as const;
+const logLevelValues = ["log", "debug", "info", "warn", "error"] as const
 
 export const listJobsInputSchema = z.object({
   cursor: z
@@ -32,7 +32,7 @@ export const listJobsInputSchema = z.object({
   sortBy: z.enum(["createdAt", "durationMs"]).optional(),
   sortDirection: z.enum(["asc", "desc"]).optional(),
   limit: z.number().min(1).max(100).optional(),
-});
+})
 
 export const listJobsOutputSchema = z.object({
   jobs: z.array(
@@ -70,11 +70,11 @@ export const listJobsOutputSchema = z.object({
       durationMs: z.number().nullable().optional(),
     })
     .nullable(),
-});
+})
 
 export const getJobByIdInputSchema = z.object({
   id: z.string(),
-});
+})
 
 export const getJobByIdOutputSchema = z.object({
   job: z.object({
@@ -102,7 +102,7 @@ export const getJobByIdOutputSchema = z.object({
     finishedAt: z.number().nullable(),
     durationMs: z.number().nullable(),
   }),
-});
+})
 
 export const listJobLogsInputSchema = z.object({
   id: z.string(),
@@ -110,7 +110,7 @@ export const listJobLogsInputSchema = z.object({
   messageContains: z.string().optional(),
   limit: z.number().min(1).max(1000).optional(),
   offset: z.number().min(0).optional(),
-});
+})
 
 export const listJobLogsOutputSchema = z.object({
   logs: z.array(
@@ -124,4 +124,4 @@ export const listJobLogsOutputSchema = z.object({
     }),
   ),
   total: z.number(),
-});
+})

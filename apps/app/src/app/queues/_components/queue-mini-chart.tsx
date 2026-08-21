@@ -1,27 +1,27 @@
-"use client";
+"use client"
 
-import { Line, LineChart, ResponsiveContainer } from "recharts";
+import { Line, LineChart, ResponsiveContainer } from "recharts"
 
 interface QueueChartData {
-  timestamp: string;
-  completed: number;
-  failed: number;
+  timestamp: string
+  completed: number
+  failed: number
 }
 
 interface QueueMiniChartProps {
-  data: QueueChartData[];
+  data: QueueChartData[]
 }
 
 export function QueueMiniChart({ data }: QueueMiniChartProps) {
   if (!data || data.length === 0) {
-    return <div className="h-16 w-32 flex items-center justify-center text-xs text-muted-foreground">No data</div>;
+    return <div className="h-16 w-32 flex items-center justify-center text-xs text-muted-foreground">No data</div>
   }
 
   // Process data to ensure we have valid timestamps
   const processedData = data.map((item) => ({
     ...item,
     timestamp: new Date(item.timestamp).toISOString(),
-  }));
+  }))
 
   return (
     <div className="h-8 w-16">
@@ -32,5 +32,5 @@ export function QueueMiniChart({ data }: QueueMiniChartProps) {
         </LineChart>
       </ResponsiveContainer>
     </div>
-  );
+  )
 }

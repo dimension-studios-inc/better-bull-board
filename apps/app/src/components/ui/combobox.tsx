@@ -1,43 +1,43 @@
-"use client";
+"use client"
 
-import { CheckIcon, ChevronsUpDown } from "lucide-react";
-import type * as React from "react";
-import { Button } from "~/components/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "~/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
-import { cn } from "~/lib/utils/client";
-import { Loader } from "./loader";
+import { CheckIcon, ChevronsUpDown } from "lucide-react"
+import type * as React from "react"
+import { Button } from "~/components/ui/button"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "~/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
+import { cn } from "~/lib/utils/client"
+import { Loader } from "./loader"
 
 export type ComboboxOption = {
-  value: string;
-  label: string;
-};
+  value: string
+  label: string
+}
 
 export interface ComboboxProps {
-  value: string;
-  onValueChange: (value: string) => void;
-  options: ComboboxOption[];
-  className?: string;
-  placeholder: string;
-  noOptionsMessage: string;
-  searchPlaceholder?: string;
-  buttonProps?: React.ComponentProps<typeof Button>;
-  search: string;
-  setSearch: (search: string) => void;
-  isLoading?: boolean;
-  isFetching?: boolean;
-  renderValue: (value: string) => React.ReactNode;
+  value: string
+  onValueChange: (value: string) => void
+  options: ComboboxOption[]
+  className?: string
+  placeholder: string
+  noOptionsMessage: string
+  searchPlaceholder?: string
+  buttonProps?: React.ComponentProps<typeof Button>
+  search: string
+  setSearch: (search: string) => void
+  isLoading?: boolean
+  isFetching?: boolean
+  renderValue: (value: string) => React.ReactNode
   infiniteLoadingProps?: {
-    hasNextPage: boolean;
-    isFetchingNextPage: boolean;
-    fetchNextPage: () => void;
-    loaderRef: React.RefObject<HTMLDivElement | null>;
-  };
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  renderOption?: (option: ComboboxOption) => React.ReactNode;
-  hideCheckIcon?: boolean;
-  popoverContentClassName?: string;
+    hasNextPage: boolean
+    isFetchingNextPage: boolean
+    fetchNextPage: () => void
+    loaderRef: React.RefObject<HTMLDivElement | null>
+  }
+  open: boolean
+  setOpen: (open: boolean) => void
+  renderOption?: (option: ComboboxOption) => React.ReactNode
+  hideCheckIcon?: boolean
+  popoverContentClassName?: string
 }
 
 export function Combobox({
@@ -86,8 +86,8 @@ export function Combobox({
                 <CommandItem
                   key={option.value}
                   onSelect={(currentValue) => {
-                    onValueChange(currentValue === value ? "" : currentValue);
-                    setOpen(false);
+                    onValueChange(currentValue === value ? "" : currentValue)
+                    setOpen(false)
                   }}
                   value={option.value}
                 >
@@ -111,5 +111,5 @@ export function Combobox({
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }

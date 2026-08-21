@@ -1,13 +1,13 @@
-import { dashboardQueueHourlyStatsTable, jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db";
-import { db } from "@better-bull-board/db/server";
-import { and, asc, desc, eq, gt, gte, ilike, lt, or, sql } from "drizzle-orm";
-import type { z } from "zod";
-import { listQueuesInputSchema, listQueuesOutputSchema } from "./queue-schemas";
+import { dashboardQueueHourlyStatsTable, jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db"
+import { db } from "@better-bull-board/db/server"
+import { and, asc, desc, eq, gt, gte, ilike, lt, or, sql } from "drizzle-orm"
+import type { z } from "zod"
+import { listQueuesInputSchema, listQueuesOutputSchema } from "./queue-schemas"
 
-type CursorDirection = "next" | "prev";
-type QueueSortBy = "waitingJobs" | "activeJobs" | "pressure";
-type SortDirection = "asc" | "desc";
-type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string };
+type CursorDirection = "next" | "prev"
+type QueueSortBy = "waitingJobs" | "activeJobs" | "pressure"
+type SortDirection = "asc" | "desc"
+type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string }
 
 const waitingJobCounts = db
   .select({
@@ -17,9 +17,9 @@ const waitingJobCounts = db
   .from(jobRunsTable)
   .where(eq(jobRunsTable.status, "waiting"))
   .groupBy(jobRunsTable.queue)
-  .as("waiting_job_counts");
+  .as("waiting_job_counts")
 
-const waitingJobsExpression = sql<number>`COALESCE(${waitingJobCounts.waitingJobs}, 0)`;
+const waitingJobsExpression = sql<number>`COALESCE(${waitingJobCounts.waitingJobs}, 0)`
 
 const activeJobCounts = db
   .select({
@@ -29,9 +29,9 @@ const activeJobCounts = db
   .from(jobRunsTable)
   .where(eq(jobRunsTable.status, "active"))
   .groupBy(jobRunsTable.queue)
-  .as("active_job_counts");
+  .as("active_job_counts")
 
-const activeJobsExpression = sql<number>`COALESCE(${activeJobCounts.activeJobs}, 0)`;
+const activeJobsExpression = sql<number>`COALESCE(${activeJobCounts.activeJobs}, 0)`
 
 const queueSelectFields = {
   id: queuesTable.id,
@@ -41,7 +41,7 @@ const queueSelectFields = {
   activeJobs: activeJobsExpression.as("active_jobs"),
   patterns: sql<string[] | null | undefined>`array_agg(${jobSchedulersTable.pattern})`.as("patterns"),
   everys: sql<number[] | null | undefined>`array_agg(${jobSchedulersTable.every})`.as("everys"),
-};
+}
 
 const buildPressureStats = (dateFrom?: Date, dateTo?: Date) =>
   db
@@ -60,36 +60,36 @@ const buildPressureStats = (dateFrom?: Date, dateTo?: Date) =>
       ),
     )
     .groupBy(dashboardQueueHourlyStatsTable.queue)
-    .as("pressure_stats");
+    .as("pressure_stats")
 
-type PressureStats = ReturnType<typeof buildPressureStats>;
+type PressureStats = ReturnType<typeof buildPressureStats>
 
 const getSortExpression = (sortBy: QueueSortBy, pressureStats?: PressureStats) => {
   if (sortBy === "pressure") {
     if (!pressureStats) {
-      throw new Error("Pressure sort requires pressure stats");
+      throw new Error("Pressure sort requires pressure stats")
     }
-    return sql<number>`COALESCE(${pressureStats.pressure}, 0)`;
+    return sql<number>`COALESCE(${pressureStats.pressure}, 0)`
   }
-  if (sortBy === "activeJobs") return activeJobsExpression;
-  return waitingJobsExpression;
-};
+  if (sortBy === "activeJobs") return activeJobsExpression
+  return waitingJobsExpression
+}
 
 const getCursorValue = (cursor: QueueCursor, sortBy: QueueSortBy) => {
   if (sortBy === "pressure") {
     if (cursor.pressure === undefined) {
-      throw new Error("Pressure cursor is required when sorting by pressure");
+      throw new Error("Pressure cursor is required when sorting by pressure")
     }
-    return cursor.pressure;
+    return cursor.pressure
   }
-  if (sortBy === "activeJobs") return cursor.activeJobs ?? 0;
-  return cursor.waitingJobs;
-};
+  if (sortBy === "activeJobs") return cursor.activeJobs ?? 0
+  return cursor.waitingJobs
+}
 
 const getOrderDirection = (cursorDirection: CursorDirection, sortDirection: SortDirection) => {
-  if (cursorDirection === "next") return sortDirection;
-  return sortDirection === "desc" ? "asc" : "desc";
-};
+  if (cursorDirection === "next") return sortDirection
+  return sortDirection === "desc" ? "asc" : "desc"
+}
 
 const getCursorComparison = (
   cursor: QueueCursor,
@@ -98,19 +98,19 @@ const getCursorComparison = (
   sortDirection: SortDirection,
   pressureStats?: PressureStats,
 ) => {
-  const sortExpression = getSortExpression(sortBy, pressureStats);
-  const cursorValue = getCursorValue(cursor, sortBy);
+  const sortExpression = getSortExpression(sortBy, pressureStats)
+  const cursorValue = getCursorValue(cursor, sortBy)
   const nameComparison =
-    cursorDirection === "next" ? gt(queuesTable.name, cursor.name) : lt(queuesTable.name, cursor.name);
-  const tiedSortComparison = and(eq(sortExpression, cursorValue), nameComparison);
-  const shouldUseGreaterThan = cursorDirection === "next" ? sortDirection === "asc" : sortDirection === "desc";
+    cursorDirection === "next" ? gt(queuesTable.name, cursor.name) : lt(queuesTable.name, cursor.name)
+  const tiedSortComparison = and(eq(sortExpression, cursorValue), nameComparison)
+  const shouldUseGreaterThan = cursorDirection === "next" ? sortDirection === "asc" : sortDirection === "desc"
 
   if (shouldUseGreaterThan) {
-    return or(gt(sortExpression, cursorValue), tiedSortComparison);
+    return or(gt(sortExpression, cursorValue), tiedSortComparison)
   }
 
-  return or(lt(sortExpression, cursorValue), tiedSortComparison);
-};
+  return or(lt(sortExpression, cursorValue), tiedSortComparison)
+}
 
 const getSortOrder = (
   cursorDirection: CursorDirection,
@@ -118,13 +118,13 @@ const getSortOrder = (
   sortDirection: SortDirection,
   pressureStats?: PressureStats,
 ) => {
-  const sortExpression = getSortExpression(sortBy, pressureStats);
-  const orderDirection = getOrderDirection(cursorDirection, sortDirection);
-  const sortOrder = orderDirection === "asc" ? asc(sortExpression) : desc(sortExpression);
-  const nameOrder = cursorDirection === "next" ? asc(queuesTable.name) : desc(queuesTable.name);
+  const sortExpression = getSortExpression(sortBy, pressureStats)
+  const orderDirection = getOrderDirection(cursorDirection, sortDirection)
+  const sortOrder = orderDirection === "asc" ? asc(sortExpression) : desc(sortExpression)
+  const nameOrder = cursorDirection === "next" ? asc(queuesTable.name) : desc(queuesTable.name)
 
-  return [sortOrder, nameOrder];
-};
+  return [sortOrder, nameOrder]
+}
 
 export const listQueues = async (input: z.input<typeof listQueuesInputSchema> = {}) => {
   const {
@@ -135,8 +135,8 @@ export const listQueues = async (input: z.input<typeof listQueuesInputSchema> = 
     sortDirection = "desc",
     pressureDateFrom,
     pressureDateTo,
-  } = listQueuesInputSchema.parse(input);
-  const limit = input.limit ?? 20;
+  } = listQueuesInputSchema.parse(input)
+  const limit = input.limit ?? 20
   const rows =
     sortBy === "pressure"
       ? await listQueuesSortedByPressure({
@@ -155,24 +155,24 @@ export const listQueues = async (input: z.input<typeof listQueuesInputSchema> = 
           search,
           sortBy,
           sortDirection,
-        });
+        })
 
-  const hasExtra = rows.length > limit;
+  const hasExtra = rows.length > limit
 
   if (hasExtra) {
-    rows.pop();
+    rows.pop()
   }
 
-  const queueRows = cursorDirection === "prev" ? rows.reverse() : rows;
+  const queueRows = cursorDirection === "prev" ? rows.reverse() : rows
   const [total] = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(queuesTable)
-    .where(search ? ilike(queuesTable.name, `%${search}%`) : undefined);
+    .where(search ? ilike(queuesTable.name, `%${search}%`) : undefined)
 
-  const firstRow = queueRows[0];
-  const lastRow = queueRows.at(-1);
-  const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra;
-  const hasOlderPage = cursorDirection === "prev" ? Boolean(cursor) : hasExtra;
+  const firstRow = queueRows[0]
+  const lastRow = queueRows.at(-1)
+  const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra
+  const hasOlderPage = cursorDirection === "prev" ? Boolean(cursor) : hasExtra
 
   return listQueuesOutputSchema.parse({
     queues: queueRows.map((row) => ({
@@ -203,8 +203,8 @@ export const listQueues = async (input: z.input<typeof listQueuesInputSchema> = 
           }
         : null,
     total: Number(total?.count ?? 0),
-  });
-};
+  })
+}
 
 async function listQueuesSortedByPressure({
   cursor,
@@ -215,15 +215,15 @@ async function listQueuesSortedByPressure({
   search,
   sortDirection,
 }: {
-  cursor: QueueCursor | null | undefined;
-  cursorDirection: CursorDirection;
-  limit: number;
-  pressureDateFrom?: Date;
-  pressureDateTo?: Date;
-  search?: string;
-  sortDirection: SortDirection;
+  cursor: QueueCursor | null | undefined
+  cursorDirection: CursorDirection
+  limit: number
+  pressureDateFrom?: Date
+  pressureDateTo?: Date
+  search?: string
+  sortDirection: SortDirection
 }) {
-  const pressureStats = buildPressureStats(pressureDateFrom, pressureDateTo);
+  const pressureStats = buildPressureStats(pressureDateFrom, pressureDateTo)
 
   return db
     .select({
@@ -243,7 +243,7 @@ async function listQueuesSortedByPressure({
     )
     .groupBy(queuesTable.id, waitingJobCounts.waitingJobs, activeJobCounts.activeJobs, pressureStats.pressure)
     .orderBy(...getSortOrder(cursorDirection, "pressure", sortDirection, pressureStats))
-    .limit(limit + 1);
+    .limit(limit + 1)
 }
 
 async function listQueuesSortedByJobCount({
@@ -254,12 +254,12 @@ async function listQueuesSortedByJobCount({
   sortBy,
   sortDirection,
 }: {
-  cursor: QueueCursor | null | undefined;
-  cursorDirection: CursorDirection;
-  limit: number;
-  search?: string;
-  sortBy: Exclude<QueueSortBy, "pressure">;
-  sortDirection: SortDirection;
+  cursor: QueueCursor | null | undefined
+  cursorDirection: CursorDirection
+  limit: number
+  search?: string
+  sortBy: Exclude<QueueSortBy, "pressure">
+  sortDirection: SortDirection
 }) {
   return db
     .select({
@@ -278,5 +278,5 @@ async function listQueuesSortedByJobCount({
     )
     .groupBy(queuesTable.id, waitingJobCounts.waitingJobs, activeJobCounts.activeJobs)
     .orderBy(...getSortOrder(cursorDirection, sortBy, sortDirection))
-    .limit(limit + 1);
+    .limit(limit + 1)
 }

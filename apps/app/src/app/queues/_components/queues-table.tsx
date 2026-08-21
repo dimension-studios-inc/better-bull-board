@@ -1,48 +1,48 @@
-"use client";
+"use client"
 
-import { useQuery } from "@tanstack/react-query";
-import { formatDuration } from "date-fns";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Info, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { createParser, parseAsString, useQueryStates } from "nuqs";
-import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Skeleton } from "~/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
-import { apiFetch, cn, smartFormatDuration } from "~/lib/utils/client";
-import { QueueActions } from "./queue-actions";
-import { QueueMiniChart } from "./queue-mini-chart";
-import { type TimePeriod, TimePeriodSelector } from "./time-period-selector";
+import { useQuery } from "@tanstack/react-query"
+import { formatDuration } from "date-fns"
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Info, Search } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
+import { useRouter } from "next/navigation"
+import { createParser, parseAsString, useQueryStates } from "nuqs"
+import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas"
+import { Badge } from "~/components/ui/badge"
+import { Button } from "~/components/ui/button"
+import { Input } from "~/components/ui/input"
+import { Skeleton } from "~/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
+import { apiFetch, cn, smartFormatDuration } from "~/lib/utils/client"
+import { QueueActions } from "./queue-actions"
+import { QueueMiniChart } from "./queue-mini-chart"
+import { type TimePeriod, TimePeriodSelector } from "./time-period-selector"
 
-type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string };
-type SortBy = "waitingJobs" | "activeJobs" | "pressure";
-type SortDirection = "asc" | "desc";
+type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string }
+type SortBy = "waitingJobs" | "activeJobs" | "pressure"
+type SortDirection = "asc" | "desc"
 
 const PRESSURE_DESCRIPTION =
-  "Average time completed or failed jobs spend waiting before starting, from completed hourly rollups in the selected time period.";
+  "Average time completed or failed jobs spend waiting before starting, from completed hourly rollups in the selected time period."
 
 const sortableQueueColumns: { key: SortBy; label: string }[] = [
   { key: "waitingJobs", label: "Waiting Jobs" },
   { key: "activeJobs", label: "Active Jobs" },
-];
+]
 
 const parseAsCursor = createParser<QueueCursor>({
   parse: (value) => {
     try {
-      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"));
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"))
     } catch {
-      return null;
+      return null
     }
   },
   serialize: (value) => Buffer.from(JSON.stringify(value)).toString("base64"),
-});
+})
 
 export function QueuesTable() {
-  const router = useRouter();
+  const router = useRouter()
   const [urlState, setUrlState] = useQueryStates({
     search: parseAsString.withDefault(""),
     timePeriod: parseAsString.withDefault("1"),
@@ -50,12 +50,12 @@ export function QueuesTable() {
     cursorDirection: parseAsString.withDefault("next"),
     sortBy: parseAsString.withDefault("waitingJobs"),
     sortDirection: parseAsString.withDefault("desc"),
-  });
+  })
 
-  const cursorDirection: "next" | "prev" = urlState.cursorDirection === "prev" ? "prev" : "next";
+  const cursorDirection: "next" | "prev" = urlState.cursorDirection === "prev" ? "prev" : "next"
   const sortBy: SortBy =
-    urlState.sortBy === "activeJobs" ? "activeJobs" : urlState.sortBy === "pressure" ? "pressure" : "waitingJobs";
-  const sortDirection: SortDirection = urlState.sortDirection === "asc" ? "asc" : "desc";
+    urlState.sortBy === "activeJobs" ? "activeJobs" : urlState.sortBy === "pressure" ? "pressure" : "waitingJobs"
+  const sortDirection: SortDirection = urlState.sortDirection === "asc" ? "asc" : "desc"
   const options = {
     cursor: urlState.cursor,
     cursorDirection,
@@ -63,11 +63,11 @@ export function QueuesTable() {
     sortBy,
     sortDirection,
     timePeriod: urlState.timePeriod as TimePeriod,
-  };
+  }
 
   const handleQueueClick = (queueName: string) => {
-    router.push(`/runs?queue=${encodeURIComponent(queueName)}`);
-  };
+    router.push(`/runs?queue=${encodeURIComponent(queueName)}`)
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["queues/table", options],
@@ -75,31 +75,31 @@ export function QueuesTable() {
       apiRoute: getQueuesTableApiRoute,
       body: options,
     }),
-  });
+  })
 
   const handleNextPage = () => {
     if (data?.nextCursor) {
-      setUrlState({ cursor: data.nextCursor, cursorDirection: "next" });
+      setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
     }
-  };
+  }
 
   const handlePrevPage = () => {
     if (data?.prevCursor) {
-      setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" });
+      setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
     } else {
-      setUrlState({ cursor: null, cursorDirection: "next" });
+      setUrlState({ cursor: null, cursorDirection: "next" })
     }
-  };
+  }
 
   const handleSearchChange = (search: string) => {
     // Reset pagination when search changes
-    setUrlState({ cursor: null, cursorDirection: "next", search });
-  };
+    setUrlState({ cursor: null, cursorDirection: "next", search })
+  }
 
   const handleTimePeriodChange = (timePeriod: TimePeriod) => {
     // Reset pagination when time period changes
-    setUrlState({ cursor: null, cursorDirection: "next", timePeriod });
-  };
+    setUrlState({ cursor: null, cursorDirection: "next", timePeriod })
+  }
 
   const handleSort = (nextSortBy: SortBy) => {
     setUrlState({
@@ -107,16 +107,16 @@ export function QueuesTable() {
       cursorDirection: "next",
       sortBy: nextSortBy,
       sortDirection: sortBy === nextSortBy && sortDirection === "desc" ? "asc" : "desc",
-    });
-  };
+    })
+  }
 
   const getSortIcon = (key: SortBy) => {
-    if (sortBy !== key) return <ArrowUpDown className="size-3.5 text-muted-foreground" />;
-    if (sortDirection === "asc") return <ArrowUp className="size-3.5" />;
-    return <ArrowDown className="size-3.5" />;
-  };
+    if (sortBy !== key) return <ArrowUpDown className="size-3.5 text-muted-foreground" />
+    if (sortDirection === "asc") return <ArrowUp className="size-3.5" />
+    return <ArrowDown className="size-3.5" />
+  }
 
-  const selectedQueueStats = data?.queues.length === 1 ? data.queues[0] : undefined;
+  const selectedQueueStats = data?.queues.length === 1 ? data.queues[0] : undefined
 
   return (
     <div className="space-y-4">
@@ -268,5 +268,5 @@ export function QueuesTable() {
         </Table>
       </div>
     </div>
-  );
+  )
 }

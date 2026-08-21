@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react";
-import Link from "next/link";
-import type { z } from "zod";
-import type { dashboardEnhancedStatsOutput } from "~/app/api/dashboard/summary/schemas";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Skeleton } from "~/components/ui/skeleton";
-import { cn } from "~/lib/utils/client";
+import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react"
+import Link from "next/link"
+import type { z } from "zod"
+import type { dashboardEnhancedStatsOutput } from "~/app/api/dashboard/summary/schemas"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { Skeleton } from "~/components/ui/skeleton"
+import { cn } from "~/lib/utils/client"
 
 interface EnhancedStatsCardsProps {
-  days: number;
-  stats: z.output<typeof dashboardEnhancedStatsOutput> | undefined;
-  isLoading: boolean;
+  days: number
+  stats: z.output<typeof dashboardEnhancedStatsOutput> | undefined
+  isLoading: boolean
 }
 
 export function EnhancedStatsCards({ days, stats, isLoading }: EnhancedStatsCardsProps) {
@@ -48,7 +48,7 @@ export function EnhancedStatsCards({ days, stats, isLoading }: EnhancedStatsCard
       color: "text-red-600",
       href: "/runs?status=failed",
     },
-  ];
+  ]
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -76,5 +76,5 @@ export function EnhancedStatsCards({ days, stats, isLoading }: EnhancedStatsCard
         </Link>
       ))}
     </div>
-  );
+  )
 }

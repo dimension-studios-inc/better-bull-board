@@ -1,8 +1,8 @@
-import { jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db";
-import { db } from "@better-bull-board/db/server";
-import { sql } from "drizzle-orm";
-import { createAuthenticatedApiRoute } from "~/lib/utils/server";
-import { getQueuesStatsApiRoute } from "./schemas";
+import { jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db"
+import { db } from "@better-bull-board/db/server"
+import { sql } from "drizzle-orm"
+import { createAuthenticatedApiRoute } from "~/lib/utils/server"
+import { getQueuesStatsApiRoute } from "./schemas"
 
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getQueuesStatsApiRoute,
@@ -29,23 +29,23 @@ export const POST = createAuthenticatedApiRoute({
       from ${queuesTable} q
       left join scheduler_queues s on s.queue_id = q.id;
   `,
-    );
+    )
     const queues = (
       result.rows as {
-        total_queues: string;
-        active_queues: string;
-        queues_with_scheduler: string;
+        total_queues: string
+        active_queues: string
+        queues_with_scheduler: string
       }[]
-    )[0];
+    )[0]
 
     if (!queues) {
-      throw new Error("Failed to get queues stats");
+      throw new Error("Failed to get queues stats")
     }
 
     return {
       total: Number(queues.total_queues),
       active: Number(queues.active_queues),
       withScheduler: Number(queues.queues_with_scheduler),
-    };
+    }
   },
-});
+})

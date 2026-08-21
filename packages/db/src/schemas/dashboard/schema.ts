@@ -1,5 +1,5 @@
-import { sql } from "drizzle-orm";
-import { bigint, integer, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm"
+import { bigint, integer, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core"
 
 export const dashboardQueueHourlyStatsTable = pgTable(
   "dashboard_queue_hourly_stats",
@@ -20,4 +20,4 @@ export const dashboardQueueHourlyStatsTable = pgTable(
     updatedAt: timestamp("updated_at", { precision: 3, mode: "date" }).notNull().default(sql`now()`),
   },
   (t) => [primaryKey({ name: "pk_dashboard_queue_hourly_stats", columns: [t.bucketStart, t.queue] })],
-);
+)

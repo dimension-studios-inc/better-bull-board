@@ -1,6 +1,6 @@
-import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { sql } from "drizzle-orm"
+import { index, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core"
+import { createInsertSchema, createSelectSchema } from "drizzle-zod"
 
 export const mcpOAuthClientsTable = pgTable(
   "mcp_oauth_clients",
@@ -19,7 +19,7 @@ export const mcpOAuthClientsTable = pgTable(
     updatedAt: timestamp("updated_at", { precision: 3, mode: "date" }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   },
   (t) => [uniqueIndex("ux_mcp_oauth_clients_client_id").on(t.clientId)],
-);
+)
 
 export const mcpOAuthAuthorizationCodesTable = pgTable(
   "mcp_oauth_authorization_codes",
@@ -41,7 +41,7 @@ export const mcpOAuthAuthorizationCodesTable = pgTable(
     uniqueIndex("ux_mcp_oauth_authorization_codes_code_hash").on(t.codeHash),
     index("ix_mcp_oauth_authorization_codes_client_id").on(t.clientId),
   ],
-);
+)
 
 export const mcpOAuthTokensTable = pgTable(
   "mcp_oauth_tokens",
@@ -66,11 +66,11 @@ export const mcpOAuthTokensTable = pgTable(
     uniqueIndex("ux_mcp_oauth_tokens_refresh_token_hash").on(t.refreshTokenHash),
     index("ix_mcp_oauth_tokens_client_id").on(t.clientId),
   ],
-);
+)
 
-export const mcpOAuthClientsInsertSchema = createInsertSchema(mcpOAuthClientsTable);
-export const mcpOAuthClientsSelectSchema = createSelectSchema(mcpOAuthClientsTable);
-export const mcpOAuthAuthorizationCodesInsertSchema = createInsertSchema(mcpOAuthAuthorizationCodesTable);
-export const mcpOAuthAuthorizationCodesSelectSchema = createSelectSchema(mcpOAuthAuthorizationCodesTable);
-export const mcpOAuthTokensInsertSchema = createInsertSchema(mcpOAuthTokensTable);
-export const mcpOAuthTokensSelectSchema = createSelectSchema(mcpOAuthTokensTable);
+export const mcpOAuthClientsInsertSchema = createInsertSchema(mcpOAuthClientsTable)
+export const mcpOAuthClientsSelectSchema = createSelectSchema(mcpOAuthClientsTable)
+export const mcpOAuthAuthorizationCodesInsertSchema = createInsertSchema(mcpOAuthAuthorizationCodesTable)
+export const mcpOAuthAuthorizationCodesSelectSchema = createSelectSchema(mcpOAuthAuthorizationCodesTable)
+export const mcpOAuthTokensInsertSchema = createInsertSchema(mcpOAuthTokensTable)
+export const mcpOAuthTokensSelectSchema = createSelectSchema(mcpOAuthTokensTable)

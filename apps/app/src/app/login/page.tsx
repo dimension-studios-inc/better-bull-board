@@ -1,20 +1,20 @@
-"use client";
+"use client"
 
-import { useId, useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
+import { useId, useState } from "react"
+import { Button } from "~/components/ui/button"
+import { Card } from "~/components/ui/card"
+import { Input } from "~/components/ui/input"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+    e.preventDefault()
+    setLoading(true)
+    setError("")
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -23,26 +23,26 @@ export default function LoginPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success) {
-        const searchParams = new URLSearchParams(window.location.search);
-        const nextPath = searchParams.get("next");
-        window.location.href = nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/";
+        const searchParams = new URLSearchParams(window.location.search)
+        const nextPath = searchParams.get("next")
+        window.location.href = nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/"
       } else {
-        setError(data.error || "Login failed");
+        setError(data.error || "Login failed")
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError("Network error. Please try again.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const emailId = useId();
-  const passwordId = useId();
+  const emailId = useId()
+  const passwordId = useId()
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -89,5 +89,5 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
-  );
+  )
 }

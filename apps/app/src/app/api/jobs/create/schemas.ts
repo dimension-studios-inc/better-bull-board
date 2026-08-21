@@ -1,7 +1,7 @@
-import z from "zod";
-import { registerApiRoute } from "~/lib/utils/client";
+import z from "zod"
+import { registerApiRoute } from "~/lib/utils/client"
 
-export const createJobInput = z.object({
+const createJobInput = z.object({
   queueName: z.string().trim().min(1, "Queue name is required"),
   jobName: z.string().trim().min(1, "Job name is required"),
   data: z.record(z.string(), z.unknown()).optional().default({}),
@@ -12,17 +12,17 @@ export const createJobInput = z.object({
       attempts: z.number().min(1).optional().default(1),
     })
     .optional(),
-});
+})
 
-export const createJobOutput = z.object({
+const createJobOutput = z.object({
   success: z.boolean(),
   jobId: z.string(),
   message: z.string(),
-});
+})
 
 export const createJobApiRoute = registerApiRoute({
   route: "/api/jobs/create",
   method: "POST",
   inputSchema: createJobInput,
   outputSchema: createJobOutput,
-});
+})

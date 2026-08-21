@@ -1,75 +1,75 @@
-"use client";
+"use client"
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { createParser, parseAsString, useQueryStates } from "nuqs";
-import { useMemo, useRef, useState } from "react";
-import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas";
-import { Badge } from "~/components/ui/badge";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
-import { TruncatedTooltip } from "~/components/ui/truncated-tooltip";
-import useDebounce from "~/hooks/use-debounce";
-import { apiFetch, cn } from "~/lib/utils/client";
-import { BulkActions } from "./bulk-actions";
-import { RunActions } from "./run-actions";
-import { RunsFilters } from "./runs-filters";
-import type { TRunFilters, TRunFilterUpdate } from "./types";
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns"
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
+import { useRouter } from "next/navigation"
+import { createParser, parseAsString, useQueryStates } from "nuqs"
+import { useMemo, useRef, useState } from "react"
+import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
+import { Badge } from "~/components/ui/badge"
+import { Checkbox } from "~/components/ui/checkbox"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
+import { TruncatedTooltip } from "~/components/ui/truncated-tooltip"
+import useDebounce from "~/hooks/use-debounce"
+import { apiFetch, cn } from "~/lib/utils/client"
+import { BulkActions } from "./bulk-actions"
+import { RunActions } from "./run-actions"
+import { RunsFilters } from "./runs-filters"
+import type { TRunFilters, TRunFilterUpdate } from "./types"
 
 const parseAsCursor = createParser<NonNullable<TRunFilters["cursor"]>>({
   parse: (value) => {
     try {
-      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"));
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"))
     } catch {
-      return null;
+      return null
     }
   },
   serialize: (value) => Buffer.from(JSON.stringify(value)).toString("base64"),
-});
+})
 
-const formatUtcTimestamp = (value: Date) => `${value.toISOString().slice(0, 19).replace("T", " ")} UTC`;
+const formatUtcTimestamp = (value: Date) => `${value.toISOString().slice(0, 19).replace("T", " ")} UTC`
 
 const formatRunTimestamp = (value: Date) => ({
   absolute: formatUtcTimestamp(value),
   relative: formatDistanceToNowStrict(value, { addSuffix: true }),
-});
+})
 
 type RunTimestampProps = {
-  value: Date;
-};
+  value: Date
+}
 
 function RunTimestamp({ value }: RunTimestampProps) {
-  const timestamp = formatRunTimestamp(value);
+  const timestamp = formatRunTimestamp(value)
 
   return (
     <time dateTime={value.toISOString()} title={timestamp.absolute}>
       <span className="block truncate">{timestamp.relative}</span>
       <span className="block truncate text-xs text-muted-foreground">{timestamp.absolute}</span>
     </time>
-  );
+  )
 }
 
 const isInteractiveRowTarget = (target: EventTarget | null) =>
-  target instanceof Element && !!target.closest("a,button,input,select,textarea,[role='checkbox']");
+  target instanceof Element && !!target.closest("a,button,input,select,textarea,[role='checkbox']")
 
 const openRunInNewPage = (runPath: string) => {
-  window.open(runPath, "_blank", "noopener,noreferrer");
-};
+  window.open(runPath, "_blank", "noopener,noreferrer")
+}
 
 const handleRowAuxClick = (event: React.MouseEvent<HTMLTableRowElement>, runPath: string) => {
-  if (event.button !== 1 || isInteractiveRowTarget(event.target)) return;
+  if (event.button !== 1 || isInteractiveRowTarget(event.target)) return
 
-  event.preventDefault();
-  openRunInNewPage(runPath);
-};
+  event.preventDefault()
+  openRunInNewPage(runPath)
+}
 
 export function RunsTable() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
+  const router = useRouter()
+  const queryClient = useQueryClient()
   const [urlFilters, setUrlFilters] = useQueryStates({
     queue: parseAsString.withDefault("all"),
     status: parseAsString.withDefault("all"),
@@ -81,15 +81,15 @@ export function RunsTable() {
     sortDirection: parseAsString.withDefault("desc"),
     cursor: parseAsCursor,
     cursorDirection: parseAsString.withDefault("next"),
-  });
+  })
 
-  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
-  const [liveUpdatesPaused, setLiveUpdatesPaused] = useState(false);
-  const cursorHistoryRef = useRef<TRunFilters["cursor"][]>([]);
-  const cursorCreatedAt = urlFilters.cursor?.createdAt;
-  const cursorJobId = urlFilters.cursor?.jobId;
-  const cursorId = urlFilters.cursor?.id;
-  const cursorDurationMs = urlFilters.cursor?.durationMs;
+  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set())
+  const [liveUpdatesPaused, setLiveUpdatesPaused] = useState(false)
+  const cursorHistoryRef = useRef<TRunFilters["cursor"][]>([])
+  const cursorCreatedAt = urlFilters.cursor?.createdAt
+  const cursorJobId = urlFilters.cursor?.jobId
+  const cursorId = urlFilters.cursor?.id
+  const cursorDurationMs = urlFilters.cursor?.durationMs
 
   const filters: TRunFilters = useMemo(
     () => ({
@@ -128,11 +128,11 @@ export function RunsTable() {
       cursorDurationMs,
       urlFilters.cursorDirection,
     ],
-  );
+  )
 
-  const debouncedFilters = useDebounce(filters, 300);
-  const queryFilters = filters.cursor || filters.cursorDirection === "prev" ? filters : debouncedFilters;
-  const liveQueryKey = useMemo(() => ["jobs/table", queryFilters] as const, [queryFilters]);
+  const debouncedFilters = useDebounce(filters, 300)
+  const queryFilters = filters.cursor || filters.cursorDirection === "prev" ? filters : debouncedFilters
+  const liveQueryKey = useMemo(() => ["jobs/table", queryFilters] as const, [queryFilters])
 
   const { data: runs, isFetching } = useQuery({
     queryKey: liveUpdatesPaused ? (["jobs/table-paused", queryFilters] as const) : liveQueryKey,
@@ -142,111 +142,111 @@ export function RunsTable() {
     }),
     initialData: liveUpdatesPaused ? () => queryClient.getQueryData(liveQueryKey) : undefined,
     staleTime: liveUpdatesPaused ? Number.POSITIVE_INFINITY : undefined,
-  });
+  })
 
   const handleFiltersChange = (newFilters: TRunFilterUpdate) => {
-    const isPaginationOnly = Object.keys(newFilters).every((key) => key === "cursor" || key === "cursorDirection");
-    const urlUpdate: Record<string, unknown> = isPaginationOnly ? {} : { cursor: null, cursorDirection: "next" };
+    const isPaginationOnly = Object.keys(newFilters).every((key) => key === "cursor" || key === "cursorDirection")
+    const urlUpdate: Record<string, unknown> = isPaginationOnly ? {} : { cursor: null, cursorDirection: "next" }
 
     if (isPaginationOnly && newFilters.cursorDirection === "next") {
-      cursorHistoryRef.current.push(filters.cursor);
+      cursorHistoryRef.current.push(filters.cursor)
     }
 
     if (isPaginationOnly && newFilters.cursorDirection === "prev") {
-      const previousCursor = cursorHistoryRef.current.pop();
+      const previousCursor = cursorHistoryRef.current.pop()
 
       if (previousCursor !== undefined) {
-        newFilters = { cursor: previousCursor, cursorDirection: "next" };
+        newFilters = { cursor: previousCursor, cursorDirection: "next" }
       }
     }
 
     if (!isPaginationOnly) {
-      cursorHistoryRef.current = [];
+      cursorHistoryRef.current = []
     }
 
     for (const [key, value] of Object.entries(newFilters)) {
       if (key === "tags" && Array.isArray(value)) {
-        urlUpdate[key] = value.length > 0 ? value.join(",") : "";
+        urlUpdate[key] = value.length > 0 ? value.join(",") : ""
       } else {
-        urlUpdate[key] = value;
+        urlUpdate[key] = value
       }
     }
 
-    setSelectedJobIds(new Set());
-    setUrlFilters(urlUpdate);
-  };
+    setSelectedJobIds(new Set())
+    setUrlFilters(urlUpdate)
+  }
 
-  const jobs = runs?.jobs || [];
+  const jobs = runs?.jobs || []
 
   const selectedJobs = useMemo(() => {
-    return jobs.filter((job) => selectedJobIds.has(job.jobId));
-  }, [jobs, selectedJobIds]);
+    return jobs.filter((job) => selectedJobIds.has(job.jobId))
+  }, [jobs, selectedJobIds])
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedJobIds(new Set(jobs.map((job) => job.jobId)));
+      setSelectedJobIds(new Set(jobs.map((job) => job.jobId)))
     } else {
-      setSelectedJobIds(new Set());
+      setSelectedJobIds(new Set())
     }
-  };
+  }
 
   const handleSelectJob = (jobId: string, checked: boolean) => {
-    const newSelection = new Set(selectedJobIds);
+    const newSelection = new Set(selectedJobIds)
     if (checked) {
-      newSelection.add(jobId);
+      newSelection.add(jobId)
     } else {
-      newSelection.delete(jobId);
+      newSelection.delete(jobId)
     }
-    setSelectedJobIds(newSelection);
-  };
+    setSelectedJobIds(newSelection)
+  }
 
-  const isAllSelected = jobs.length > 0 && selectedJobIds.size === jobs.length;
-  const isPartiallySelected = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length;
+  const isAllSelected = jobs.length > 0 && selectedJobIds.size === jobs.length
+  const isPartiallySelected = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
       case "failed":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
       case "active":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
       case "waiting":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
       case "delayed":
       case "prioritized":
       case "waiting-children":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300"
       case "unknown":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
     }
-  };
+  }
 
   const handleRowClick = (event: React.MouseEvent<HTMLTableRowElement>, runPath: string) => {
-    if (isInteractiveRowTarget(event.target)) return;
+    if (isInteractiveRowTarget(event.target)) return
 
     if (event.metaKey || event.ctrlKey) {
-      openRunInNewPage(runPath);
-      return;
+      openRunInNewPage(runPath)
+      return
     }
 
-    router.push(runPath);
-  };
+    router.push(runPath)
+  }
 
   const handleDurationSort = () => {
     handleFiltersChange({
       sortBy: "durationMs",
       sortDirection: filters.sortBy === "durationMs" && filters.sortDirection === "desc" ? "asc" : "desc",
-    });
-  };
+    })
+  }
 
   const getDurationSortIcon = () => {
-    if (filters.sortBy !== "durationMs") return <ArrowUpDown className="size-3.5 text-muted-foreground" />;
-    if (filters.sortDirection === "asc") return <ArrowUp className="size-3.5" />;
-    return <ArrowDown className="size-3.5" />;
-  };
+    if (filters.sortBy !== "durationMs") return <ArrowUpDown className="size-3.5 text-muted-foreground" />
+    if (filters.sortDirection === "asc") return <ArrowUp className="size-3.5" />
+    return <ArrowDown className="size-3.5" />
+  }
 
   return (
     <div className="space-y-4">
@@ -295,7 +295,7 @@ export function RunsTable() {
           </TableHeader>
           <TableBody>
             {jobs.map((run) => {
-              const runPath = `/runs/${run.id}`;
+              const runPath = `/runs/${run.id}`
 
               return (
                 <AnimatePresence key={`${run.id}-${run.createdAt.getTime()}`}>
@@ -318,7 +318,7 @@ export function RunsTable() {
                           checked={selectedJobIds.has(run.jobId)}
                           onCheckedChange={(checked) => handleSelectJob(run.jobId, checked as boolean)}
                           onClick={(e) => {
-                            e.stopPropagation();
+                            e.stopPropagation()
                           }}
                           aria-label={`Select job ${run.jobId}`}
                         />
@@ -388,11 +388,11 @@ export function RunsTable() {
                     </TableCell>
                   </motion.tr>
                 </AnimatePresence>
-              );
+              )
             })}
           </TableBody>
         </Table>
       </div>
     </div>
-  );
+  )
 }

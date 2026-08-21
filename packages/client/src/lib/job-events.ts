@@ -1,9 +1,9 @@
-import type { Job } from "bullmq";
-import type Redis from "ioredis";
+import type { Job } from "bullmq"
+import type Redis from "ioredis"
 
-export const JOB_SYNC_STREAM_KEY = "bbb:worker:jobs";
+export const JOB_SYNC_STREAM_KEY = "bbb:worker:jobs"
 
-export type JobSyncPhase = "waiting" | "active" | "terminal" | "snapshot";
+export type JobSyncPhase = "waiting" | "active" | "terminal" | "snapshot"
 
 export const emitJobSyncEvent = async <
   // biome-ignore lint/suspicious/noExplicitAny: extends bullmq
@@ -20,13 +20,13 @@ export const emitJobSyncEvent = async <
   phase,
   state,
 }: {
-  redis: Redis;
-  workerId?: string;
-  queueName: string;
-  job: Job<DataType, ResultType, NameType>;
-  tags?: string[];
-  phase: JobSyncPhase;
-  state?: string;
+  redis: Redis
+  workerId?: string
+  queueName: string
+  job: Job<DataType, ResultType, NameType>
+  tags?: string[]
+  phase: JobSyncPhase
+  state?: string
 }) => {
   const payload = JSON.stringify({
     version: 1,
@@ -36,7 +36,7 @@ export const emitJobSyncEvent = async <
     state,
     tags,
     job: job.toJSON(),
-  });
+  })
 
-  await redis.xadd(JOB_SYNC_STREAM_KEY, "*", "payload", payload);
-};
+  await redis.xadd(JOB_SYNC_STREAM_KEY, "*", "payload", payload)
+}
