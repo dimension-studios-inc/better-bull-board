@@ -1,11 +1,11 @@
 import z from "zod"
 import { registerApiRoute } from "~/lib/utils/client"
 
-export const getTagsInput = z.object({
+const getTagsInput = z.object({
   search: z.string().optional(),
 })
 
-export const getTagsOutput = z.object({
+const getTagsOutput = z.object({
   tags: z.array(z.string()),
 })
 

@@ -1,41 +1,24 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignore": ["**/debug/**"],
   "ignoreWorkspaces": ["packages/_template"],
-  "exclude": ["types"],
-  "ignoreUnresolved": ["next"],
-  "ignoreFiles": [
-    "apps/app/src/app/_components/colors.tsx",
-    "apps/app/src/app/_components/stats-card.tsx",
-    "apps/app/src/components/job-trend-chart.tsx",
-    "apps/app/src/components/ui/select.tsx"
-  ],
-  "ignoreIssues": {
-    "apps/app/src/components/ui/**": ["exports"],
-    "apps/app/src/app/api/**/schemas.ts": ["exports"],
-    "apps/app/src/hooks/use-websocket.tsx": ["exports"],
-    "apps/app/src/lib/auth/server.ts": ["exports"],
-    "apps/app/src/lib/health-checks.ts": ["exports"],
-    "apps/app/src/lib/utils/server.ts": ["exports"]
-  },
   "workspaces": {
-    "packages/db": {
-      "drizzle": {
-        "config": []
-      },
-      "entry": ["drizzle.config.ts"]
-    },
-    "packages/bull-demo": {
-      "ignoreDependencies": ["@better-bull-board/db", "dotenv"]
-    },
-    "packages/client": {
-      "ignoreDependencies": ["dotenv"]
+    "apps/app": {
+      "entry": ["src/components/ui/**.{ts,tsx}"]
     },
     "apps/ingest": {
-      "ignoreDependencies": ["dotenv"]
+      "entry": ["debug/index.ts"]
     },
-    "apps/app": {
-      "ignoreDependencies": ["@radix-ui/react-select"]
+    "packages/bull-demo": {
+      "entry": ["debug/*.ts"]
+    },
+    "packages/client": {
+      "entry": ["debug/index.ts"]
+    },
+    "packages/db": {
+      "entry": ["debug/index.ts"]
+    },
+    "packages/typescript-config": {
+      "ignoreUnresolved": ["next"]
     }
   }
 }
