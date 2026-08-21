@@ -45,7 +45,7 @@
   },
   "type": "module",
   "devDependencies": {
-    "@types/node": "25.6.0",
+    "@types/node": "25.9.5",
     "tsx": "4.21.0"
   }
 }
