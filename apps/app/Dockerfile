@@ -15,7 +15,7 @@ ENV HOSTNAME="0.0.0.0"
 # Pin matches package.json packageManager (base has no package.json yet).
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME/bin:$PATH"
-RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
+RUN corepack enable && corepack prepare pnpm@12.0.0 --activate
 
 #* ---- Prepare stage ----
 FROM base AS prepare
