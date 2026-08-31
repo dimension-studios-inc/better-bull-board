@@ -26,14 +26,15 @@ RUN pnpm dlx turbo@2.10.11 prune @better-bull-board/app --docker
 # Install full dependencies (including devDependencies) because `next build` needs
 # type definitions, PostCSS plugins, and other build-time tooling. The final image
 # only copies Next's standalone output, so devDependencies never leak into runtime.
-# `--prod=false` is required because `NODE_ENV=production` (set in `base`) otherwise
-# makes pnpm skip devDependencies implicitly.
+# `NODE_ENV=development` overrides `production` from `base`; pnpm 12 otherwise
+# skips devDependencies, and `--prod` is a flag with no `--prod=false` form.
 # `--ignore-scripts` skips the root `lefthook install` prepare hook (git/lefthook
 # are not available in this image, and lefthook is a devDependency).
 FROM base AS installer
+ENV NODE_ENV=development
 COPY --from=prepare /app/out/json/ .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-  pnpm ci --ignore-scripts --prod=false
+  pnpm ci --ignore-scripts
 COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
