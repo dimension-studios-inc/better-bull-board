@@ -44,7 +44,7 @@
     "recharts": "3.10.1",
     "sonner": "2.0.8",
     "tailwind-merge": "3.6.0",
-    "zod": "4.4.3",
+    "zod": "4.5.4",
     "shiki": "4.4.3",
     "tailwindcss": "4.3.3",
     "@tailwindcss/postcss": "4.3.3",
