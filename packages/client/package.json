@@ -22,7 +22,7 @@
     "type-check": "tsc --noEmit",
     "debug": "dotenv -e .env -- tsx debug/index.ts",
     "prepublishOnly": "pnpm run build",
-    "pack:check": "pnpm pack --dry-run --json | grep -q '\"path\": \"dist/index.d.mts\"'"
+    "pack:check": "pnpm run build && pnpm pack --dry-run --json | grep -q '\"path\": \"dist/index.d.mts\"'"
   },
   "license": "ISC",
   "dependencies": {
