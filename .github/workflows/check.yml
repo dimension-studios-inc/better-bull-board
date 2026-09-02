@@ -41,5 +41,9 @@ jobs:
       - name: Run type check
         run: pnpm type-check
 
+      - name: Verify client pack includes types
+        working-directory: packages/client
+        run: pnpm run build && pnpm run pack:check
+
       - name: Run knip
         run: pnpm knip
