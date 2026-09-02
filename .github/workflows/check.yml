@@ -43,7 +43,7 @@ jobs:
 
       - name: Verify client pack includes types
         working-directory: packages/client
-        run: pnpm run build && pnpm run pack:check
+        run: pnpm run pack:check
 
       - name: Run knip
         run: pnpm knip
