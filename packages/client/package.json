@@ -3,7 +3,10 @@
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.mts",
-  "version": "0.1.5",
+  "version": "0.1.6",
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dimension-studios-inc/better-bull-board.git",
@@ -18,7 +21,8 @@
     "dev": "tsdown --watch",
     "type-check": "tsc --noEmit",
     "debug": "dotenv -e .env -- tsx debug/index.ts",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "pack:check": "pnpm pack --dry-run --json | grep -q '\"path\": \"dist/index.d.mts\"'"
   },
   "license": "ISC",
   "dependencies": {
