@@ -5,8 +5,10 @@ Developer documentation for integrating Better Bull Board with your BullMQ worke
 ## Installation
 
 ```bash
-pnpm add @better-bull-board/client
+pnpm add @better-bull-board/client bullmq
 ```
+
+`bullmq` is a peer dependency (`^6`). Install the version your app uses; it does not need to match this package's pin.
 
 ## Usage
 
