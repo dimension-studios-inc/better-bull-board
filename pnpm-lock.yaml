@@ -428,9 +428,6 @@ importers:
       '@t3-oss/env-core':
         specifier: 0.13.11
         version: 0.13.11(typescript@7.0.2)(zod@4.5.4)
-      bullmq:
-        specifier: 6.3.3
-        version: 6.3.3(ioredis@6.0.0)(pg@8.23.0)
       ioredis:
         specifier: 6.0.0
         version: 6.0.0
@@ -444,6 +441,9 @@ importers:
       '@types/node':
         specifier: 25.9.5
         version: 25.9.5
+      bullmq:
+        specifier: 6.3.3
+        version: 6.3.3(ioredis@6.0.0)(pg@8.23.0)
       dotenv-cli:
         specifier: 11.0.0
         version: 11.0.0
