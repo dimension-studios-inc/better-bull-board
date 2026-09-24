@@ -204,7 +204,7 @@ importers:
         version: link:../../packages/mcp
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
-        version: 1.30.0(zod@4.5.4)
+        version: 1.30.0(zod@4.6.1)
       '@radix-ui/react-collapsible':
         specifier: 1.1.20
         version: 1.1.20(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -234,7 +234,7 @@ importers:
         version: 1.3.3
       '@t3-oss/env-nextjs':
         specifier: 0.13.11
-        version: 0.13.11(typescript@7.0.2)(zod@4.5.4)
+        version: 0.13.11(typescript@7.0.2)(zod@4.6.1)
       '@tailwindcss/postcss':
         specifier: 4.3.3
         version: 4.3.3
@@ -311,8 +311,8 @@ importers:
         specifier: 1.4.0
         version: 1.4.0
       zod:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.6.1
+        version: 4.6.1
     devDependencies:
       '@better-bull-board/typescript-config':
         specifier: workspace:*
@@ -343,7 +343,7 @@ importers:
         version: 1.3.3
       '@t3-oss/env-core':
         specifier: 0.13.11
-        version: 0.13.11(typescript@7.0.2)(zod@4.5.4)
+        version: 0.13.11(typescript@7.0.2)(zod@4.6.1)
       bullmq:
         specifier: 6.3.4
         version: 6.3.4(ioredis@6.0.0)(pg@8.23.0)
@@ -369,8 +369,8 @@ importers:
         specifier: 8.21.3
         version: 8.21.3
       zod:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.6.1
+        version: 4.6.1
     devDependencies:
       '@better-bull-board/typescript-config':
         specifier: workspace:*
@@ -404,13 +404,13 @@ importers:
         version: 1.3.3
       '@t3-oss/env-core':
         specifier: 0.13.11
-        version: 0.13.11(typescript@7.0.2)(zod@4.5.4)
+        version: 0.13.11(typescript@7.0.2)(zod@4.6.1)
       dotenv:
         specifier: 17.4.2
         version: 17.4.2
       zod:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.6.1
+        version: 4.6.1
     devDependencies:
       '@better-bull-board/typescript-config':
         specifier: workspace:*
@@ -444,7 +444,7 @@ importers:
         version: 1.3.3
       '@t3-oss/env-core':
         specifier: 0.13.11
-        version: 0.13.11(typescript@7.0.2)(zod@4.5.4)
+        version: 0.13.11(typescript@7.0.2)(zod@4.6.1)
       bullmq:
         specifier: 6.3.4
         version: 6.3.4(ioredis@6.0.0)(pg@8.23.0)
@@ -455,8 +455,8 @@ importers:
         specifier: 6.0.0
         version: 6.0.0
       zod:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.6.1
+        version: 4.6.1
     devDependencies:
       '@better-bull-board/typescript-config':
         specifier: workspace:*
@@ -484,13 +484,13 @@ importers:
         version: 1.3.3
       '@t3-oss/env-core':
         specifier: 0.13.11
-        version: 0.13.11(typescript@7.0.2)(zod@4.5.4)
+        version: 0.13.11(typescript@7.0.2)(zod@4.6.1)
       ioredis:
         specifier: 6.0.0
         version: 6.0.0
       zod:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.6.1
+        version: 4.6.1
     devDependencies:
       '@better-bull-board/typescript-config':
         specifier: workspace:*
@@ -523,8 +523,8 @@ importers:
         specifier: 0.45.2
         version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)
       zod:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.6.1
+        version: 4.6.1
     devDependencies:
       '@better-bull-board/typescript-config':
         specifier: workspace:*
@@ -555,13 +555,13 @@ importers:
         version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)
       drizzle-zod:
         specifier: 0.8.3
-        version: 0.8.3(drizzle-orm@0.45.2(@types/pg@8.23.1)(pg@8.23.0))(zod@4.5.4)
+        version: 0.8.3(drizzle-orm@0.45.2(@types/pg@8.23.1)(pg@8.23.0))(zod@4.6.1)
       pg:
         specifier: 8.23.0
         version: 8.23.0
       zod:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.6.1
+        version: 4.6.1
     devDependencies:
       '@better-bull-board/typescript-config':
         specifier: workspace:*
@@ -595,10 +595,10 @@ importers:
         version: link:../core
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
-        version: 1.30.0(zod@4.5.4)
+        version: 1.30.0(zod@4.6.1)
       '@t3-oss/env-core':
         specifier: 0.13.11
-        version: 0.13.11(typescript@7.0.2)(zod@4.5.4)
+        version: 0.13.11(typescript@7.0.2)(zod@4.6.1)
       bullmq:
         specifier: 6.3.4
         version: 6.3.4(ioredis@6.0.0)(pg@8.23.0)
@@ -609,8 +609,8 @@ importers:
         specifier: 6.0.0
         version: 6.0.0
       zod:
-        specifier: 4.5.4
-        version: 4.5.4
+        specifier: 4.6.1
+        version: 4.6.1
     devDependencies:
       '@better-bull-board/typescript-config':
         specifier: workspace:*
@@ -4413,6 +4413,9 @@ packages:
   zod@4.5.4:
     resolution: {integrity: sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA==}
 
+  zod@4.6.1:
+    resolution: {integrity: sha512-341aRWQsve0rvronKNTqZpjmzdbUDlFuzHaI/XLg/Ej82qffDJRRfBTCuv7+9q/rMjB6LSLyEBnW4InJeMtt/Q==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -4986,7 +4989,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@modelcontextprotocol/sdk@1.30.0(zod@4.5.4)':
+  '@modelcontextprotocol/sdk@1.30.0(zod@4.6.1)':
     dependencies:
       '@hono/node-server': 1.19.14(hono@4.12.25)
       ajv: 8.20.0
@@ -5003,8 +5006,8 @@ snapshots:
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
-      zod: 4.5.4
-      zod-to-json-schema: 3.25.2(zod@4.5.4)
+      zod: 4.6.1
+      zod-to-json-schema: 3.25.2(zod@4.6.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -5633,17 +5636,17 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@t3-oss/env-core@0.13.11(typescript@7.0.2)(zod@4.5.4)':
+  '@t3-oss/env-core@0.13.11(typescript@7.0.2)(zod@4.6.1)':
     optionalDependencies:
       typescript: 7.0.2
-      zod: 4.5.4
+      zod: 4.6.1
 
-  '@t3-oss/env-nextjs@0.13.11(typescript@7.0.2)(zod@4.5.4)':
+  '@t3-oss/env-nextjs@0.13.11(typescript@7.0.2)(zod@4.6.1)':
     dependencies:
-      '@t3-oss/env-core': 0.13.11(typescript@7.0.2)(zod@4.5.4)
+      '@t3-oss/env-core': 0.13.11(typescript@7.0.2)(zod@4.6.1)
     optionalDependencies:
       typescript: 7.0.2
-      zod: 4.5.4
+      zod: 4.6.1
 
   '@tailwindcss/node@4.3.3':
     dependencies:
@@ -6208,10 +6211,10 @@ snapshots:
       '@types/pg': 8.23.1
       pg: 8.23.0
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@types/pg@8.23.1)(pg@8.23.0))(zod@4.5.4):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@types/pg@8.23.1)(pg@8.23.0))(zod@4.6.1):
     dependencies:
       drizzle-orm: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)
-      zod: 4.5.4
+      zod: 4.6.1
 
   dts-resolver@3.0.0(oxc-resolver@11.24.2):
     optionalDependencies:
@@ -7583,10 +7586,12 @@ snapshots:
       '@yuku-parser/binding-win32-arm64': 0.10.2
       '@yuku-parser/binding-win32-x64': 0.10.2
 
-  zod-to-json-schema@3.25.2(zod@4.5.4):
+  zod-to-json-schema@3.25.2(zod@4.6.1):
     dependencies:
-      zod: 4.5.4
+      zod: 4.6.1
 
   zod@4.5.4: {}
+
+  zod@4.6.1: {}
 
   zwitch@2.0.4: {}
