@@ -269,8 +269,8 @@ importers:
         specifier: 6.2.12
         version: 6.2.12
       lucide-react:
-        specifier: 1.43.0
-        version: 1.43.0(react@19.3.0)
+        specifier: 1.45.0
+        version: 1.45.0(react@19.3.0)
       motion:
         specifier: 13.2.0
         version: 13.2.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -3615,8 +3615,8 @@ packages:
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
-  lucide-react@1.43.0:
-    resolution: {integrity: sha512-ubtnda1fVK5ky0PNEpOmB0wiwhpZUyJiol4K14KCm+QKvuCkfUu54Et/rIjyupJpwiJ5Hg+BLQE86/GEsS+IgQ==}
+  lucide-react@1.45.0:
+    resolution: {integrity: sha512-yH1ubCAduho9UR7oJhRXIQXogksRILBiTuZC4/bQIGeB9JOkxMlSuEHyyZpo1Z3S0yWJO2KTSUZbjiNvVxeOUw==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -6688,7 +6688,7 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  lucide-react@1.43.0(react@19.3.0):
+  lucide-react@1.45.0(react@19.3.0):
     dependencies:
       react: 19.3.0
 
