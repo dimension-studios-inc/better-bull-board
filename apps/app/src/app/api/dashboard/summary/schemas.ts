@@ -2,7 +2,12 @@ import z from "zod"
 import { registerApiRoute } from "~/lib/utils/client"
 
 const getDashboardSummaryInput = z.object({
-  days: z.number().min(1).max(30),
+  // Period ending now, from the last 5 minutes up to the last 30 days
+  minutes: z
+    .number()
+    .int()
+    .min(5)
+    .max(30 * 24 * 60),
 })
 
 export const dashboardEnhancedStatsOutput = z.object({

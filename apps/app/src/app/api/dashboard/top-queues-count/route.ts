@@ -7,7 +7,7 @@ export const POST = createAuthenticatedApiRoute({
   async handler(input) {
     const days = input?.days || 1
     const limit = input?.limit || 10
-    const summary = await getDashboardSummary({ days })
+    const summary = await getDashboardSummary({ minutes: days * 24 * 60 })
     return summary.topQueuesCount.slice(0, limit)
   },
 })
