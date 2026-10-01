@@ -1,3 +1,3 @@
 export function PageContainer({ children }: { children: React.ReactNode }) {
-  return <div className="p-4 space-y-4 md:p-6 md:space-y-6">{children}</div>
+  return <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:gap-6 md:py-6 lg:px-6">{children}</div>
 }
