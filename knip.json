@@ -1,7 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreWorkspaces": ["packages/_template"],
-  "ignoreBinaries": ["view"],
   "workspaces": {
     "apps/app": {
       "entry": ["src/components/ui/**.{ts,tsx}"]
