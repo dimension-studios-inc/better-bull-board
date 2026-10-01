@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query"
 import { Activity, Clock, Server } from "lucide-react"
 import { getQueuesStatsApiRoute } from "~/app/api/queues/stats/schemas"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { Badge } from "~/components/ui/badge"
+import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 import { Skeleton } from "~/components/ui/skeleton"
-import { apiFetch, cn } from "~/lib/utils/client"
+import { apiFetch } from "~/lib/utils/client"
 
 export function QueueStats() {
   const { data: queues, isLoading } = useQuery({
@@ -42,21 +43,21 @@ export function QueueStats() {
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+    <div className="grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs @xl/main:grid-cols-3 dark:*:data-[slot=card]:bg-card">
       {stats.map((stat) => (
-        <Card key={stat.title}>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{stat.title}</CardTitle>
-            <stat.icon className={cn("size-4", stat.color)} />
+        <Card key={stat.title} className="@container/card">
+          <CardHeader>
+            <CardDescription>{stat.title}</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {isLoading ? <Skeleton className="h-8 w-16" /> : (stat.value?.toLocaleString() ?? "-")}
+            </CardTitle>
+            <CardAction>
+              <Badge variant="outline">
+                <stat.icon className={stat.color} />
+              </Badge>
+            </CardAction>
           </CardHeader>
-          <CardContent className="space-y-1">
-            {isLoading ? (
-              <Skeleton className="h-8 w-full" />
-            ) : (
-              <div className="text-2xl font-bold font-mono">{stat.value}</div>
-            )}
-            <p className="text-xs text-muted-foreground">{stat.description}</p>
-          </CardContent>
+          <CardFooter className="text-sm text-muted-foreground">{stat.description}</CardFooter>
         </Card>
       ))}
     </div>

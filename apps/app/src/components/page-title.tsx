@@ -31,9 +31,9 @@ export function PageTitle({
             <ArrowLeft className="size-4" />
           </Button>
         )}
-        <h1 className="text-2xl font-bold text-foreground break-all md:text-3xl">{title}</h1>
+        <h2 className="text-xl font-semibold text-foreground break-all md:text-2xl">{title}</h2>
       </div>
-      <p className="text-muted-foreground break-words">{description}</p>
+      <p className="text-sm text-muted-foreground break-words">{description}</p>
     </div>
   )
 }
