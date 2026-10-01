@@ -1,4 +1,4 @@
-import { cn } from "~/lib/utils/client"
+import { cn } from "cn"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 
 type TruncatedTooltipProps = {

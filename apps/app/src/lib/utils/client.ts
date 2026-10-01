@@ -1,6 +1,4 @@
-import clsx, { type ClassValue } from "clsx"
 import { formatDuration } from "date-fns"
-import { twMerge } from "tailwind-merge"
 import type { output, ZodType } from "zod"
 
 export type TApiRoute = {
@@ -12,10 +10,6 @@ export type TApiRoute = {
   inputSchema?: ZodType | undefined
   urlSchema?: ZodType | undefined
   outputSchema: ZodType
-}
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
 }
 
 export function apiFetch<

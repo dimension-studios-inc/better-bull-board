@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { cn } from "cn"
 import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
@@ -14,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
 import { TruncatedTooltip } from "~/components/ui/truncated-tooltip"
 import useDebounce from "~/hooks/use-debounce"
-import { apiFetch, cn } from "~/lib/utils/client"
+import { apiFetch } from "~/lib/utils/client"
 import { BulkActions } from "./bulk-actions"
 import { RunActions } from "./run-actions"
 import { RunsFilters } from "./runs-filters"
