@@ -1,10 +1,10 @@
 "use client"
 
+import { cn } from "cn"
 import { Activity, AlertCircle, CheckCircle, ChevronRight, Clock } from "lucide-react"
 import Link from "next/link"
 import type { z } from "zod"
 import type { dashboardEnhancedStatsOutput } from "~/app/api/dashboard/summary/schemas"
-import { Badge } from "~/components/ui/badge"
 import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 import { Skeleton } from "~/components/ui/skeleton"
 
@@ -60,9 +60,7 @@ export function EnhancedStatsCards({ days, stats, isLoading }: EnhancedStatsCard
               {isLoading ? <Skeleton className="h-8 w-24" /> : (card.value?.toLocaleString() ?? "-")}
             </CardTitle>
             <CardAction>
-              <Badge variant="outline">
-                <card.icon className={card.color} />
-              </Badge>
+              <card.icon className={cn("size-4", card.color)} />
             </CardAction>
           </CardHeader>
           <CardFooter className="text-sm text-muted-foreground">
