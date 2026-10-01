@@ -8,13 +8,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Skeleton } from "~/components/ui/skeleton"
 
 interface RunGraphChartProps {
-  days: number
+  minutes: number
+  periodLabel: string
   runGraphData: z.output<typeof dashboardRunGraphOutput>[] | undefined
   isLoading: boolean
 }
 
+// Graph buckets go from 10 seconds (last 5 minutes) to 1 day (last 30 days)
+const getTimeFormats = (minutes: number) => {
+  if (minutes <= 15) return { axis: "HH:mm:ss", tooltip: "HH:mm:ss" }
+  if (minutes <= 12 * 60) return { axis: "HH:mm", tooltip: "HH:mm" }
+  if (minutes <= 7 * 24 * 60) return { axis: "EEEEEE HH:mm", tooltip: "EEEEEE HH:mm" }
+  return { axis: "MMM dd", tooltip: "MMM dd, yyyy" }
+}
+
 const CustomTooltip =
-  ({ days }: { days: number }) =>
+  ({ tooltipFormat }: { tooltipFormat: string }) =>
   ({
     active,
     payload,
@@ -28,9 +37,7 @@ const CustomTooltip =
       const data = payload[0].payload
       return (
         <div className="bg-background border rounded-lg px-2.5 py-1.5 text-xs shadow-xl">
-          <p className="font-medium">
-            {data.timestamp && format(new Date(data.timestamp), days <= 7 ? "EEEEEE HH:mm" : "MMM dd, yyyy")}
-          </p>
+          <p className="font-medium">{data.timestamp && format(new Date(data.timestamp), tooltipFormat)}</p>
           <p className="text-muted-foreground">
             Runs: <span className="font-mono font-medium text-foreground">{data.runCount.toLocaleString()}</span>
           </p>
@@ -40,21 +47,20 @@ const CustomTooltip =
     return null
   }
 
-export function RunGraphChart({ days, runGraphData, isLoading }: RunGraphChartProps) {
+export function RunGraphChart({ minutes, periodLabel, runGraphData, isLoading }: RunGraphChartProps) {
+  const timeFormats = getTimeFormats(minutes)
   const chartData =
     runGraphData?.map((item) => ({
       timestamp: item.timestamp,
       runCount: item.runCount,
-      formattedTime: format(new Date(item.timestamp), days <= 7 ? "EEEEEE HH:mm" : "MMM dd"),
+      formattedTime: format(new Date(item.timestamp), timeFormats.axis),
     })) || []
 
   return (
     <Card className="@container/card">
       <CardHeader>
         <CardTitle>Total Runs</CardTitle>
-        <CardDescription>
-          Runs over the last {days} day{days > 1 ? "s" : ""}
-        </CardDescription>
+        <CardDescription>Runs created in the {periodLabel.toLowerCase()}</CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {isLoading ? (
@@ -87,7 +93,10 @@ export function RunGraphChart({ days, runGraphData, isLoading }: RunGraphChartPr
                   tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
                   tickFormatter={(value) => value.toLocaleString()}
                 />
-                <Tooltip content={CustomTooltip({ days })} cursor={{ stroke: "var(--border)" }} />
+                <Tooltip
+                  content={CustomTooltip({ tooltipFormat: timeFormats.tooltip })}
+                  cursor={{ stroke: "var(--border)" }}
+                />
                 <Area
                   type="natural"
                   dataKey="runCount"

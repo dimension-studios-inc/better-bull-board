@@ -5,6 +5,6 @@ import { createAuthenticatedApiRoute } from "~/lib/utils/server"
 export const POST = createAuthenticatedApiRoute({
   apiRoute: getDashboardSummaryApiRoute,
   async handler(input) {
-    return getDashboardSummary({ days: input.days })
+    return getDashboardSummary({ minutes: input.minutes })
   },
 })

@@ -6,7 +6,7 @@ export const POST = createAuthenticatedApiRoute({
   apiRoute: getEnhancedStatsApiRoute,
   async handler(input) {
     const days = input?.days || 1
-    const summary = await getDashboardSummary({ days })
+    const summary = await getDashboardSummary({ minutes: days * 24 * 60 })
     return summary.enhancedStats
   },
 })

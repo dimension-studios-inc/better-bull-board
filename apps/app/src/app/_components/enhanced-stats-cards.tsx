@@ -9,12 +9,12 @@ import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } 
 import { Skeleton } from "~/components/ui/skeleton"
 
 interface EnhancedStatsCardsProps {
-  days: number
+  periodLabel: string
   stats: z.output<typeof dashboardEnhancedStatsOutput> | undefined
   isLoading: boolean
 }
 
-export function EnhancedStatsCards({ days, stats, isLoading }: EnhancedStatsCardsProps) {
+export function EnhancedStatsCards({ periodLabel, stats, isLoading }: EnhancedStatsCardsProps) {
   const cards = [
     {
       title: "Running Tasks",
@@ -36,7 +36,7 @@ export function EnhancedStatsCards({ days, stats, isLoading }: EnhancedStatsCard
       title: "Successes",
       value: stats?.successes,
       icon: CheckCircle,
-      description: `Completed in last ${days} day${days > 1 ? "s" : ""}`,
+      description: `Completed (${periodLabel.toLowerCase()})`,
       color: "text-green-600",
       href: "/runs?status=completed",
     },
@@ -44,7 +44,7 @@ export function EnhancedStatsCards({ days, stats, isLoading }: EnhancedStatsCard
       title: "Failures",
       value: stats?.failures,
       icon: AlertCircle,
-      description: `Failed in last ${days} day${days > 1 ? "s" : ""}`,
+      description: `Failed (${periodLabel.toLowerCase()})`,
       color: "text-red-600",
       href: "/runs?status=failed",
     },
