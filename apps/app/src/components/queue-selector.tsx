@@ -103,10 +103,9 @@ export function QueueSelector({
 
   const defaultRenderValue = (value: string) => {
     const option = queueOptions?.find((opt) => opt.value === value)
-    if (!option) {
-      if (isLoading) return "Loading..."
-      return allowCustomValue ? value : ""
-    }
+    // The list is paginated and filtered by the search, so the selected queue may not be loaded:
+    // its name is its label anyway
+    if (!option) return value
 
     return option.label === getCustomQueueOptionLabel(option.value) ? option.value : option.label
   }
