@@ -1,9 +1,9 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import { cn } from "cn"
 import { Activity, Clock, Server } from "lucide-react"
 import { getQueuesStatsApiRoute } from "~/app/api/queues/stats/schemas"
-import { Badge } from "~/components/ui/badge"
 import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 import { Skeleton } from "~/components/ui/skeleton"
 import { apiFetch } from "~/lib/utils/client"
@@ -52,9 +52,7 @@ export function QueueStats() {
               {isLoading ? <Skeleton className="h-8 w-16" /> : (stat.value?.toLocaleString() ?? "-")}
             </CardTitle>
             <CardAction>
-              <Badge variant="outline">
-                <stat.icon className={stat.color} />
-              </Badge>
+              <stat.icon className={cn("size-4", stat.color)} />
             </CardAction>
           </CardHeader>
           <CardFooter className="text-sm text-muted-foreground">{stat.description}</CardFooter>
