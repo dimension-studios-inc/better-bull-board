@@ -43,8 +43,8 @@ export default async function McpAuthorizePage({
   const requestsWrite = requestedScopes.includes(MCP_WRITE_SCOPE)
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-lg items-center">
+    <div className="min-h-dvh bg-background p-4 sm:p-6">
+      <div className="mx-auto flex min-h-[calc(100dvh-2rem)] sm:min-h-[calc(100dvh-3rem)] max-w-lg items-center">
         <Card className="w-full p-6">
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold">Authorize MCP access</h1>

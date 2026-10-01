@@ -3,7 +3,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { AlertCircle } from "lucide-react"
 import { useParams } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { getJobByIdApiRoute } from "~/app/api/jobs/[id]/schemas"
 import { getJobLogsApiRoute } from "~/app/api/jobs/logs/schemas"
 import { PageContainer } from "~/components/page-container"
@@ -27,6 +27,14 @@ export default function RunViewPage() {
   const params = useParams()
   const runId = params.id as string
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null)
+  const detailsRef = useRef<HTMLDivElement>(null)
+
+  // On stacked (mobile) layouts the details panel sits below the logs, so bring it into view
+  useEffect(() => {
+    if (selectedLog && window.matchMedia("(max-width: 1023px)").matches) {
+      detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [selectedLog])
 
   const {
     data: run,
@@ -109,8 +117,8 @@ export default function RunViewPage() {
     <PageContainer>
       <PageTitle title={`Run ${run.job.jobId}`} description={`${run.job.queue} • ${run.job.status}`} withBackButton />
 
-      <div className="flex flex-row gap-2">
-        <div className="flex-1">
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-2">
+        <div className="min-w-0 flex-1">
           <LogsWaterfall
             logs={logsData}
             isLoading={isLoadingLogs}
@@ -121,7 +129,7 @@ export default function RunViewPage() {
             onLoadMore={() => fetchNextPage()}
           />
         </div>
-        <div className="w-96">
+        <div ref={detailsRef} className="w-full scroll-mt-4 lg:w-96 lg:shrink-0">
           {selectedLog ? (
             <LogDetailsDrawer log={selectedLog} run={job} onBack={() => setSelectedLog(null)} />
           ) : (

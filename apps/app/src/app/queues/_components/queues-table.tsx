@@ -120,10 +120,10 @@ export function QueuesTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
           <TimePeriodSelector value={options.timePeriod} onChange={handleTimePeriodChange} />
-          <div className="flex-1 relative max-w-[350px]">
+          <div className="flex-1 relative min-w-48 sm:max-w-[350px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by queue name..."
@@ -149,13 +149,25 @@ export function QueuesTable() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={isLoading || !data?.prevCursor}>
+        <div className="flex items-center gap-2 ml-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={isLoading || !data?.prevCursor}
+            aria-label="Previous page"
+          >
             <ChevronLeft className="h-4 w-4" />
-            Previous
+            <span className="hidden sm:inline">Previous</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleNextPage} disabled={isLoading || !data?.nextCursor}>
-            Next
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={isLoading || !data?.nextCursor}
+            aria-label="Next page"
+          >
+            <span className="hidden sm:inline">Next</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -257,7 +269,7 @@ export function QueuesTable() {
                     <QueueMiniChart data={queue.chartData} />
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="transition-opacity duration-200 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-within:opacity-100">
                       <QueueActions queueName={queue.name} isPaused={queue.isPaused} />
                     </div>
                   </TableCell>

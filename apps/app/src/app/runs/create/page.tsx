@@ -97,14 +97,14 @@ export default function CreateRunPage() {
 
   return (
     <PageContainer>
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-2">
         <PageTitle title="Create New Run" description="Create a new job run in a queue" />
         <Button variant="outline" onClick={() => router.push("/runs")}>
           Cancel
         </Button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 w-2xl">
+      <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-2xl">
         <div className="space-y-2">
           <label htmlFor="queue" className="text-sm font-medium mb-2 block">
             Queue *
@@ -118,7 +118,7 @@ export default function CreateRunPage() {
             setOpen={setQueueOpen}
             placeholder="Select a queue..."
             className="w-full"
-            popoverContentClassName="w-2xl"
+            popoverContentClassName="w-(--radix-popover-trigger-width)"
             allowCustomValue
           />
           {selectedQueue && selectedQueue !== "all" && isLastRunLoading && (

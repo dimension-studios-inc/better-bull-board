@@ -25,7 +25,7 @@ export function EnhancedDashboard() {
   return (
     <div className="space-y-6">
       {/* Time Period Selector */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <div>
           <h2 className="text-lg font-semibold">Dashboard Analytics</h2>
           <p className="text-sm text-muted-foreground">Monitor your BullMQ job performance and queue analytics</p>
@@ -40,7 +40,7 @@ export function EnhancedDashboard() {
       <QueuePerformanceTable queuePerformance={dashboardSummary?.queuePerformance} isLoading={isLoading} />
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <QueueDurationChart queueDuration={dashboardSummary?.topQueuesDuration.slice(0, 10)} isLoading={isLoading} />
         <QueueCountChart queueCounts={dashboardSummary?.topQueuesCount.slice(0, 10)} isLoading={isLoading} />
       </div>

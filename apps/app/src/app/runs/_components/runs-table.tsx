@@ -382,7 +382,7 @@ export function RunsTable() {
                       )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="transition-opacity duration-200 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-within:opacity-100">
                         <RunActions jobId={run.jobId} queueName={run.queue} status={run.status} />
                       </div>
                     </TableCell>

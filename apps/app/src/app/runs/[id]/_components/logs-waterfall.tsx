@@ -124,16 +124,16 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
   const totalDuration = endTime - startTime
 
   return (
-    <ScrollArea className="h-[calc(100vh-12rem)] pr-4">
+    <ScrollArea className="h-[60dvh] pr-4 lg:h-[calc(100vh-12rem)]">
       {/* Waterfall header with time markers */}
       <div className="grid grid-cols-12 gap-4 mb-4 pb-2 border-b">
-        <div className="col-span-6">
+        <div className="col-span-7 md:col-span-6">
           <span className="text-sm font-medium text-muted-foreground">Log Details</span>
         </div>
-        <div className="col-span-6">
+        <div className="col-span-5 md:col-span-6">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>0ms</span>
-            <span>Timeline</span>
+            <span className="hidden sm:inline">Timeline</span>
             <span>{smartFormatDuration(totalDuration)}</span>
           </div>
         </div>
@@ -160,7 +160,7 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
               )}
               onClick={() => onLogClick?.(log)}
             >
-              <div className={cn("col-span-6 flex items-center space-x-3 p-2 rounded font-mono")}>
+              <div className={cn("col-span-7 md:col-span-6 flex items-center space-x-3 p-2 rounded font-mono")}>
                 {/* Timeline dot */}
                 <Tooltip>
                   <TooltipTrigger>
@@ -178,7 +178,7 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
                   <pre className="truncate text-xs">{log.message}</pre>
                 </div>
               </div>
-              <div className="col-span-6 flex items-center h-full border-l border-muted-foreground/20">
+              <div className="col-span-5 md:col-span-6 flex items-center h-full border-l border-muted-foreground/20">
                 <div className="size-full items-center flex">
                   {/* Waterfall bar */}
                   <div
