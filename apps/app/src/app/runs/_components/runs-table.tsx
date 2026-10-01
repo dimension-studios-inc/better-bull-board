@@ -60,7 +60,7 @@ const openRunInNewPage = (runPath: string) => {
   window.open(runPath, "_blank", "noopener,noreferrer")
 }
 
-const handleRowAuxClick = (event: React.MouseEvent<HTMLTableRowElement>, runPath: string) => {
+const handleRowAuxClick = (event: React.MouseEvent<HTMLElement>, runPath: string) => {
   if (event.button !== 1 || isInteractiveRowTarget(event.target)) return
 
   event.preventDefault()
@@ -224,7 +224,7 @@ export function RunsTable() {
     }
   }
 
-  const handleRowClick = (event: React.MouseEvent<HTMLTableRowElement>, runPath: string) => {
+  const handleRowClick = (event: React.MouseEvent<HTMLElement>, runPath: string) => {
     if (isInteractiveRowTarget(event.target)) return
 
     if (event.metaKey || event.ctrlKey) {
@@ -263,7 +263,101 @@ export function RunsTable() {
           )
         }
       />
-      <div className="relative overflow-y-scroll rounded-lg border">
+      {/* Mobile: card list */}
+      <div className="space-y-2 md:hidden">
+        <div className="flex items-center justify-between gap-2 px-1">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Checkbox
+              checked={isAllSelected}
+              indeterminate={isPartiallySelected}
+              onCheckedChange={handleSelectAll}
+              aria-label="Select all jobs"
+            />
+            {selectedJobIds.size > 0 ? `${selectedJobIds.size} selected` : "Select all"}
+          </label>
+          <button
+            type="button"
+            className="flex items-center gap-1 text-sm font-medium text-muted-foreground"
+            onClick={handleDurationSort}
+          >
+            Duration
+            {getDurationSortIcon()}
+          </button>
+        </div>
+        {jobs.map((run) => {
+          const runPath = `/runs/${run.id}`
+          const isSelected = selectedJobIds.has(run.jobId)
+          const duration =
+            run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")
+              ? formatDistanceStrict(run.startedAt, run.finishedAt)
+              : null
+
+          return (
+            // biome-ignore lint/a11y/useSemanticElements: card contains nested interactive controls
+            <div
+              key={`${run.id}-${run.createdAt.getTime()}`}
+              role="link"
+              tabIndex={0}
+              className={cn(
+                "cursor-pointer space-y-2 rounded-lg border bg-card p-3 transition-colors active:bg-muted/50",
+                isSelected && "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950",
+              )}
+              onClick={(event) => handleRowClick(event, runPath)}
+              onAuxClick={(event) => handleRowAuxClick(event, runPath)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !isInteractiveRowTarget(event.target)) router.push(runPath)
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  className="mt-0.5"
+                  checked={isSelected}
+                  onCheckedChange={(checked) => handleSelectJob(run.jobId, checked as boolean)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                  }}
+                  aria-label={`Select job ${run.jobId}`}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="truncate text-sm font-medium">{run.queue}</span>
+                    <Badge className={cn("shrink-0", getStatusColor(run.status))}>{run.status}</Badge>
+                  </div>
+                  <div className="truncate font-mono text-xs text-muted-foreground">#{run.jobId}</div>
+                </div>
+              </div>
+              {run.tags && run.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 pl-7">
+                  {run.tags.map((tag) => (
+                    <Badge key={tag} variant="outline" className="max-w-full truncate">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {run.status === "failed" && run.errorMessage && (
+                <p className="ml-7 line-clamp-2 break-all rounded bg-red-50 px-2 py-1 font-mono text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                  {run.errorMessage}
+                </p>
+              )}
+              <div className="flex items-center justify-between gap-2 pl-7">
+                <div className="min-w-0 truncate text-xs text-muted-foreground">
+                  <time dateTime={run.createdAt.toISOString()} title={formatUtcTimestamp(run.createdAt)}>
+                    {formatDistanceToNowStrict(run.createdAt, { addSuffix: true })}
+                  </time>
+                  {duration && <> · {duration}</>}
+                </div>
+                <div className="-my-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <RunActions jobId={run.jobId} queueName={run.queue} status={run.status} />
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="relative hidden overflow-y-scroll rounded-lg border md:block">
         <Table className="table-fixed w-full">
           <TableHeader className="z-10">
             <TableRow>

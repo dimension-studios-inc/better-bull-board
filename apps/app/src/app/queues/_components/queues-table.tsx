@@ -120,35 +120,33 @@ export function QueuesTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
-          <TimePeriodSelector value={options.timePeriod} onChange={handleTimePeriodChange} />
-          <div className="flex-1 relative min-w-48 sm:max-w-[350px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by queue name..."
-              value={options.search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          {options.search && (isLoading || selectedQueueStats) && (
-            <div className="flex h-9 items-center gap-3 rounded-md border px-3 text-xs text-muted-foreground">
-              {isLoading ? (
-                <Skeleton className="h-4 w-32" />
-              ) : (
-                <>
-                  <span className="whitespace-nowrap">
-                    <span className="font-mono text-foreground">{selectedQueueStats?.waitingJobs ?? 0}</span> waiting
-                  </span>
-                  <span className="whitespace-nowrap">
-                    <span className="font-mono text-foreground">{selectedQueueStats?.activeJobs ?? 0}</span> active
-                  </span>
-                </>
-              )}
-            </div>
-          )}
+      <div className="flex flex-wrap items-center gap-2">
+        <TimePeriodSelector value={options.timePeriod} onChange={handleTimePeriodChange} />
+        <div className="relative order-1 w-full sm:order-none sm:w-auto sm:flex-1 sm:max-w-[350px]">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by queue name..."
+            value={options.search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="pl-10"
+          />
         </div>
+        {options.search && (isLoading || selectedQueueStats) && (
+          <div className="order-1 flex h-9 items-center gap-3 rounded-md border px-3 text-xs text-muted-foreground sm:order-none">
+            {isLoading ? (
+              <Skeleton className="h-4 w-32" />
+            ) : (
+              <>
+                <span className="whitespace-nowrap">
+                  <span className="font-mono text-foreground">{selectedQueueStats?.waitingJobs ?? 0}</span> waiting
+                </span>
+                <span className="whitespace-nowrap">
+                  <span className="font-mono text-foreground">{selectedQueueStats?.activeJobs ?? 0}</span> active
+                </span>
+              </>
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-2 ml-auto">
           <Button
             variant="outline"
