@@ -194,7 +194,7 @@ export function RunsFilters({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
+      <div className="flex w-full flex-wrap items-center gap-2 min-w-0 lg:w-auto lg:flex-1">
         <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-9 gap-1 bg-transparent">
@@ -347,7 +347,7 @@ export function RunsFilters({
         ))}
         {startEndContent}
       </div>
-      <div className="flex items-center gap-2 ml-auto">
+      <div className="flex w-full items-center gap-2 lg:w-auto">
         <Button
           variant="outline"
           size="sm"
@@ -359,32 +359,36 @@ export function RunsFilters({
         >
           {liveUpdatesPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
         </Button>
-        <Button asChild size="sm" className="gap-1">
+        <Button asChild size="sm" className="h-9 gap-1">
           <Link href="/runs/create">
             <Plus className="h-4 w-4" />
             Create Run
           </Link>
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handlePrevPage}
-          disabled={isFetching || (!runs?.prevCursor && !filters.cursor)}
-          aria-label="Previous page"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">Previous</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleNextPage}
-          disabled={isFetching || !runs?.nextCursor}
-          aria-label="Next page"
-        >
-          <span className="hidden sm:inline">Next</span>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9"
+            onClick={handlePrevPage}
+            disabled={isFetching || (!runs?.prevCursor && !filters.cursor)}
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Previous</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9"
+            onClick={handleNextPage}
+            disabled={isFetching || !runs?.nextCursor}
+            aria-label="Next page"
+          >
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   )
