@@ -1,12 +1,13 @@
 "use client"
 
 import type { jobRunsTable } from "@better-bull-board/db"
+import { cn } from "cn"
 import { AlertCircle, AlertTriangle, ArrowLeft, Bug, CalendarClock, Clock, Info } from "lucide-react"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Separator } from "~/components/ui/separator"
-import { cn, smartFormatDuration } from "~/lib/utils/client"
+import { smartFormatDuration } from "~/lib/utils/client"
 
 interface LogEntry {
   id: string

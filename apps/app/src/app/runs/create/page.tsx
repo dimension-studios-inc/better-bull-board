@@ -8,7 +8,6 @@ import { toast } from "sonner"
 import { createJobApiRoute } from "~/app/api/jobs/create/schemas"
 import { getLastRunDataApiRoute } from "~/app/api/jobs/last-run-data/schemas"
 import { PageContainer } from "~/components/page-container"
-import { PageTitle } from "~/components/page-title"
 import { QueueSelector } from "~/components/queue-selector"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
@@ -97,13 +96,6 @@ export default function CreateRunPage() {
 
   return (
     <PageContainer>
-      <div className="flex items-start justify-between gap-2">
-        <PageTitle title="Create New Run" description="Create a new job run in a queue" />
-        <Button variant="outline" onClick={() => router.push("/runs")}>
-          Cancel
-        </Button>
-      </div>
-
       <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-2xl">
         <div className="space-y-2">
           <label htmlFor="queue" className="text-sm font-medium mb-2 block">

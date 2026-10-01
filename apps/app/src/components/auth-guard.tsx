@@ -1,5 +1,8 @@
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { Sidebar } from "~/components/sidebar"
+import { AppSidebar } from "~/components/app-sidebar"
+import { SiteHeader } from "~/components/site-header"
+import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar"
 import { getAuthenticatedUser } from "~/lib/auth/server"
 
 interface AuthGuardProps {
@@ -19,11 +22,25 @@ export async function AuthGuard({ children, pathname }: AuthGuardProps) {
     return <>{children}</>
   }
 
+  // Restore the collapsed/expanded state persisted by the sidebar
+  const sidebarState = (await cookies()).get("sidebar_state")?.value
+
   // For authenticated users on other pages, render with full layout
   return (
-    <div className="flex h-dvh flex-col bg-background md:flex-row">
-      <Sidebar />
-      <main className="min-w-0 flex-1 overflow-auto">{children}</main>
-    </div>
+    <SidebarProvider
+      defaultOpen={sidebarState !== "false"}
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar variant="inset" />
+      <SidebarInset className="min-w-0">
+        <SiteHeader />
+        <div className="flex flex-1 flex-col">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

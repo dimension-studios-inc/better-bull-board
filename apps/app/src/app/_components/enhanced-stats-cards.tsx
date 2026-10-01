@@ -1,12 +1,12 @@
 "use client"
 
-import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react"
+import { Activity, AlertCircle, CheckCircle, ChevronRight, Clock } from "lucide-react"
 import Link from "next/link"
 import type { z } from "zod"
 import type { dashboardEnhancedStatsOutput } from "~/app/api/dashboard/summary/schemas"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { Badge } from "~/components/ui/badge"
+import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 import { Skeleton } from "~/components/ui/skeleton"
-import { cn } from "~/lib/utils/client"
 
 interface EnhancedStatsCardsProps {
   days: number
@@ -51,29 +51,31 @@ export function EnhancedStatsCards({ days, stats, isLoading }: EnhancedStatsCard
   ]
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+    <div className="grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
       {cards.map((card) => (
-        <Link
-          key={card.title}
-          href={card.href}
-          aria-label={`View ${card.title.toLowerCase()} runs`}
-          className="block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <Card className="h-full cursor-pointer transition-colors hover:bg-muted/50">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-              <card.icon className={cn("size-4", card.color)} />
-            </CardHeader>
-            <CardContent className="space-y-1">
-              {isLoading ? (
-                <Skeleton className="h-8 w-full" />
-              ) : (
-                <div className="text-2xl font-bold font-mono">{card.value?.toLocaleString()}</div>
-              )}
-              <p className="text-xs text-muted-foreground">{card.description}</p>
-            </CardContent>
-          </Card>
-        </Link>
+        <Card key={card.title} className="@container/card relative transition-colors hover:border-foreground/20">
+          <CardHeader>
+            <CardDescription>{card.title}</CardDescription>
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              {isLoading ? <Skeleton className="h-8 w-24" /> : (card.value?.toLocaleString() ?? "-")}
+            </CardTitle>
+            <CardAction>
+              <Badge variant="outline">
+                <card.icon className={card.color} />
+              </Badge>
+            </CardAction>
+          </CardHeader>
+          <CardFooter className="text-sm text-muted-foreground">
+            <Link
+              href={card.href}
+              aria-label={`View ${card.title.toLowerCase()} runs`}
+              className="flex items-center gap-1 after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+            >
+              {card.description}
+              <ChevronRight className="size-4" />
+            </Link>
+          </CardFooter>
+        </Card>
       ))}
     </div>
   )
