@@ -6,7 +6,7 @@ import { useMemo, useState } from "react"
 import type { z } from "zod"
 import type { dashboardQueuePerformanceOutput } from "~/app/api/dashboard/summary/schemas"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { ScrollArea } from "~/components/ui/scroll-area"
+import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area"
 import { Skeleton } from "~/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import { TruncatedTooltip } from "~/components/ui/truncated-tooltip"
@@ -94,7 +94,7 @@ export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerf
           </div>
         ) : (
           <ScrollArea className="h-96">
-            <Table>
+            <Table className="min-w-[720px]">
               <TableHeader className="z-10">
                 <TableRow>
                   {sortableColumns.map((column) => (
@@ -166,6 +166,7 @@ export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerf
                 )}
               </TableBody>
             </Table>
+            <ScrollBar orientation="horizontal" />
           </ScrollArea>
         )}
       </CardContent>

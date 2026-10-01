@@ -127,15 +127,15 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
       : null
 
   return (
-    <Card className="h-[calc(100vh-12rem)]">
+    <Card className="lg:h-[calc(100vh-12rem)]">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           {getStatusIcon(run.status)}
           <span>Run Details</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-full pb-6 overflow-hidden">
-        <div className="space-y-6 overflow-y-auto overflow-x-hidden h-full">
+      <CardContent className="lg:h-full pb-6 overflow-hidden">
+        <div className="space-y-6 overflow-y-auto overflow-x-hidden lg:h-full">
           {/* Status */}
           <div>
             <h3 className="text-sm font-medium mb-3">Status</h3>

@@ -87,7 +87,7 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
 
   return (
     <>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {cancellableJobs.length > 0 && (
           <Button
             variant="destructive"
@@ -114,7 +114,8 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
 
         <Button variant="outline" size="sm" onClick={onClearSelection} className="flex items-center gap-2">
           <Trash2 className="size-4" />
-          Clear Selection
+          <span className="hidden sm:inline">Clear Selection</span>
+          <span className="sm:hidden">Clear</span>
         </Button>
       </div>
 
