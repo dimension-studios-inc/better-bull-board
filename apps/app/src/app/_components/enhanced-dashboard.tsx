@@ -25,8 +25,7 @@ export function EnhancedDashboard() {
   return (
     <div className="flex flex-col gap-4 md:gap-6">
       {/* Time Period Selector */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
-        <p className="text-sm text-muted-foreground">Monitor your BullMQ job performance and queue analytics</p>
+      <div className="flex items-center">
         <TimePeriodSelector value={timePeriod} onChange={setTimePeriod} />
       </div>
 

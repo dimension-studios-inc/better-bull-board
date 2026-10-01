@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react"
 import { getJobByIdApiRoute } from "~/app/api/jobs/[id]/schemas"
 import { getJobLogsApiRoute } from "~/app/api/jobs/logs/schemas"
 import { PageContainer } from "~/components/page-container"
-import { PageTitle } from "~/components/page-title"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 import { Skeleton } from "~/components/ui/skeleton"
 import { apiFetch } from "~/lib/utils/client"
@@ -78,15 +77,12 @@ export default function RunViewPage() {
   if (isLoadingRun) {
     return (
       <PageContainer>
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-64" />
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3">
-              <Skeleton className="h-96 w-full" />
-            </div>
-            <div className="lg:col-span-1">
-              <Skeleton className="h-96 w-full" />
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <Skeleton className="h-96 w-full" />
+          </div>
+          <div className="lg:col-span-1">
+            <Skeleton className="h-96 w-full" />
           </div>
         </div>
       </PageContainer>
@@ -115,8 +111,6 @@ export default function RunViewPage() {
   }
   return (
     <PageContainer>
-      <PageTitle title={`Run ${run.job.jobId}`} description={`${run.job.queue} • ${run.job.status}`} withBackButton />
-
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-2">
         <div className="min-w-0 flex-1">
           <LogsWaterfall
