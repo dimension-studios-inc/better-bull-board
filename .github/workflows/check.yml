@@ -47,3 +47,6 @@ jobs:
 
       - name: Run knip
         run: pnpm knip
+        env:
+          # knip loads packages/db/drizzle.config.ts, which throws without a URL; it never connects
+          DATABASE_URL: postgresql://knip:knip@localhost:5432/knip
