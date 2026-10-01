@@ -1,6 +1,7 @@
 "use client"
 
 import type { jobRunsTable } from "@better-bull-board/db"
+import { cn } from "cn"
 import {
   AlertCircle,
   CalendarClock,
@@ -23,7 +24,7 @@ import { Badge } from "~/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible"
 import { Separator } from "~/components/ui/separator"
-import { cn, smartFormatDuration } from "~/lib/utils/client"
+import { smartFormatDuration } from "~/lib/utils/client"
 
 interface RunDetailsDrawerProps {
   run: typeof jobRunsTable.$inferSelect

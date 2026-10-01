@@ -1,6 +1,7 @@
 "use client"
 
 import type { jobRunsTable } from "@better-bull-board/db"
+import { cn } from "cn"
 import { AlertCircle, AlertTriangle, Bug, Info } from "lucide-react"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 import { Badge } from "~/components/ui/badge"
@@ -9,7 +10,7 @@ import { ScrollArea } from "~/components/ui/scroll-area"
 import { Skeleton } from "~/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll"
-import { cn, smartFormatDuration } from "~/lib/utils/client"
+import { smartFormatDuration } from "~/lib/utils/client"
 
 interface LogEntry {
   id: string

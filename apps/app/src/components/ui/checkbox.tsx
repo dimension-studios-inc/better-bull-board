@@ -1,9 +1,9 @@
 /** biome-ignore-all lint/a11y/useSemanticElements: shadcn */
 "use client"
 
+import { cn } from "cn"
 import { Check, Minus } from "lucide-react"
 import * as React from "react"
-import { cn } from "~/lib/utils/client"
 
 interface CheckboxProps {
   checked?: boolean

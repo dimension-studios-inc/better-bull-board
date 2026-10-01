@@ -1,9 +1,9 @@
 "use client"
 
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
+import { cn } from "cn"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 import type * as React from "react"
-import { cn } from "~/lib/utils/client"
 
 function DropdownMenu({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
   return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
