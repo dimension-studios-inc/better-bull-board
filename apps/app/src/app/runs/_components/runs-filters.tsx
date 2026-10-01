@@ -193,8 +193,8 @@ export function RunsFilters({
   }
 
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
         <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-9 gap-1 bg-transparent">
@@ -208,7 +208,7 @@ export function RunsFilters({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="p-4 w-max" align="start">
-            <div className="space-y-4 w-80">
+            <div className="space-y-4 w-80 max-w-[calc(100vw-4rem)]">
               <div className="font-medium text-sm">Filter Options</div>
 
               <div className="space-y-3">
@@ -323,7 +323,7 @@ export function RunsFilters({
             </div>
           </PopoverContent>
         </Popover>
-        <div className="flex-1 relative w-96">
+        <div className="flex-1 relative min-w-40 max-w-96">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by job ID, name, or error..."
@@ -333,8 +333,8 @@ export function RunsFilters({
           />
         </div>
         {activeFilters.map((filter) => (
-          <Badge key={`${filter.key}-${filter.value}`} variant="secondary" className="h-9 px-2">
-            {filter.label}
+          <Badge key={`${filter.key}-${filter.value}`} variant="secondary" className="h-9 max-w-full px-2">
+            <span className="truncate">{filter.label}</span>
             <Button
               variant="ghost"
               size="sm"
@@ -347,7 +347,7 @@ export function RunsFilters({
         ))}
         {startEndContent}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 ml-auto">
         <Button
           variant="outline"
           size="sm"
@@ -370,12 +370,19 @@ export function RunsFilters({
           size="sm"
           onClick={handlePrevPage}
           disabled={isFetching || (!runs?.prevCursor && !filters.cursor)}
+          aria-label="Previous page"
         >
           <ChevronLeft className="h-4 w-4" />
-          Previous
+          <span className="hidden sm:inline">Previous</span>
         </Button>
-        <Button variant="outline" size="sm" onClick={handleNextPage} disabled={isFetching || !runs?.nextCursor}>
-          Next
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleNextPage}
+          disabled={isFetching || !runs?.nextCursor}
+          aria-label="Next page"
+        >
+          <span className="hidden sm:inline">Next</span>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

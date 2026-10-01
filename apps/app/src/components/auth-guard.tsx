@@ -21,9 +21,9 @@ export async function AuthGuard({ children, pathname }: AuthGuardProps) {
 
   // For authenticated users on other pages, render with full layout
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-dvh flex-col bg-background md:flex-row">
       <Sidebar />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="min-w-0 flex-1 overflow-auto">{children}</main>
     </div>
   )
 }

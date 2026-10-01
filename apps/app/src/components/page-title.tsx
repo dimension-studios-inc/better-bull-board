@@ -24,16 +24,16 @@ export function PageTitle({
   }
 
   return (
-    <div>
+    <div className="min-w-0">
       <div className="flex items-center gap-2">
         {withBackButton && (
           <Button variant="ghost" size={"sm"} onClick={handleGoBack}>
             <ArrowLeft className="size-4" />
           </Button>
         )}
-        <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+        <h1 className="text-2xl font-bold text-foreground break-all md:text-3xl">{title}</h1>
       </div>
-      <p className="text-muted-foreground">{description}</p>
+      <p className="text-muted-foreground break-words">{description}</p>
     </div>
   )
 }
