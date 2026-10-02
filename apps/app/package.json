@@ -19,7 +19,7 @@
     "@t3-oss/env-nextjs": "0.13.11",
     "@tailwindcss/postcss": "4.3.3",
     "@tanstack/react-query": "5.103.1",
-    "bullmq": "6.3.6",
+    "bullmq": "6.3.7",
     "cn": "0.4.0",
     "cookies-next": "6.1.1",
     "date-fns": "4.4.0",
