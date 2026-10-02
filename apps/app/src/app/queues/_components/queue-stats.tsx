@@ -43,19 +43,19 @@ export function QueueStats() {
   ]
 
   return (
-    <div className="grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs @xl/main:grid-cols-3 dark:*:data-[slot=card]:bg-card">
+    <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-3">
       {stats.map((stat) => (
-        <Card key={stat.title} className="@container/card">
+        <Card key={stat.title}>
           <CardHeader>
             <CardDescription>{stat.title}</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            <CardTitle>
               {isLoading ? <Skeleton className="h-8 w-16" /> : (stat.value?.toLocaleString() ?? "-")}
             </CardTitle>
             <CardAction>
               <stat.icon className={cn("size-4", stat.color)} />
             </CardAction>
           </CardHeader>
-          <CardFooter className="text-sm text-muted-foreground">{stat.description}</CardFooter>
+          <CardFooter>{stat.description}</CardFooter>
         </Card>
       ))}
     </div>
