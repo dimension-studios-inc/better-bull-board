@@ -9,6 +9,7 @@ import { Separator } from "@better-bull-board/ui/components/separator"
 import { cn } from "cn"
 import { AlertCircle, AlertTriangle, ArrowLeft, Bug, CalendarClock, Clock, Info } from "lucide-react"
 import { smartFormatDuration } from "~/lib/utils/client"
+import { formatUtcDateTime } from "~/lib/utils/date"
 
 interface LogEntry {
   id: string
@@ -115,7 +116,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
                 <DetailItem
                   icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
                   label="Timestamp"
-                  value={logDate.toISOString()}
+                  value={formatUtcDateTime(logDate, { milliseconds: true })}
                 />
                 <DetailItem
                   icon={<Clock className="h-4 w-4 text-muted-foreground" />}

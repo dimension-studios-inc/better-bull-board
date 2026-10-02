@@ -26,6 +26,7 @@ import {
 import { useEffect, useState } from "react"
 import { codeToHtml } from "shiki"
 import { smartFormatDuration } from "~/lib/utils/client"
+import { formatUtcDateTime } from "~/lib/utils/date"
 
 interface RunDetailsDrawerProps {
   run: typeof jobRunsTable.$inferSelect
@@ -186,27 +187,27 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                 <DetailItem
                   icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
                   label="Created"
-                  value={new Date(run.createdAt).toISOString()}
+                  value={formatUtcDateTime(run.createdAt)}
                 />
                 {run.enqueuedAt && (
                   <DetailItem
                     icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
                     label="Enqueued"
-                    value={new Date(run.enqueuedAt).toISOString()}
+                    value={formatUtcDateTime(run.enqueuedAt)}
                   />
                 )}
                 {run.startedAt && (
                   <DetailItem
                     icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
                     label="Started"
-                    value={new Date(run.startedAt).toISOString()}
+                    value={formatUtcDateTime(run.startedAt)}
                   />
                 )}
                 {run.finishedAt && (
                   <DetailItem
                     icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
                     label="Finished"
-                    value={new Date(run.finishedAt).toISOString()}
+                    value={formatUtcDateTime(run.finishedAt)}
                   />
                 )}
                 {duration && (
