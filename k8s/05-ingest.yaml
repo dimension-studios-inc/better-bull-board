@@ -94,6 +94,11 @@ metadata:
   namespace: better-bull-board
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-nginx
+    # The F5 NGINX Ingress Controller only proxies WebSocket upgrades for the listed services
+    nginx.org/websocket-services: bbb-ingest-service
+    # No heartbeat on the socket: keep idle connections open
+    nginx.org/proxy-read-timeout: "3600s"
+    nginx.org/proxy-send-timeout: "3600s"
 spec:
   ingressClassName: nginx
   tls:
