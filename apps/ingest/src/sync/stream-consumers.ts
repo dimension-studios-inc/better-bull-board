@@ -65,3 +65,80 @@ export const cleanupStaleConsumers = async ({
     })
   }
 }
+
+/**
+ * Acknowledge and delete processed entries in one transaction.
+ *
+ * Sent as two separate commands, a restart in between (deployments) left whole batches acknowledged but never
+ * deleted: no longer pending, nothing would ever remove them from the stream.
+ */
+export const ackAndDeleteEntries = async ({
+  client,
+  group,
+  ids,
+  stream,
+}: {
+  client: Redis
+  group: string
+  ids: string[]
+  stream: string
+}) => {
+  if (ids.length === 0) return
+  const results = await client
+    .multi()
+    .xack(stream, group, ...ids)
+    .xdel(stream, ...ids)
+    .exec()
+  const error = results?.find(([commandError]) => commandError)?.[0]
+  if (error) throw error
+}
+
+const compareStreamIds = (a: string, b: string) => {
+  const [aMs = 0n, aSeq = 0n] = a.split("-").map(BigInt)
+  const [bMs = 0n, bSeq = 0n] = b.split("-").map(BigInt)
+  if (aMs !== bMs) return aMs < bMs ? -1 : 1
+  if (aSeq !== bSeq) return aSeq < bSeq ? -1 : 1
+  return 0
+}
+
+/**
+ * Delete acknowledged entries left in the stream (see ackAndDeleteEntries).
+ *
+ * Entries older than both the oldest pending entry and the last delivered entry of every group were delivered and
+ * acknowledged: trimming them never drops an entry that still has to be processed.
+ */
+export const trimAcknowledgedEntries = async ({ client, stream }: { client: Redis; stream: string }) => {
+  try {
+    const groups = parseInfoRows(await client.call("XINFO", "GROUPS", stream))
+    if (groups.length === 0) return
+
+    let minId: string | undefined
+    for (const group of groups) {
+      const groupName = String(group.get("name"))
+      const pending = (await client.call("XPENDING", stream, groupName)) as [number, string | null, ...unknown[]]
+      const candidates = [String(group.get("last-delivered-id") ?? "0-0"), pending[1]].filter(
+        (id): id is string => typeof id === "string",
+      )
+      for (const id of candidates) {
+        if (!minId || compareStreamIds(id, minId) < 0) minId = id
+      }
+    }
+    if (!minId || minId === "0-0") return
+
+    const trimmed = Number(await client.call("XTRIM", stream, "MINID", minId))
+    if (trimmed > 0) {
+      logger.log("🧹 Trimmed acknowledged Redis stream entries", { stream, trimmed })
+    }
+  } catch (error) {
+    logger.warn("Failed to trim acknowledged Redis stream entries", { error, stream })
+  }
+}
+
+const parseInfoRows = (response: unknown) =>
+  Array.isArray(response)
+    ? response.filter(Array.isArray).map((row: unknown[]) => {
+        const record = new Map<string, unknown>()
+        for (let i = 0; i < row.length; i += 2) record.set(String(row[i]), row[i + 1])
+        return record
+      })
+    : []
