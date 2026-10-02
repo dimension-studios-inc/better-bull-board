@@ -4,7 +4,7 @@ import { instanceId } from "~/lib/instance"
 import { redis } from "~/lib/redis"
 import { formatJobRun, parseJobSyncEvent } from "./job-format"
 import { safeUpsertJobRuns } from "./job-upsert"
-import { cleanupStaleConsumers } from "./stream-consumers"
+import { ackAndDeleteEntries, cleanupStaleConsumers, trimAcknowledgedEntries } from "./stream-consumers"
 
 const streamRedis = redis.duplicate()
 
@@ -54,11 +54,10 @@ const ensureGroup = async () => {
   }
 }
 
-const ackAndDelete = async (ids: string[]) => {
-  if (ids.length === 0) return
-  await redis.call("XACK", env.JOB_SYNC_STREAM_KEY, env.JOB_SYNC_CONSUMER_GROUP, ...ids)
-  await redis.call("XDEL", env.JOB_SYNC_STREAM_KEY, ...ids)
-}
+const ackAndDelete = (ids: string[]) =>
+  ackAndDeleteEntries({ client: redis, group: env.JOB_SYNC_CONSUMER_GROUP, ids, stream: env.JOB_SYNC_STREAM_KEY })
+
+const STREAM_TRIM_INTERVAL_MS = 60 * 60 * 1000
 
 const processMessages = async (messages: StreamMessage[]) => {
   if (messages.length === 0) return
@@ -145,6 +144,9 @@ export const startJobStreamIngestion = async () => {
     group: env.JOB_SYNC_CONSUMER_GROUP,
     stream: env.JOB_SYNC_STREAM_KEY,
   })
+  const trim = () => trimAcknowledgedEntries({ client: redis, stream: env.JOB_SYNC_STREAM_KEY })
+  void trim()
+  setInterval(trim, STREAM_TRIM_INTERVAL_MS).unref()
   logger.log("📥 Job stream ingestion started", {
     stream: env.JOB_SYNC_STREAM_KEY,
     group: env.JOB_SYNC_CONSUMER_GROUP,
