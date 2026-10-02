@@ -11,6 +11,7 @@ import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
+import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area"
 import { Skeleton } from "~/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
@@ -171,7 +172,7 @@ export function QueuesTable() {
           </Button>
         </div>
       </div>
-      <div className="relative overflow-y-scroll rounded-lg border">
+      <ScrollArea className="rounded-lg border">
         <Table className="table-fixed w-full">
           <TableHeader className="z-10">
             <TableRow>
@@ -277,7 +278,8 @@ export function QueuesTable() {
             ))}
           </TableBody>
         </Table>
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   )
 }

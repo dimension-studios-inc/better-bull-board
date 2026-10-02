@@ -6,6 +6,7 @@ import { AlertCircle, AlertTriangle, ArrowLeft, Bug, CalendarClock, Clock, Info 
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { ScrollArea } from "~/components/ui/scroll-area"
 import { Separator } from "~/components/ui/separator"
 import { smartFormatDuration } from "~/lib/utils/client"
 
@@ -97,47 +98,49 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
         </div>
       </CardHeader>
       <CardContent className="lg:h-full pb-6 overflow-hidden">
-        <div className="space-y-6 overflow-y-auto overflow-x-hidden lg:h-full">
-          {/* Log Level */}
-          <div>
-            <h3 className="text-sm font-medium mb-3">Level</h3>
-            <Badge className={getLevelColor(log.level)}>{log.level.toUpperCase()}</Badge>
-          </div>
+        <ScrollArea className="lg:h-full [&>[data-slot=scroll-area-viewport]>div]:block!">
+          <div className="space-y-6">
+            {/* Log Level */}
+            <div>
+              <h3 className="text-sm font-medium mb-3">Level</h3>
+              <Badge className={getLevelColor(log.level)}>{log.level.toUpperCase()}</Badge>
+            </div>
 
-          <Separator />
+            <Separator />
 
-          {/* Basic Info */}
-          <div>
-            <h3 className="text-sm font-medium mb-3">Basic Information</h3>
-            <div className="space-y-3">
-              <DetailItem
-                icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
-                label="Timestamp"
-                value={logDate.toISOString()}
-              />
-              <DetailItem
-                icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-                label="Relative Time"
-                value={`${formatRelativeTime(relativeTime)} after start`}
-              />
-              <DetailItem
-                icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
-                label="Log ID"
-                value={<span className="font-mono text-xs break-all">{log.id}</span>}
-              />
+            {/* Basic Info */}
+            <div>
+              <h3 className="text-sm font-medium mb-3">Basic Information</h3>
+              <div className="space-y-3">
+                <DetailItem
+                  icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
+                  label="Timestamp"
+                  value={logDate.toISOString()}
+                />
+                <DetailItem
+                  icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+                  label="Relative Time"
+                  value={`${formatRelativeTime(relativeTime)} after start`}
+                />
+                <DetailItem
+                  icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
+                  label="Log ID"
+                  value={<span className="font-mono text-xs break-all">{log.id}</span>}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Message */}
+            <div>
+              <h3 className="text-sm font-medium mb-3">Message</h3>
+              <div className="p-2 bg-muted/30 rounded border">
+                <pre className="text-xs font-mono whitespace-pre-wrap wrap-break-word">{log.message}</pre>
+              </div>
             </div>
           </div>
-
-          <Separator />
-
-          {/* Message */}
-          <div>
-            <h3 className="text-sm font-medium mb-3">Message</h3>
-            <div className="p-2 bg-muted/30 rounded border">
-              <pre className="text-xs font-mono whitespace-pre-wrap wrap-break-word">{log.message}</pre>
-            </div>
-          </div>
-        </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   )

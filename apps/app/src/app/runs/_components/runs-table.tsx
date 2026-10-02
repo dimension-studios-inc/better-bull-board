@@ -11,6 +11,7 @@ import { useMemo, useRef, useState } from "react"
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
 import { Badge } from "~/components/ui/badge"
 import { Checkbox } from "~/components/ui/checkbox"
+import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
 import { TruncatedTooltip } from "~/components/ui/truncated-tooltip"
@@ -358,7 +359,7 @@ export function RunsTable() {
       </div>
 
       {/* Desktop: table */}
-      <div className="relative hidden overflow-y-scroll rounded-lg border md:block">
+      <ScrollArea className="hidden rounded-lg border md:block">
         <Table className="table-fixed w-full">
           <TableHeader className="z-10">
             <TableRow>
@@ -462,14 +463,16 @@ export function RunsTable() {
                             align="start"
                             sideOffset={8}
                             withoutArrow
-                            className="max-h-80 max-w-xl overflow-auto rounded-lg border border-red-500/20 bg-background p-0 text-foreground shadow-xl"
+                            className="max-w-xl overflow-hidden rounded-lg border border-red-500/20 bg-background p-0 text-foreground shadow-xl"
                           >
                             <div className="border-b border-red-500/10 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
                               Error details
                             </div>
-                            <pre className="whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed text-red-700 dark:text-red-300">
-                              {run.errorMessage}
-                            </pre>
+                            <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-72">
+                              <pre className="whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed text-red-700 dark:text-red-300">
+                                {run.errorMessage}
+                              </pre>
+                            </ScrollArea>
                           </TooltipContent>
                         </Tooltip>
                       ) : (
@@ -487,7 +490,8 @@ export function RunsTable() {
             })}
           </TableBody>
         </Table>
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   )
 }
