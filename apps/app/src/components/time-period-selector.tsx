@@ -1,10 +1,10 @@
 "use client"
 
+import { Button } from "@better-bull-board/ui/components/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
+import { Separator } from "@better-bull-board/ui/components/separator"
 import { CalendarDays } from "lucide-react"
 import { Fragment, useState } from "react"
-import { Button } from "~/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
-import { Separator } from "~/components/ui/separator"
 
 const MINUTE = 1
 const HOUR = 60 * MINUTE
@@ -50,11 +50,9 @@ export function TimePeriodSelector({ value, onChange }: TimePeriodSelectorProps)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <CalendarDays className="h-4 w-4" />
-          {getTimePeriodLabel(value)}
-        </Button>
+      <PopoverTrigger render={<Button variant="outline" />}>
+        <CalendarDays className="h-4 w-4" />
+        {getTimePeriodLabel(value)}
       </PopoverTrigger>
       <PopoverContent className="w-48 p-2" align="start">
         <div className="space-y-1">

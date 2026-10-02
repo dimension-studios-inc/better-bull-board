@@ -1,12 +1,7 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { RotateCcw, Trash2, X } from "lucide-react"
-import { useState } from "react"
-import { bulkCancelJobsApiRoute } from "~/app/api/jobs/bulk-cancel/schemas"
-import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas"
-import { Badge } from "~/components/ui/badge"
-import { Button } from "~/components/ui/button"
+import { Badge } from "@better-bull-board/ui/components/badge"
+import { Button } from "@better-bull-board/ui/components/button"
 import {
   Dialog,
   DialogContent,
@@ -14,8 +9,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog"
-import { ScrollArea } from "~/components/ui/scroll-area"
+} from "@better-bull-board/ui/components/dialog"
+import { ScrollArea } from "@better-bull-board/ui/components/scroll-area"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { RotateCcw, Trash2, X } from "lucide-react"
+import { useState } from "react"
+import { bulkCancelJobsApiRoute } from "~/app/api/jobs/bulk-cancel/schemas"
+import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas"
 import { apiFetch } from "~/lib/utils/client"
 
 interface BulkActionsProps {
@@ -90,30 +90,20 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
     <>
       <div className="flex flex-wrap gap-2">
         {cancellableJobs.length > 0 && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setCancelDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
+          <Button variant="destructive" onClick={() => setCancelDialogOpen(true)} className="flex items-center gap-2">
             <X className="size-4" />
             Cancel ({cancellableJobs.length})
           </Button>
         )}
 
         {replayableJobs.length > 0 && (
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => setReplayDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
+          <Button variant="default" onClick={() => setReplayDialogOpen(true)} className="flex items-center gap-2">
             <RotateCcw className="size-4" />
             Replay ({replayableJobs.length})
           </Button>
         )}
 
-        <Button variant="outline" size="sm" onClick={onClearSelection} className="flex items-center gap-2">
+        <Button variant="outline" onClick={onClearSelection}>
           <Trash2 className="size-4" />
           <span className="hidden sm:inline">Clear Selection</span>
           <span className="sm:hidden">Clear</span>

@@ -1,13 +1,13 @@
 "use client"
 
+import { Button } from "@better-bull-board/ui/components/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Pause, Play, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { deleteQueueApiRoute } from "~/app/api/queues/delete/schemas"
 import { pauseQueueApiRoute } from "~/app/api/queues/pause/schemas"
 import { resumeQueueApiRoute } from "~/app/api/queues/resume/schemas"
-import { Button } from "~/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
 import { apiFetch } from "~/lib/utils/client"
 
 interface QueueActionsProps {
@@ -69,10 +69,8 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
     <div className="flex gap-1">
       {/* Pause/Resume Button */}
       <Popover open={pausePopoverOpen} onOpenChange={setPausePopoverOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm">
-            {isPaused ? <Play className="size-4" /> : <Pause className="size-4" />}
-          </Button>
+        <PopoverTrigger render={<Button variant="ghost" size="icon-sm" />}>
+          {isPaused ? <Play className="size-4" /> : <Pause className="size-4" />}
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="space-y-4">
@@ -102,10 +100,8 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
 
       {/* Delete Button */}
       <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-            <Trash2 className="size-4" />
-          </Button>
+        <PopoverTrigger render={<Button variant="ghost" size="icon-sm" className="text-red-600 hover:text-red-700" />}>
+          <Trash2 className="size-4" />
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="space-y-4">

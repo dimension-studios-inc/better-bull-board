@@ -1,14 +1,14 @@
 "use client"
 
 import type { jobRunsTable } from "@better-bull-board/db"
+import { Alert, AlertDescription } from "@better-bull-board/ui/components/alert"
+import { Badge } from "@better-bull-board/ui/components/badge"
+import { ScrollArea } from "@better-bull-board/ui/components/scroll-area"
+import { Skeleton } from "@better-bull-board/ui/components/skeleton"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@better-bull-board/ui/components/tooltip"
 import { cn } from "cn"
 import { AlertCircle, AlertTriangle, Bug, Info } from "lucide-react"
-import { Alert, AlertDescription } from "~/components/ui/alert"
-import { Badge } from "~/components/ui/badge"
-import { Loader } from "~/components/ui/loader"
-import { ScrollArea } from "~/components/ui/scroll-area"
-import { Skeleton } from "~/components/ui/skeleton"
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
+import { Loader } from "~/components/loader"
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll"
 import { smartFormatDuration } from "~/lib/utils/client"
 
@@ -167,7 +167,7 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
                   <TooltipTrigger>
                     <div className="shrink-0">{getLevelIcon(log.level)}</div>
                   </TooltipTrigger>
-                  <TooltipContent className="bg-none p-0 m-0 [&_svg.rotate-45]:hidden">
+                  <TooltipContent className="bg-none p-0 m-0 [&>[data-side]]:hidden">
                     <Badge className={getLevelColor(log.level)} variant="outline">
                       {log.level.toUpperCase()}
                     </Badge>

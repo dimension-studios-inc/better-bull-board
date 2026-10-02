@@ -1,10 +1,10 @@
 "use client"
 
+import { Separator } from "@better-bull-board/ui/components/separator"
+import { SidebarTrigger } from "@better-bull-board/ui/components/sidebar"
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Separator } from "~/components/ui/separator"
-import { SidebarTrigger } from "~/components/ui/sidebar"
 
 type PageInfo = { title: string; parent?: { title: string; href: string } }
 

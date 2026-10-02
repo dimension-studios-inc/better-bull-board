@@ -1,12 +1,12 @@
 "use client"
 
+import { Button } from "@better-bull-board/ui/components/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { RotateCcw, X } from "lucide-react"
 import { useState } from "react"
 import { cancelJobApiRoute } from "~/app/api/jobs/cancel/schemas"
 import { replayJobApiRoute } from "~/app/api/jobs/replay/schemas"
-import { Button } from "~/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
 import { apiFetch } from "~/lib/utils/client"
 
 interface RunActionsProps {
@@ -62,10 +62,10 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
       {/* Cancel Button - only show for active, waiting, or delayed jobs */}
       {canCancel && (
         <Popover open={cancelPopoverOpen} onOpenChange={setCancelPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-              <X className="size-4" />
-            </Button>
+          <PopoverTrigger
+            render={<Button variant="ghost" size="icon-sm" className="text-red-600 hover:text-red-700" />}
+          >
+            <X className="size-4" />
           </PopoverTrigger>
           <PopoverContent className="w-80">
             <div className="space-y-4">
@@ -91,10 +91,8 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
       {/* Replay Button - only show for completed or failed jobs */}
       {canReplay && (
         <Popover open={replayPopoverOpen} onOpenChange={setReplayPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <RotateCcw className="size-4" />
-            </Button>
+          <PopoverTrigger render={<Button variant="ghost" size="icon-sm" />}>
+            <RotateCcw className="size-4" />
           </PopoverTrigger>
           <PopoverContent className="w-80">
             <div className="space-y-4">

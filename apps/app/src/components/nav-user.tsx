@@ -1,7 +1,6 @@
 "use client"
 
-import { EllipsisVertical, LogOut } from "lucide-react"
-import { Avatar, AvatarFallback } from "~/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@better-bull-board/ui/components/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,8 +8,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu"
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "~/components/ui/sidebar"
+} from "@better-bull-board/ui/components/dropdown-menu"
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@better-bull-board/ui/components/sidebar"
+import { EllipsisVertical, LogOut } from "lucide-react"
 import { useAuth } from "~/lib/auth/context"
 
 function UserIdentity({ email }: { email: string }) {
@@ -38,17 +38,19 @@ export function NavUser() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <UserIdentity email={email} />
-              <EllipsisVertical className="ml-auto size-4" />
-            </SidebarMenuButton>
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
+                size="lg"
+                className="data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
+              />
+            }
+          >
+            <UserIdentity email={email} />
+            <EllipsisVertical className="ml-auto size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--anchor-width) min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}

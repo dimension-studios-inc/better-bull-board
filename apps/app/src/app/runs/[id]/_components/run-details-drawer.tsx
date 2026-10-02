@@ -1,6 +1,11 @@
 "use client"
 
 import type { jobRunsTable } from "@better-bull-board/db"
+import { Badge } from "@better-bull-board/ui/components/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@better-bull-board/ui/components/collapsible"
+import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
+import { Separator } from "@better-bull-board/ui/components/separator"
 import { cn } from "cn"
 import {
   AlertCircle,
@@ -20,11 +25,6 @@ import {
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { codeToHtml } from "shiki"
-import { Badge } from "~/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible"
-import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area"
-import { Separator } from "~/components/ui/separator"
 import { smartFormatDuration } from "~/lib/utils/client"
 
 interface RunDetailsDrawerProps {

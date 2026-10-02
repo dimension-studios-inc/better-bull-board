@@ -1,5 +1,12 @@
 "use client"
 
+import { Badge } from "@better-bull-board/ui/components/badge"
+import { Button } from "@better-bull-board/ui/components/button"
+import { Input } from "@better-bull-board/ui/components/input"
+import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
+import { Skeleton } from "@better-bull-board/ui/components/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@better-bull-board/ui/components/tooltip"
 import { useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
 import { formatDuration } from "date-fns"
@@ -8,13 +15,6 @@ import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas"
-import { Badge } from "~/components/ui/badge"
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area"
-import { Skeleton } from "~/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
 import { apiFetch, smartFormatDuration } from "~/lib/utils/client"
 import { QueueActions } from "./queue-actions"
 import { QueueMiniChart } from "./queue-mini-chart"
@@ -134,7 +134,7 @@ export function QueuesTable() {
           />
         </div>
         {options.search && (isLoading || selectedQueueStats) && (
-          <div className="order-1 flex h-9 items-center gap-3 rounded-md border px-3 text-xs text-muted-foreground sm:order-none">
+          <div className="order-1 flex h-8 items-center gap-3 rounded-lg border px-2.5 text-xs text-muted-foreground sm:order-none">
             {isLoading ? (
               <Skeleton className="h-4 w-32" />
             ) : (
@@ -152,7 +152,6 @@ export function QueuesTable() {
         <div className="flex items-center gap-2 ml-auto">
           <Button
             variant="outline"
-            size="sm"
             onClick={handlePrevPage}
             disabled={isLoading || !data?.prevCursor}
             aria-label="Previous page"
@@ -162,7 +161,6 @@ export function QueuesTable() {
           </Button>
           <Button
             variant="outline"
-            size="sm"
             onClick={handleNextPage}
             disabled={isLoading || !data?.nextCursor}
             aria-label="Next page"
@@ -202,14 +200,16 @@ export function QueuesTable() {
                     {getSortIcon("pressure")}
                   </button>
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        aria-label="What pressure means"
-                      >
-                        <Info className="size-3.5" />
-                      </button>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          type="button"
+                          className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          aria-label="What pressure means"
+                        />
+                      }
+                    >
+                      <Info className="size-3.5" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-64 text-left">{PRESSURE_DESCRIPTION}</TooltipContent>
                   </Tooltip>

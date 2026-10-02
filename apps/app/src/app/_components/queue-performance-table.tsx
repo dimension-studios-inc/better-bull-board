@@ -1,15 +1,15 @@
 "use client"
 
+import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
+import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
+import { Skeleton } from "@better-bull-board/ui/components/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
 import type { z } from "zod"
 import type { dashboardQueuePerformanceOutput } from "~/app/api/dashboard/summary/schemas"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area"
-import { Skeleton } from "~/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
-import { TruncatedTooltip } from "~/components/ui/truncated-tooltip"
+import { TruncatedTooltip } from "~/components/truncated-tooltip"
 
 type QueuePerformance = z.output<typeof dashboardQueuePerformanceOutput>
 

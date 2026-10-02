@@ -1,13 +1,13 @@
 "use client"
 
 import type { jobRunsTable } from "@better-bull-board/db"
+import { Badge } from "@better-bull-board/ui/components/badge"
+import { Button } from "@better-bull-board/ui/components/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
+import { ScrollArea } from "@better-bull-board/ui/components/scroll-area"
+import { Separator } from "@better-bull-board/ui/components/separator"
 import { cn } from "cn"
 import { AlertCircle, AlertTriangle, ArrowLeft, Bug, CalendarClock, Clock, Info } from "lucide-react"
-import { Badge } from "~/components/ui/badge"
-import { Button } from "~/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { ScrollArea } from "~/components/ui/scroll-area"
-import { Separator } from "~/components/ui/separator"
 import { smartFormatDuration } from "~/lib/utils/client"
 
 interface LogEntry {
@@ -88,7 +88,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
     <Card className="lg:h-[calc(100vh-12rem)] overflow-hidden">
       <CardHeader>
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={onBack} className="p-1 h-8 w-8">
+          <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <CardTitle className="flex items-center space-x-2">

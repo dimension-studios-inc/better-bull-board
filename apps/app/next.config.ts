@@ -1,6 +1,7 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["@better-bull-board/ui"],
   rewrites: async () => {
     return [
       { source: "/healthz", destination: "/health" },

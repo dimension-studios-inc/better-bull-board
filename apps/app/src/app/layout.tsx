@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
-import "./globals.css"
+import "@better-bull-board/ui/globals.css"
+import { Toaster } from "@better-bull-board/ui/components/sonner"
 import { cn } from "cn"
 import { headers } from "next/headers"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
 import { AuthGuard } from "~/components/auth-guard"
-import { Toaster } from "~/components/ui/sonner"
 import { env } from "~/lib/env"
 import { Providers } from "./providers"
 

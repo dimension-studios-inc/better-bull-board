@@ -1,5 +1,9 @@
 "use client"
 
+import { Badge } from "@better-bull-board/ui/components/badge"
+import { Button } from "@better-bull-board/ui/components/button"
+import { Input } from "@better-bull-board/ui/components/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
 import { useQuery } from "@tanstack/react-query"
 import { ChevronLeft, ChevronRight, Filter, Pause, Play, Plus, Search, X } from "lucide-react"
 import Link from "next/link"
@@ -7,10 +11,6 @@ import { useMemo, useState } from "react"
 import { getTagsApiRoute } from "~/app/api/tags/schemas"
 import { QueueSelector } from "~/components/queue-selector"
 import { SearchSelect, type SearchSelectOption } from "~/components/search-select"
-import { Badge } from "~/components/ui/badge"
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
 import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
 import type { TRunFilters, TRunFilterUpdate } from "./types"
@@ -196,16 +196,14 @@ export function RunsFilters({
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex w-full flex-wrap items-center gap-2 min-w-0 lg:w-auto lg:flex-1">
         <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 gap-1 bg-transparent">
-              <Filter className="h-4 w-4" />
-              Filters
-              {activeFilters.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs">
-                  {activeFilters.length}
-                </Badge>
-              )}
-            </Button>
+          <PopoverTrigger render={<Button variant="outline" />}>
+            <Filter className="h-4 w-4" />
+            Filters
+            {activeFilters.length > 0 && (
+              <Badge variant="secondary" className="min-w-5">
+                {activeFilters.length}
+              </Badge>
+            )}
           </PopoverTrigger>
           <PopoverContent className="p-4 w-max" align="start">
             <div className="space-y-4 w-80 max-w-[calc(100vw-4rem)]">
@@ -333,7 +331,7 @@ export function RunsFilters({
           />
         </div>
         {activeFilters.map((filter) => (
-          <Badge key={`${filter.key}-${filter.value}`} variant="secondary" className="h-9 max-w-full px-2">
+          <Badge key={`${filter.key}-${filter.value}`} variant="secondary" className="max-w-full">
             <span className="truncate">{filter.label}</span>
             <Button
               variant="ghost"
@@ -350,26 +348,21 @@ export function RunsFilters({
       <div className="flex w-full items-center gap-2 lg:w-auto">
         <Button
           variant="outline"
-          size="sm"
+          size="icon"
           onClick={() => onLiveUpdatesPausedChange(!liveUpdatesPaused)}
-          className="size-9 p-0"
           aria-pressed={liveUpdatesPaused}
           aria-label={liveUpdatesPaused ? "Resume live updates" : "Pause live updates"}
           title={liveUpdatesPaused ? "Resume live updates" : "Pause live updates"}
         >
           {liveUpdatesPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
         </Button>
-        <Button asChild size="sm" className="h-9 gap-1">
-          <Link href="/runs/create">
-            <Plus className="h-4 w-4" />
-            Create Run
-          </Link>
+        <Button nativeButton={false} render={<Link href="/runs/create" />}>
+          <Plus className="h-4 w-4" />
+          Create Run
         </Button>
         <div className="ml-auto flex items-center gap-2">
           <Button
             variant="outline"
-            size="sm"
-            className="h-9"
             onClick={handlePrevPage}
             disabled={isFetching || (!runs?.prevCursor && !filters.cursor)}
             aria-label="Previous page"
@@ -379,8 +372,6 @@ export function RunsFilters({
           </Button>
           <Button
             variant="outline"
-            size="sm"
-            className="h-9"
             onClick={handleNextPage}
             disabled={isFetching || !runs?.nextCursor}
             aria-label="Next page"

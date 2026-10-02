@@ -5,18 +5,18 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "../../packages/ui/src/styles/globals.css",
+    "css": "src/styles/globals.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "~/components",
+    "components": "@better-bull-board/ui/components",
     "utils": "cn",
     "ui": "@better-bull-board/ui/components",
-    "lib": "~/lib",
-    "hooks": "~/hooks"
+    "lib": "@better-bull-board/ui/lib",
+    "hooks": "@better-bull-board/ui/hooks"
   },
   "rtl": false,
   "menuColor": "default",

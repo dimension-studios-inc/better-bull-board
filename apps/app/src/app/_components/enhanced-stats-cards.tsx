@@ -1,12 +1,19 @@
 "use client"
 
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@better-bull-board/ui/components/card"
+import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { cn } from "cn"
 import { Activity, AlertCircle, CheckCircle, ChevronRight, Clock } from "lucide-react"
 import Link from "next/link"
 import type { z } from "zod"
 import type { dashboardEnhancedStatsOutput } from "~/app/api/dashboard/summary/schemas"
-import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
-import { Skeleton } from "~/components/ui/skeleton"
 
 interface EnhancedStatsCardsProps {
   periodLabel: string
