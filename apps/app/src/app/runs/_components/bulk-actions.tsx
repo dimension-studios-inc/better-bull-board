@@ -90,30 +90,20 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
     <>
       <div className="flex flex-wrap gap-2">
         {cancellableJobs.length > 0 && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setCancelDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
+          <Button variant="destructive" onClick={() => setCancelDialogOpen(true)} className="flex items-center gap-2">
             <X className="size-4" />
             Cancel ({cancellableJobs.length})
           </Button>
         )}
 
         {replayableJobs.length > 0 && (
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => setReplayDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
+          <Button variant="default" onClick={() => setReplayDialogOpen(true)} className="flex items-center gap-2">
             <RotateCcw className="size-4" />
             Replay ({replayableJobs.length})
           </Button>
         )}
 
-        <Button variant="outline" size="sm" onClick={onClearSelection} className="flex items-center gap-2">
+        <Button variant="outline" onClick={onClearSelection}>
           <Trash2 className="size-4" />
           <span className="hidden sm:inline">Clear Selection</span>
           <span className="sm:hidden">Clear</span>
