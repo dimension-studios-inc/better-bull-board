@@ -6,9 +6,9 @@ import Link from "next/link"
 import { useMemo, useState } from "react"
 import { getTagsApiRoute } from "~/app/api/tags/schemas"
 import { QueueSelector } from "~/components/queue-selector"
+import { SearchSelect, type SearchSelectOption } from "~/components/search-select"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
-import { Combobox, type ComboboxOption } from "~/components/ui/combobox"
 import { Input } from "~/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
 import useDebounce from "~/hooks/use-debounce"
@@ -61,7 +61,7 @@ export function RunsFilters({
     enabled: tagsOpen && debouncedTagsSearch.length >= MIN_TAG_SEARCH_LENGTH,
   })
 
-  const statusOptions: ComboboxOption[] = [
+  const statusOptions: SearchSelectOption[] = [
     { value: "all", label: "All Statuses" },
     { value: "completed", label: "Completed" },
     { value: "failed", label: "Failed" },
@@ -73,7 +73,7 @@ export function RunsFilters({
     { value: "unknown", label: "Unknown" },
   ]
 
-  const tagsOptions: ComboboxOption[] = useMemo(() => {
+  const tagsOptions: SearchSelectOption[] = useMemo(() => {
     if (!tagsData?.tags) return []
     return tagsData.tags.map((tag) => ({ value: tag, label: tag }))
   }, [tagsData])
@@ -231,7 +231,7 @@ export function RunsFilters({
 
                 <div>
                   <label className="text-sm font-medium mb-2 block">Status</label>
-                  <Combobox
+                  <SearchSelect
                     value={filters.status}
                     onValueChange={(value) => setFilters({ status: value })}
                     options={statusOptions}
@@ -271,7 +271,7 @@ export function RunsFilters({
                         ))}
                       </div>
                     )}
-                    <Combobox
+                    <SearchSelect
                       value=""
                       onValueChange={(value) => {
                         if (value && !filters.tags.includes(value)) {

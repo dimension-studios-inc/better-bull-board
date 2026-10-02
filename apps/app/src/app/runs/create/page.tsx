@@ -110,7 +110,6 @@ export default function CreateRunPage() {
             setOpen={setQueueOpen}
             placeholder="Select a queue..."
             className="w-full"
-            popoverContentClassName="w-(--radix-popover-trigger-width)"
             allowCustomValue
           />
           {selectedQueue && selectedQueue !== "all" && isLastRunLoading && (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
+import { cn } from "cn"
 import { headers } from "next/headers"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
 import { AuthGuard } from "~/components/auth-guard"
@@ -31,8 +32,8 @@ export default async function RootLayout({
   const pathname = (await headers()).get("x-pathname") as string
 
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className={cn("font-sans", geistSans.variable, geistMono.variable)}>
+      <body className="antialiased">
         <NuqsAdapter>
           <Providers WEBSOCKET_URL={env.WEBSOCKET_URL}>
             <AuthGuard pathname={pathname}>{children}</AuthGuard>
