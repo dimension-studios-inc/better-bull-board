@@ -1,6 +1,7 @@
 import { jobRunsInsertSchema } from "@better-bull-board/db/schemas/job/schema"
 import type { Job } from "bullmq"
 import { z } from "zod/v4"
+import { stripNullCharacters } from "~/lib/sanitize"
 
 export const jobSyncEventSchema = z.object({
   version: z.literal(1),
@@ -103,7 +104,7 @@ export const formatJobRun = ({
     createdAt: enqueuedAt,
   }
 
-  return jobRunsInsertSchema.parse(formatted)
+  return jobRunsInsertSchema.parse(stripNullCharacters(formatted))
 }
 
 export const parseJobSyncEvent = (raw: string) => {
