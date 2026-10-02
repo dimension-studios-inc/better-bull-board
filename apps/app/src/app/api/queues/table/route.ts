@@ -1,24 +1,26 @@
 import { listQueues } from "@better-bull-board/core/queues"
 import { dashboardQueueHourlyStatsTable, jobRunsTable } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
-import { addDays, addHours, startOfDay, startOfHour } from "date-fns"
 import { and, gte, inArray, lt, sql } from "drizzle-orm"
+import { startOfUtcDay, startOfUtcHour } from "~/lib/utils/date"
 import { createAuthenticatedApiRoute } from "~/lib/utils/server"
 import { getQueuesTableApiRoute } from "./schemas"
 
 type ChartDataPoint = { timestamp: string; completed: number; failed: number }
 type ChartStep = "hour" | "day"
-type ChartDataRow = ChartDataPoint & { queueName: string }
+// Bucket start as epoch milliseconds: timestamp columns hold UTC without time zone, which `new Date()` would read in
+// the server's local time zone
+type ChartDataRow = { queueName: string; timestamp: string; completed: number; failed: number }
+
+const STEP_MS: Record<ChartStep, number> = { hour: 60 * 60 * 1000, day: 24 * 60 * 60 * 1000 }
 
 function fillChartData(dateFrom: Date, dateTo: Date, stepKind: ChartStep, chartData: ChartDataPoint[]) {
   const filled: ChartDataPoint[] = []
-  const map = new Map(chartData.map((d) => [new Date(d.timestamp).toISOString().slice(0, 19).replace("T", " "), d]))
+  const map = new Map(chartData.map((d) => [d.timestamp, d]))
+  const start = stepKind === "hour" ? startOfUtcHour(dateFrom) : startOfUtcDay(dateFrom)
 
-  for (let d = new Date(dateFrom); d <= dateTo; d = stepKind === "hour" ? addHours(d, 1) : addDays(d, 1)) {
-    const ts =
-      stepKind === "hour"
-        ? startOfHour(d).toISOString().slice(0, 19).replace("T", " ")
-        : startOfDay(d).toISOString().slice(0, 19).replace("T", " ")
+  for (let d = start.getTime(); d <= dateTo.getTime(); d += STEP_MS[stepKind]) {
+    const ts = new Date(d).toISOString()
 
     const data = map.get(ts)
     if (data) {
@@ -44,8 +46,8 @@ export const POST = createAuthenticatedApiRoute({
     const timePeriodDays = Number(timePeriod)
     const dateFrom = new Date(Date.now() - timePeriodDays * 24 * 60 * 60 * 1000)
     const dateTo = new Date()
-    const pressureDateFrom = startOfHour(dateFrom)
-    const pressureDateTo = startOfHour(dateTo)
+    const pressureDateFrom = startOfUtcHour(dateFrom)
+    const pressureDateTo = startOfUtcHour(dateTo)
 
     const queuePage = await listQueues({
       search,
@@ -61,8 +63,8 @@ export const POST = createAuthenticatedApiRoute({
     const queueNames = queueRows.map((row) => row.name)
 
     const interval = timePeriodDays <= 7 ? "hour" : "day"
-    const currentHourStart = startOfHour(dateTo)
-    const chartDateFrom = interval === "hour" ? startOfHour(dateFrom) : startOfDay(dateFrom)
+    const currentHourStart = startOfUtcHour(dateTo)
+    const chartDateFrom = interval === "hour" ? startOfUtcHour(dateFrom) : startOfUtcDay(dateFrom)
 
     // Performance logging
     const performanceStart = Date.now()
@@ -98,8 +100,12 @@ export const POST = createAuthenticatedApiRoute({
               queueName: dashboardQueueHourlyStatsTable.queue,
               timestamp:
                 interval === "hour"
-                  ? sql<string>`${dashboardQueueHourlyStatsTable.bucketStart}`.as("timestamp")
-                  : sql<string>`date_trunc('day', ${dashboardQueueHourlyStatsTable.bucketStart})`.as("timestamp"),
+                  ? sql<string>`(EXTRACT(EPOCH FROM ${dashboardQueueHourlyStatsTable.bucketStart}) * 1000)::bigint`.as(
+                      "timestamp",
+                    )
+                  : sql<string>`(EXTRACT(EPOCH FROM date_trunc('day', ${dashboardQueueHourlyStatsTable.bucketStart})) * 1000)::bigint`.as(
+                      "timestamp",
+                    ),
               completed: sql<number>`SUM(${dashboardQueueHourlyStatsTable.completedRuns})`,
               failed: sql<number>`SUM(${dashboardQueueHourlyStatsTable.failedRuns})`,
             })
@@ -122,8 +128,12 @@ export const POST = createAuthenticatedApiRoute({
               queueName: jobRunsTable.queue,
               timestamp:
                 interval === "hour"
-                  ? sql<string>`date_trunc('hour', ${jobRunsTable.createdAt})`.as("timestamp")
-                  : sql<string>`date_trunc('day', ${jobRunsTable.createdAt})`.as("timestamp"),
+                  ? sql<string>`(EXTRACT(EPOCH FROM date_trunc('hour', ${jobRunsTable.createdAt})) * 1000)::bigint`.as(
+                      "timestamp",
+                    )
+                  : sql<string>`(EXTRACT(EPOCH FROM date_trunc('day', ${jobRunsTable.createdAt})) * 1000)::bigint`.as(
+                      "timestamp",
+                    ),
               completed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
               failed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
             })
@@ -158,7 +168,7 @@ export const POST = createAuthenticatedApiRoute({
     const chartDataMap = new Map<string, Map<string, ChartDataPoint>>()
     for (const chart of [...historicalChartData, ...currentHourChartData]) {
       const chartData = chartDataMap.get(chart.queueName) ?? new Map<string, ChartDataPoint>()
-      const timestamp = new Date(chart.timestamp).toISOString().slice(0, 19).replace("T", " ")
+      const timestamp = new Date(Number(chart.timestamp)).toISOString()
       const previous = chartData.get(timestamp)
 
       chartData.set(timestamp, {

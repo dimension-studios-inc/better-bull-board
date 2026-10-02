@@ -1,4 +1,5 @@
 import { db } from "@better-bull-board/db/server"
+import { utcTimestamp } from "@better-bull-board/db/utils/timestamp"
 import { logger } from "@rharkor/logger"
 import { sql } from "drizzle-orm"
 import cron from "node-cron"
@@ -31,7 +32,7 @@ export const refreshRecentJobTags = async () => {
             now()
           FROM "job_runs"
           CROSS JOIN LATERAL unnest("job_runs"."tags") AS unnested_tags(tag)
-          WHERE "job_runs"."created_at" >= ${createdFrom}
+          WHERE "job_runs"."created_at" >= ${utcTimestamp(createdFrom)}
             AND cardinality("job_runs"."tags") > 0
             AND unnested_tags.tag IS NOT NULL
             AND unnested_tags.tag <> ''
@@ -45,7 +46,7 @@ export const refreshRecentJobTags = async () => {
         if (deleteBefore) {
           await tx.execute(sql`
             DELETE FROM "job_tags"
-            WHERE "last_seen_at" < ${deleteBefore}
+            WHERE "last_seen_at" < ${utcTimestamp(deleteBefore)}
           `)
         }
       })
