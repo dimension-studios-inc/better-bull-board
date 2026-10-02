@@ -9,8 +9,8 @@ type TruncatedTooltipProps = {
 export function TruncatedTooltip({ value, className }: TruncatedTooltipProps) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <span className={cn("inline-block max-w-full truncate align-bottom", className)}>{value}</span>
+      <TooltipTrigger render={<span className={cn("inline-block max-w-full truncate align-bottom", className)} />}>
+        {value}
       </TooltipTrigger>
       <TooltipContent
         side="top"

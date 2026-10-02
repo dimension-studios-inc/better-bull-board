@@ -202,14 +202,16 @@ export function QueuesTable() {
                     {getSortIcon("pressure")}
                   </button>
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        aria-label="What pressure means"
-                      >
-                        <Info className="size-3.5" />
-                      </button>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          type="button"
+                          className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          aria-label="What pressure means"
+                        />
+                      }
+                    >
+                      <Info className="size-3.5" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-64 text-left">{PRESSURE_DESCRIPTION}</TooltipContent>
                   </Tooltip>
