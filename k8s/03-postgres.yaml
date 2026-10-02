@@ -21,6 +21,17 @@ spec:
         - name: bbb-postgres
           image: public.ecr.aws/n5q7l0s4/better-bull-board-postgres:latest
           imagePullPolicy: Always
+          # Postgres defaults target tiny machines (shared_buffers=128MB, work_mem=4MB): size them for the 8Gi limit.
+          # Check with `SHOW shared_buffers` and the cache hit ratio / temp files in pg_stat_database.
+          args:
+            - "-c"
+            - "shared_buffers=2GB"
+            - "-c"
+            - "effective_cache_size=6GB"
+            - "-c"
+            - "work_mem=16MB"
+            - "-c"
+            - "maintenance_work_mem=512MB"
           ports:
             - containerPort: 5432
               name: bbb-postgres
@@ -33,6 +44,9 @@ spec:
             - name: bbb-postgres-data
               mountPath: /var/lib/postgresql/data
               subPath: bbb-postgres # ensures clean separation in PVC
+            # Parallel queries use /dev/shm, limited to 64Mi by default in Kubernetes
+            - name: dshm
+              mountPath: /dev/shm
           livenessProbe:
             exec:
               command:
@@ -60,6 +74,11 @@ spec:
             limits:
               cpu: "2000m"
               memory: "8Gi"
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
       securityContext:
         fsGroup: 999
         fsGroupChangePolicy: "OnRootMismatch"
