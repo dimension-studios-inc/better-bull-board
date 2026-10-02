@@ -30,7 +30,7 @@ export function QueueMiniChart({ data }: QueueMiniChartProps) {
           <Line
             type="monotone"
             dataKey="completed"
-            stroke="var(--chart-2)"
+            stroke="var(--color-green-600)"
             strokeWidth={1.5}
             dot={false}
             activeDot={false}
@@ -38,7 +38,7 @@ export function QueueMiniChart({ data }: QueueMiniChartProps) {
           <Line
             type="monotone"
             dataKey="failed"
-            stroke="var(--chart-5)"
+            stroke="var(--color-red-600)"
             strokeWidth={1.5}
             dot={false}
             activeDot={false}
