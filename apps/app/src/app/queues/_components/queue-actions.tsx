@@ -69,7 +69,7 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
     <div className="flex gap-1">
       {/* Pause/Resume Button */}
       <Popover open={pausePopoverOpen} onOpenChange={setPausePopoverOpen}>
-        <PopoverTrigger render={<Button variant="ghost" size="sm" />}>
+        <PopoverTrigger render={<Button variant="ghost" size="icon-sm" />}>
           {isPaused ? <Play className="size-4" /> : <Pause className="size-4" />}
         </PopoverTrigger>
         <PopoverContent className="w-80">
@@ -100,7 +100,7 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
 
       {/* Delete Button */}
       <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
-        <PopoverTrigger render={<Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" />}>
+        <PopoverTrigger render={<Button variant="ghost" size="icon-sm" className="text-red-600 hover:text-red-700" />}>
           <Trash2 className="size-4" />
         </PopoverTrigger>
         <PopoverContent className="w-80">

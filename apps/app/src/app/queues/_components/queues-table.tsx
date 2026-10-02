@@ -134,7 +134,7 @@ export function QueuesTable() {
           />
         </div>
         {options.search && (isLoading || selectedQueueStats) && (
-          <div className="order-1 flex h-9 items-center gap-3 rounded-md border px-3 text-xs text-muted-foreground sm:order-none">
+          <div className="order-1 flex h-8 items-center gap-3 rounded-lg border px-2.5 text-xs text-muted-foreground sm:order-none">
             {isLoading ? (
               <Skeleton className="h-4 w-32" />
             ) : (
@@ -152,7 +152,6 @@ export function QueuesTable() {
         <div className="flex items-center gap-2 ml-auto">
           <Button
             variant="outline"
-            size="sm"
             onClick={handlePrevPage}
             disabled={isLoading || !data?.prevCursor}
             aria-label="Previous page"
@@ -162,7 +161,6 @@ export function QueuesTable() {
           </Button>
           <Button
             variant="outline"
-            size="sm"
             onClick={handleNextPage}
             disabled={isLoading || !data?.nextCursor}
             aria-label="Next page"

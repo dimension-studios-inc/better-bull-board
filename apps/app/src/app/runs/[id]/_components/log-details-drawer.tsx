@@ -88,7 +88,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
     <Card className="lg:h-[calc(100vh-12rem)] overflow-hidden">
       <CardHeader>
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={onBack} className="p-1 h-8 w-8">
+          <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <CardTitle className="flex items-center space-x-2">
