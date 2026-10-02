@@ -3,7 +3,7 @@
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
 import { getQueuesNameApiRoute } from "~/app/api/queues/name/schemas"
-import { Combobox, type ComboboxOption } from "~/components/ui/combobox"
+import { SearchSelect, type SearchSelectOption } from "~/components/search-select"
 import useDebounce from "~/hooks/use-debounce"
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll"
 import { apiFetch } from "~/lib/utils/client"
@@ -71,7 +71,7 @@ export function QueueSelector({
     enabled: open,
   })
 
-  const queueOptions: ComboboxOption[] = useMemo(() => {
+  const queueOptions: SearchSelectOption[] = useMemo(() => {
     const options = includeAllOption ? [{ value: "all", label: allOptionLabel }] : []
     const normalizedSearch = search.trim().toLowerCase()
 
@@ -111,7 +111,7 @@ export function QueueSelector({
   }
 
   return (
-    <Combobox
+    <SearchSelect
       value={value}
       onValueChange={onValueChange}
       options={queueOptions}
@@ -127,8 +127,6 @@ export function QueueSelector({
       isFetching={isLoading}
       infiniteLoadingProps={{
         hasNextPage,
-        fetchNextPage,
-        isFetchingNextPage,
         loaderRef: loaderRef as React.RefObject<HTMLDivElement>,
       }}
       popoverContentClassName={popoverContentClassName}

@@ -55,6 +55,13 @@ function RunTimestamp({ value }: RunTimestampProps) {
   )
 }
 
+// The Checkbox renders a check for every checked state: show a dash on a filled box when partially selected
+const INDETERMINATE_CHECKBOX_CLASS_NAME =
+  "data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground data-[state=indeterminate]:[&_svg]:hidden data-[state=indeterminate]:before:h-0.5 data-[state=indeterminate]:before:w-2 data-[state=indeterminate]:before:rounded-full data-[state=indeterminate]:before:bg-current"
+
+// TooltipContent always renders an arrow, which does not fit these custom tooltip bodies
+const TOOLTIP_WITHOUT_ARROW_CLASS_NAME = "[&_svg.rotate-45]:hidden"
+
 const isInteractiveRowTarget = (target: EventTarget | null) =>
   target instanceof Element && !!target.closest("a,button,input,select,textarea,[role='checkbox']")
 
@@ -204,6 +211,7 @@ export function RunsTable() {
 
   const isAllSelected = jobs.length > 0 && selectedJobIds.size === jobs.length
   const isPartiallySelected = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length
+  const selectAllState = isAllSelected ? true : isPartiallySelected ? "indeterminate" : false
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -270,9 +278,9 @@ export function RunsTable() {
         <div className="flex items-center justify-between gap-2 px-1">
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <Checkbox
-              checked={isAllSelected}
-              indeterminate={isPartiallySelected}
-              onCheckedChange={handleSelectAll}
+              checked={selectAllState}
+              onCheckedChange={(checked) => handleSelectAll(checked === true)}
+              className={INDETERMINATE_CHECKBOX_CLASS_NAME}
               aria-label="Select all jobs"
             />
             {selectedJobIds.size > 0 ? `${selectedJobIds.size} selected` : "Select all"}
@@ -366,9 +374,9 @@ export function RunsTable() {
               <TableHead style={{ width: "50px" }}>
                 <div className="flex items-center">
                   <Checkbox
-                    checked={isAllSelected}
-                    indeterminate={isPartiallySelected}
-                    onCheckedChange={handleSelectAll}
+                    checked={selectAllState}
+                    onCheckedChange={(checked) => handleSelectAll(checked === true)}
+                    className={INDETERMINATE_CHECKBOX_CLASS_NAME}
                     aria-label="Select all jobs"
                   />
                 </div>
@@ -462,8 +470,10 @@ export function RunsTable() {
                             side="left"
                             align="start"
                             sideOffset={8}
-                            withoutArrow
-                            className="max-w-xl overflow-hidden rounded-lg border border-red-500/20 bg-background p-0 text-foreground shadow-xl"
+                            className={cn(
+                              "max-w-xl overflow-hidden rounded-lg border border-red-500/20 bg-background p-0 text-foreground shadow-xl",
+                              TOOLTIP_WITHOUT_ARROW_CLASS_NAME,
+                            )}
                           >
                             <div className="border-b border-red-500/10 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
                               Error details

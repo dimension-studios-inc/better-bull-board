@@ -167,7 +167,7 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
                   <TooltipTrigger>
                     <div className="shrink-0">{getLevelIcon(log.level)}</div>
                   </TooltipTrigger>
-                  <TooltipContent className="bg-none p-0 m-0" withoutArrow>
+                  <TooltipContent className="bg-none p-0 m-0 [&_svg.rotate-45]:hidden">
                     <Badge className={getLevelColor(log.level)} variant="outline">
                       {log.level.toUpperCase()}
                     </Badge>
