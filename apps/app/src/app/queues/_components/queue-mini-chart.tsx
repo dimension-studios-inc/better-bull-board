@@ -27,8 +27,22 @@ export function QueueMiniChart({ data }: QueueMiniChartProps) {
     <div className="h-8 w-16">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={processedData}>
-          <Line type="monotone" dataKey="completed" stroke="#10b981" strokeWidth={1.5} dot={false} activeDot={false} />
-          <Line type="monotone" dataKey="failed" stroke="#ef4444" strokeWidth={1.5} dot={false} activeDot={false} />
+          <Line
+            type="monotone"
+            dataKey="completed"
+            stroke="var(--chart-2)"
+            strokeWidth={1.5}
+            dot={false}
+            activeDot={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="failed"
+            stroke="var(--chart-5)"
+            strokeWidth={1.5}
+            dot={false}
+            activeDot={false}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

@@ -73,8 +73,8 @@ export function RunGraphChart({ minutes, periodLabel, runGraphData, isLoading }:
               <AreaChart data={chartData} margin={{ left: 0, right: 12 }}>
                 <defs>
                   <linearGradient id="fillRunCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.1} />
+                    <stop offset="5%" stopColor="var(--chart-3)" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="var(--chart-3)" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} stroke="var(--border)" />
@@ -101,7 +101,7 @@ export function RunGraphChart({ minutes, periodLabel, runGraphData, isLoading }:
                   type="natural"
                   dataKey="runCount"
                   fill="url(#fillRunCount)"
-                  stroke="var(--primary)"
+                  stroke="var(--chart-3)"
                   strokeWidth={2}
                   name="Run Count"
                 />
