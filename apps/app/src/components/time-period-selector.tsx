@@ -50,11 +50,9 @@ export function TimePeriodSelector({ value, onChange }: TimePeriodSelectorProps)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <CalendarDays className="h-4 w-4" />
-          {getTimePeriodLabel(value)}
-        </Button>
+      <PopoverTrigger render={<Button variant="outline" size="sm" className="gap-2" />}>
+        <CalendarDays className="h-4 w-4" />
+        {getTimePeriodLabel(value)}
       </PopoverTrigger>
       <PopoverContent className="w-48 p-2" align="start">
         <div className="space-y-1">

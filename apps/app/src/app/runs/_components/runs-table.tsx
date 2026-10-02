@@ -55,12 +55,12 @@ function RunTimestamp({ value }: RunTimestampProps) {
   )
 }
 
-// The Checkbox renders a check for every checked state: show a dash on a filled box when partially selected
+// The shadcn Checkbox shows a check for the indeterminate state too: show a dash on a filled box instead
 const INDETERMINATE_CHECKBOX_CLASS_NAME =
-  "data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground data-[state=indeterminate]:[&_svg]:hidden data-[state=indeterminate]:before:h-0.5 data-[state=indeterminate]:before:w-2 data-[state=indeterminate]:before:rounded-full data-[state=indeterminate]:before:bg-current"
+  "data-indeterminate:border-primary data-indeterminate:bg-primary data-indeterminate:text-primary-foreground data-indeterminate:[&_svg]:hidden data-indeterminate:before:h-0.5 data-indeterminate:before:w-2 data-indeterminate:before:rounded-full data-indeterminate:before:bg-current"
 
 // TooltipContent always renders an arrow, which does not fit these custom tooltip bodies
-const TOOLTIP_WITHOUT_ARROW_CLASS_NAME = "[&_svg.rotate-45]:hidden"
+const TOOLTIP_WITHOUT_ARROW_CLASS_NAME = "[&>[data-side]]:hidden"
 
 const isInteractiveRowTarget = (target: EventTarget | null) =>
   target instanceof Element && !!target.closest("a,button,input,select,textarea,[role='checkbox']")
@@ -211,7 +211,6 @@ export function RunsTable() {
 
   const isAllSelected = jobs.length > 0 && selectedJobIds.size === jobs.length
   const isPartiallySelected = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length
-  const selectAllState = isAllSelected ? true : isPartiallySelected ? "indeterminate" : false
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -278,8 +277,9 @@ export function RunsTable() {
         <div className="flex items-center justify-between gap-2 px-1">
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <Checkbox
-              checked={selectAllState}
-              onCheckedChange={(checked) => handleSelectAll(checked === true)}
+              checked={isAllSelected}
+              indeterminate={isPartiallySelected}
+              onCheckedChange={handleSelectAll}
               className={INDETERMINATE_CHECKBOX_CLASS_NAME}
               aria-label="Select all jobs"
             />
@@ -374,8 +374,9 @@ export function RunsTable() {
               <TableHead style={{ width: "50px" }}>
                 <div className="flex items-center">
                   <Checkbox
-                    checked={selectAllState}
-                    onCheckedChange={(checked) => handleSelectAll(checked === true)}
+                    checked={isAllSelected}
+                    indeterminate={isPartiallySelected}
+                    onCheckedChange={handleSelectAll}
                     className={INDETERMINATE_CHECKBOX_CLASS_NAME}
                     aria-label="Select all jobs"
                   />
@@ -458,13 +459,15 @@ export function RunsTable() {
                     <TableCell className="max-w-48">
                       {run.status === "failed" && run.errorMessage ? (
                         <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="block w-full truncate text-left font-mono text-xs text-red-600 underline decoration-red-400/40 decoration-dotted underline-offset-4 transition-colors hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 dark:text-red-400 dark:hover:text-red-300"
-                            >
-                              {run.errorMessage}
-                            </button>
+                          <TooltipTrigger
+                            render={
+                              <button
+                                type="button"
+                                className="block w-full truncate text-left font-mono text-xs text-red-600 underline decoration-red-400/40 decoration-dotted underline-offset-4 transition-colors hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 dark:text-red-400 dark:hover:text-red-300"
+                              />
+                            }
+                          >
+                            {run.errorMessage}
                           </TooltipTrigger>
                           <TooltipContent
                             side="left"

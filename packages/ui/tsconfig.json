@@ -6,6 +6,8 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": [],
     "noEmit": true,
+    // Components are kept identical to the shadcn registry, which does not follow this rule
+    "noUnusedLocals": false,
     "paths": {
       "@better-bull-board/ui/*": ["./src/*"]
     }

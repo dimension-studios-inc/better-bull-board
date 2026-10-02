@@ -62,10 +62,8 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
       {/* Cancel Button - only show for active, waiting, or delayed jobs */}
       {canCancel && (
         <Popover open={cancelPopoverOpen} onOpenChange={setCancelPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-              <X className="size-4" />
-            </Button>
+          <PopoverTrigger render={<Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" />}>
+            <X className="size-4" />
           </PopoverTrigger>
           <PopoverContent className="w-80">
             <div className="space-y-4">
@@ -91,10 +89,8 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
       {/* Replay Button - only show for completed or failed jobs */}
       {canReplay && (
         <Popover open={replayPopoverOpen} onOpenChange={setReplayPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <RotateCcw className="size-4" />
-            </Button>
+          <PopoverTrigger render={<Button variant="ghost" size="sm" />}>
+            <RotateCcw className="size-4" />
           </PopoverTrigger>
           <PopoverContent className="w-80">
             <div className="space-y-4">

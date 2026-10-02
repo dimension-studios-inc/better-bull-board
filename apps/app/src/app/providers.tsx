@@ -1,5 +1,6 @@
 "use client"
 
+import { TooltipProvider } from "@better-bull-board/ui/components/tooltip"
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { WebSocketProvider } from "~/hooks/use-websocket"
@@ -37,7 +38,7 @@ export const Providers = ({ children, WEBSOCKET_URL }: { children: React.ReactNo
             WEBSOCKET_URL,
           }}
         >
-          {children}
+          <TooltipProvider>{children}</TooltipProvider>
         </WebSocketProvider>
       </QueryClientProvider>
     </AuthProvider>

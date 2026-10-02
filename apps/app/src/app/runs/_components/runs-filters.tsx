@@ -196,16 +196,14 @@ export function RunsFilters({
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex w-full flex-wrap items-center gap-2 min-w-0 lg:w-auto lg:flex-1">
         <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 gap-1 bg-transparent">
-              <Filter className="h-4 w-4" />
-              Filters
-              {activeFilters.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs">
-                  {activeFilters.length}
-                </Badge>
-              )}
-            </Button>
+          <PopoverTrigger render={<Button variant="outline" size="sm" className="h-9 gap-1 bg-transparent" />}>
+            <Filter className="h-4 w-4" />
+            Filters
+            {activeFilters.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 min-w-5 text-xs">
+                {activeFilters.length}
+              </Badge>
+            )}
           </PopoverTrigger>
           <PopoverContent className="p-4 w-max" align="start">
             <div className="space-y-4 w-80 max-w-[calc(100vw-4rem)]">
@@ -359,11 +357,9 @@ export function RunsFilters({
         >
           {liveUpdatesPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
         </Button>
-        <Button asChild size="sm" className="h-9 gap-1">
-          <Link href="/runs/create">
-            <Plus className="h-4 w-4" />
-            Create Run
-          </Link>
+        <Button size="sm" className="h-9 gap-1" nativeButton={false} render={<Link href="/runs/create" />}>
+          <Plus className="h-4 w-4" />
+          Create Run
         </Button>
         <div className="ml-auto flex items-center gap-2">
           <Button

@@ -42,11 +42,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:p-1.5!">
-              <Link href="/" onClick={handleNavigate}>
-                <Image src="/icon.png" alt="" width={20} height={20} className="size-5!" />
-                <span className="text-base font-semibold">Better Bull Board</span>
-              </Link>
+            <SidebarMenuButton
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              render={<Link href="/" onClick={handleNavigate} />}
+            >
+              <Image src="/icon.png" alt="" width={20} height={20} className="size-5!" />
+              <span className="text-base font-semibold">Better Bull Board</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -57,25 +58,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Create Run"
                   className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+                  render={<Link href="/runs/create" onClick={handleNavigate} />}
                 >
-                  <Link href="/runs/create" onClick={handleNavigate}>
-                    <CirclePlus />
-                    <span>Create Run</span>
-                  </Link>
+                  <CirclePlus />
+                  <span>Create Run</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
             <SidebarMenu>
               {navigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title} isActive={isActivePath(pathname, item.href)}>
-                    <Link href={item.href} onClick={handleNavigate}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    isActive={isActivePath(pathname, item.href)}
+                    render={<Link href={item.href} onClick={handleNavigate} />}
+                  >
+                    <item.icon />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
