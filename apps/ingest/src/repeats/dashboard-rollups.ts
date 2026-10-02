@@ -1,4 +1,5 @@
 import { db } from "@better-bull-board/db/server"
+import { utcTimestamp } from "@better-bull-board/db/utils/timestamp"
 import { logger } from "@rharkor/logger"
 import { sql } from "drizzle-orm"
 import cron from "node-cron"
@@ -23,7 +24,7 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
       await db.transaction(async (tx) => {
         await tx.execute(sql`
           DELETE FROM "dashboard_queue_hourly_stats"
-          WHERE "bucket_start" = date_trunc('hour', now() - interval '1 hour')::timestamp
+          WHERE "bucket_start" = date_trunc('hour', (now() AT TIME ZONE 'UTC') - interval '1 hour')
         `)
 
         await tx.execute(sql`
@@ -79,8 +80,8 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
             )::bigint AS "pressure_count",
             now()
           FROM "job_runs"
-          WHERE "created_at" >= date_trunc('hour', now() - interval '1 hour')::timestamp
-            AND "created_at" < date_trunc('hour', now())::timestamp
+          WHERE "created_at" >= date_trunc('hour', (now() AT TIME ZONE 'UTC') - interval '1 hour')
+            AND "created_at" < date_trunc('hour', now() AT TIME ZONE 'UTC')
           GROUP BY date_trunc('hour', "created_at")::timestamp, "queue"
           ON CONFLICT ("bucket_start", "queue") DO UPDATE SET
             "total_runs" = EXCLUDED."total_runs",
@@ -99,7 +100,7 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
 
         await tx.execute(sql`
           DELETE FROM "dashboard_queue_hourly_stats"
-          WHERE "bucket_start" < ${deleteBefore}
+          WHERE "bucket_start" < ${utcTimestamp(deleteBefore)}
         `)
       })
       logger.debug("Dashboard rollups refresh completed", {
