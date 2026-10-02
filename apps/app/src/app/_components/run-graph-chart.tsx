@@ -6,6 +6,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import type { z } from "zod"
 import type { dashboardRunGraphOutput } from "~/app/api/dashboard/summary/schemas"
 import { formatUtc } from "~/lib/utils/date"
+import { CHART_RESIZE_DEBOUNCE_MS } from "./chart-config"
 
 interface RunGraphChartProps {
   minutes: number
@@ -69,7 +70,7 @@ export function RunGraphChart({ minutes, periodLabel, runGraphData, isLoading }:
           </div>
         ) : chartData.length > 0 ? (
           <div className="h-64 sm:h-80">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" debounce={CHART_RESIZE_DEBOUNCE_MS}>
               <AreaChart data={chartData} margin={{ left: 0, right: 12 }}>
                 <defs>
                   <linearGradient id="fillRunCount" x1="0" y1="0" x2="0" y2="1">

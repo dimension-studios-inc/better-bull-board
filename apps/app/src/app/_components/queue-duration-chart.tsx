@@ -5,6 +5,7 @@ import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import type { z } from "zod"
 import type { dashboardTopQueuesDurationOutput } from "~/app/api/dashboard/summary/schemas"
+import { CHART_RESIZE_DEBOUNCE_MS } from "./chart-config"
 
 interface QueueDurationChartProps {
   queueDuration: z.output<typeof dashboardTopQueuesDurationOutput>[] | undefined
@@ -57,7 +58,7 @@ export function QueueDurationChart({ queueDuration, isLoading }: QueueDurationCh
           </div>
         ) : chartData.length > 0 ? (
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" debounce={CHART_RESIZE_DEBOUNCE_MS}>
               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <XAxis dataKey="queue" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => formatDuration(value)} />
