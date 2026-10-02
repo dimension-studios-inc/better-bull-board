@@ -2,10 +2,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
-import { format } from "date-fns"
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import type { z } from "zod"
 import type { dashboardRunGraphOutput } from "~/app/api/dashboard/summary/schemas"
+import { formatUtc } from "~/lib/utils/date"
 
 interface RunGraphChartProps {
   minutes: number
@@ -37,7 +37,7 @@ const CustomTooltip =
       const data = payload[0].payload
       return (
         <div className="bg-background border rounded-lg px-2.5 py-1.5 text-xs shadow-xl">
-          <p className="font-medium">{data.timestamp && format(new Date(data.timestamp), tooltipFormat)}</p>
+          <p className="font-medium">{data.timestamp && `${formatUtc(data.timestamp, tooltipFormat)} UTC`}</p>
           <p className="text-muted-foreground">
             Runs: <span className="font-mono font-medium text-foreground">{data.runCount.toLocaleString()}</span>
           </p>
@@ -53,14 +53,14 @@ export function RunGraphChart({ minutes, periodLabel, runGraphData, isLoading }:
     runGraphData?.map((item) => ({
       timestamp: item.timestamp,
       runCount: item.runCount,
-      formattedTime: format(new Date(item.timestamp), timeFormats.axis),
+      formattedTime: formatUtc(item.timestamp, timeFormats.axis),
     })) || []
 
   return (
     <Card className="@container/card">
       <CardHeader>
         <CardTitle>Total Runs</CardTitle>
-        <CardDescription>Runs created in the {periodLabel.toLowerCase()}</CardDescription>
+        <CardDescription>Runs created in the {periodLabel.toLowerCase()} (times in UTC)</CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {isLoading ? (
