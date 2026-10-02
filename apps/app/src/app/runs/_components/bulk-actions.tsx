@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
+import { ScrollArea } from "~/components/ui/scroll-area"
 import { apiFetch } from "~/lib/utils/client"
 
 interface BulkActionsProps {
@@ -129,7 +130,7 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
               {cancellableJobs.length === 1 ? "" : "s"}? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-60 overflow-y-auto">
+          <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-60">
             <div className="space-y-2">
               {cancellableJobs.map((job) => (
                 <div key={job.jobId} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
@@ -139,7 +140,7 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
                 </div>
               ))}
             </div>
-          </div>
+          </ScrollArea>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
               Cancel
@@ -162,7 +163,7 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
               configuration.
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-60 overflow-y-auto">
+          <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-60">
             <div className="space-y-2">
               {replayableJobs.map((job) => (
                 <div key={job.jobId} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
@@ -172,7 +173,7 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
                 </div>
               ))}
             </div>
-          </div>
+          </ScrollArea>
           <DialogFooter>
             <Button variant="outline" onClick={() => setReplayDialogOpen(false)}>
               Cancel
