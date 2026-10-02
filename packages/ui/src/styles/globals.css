@@ -130,6 +130,11 @@
   html {
     @apply font-sans;
   }
+  /* No rubber-band overscroll (macOS / iOS): the app should not bounce past its edges */
+  html,
+  body {
+    overscroll-behavior: none;
+  }
 
   button:not(:disabled),
   [role="button"]:not(:disabled) {
