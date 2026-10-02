@@ -7,6 +7,7 @@ import { acquireLock, releaseLock } from "~/lib/distributed-lock"
 import { env } from "~/lib/env"
 import { publishIngestEvent } from "~/lib/ingest-events"
 import { instanceId } from "~/lib/instance"
+import { stripNullCharacters } from "~/lib/sanitize"
 
 export type LogEventForPersistence = {
   id?: string
@@ -170,8 +171,10 @@ const bufferUnresolvedLogs = async (events: LogEventForPersistence[]) => {
   }, "job_log_buffer insert")
 }
 
-export const persistLogEvents = async (events: LogEventForPersistence[]) => {
-  if (events.length === 0) return []
+export const persistLogEvents = async (rawEvents: LogEventForPersistence[]) => {
+  if (rawEvents.length === 0) return []
+
+  const events = stripNullCharacters(rawEvents)
 
   const jobRunIds = await resolveJobRunIds(events)
   const resolved: ResolvedLogEvent[] = []
