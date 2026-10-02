@@ -219,7 +219,7 @@ export const resolveBufferedJobLogs = async () => {
   const [{ count = 0, oldestCreatedAt = null } = { count: 0, oldestCreatedAt: null }] = await db
     .select({
       count: sql<number>`count(*)::int`,
-      oldestCreatedAt: sql<Date | null>`min(${jobLogBufferTable.createdAt})`,
+      oldestCreatedAt: sql<Date | null>`min(${jobLogBufferTable.createdAt})`.mapWith(jobLogBufferTable.createdAt),
     })
     .from(jobLogBufferTable)
 
@@ -255,7 +255,7 @@ export const resolveBufferedJobLogs = async () => {
     )
   }
 
-  const oldestAgeMs = oldestCreatedAt ? Date.now() - new Date(oldestCreatedAt).getTime() : 0
+  const oldestAgeMs = oldestCreatedAt ? Date.now() - oldestCreatedAt.getTime() : 0
   const unresolved = bufferedRows.length - resolved.length
   const logPayload = {
     backlog: count,

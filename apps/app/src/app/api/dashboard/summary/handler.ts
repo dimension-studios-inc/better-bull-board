@@ -1,5 +1,6 @@
 import { dashboardQueueHourlyStatsTable, jobRunsTable } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
+import { utcTimestamp } from "@better-bull-board/db/utils/timestamp"
 import { type SQL, sql } from "drizzle-orm"
 import type { z } from "zod"
 import type { getDashboardSummaryOutput } from "~/app/api/dashboard/summary/schemas"
@@ -44,10 +45,6 @@ const MAX_ROLLUP_LAG_MS = 3 * HOUR_MS
 const toNumber = (value: string | number | null | undefined) => Number(value ?? 0)
 
 const toSeconds = (milliseconds: string | number | null | undefined) => toNumber(milliseconds) / 1000
-
-// Timestamps are stored in UTC without time zone: pass UTC strings so the comparison does not depend on the
-// server time zone (node-postgres serializes Date parameters in local time)
-const toSqlTimestamp = (date: Date) => sql`${date.toISOString().slice(0, 23)}::timestamp`
 
 const floorTo = (date: Date, ms: number) => new Date(Math.floor(date.getTime() / ms) * ms)
 
@@ -149,8 +146,8 @@ const getBucketRows = async ({ bucketSeconds, rollupRange, rawRanges }: Dashboar
         MIN("duration_min_ms") AS "duration_min_ms",
         MAX("duration_max_ms") AS "duration_max_ms"
       FROM ${dashboardQueueHourlyStatsTable}
-      WHERE "bucket_start" >= ${toSqlTimestamp(rollupRange.from)}
-        AND "bucket_start" < ${toSqlTimestamp(rollupRange.to)}
+      WHERE "bucket_start" >= ${utcTimestamp(rollupRange.from)}
+        AND "bucket_start" < ${utcTimestamp(rollupRange.to)}
       GROUP BY 1, 2
     `)
   }
@@ -158,7 +155,7 @@ const getBucketRows = async ({ bucketSeconds, rollupRange, rawRanges }: Dashboar
   if (rawRanges.length > 0) {
     const rawRangesFilter = sql.join(
       rawRanges.map(
-        (range) => sql`("created_at" >= ${toSqlTimestamp(range.from)} AND "created_at" < ${toSqlTimestamp(range.to)})`,
+        (range) => sql`("created_at" >= ${utcTimestamp(range.from)} AND "created_at" < ${utcTimestamp(range.to)})`,
       ),
       sql` OR `,
     )

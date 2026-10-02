@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight, Filter, Pause, Play, Plus, Search, X } from 
 import Link from "next/link"
 import { useMemo, useState } from "react"
 import { getTagsApiRoute } from "~/app/api/tags/schemas"
+import { DateTimePicker } from "~/components/date-time-picker"
 import { QueueSelector } from "~/components/queue-selector"
 import { SearchSelect, type SearchSelectOption } from "~/components/search-select"
 import useDebounce from "~/hooks/use-debounce"
@@ -17,10 +18,8 @@ import type { TRunFilters, TRunFilterUpdate } from "./types"
 
 const MIN_TAG_SEARCH_LENGTH = 2
 
-const formatCreatedFilterLabel = (value: string) => value.replace("T", " ")
-
-const getCreatedInputValue = (value: string, fallbackTime: string) =>
-  value && !value.includes("T") ? `${value}T${fallbackTime}` : value
+// Filter values are UTC date times without time zone
+const formatCreatedFilterLabel = (value: string) => `${value.replace("T", " ")} UTC`
 
 export function RunsFilters({
   filters,
@@ -300,19 +299,21 @@ export function RunsFilters({
 
                 <div>
                   <label className="text-sm font-medium mb-2 block">Created</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      type="datetime-local"
-                      step={1}
-                      value={getCreatedInputValue(filters.createdFrom, "00:00")}
-                      onChange={(event) => setFilters({ createdFrom: event.target.value })}
+                  <div className="grid gap-2">
+                    <DateTimePicker
+                      value={filters.createdFrom}
+                      onChange={(createdFrom) => setFilters({ createdFrom })}
+                      placeholder="From"
+                      defaultTime="00:00:00"
+                      className="w-full"
                       aria-label="Created from"
                     />
-                    <Input
-                      type="datetime-local"
-                      step={1}
-                      value={getCreatedInputValue(filters.createdTo, "23:59")}
-                      onChange={(event) => setFilters({ createdTo: event.target.value })}
+                    <DateTimePicker
+                      value={filters.createdTo}
+                      onChange={(createdTo) => setFilters({ createdTo })}
+                      placeholder="To"
+                      defaultTime="23:59:59"
+                      className="w-full"
                       aria-label="Created to"
                     />
                   </div>

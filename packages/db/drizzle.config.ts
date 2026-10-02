@@ -2,7 +2,8 @@
 import { config as dotenvConfig } from "dotenv"
 import { defineConfig } from "drizzle-kit"
 
-dotenvConfig()
+// quiet: dotenv logs to stderr, which the ingest migration reports as a migration error
+dotenvConfig({ quiet: true })
 
 const dbUrl = process.env.DATABASE_URL_NON_POOLING ?? process.env.DATABASE_URL
 

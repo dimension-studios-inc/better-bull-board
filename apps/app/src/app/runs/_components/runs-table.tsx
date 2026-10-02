@@ -17,6 +17,7 @@ import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
 import { TruncatedTooltip } from "~/components/truncated-tooltip"
 import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
+import { formatUtcDateTime } from "~/lib/utils/date"
 import { BulkActions } from "./bulk-actions"
 import { RunActions } from "./run-actions"
 import { RunsFilters } from "./runs-filters"
@@ -33,10 +34,8 @@ const parseAsCursor = createParser<NonNullable<TRunFilters["cursor"]>>({
   serialize: (value) => Buffer.from(JSON.stringify(value)).toString("base64"),
 })
 
-const formatUtcTimestamp = (value: Date) => `${value.toISOString().slice(0, 19).replace("T", " ")} UTC`
-
 const formatRunTimestamp = (value: Date) => ({
-  absolute: formatUtcTimestamp(value),
+  absolute: formatUtcDateTime(value),
   relative: formatDistanceToNowStrict(value, { addSuffix: true }),
 })
 
@@ -352,7 +351,7 @@ export function RunsTable() {
               )}
               <div className="flex items-center justify-between gap-2 pl-7">
                 <div className="min-w-0 truncate text-xs text-muted-foreground">
-                  <time dateTime={run.createdAt.toISOString()} title={formatUtcTimestamp(run.createdAt)}>
+                  <time dateTime={run.createdAt.toISOString()} title={formatUtcDateTime(run.createdAt)}>
                     {formatDistanceToNowStrict(run.createdAt, { addSuffix: true })}
                   </time>
                   {duration && <> · {duration}</>}
