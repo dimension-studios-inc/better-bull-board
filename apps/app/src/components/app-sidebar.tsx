@@ -1,11 +1,5 @@
 "use client"
 
-import { CirclePlus, LayoutDashboard, List, Server } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import type * as React from "react"
-import { NavUser } from "~/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +11,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "~/components/ui/sidebar"
+} from "@better-bull-board/ui/components/sidebar"
+import { CirclePlus, LayoutDashboard, List, Server } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import type * as React from "react"
+import { NavUser } from "~/components/nav-user"
 
 const navigation = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },

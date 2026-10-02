@@ -1,18 +1,18 @@
 /** biome-ignore-all lint/correctness/useExhaustiveDependencies: we need to ignore this because we need to use the useEffect hook */
 "use client"
 
+import { Button } from "@better-bull-board/ui/components/button"
+import { Input } from "@better-bull-board/ui/components/input"
+import { Separator } from "@better-bull-board/ui/components/separator"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@better-bull-board/ui/components/sheet"
+import { Skeleton } from "@better-bull-board/ui/components/skeleton"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@better-bull-board/ui/components/tooltip"
+import { useIsMobile } from "@better-bull-board/ui/hooks/use-mobile"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { PanelLeftIcon } from "lucide-react"
 import { Slot } from "radix-ui"
 import * as React from "react"
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { Separator } from "~/components/ui/separator"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "~/components/ui/sheet"
-import { Skeleton } from "~/components/ui/skeleton"
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
-import { useIsMobile } from "~/hooks/use-mobile"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7

@@ -1,10 +1,10 @@
 "use client"
 
+import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
+import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import type { z } from "zod"
 import type { dashboardTopQueuesDurationOutput } from "~/app/api/dashboard/summary/schemas"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { Skeleton } from "~/components/ui/skeleton"
 
 interface QueueDurationChartProps {
   queueDuration: z.output<typeof dashboardTopQueuesDurationOutput>[] | undefined

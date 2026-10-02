@@ -1,10 +1,10 @@
 "use client"
 
+import { Button } from "@better-bull-board/ui/components/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
+import { Separator } from "@better-bull-board/ui/components/separator"
 import { CalendarDays } from "lucide-react"
 import { Fragment, useState } from "react"
-import { Button } from "~/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
-import { Separator } from "~/components/ui/separator"
 
 const MINUTE = 1
 const HOUR = 60 * MINUTE

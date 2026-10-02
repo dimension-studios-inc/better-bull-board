@@ -1,9 +1,9 @@
 "use client"
 
+import { Button } from "@better-bull-board/ui/components/button"
+import { Card } from "@better-bull-board/ui/components/card"
+import { Input } from "@better-bull-board/ui/components/input"
 import { useId, useState } from "react"
-import { Button } from "~/components/ui/button"
-import { Card } from "~/components/ui/card"
-import { Input } from "~/components/ui/input"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
