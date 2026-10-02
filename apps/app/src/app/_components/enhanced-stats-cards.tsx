@@ -51,19 +51,19 @@ export function EnhancedStatsCards({ periodLabel, stats, isLoading }: EnhancedSt
   ]
 
   return (
-    <div className="grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+    <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       {cards.map((card) => (
-        <Card key={card.title} className="@container/card relative transition-colors hover:border-foreground/20">
+        <Card key={card.title} className="relative">
           <CardHeader>
             <CardDescription>{card.title}</CardDescription>
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            <CardTitle>
               {isLoading ? <Skeleton className="h-8 w-24" /> : (card.value?.toLocaleString() ?? "-")}
             </CardTitle>
             <CardAction>
               <card.icon className={cn("size-4", card.color)} />
             </CardAction>
           </CardHeader>
-          <CardFooter className="text-sm text-muted-foreground">
+          <CardFooter>
             <Link
               href={card.href}
               aria-label={`View ${card.title.toLowerCase()} runs`}
