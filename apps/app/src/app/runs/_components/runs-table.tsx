@@ -11,6 +11,7 @@ import { useMemo, useRef, useState } from "react"
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
 import { Badge } from "~/components/ui/badge"
 import { Checkbox } from "~/components/ui/checkbox"
+import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip"
 import { TruncatedTooltip } from "~/components/ui/truncated-tooltip"
@@ -53,6 +54,13 @@ function RunTimestamp({ value }: RunTimestampProps) {
     </time>
   )
 }
+
+// The Checkbox renders a check for every checked state: show a dash on a filled box when partially selected
+const INDETERMINATE_CHECKBOX_CLASS_NAME =
+  "data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground data-[state=indeterminate]:[&_svg]:hidden data-[state=indeterminate]:before:h-0.5 data-[state=indeterminate]:before:w-2 data-[state=indeterminate]:before:rounded-full data-[state=indeterminate]:before:bg-current"
+
+// TooltipContent always renders an arrow, which does not fit these custom tooltip bodies
+const TOOLTIP_WITHOUT_ARROW_CLASS_NAME = "[&_svg.rotate-45]:hidden"
 
 const isInteractiveRowTarget = (target: EventTarget | null) =>
   target instanceof Element && !!target.closest("a,button,input,select,textarea,[role='checkbox']")
@@ -203,6 +211,7 @@ export function RunsTable() {
 
   const isAllSelected = jobs.length > 0 && selectedJobIds.size === jobs.length
   const isPartiallySelected = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length
+  const selectAllState = isAllSelected ? true : isPartiallySelected ? "indeterminate" : false
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -269,9 +278,9 @@ export function RunsTable() {
         <div className="flex items-center justify-between gap-2 px-1">
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <Checkbox
-              checked={isAllSelected}
-              indeterminate={isPartiallySelected}
-              onCheckedChange={handleSelectAll}
+              checked={selectAllState}
+              onCheckedChange={(checked) => handleSelectAll(checked === true)}
+              className={INDETERMINATE_CHECKBOX_CLASS_NAME}
               aria-label="Select all jobs"
             />
             {selectedJobIds.size > 0 ? `${selectedJobIds.size} selected` : "Select all"}
@@ -358,16 +367,16 @@ export function RunsTable() {
       </div>
 
       {/* Desktop: table */}
-      <div className="relative hidden overflow-y-scroll rounded-lg border md:block">
+      <ScrollArea className="hidden rounded-lg border md:block">
         <Table className="table-fixed w-full">
           <TableHeader className="z-10">
             <TableRow>
               <TableHead style={{ width: "50px" }}>
                 <div className="flex items-center">
                   <Checkbox
-                    checked={isAllSelected}
-                    indeterminate={isPartiallySelected}
-                    onCheckedChange={handleSelectAll}
+                    checked={selectAllState}
+                    onCheckedChange={(checked) => handleSelectAll(checked === true)}
+                    className={INDETERMINATE_CHECKBOX_CLASS_NAME}
                     aria-label="Select all jobs"
                   />
                 </div>
@@ -461,15 +470,19 @@ export function RunsTable() {
                             side="left"
                             align="start"
                             sideOffset={8}
-                            withoutArrow
-                            className="max-h-80 max-w-xl overflow-auto rounded-lg border border-red-500/20 bg-background p-0 text-foreground shadow-xl"
+                            className={cn(
+                              "max-w-xl overflow-hidden rounded-lg border border-red-500/20 bg-background p-0 text-foreground shadow-xl",
+                              TOOLTIP_WITHOUT_ARROW_CLASS_NAME,
+                            )}
                           >
                             <div className="border-b border-red-500/10 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
                               Error details
                             </div>
-                            <pre className="whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed text-red-700 dark:text-red-300">
-                              {run.errorMessage}
-                            </pre>
+                            <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-72">
+                              <pre className="whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed text-red-700 dark:text-red-300">
+                                {run.errorMessage}
+                              </pre>
+                            </ScrollArea>
                           </TooltipContent>
                         </Tooltip>
                       ) : (
@@ -487,7 +500,8 @@ export function RunsTable() {
             })}
           </TableBody>
         </Table>
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   )
 }

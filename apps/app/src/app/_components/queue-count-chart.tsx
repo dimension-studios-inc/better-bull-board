@@ -57,7 +57,7 @@ export function QueueCountChart({ queueCounts, isLoading }: QueueCountChartProps
                 <Tooltip content={CustomTooltip} />
                 <Bar
                   dataKey="value"
-                  fill="#10b981"
+                  fill="var(--chart-2)"
                   radius={[4, 4, 0, 0]}
                   className="hover:opacity-80 transition-opacity"
                 />

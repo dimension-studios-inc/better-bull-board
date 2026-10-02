@@ -3,7 +3,7 @@
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
 import { getQueuesNameApiRoute } from "~/app/api/queues/name/schemas"
-import { Combobox, type ComboboxOption } from "~/components/ui/combobox"
+import { SearchSelect, type SearchSelectOption } from "~/components/search-select"
 import useDebounce from "~/hooks/use-debounce"
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll"
 import { apiFetch } from "~/lib/utils/client"
@@ -71,7 +71,7 @@ export function QueueSelector({
     enabled: open,
   })
 
-  const queueOptions: ComboboxOption[] = useMemo(() => {
+  const queueOptions: SearchSelectOption[] = useMemo(() => {
     const options = includeAllOption ? [{ value: "all", label: allOptionLabel }] : []
     const normalizedSearch = search.trim().toLowerCase()
 
@@ -103,16 +103,15 @@ export function QueueSelector({
 
   const defaultRenderValue = (value: string) => {
     const option = queueOptions?.find((opt) => opt.value === value)
-    if (!option) {
-      if (isLoading) return "Loading..."
-      return allowCustomValue ? value : ""
-    }
+    // The list is paginated and filtered by the search, so the selected queue may not be loaded:
+    // its name is its label anyway
+    if (!option) return value
 
     return option.label === getCustomQueueOptionLabel(option.value) ? option.value : option.label
   }
 
   return (
-    <Combobox
+    <SearchSelect
       value={value}
       onValueChange={onValueChange}
       options={queueOptions}
@@ -128,8 +127,6 @@ export function QueueSelector({
       isFetching={isLoading}
       infiniteLoadingProps={{
         hasNextPage,
-        fetchNextPage,
-        isFetchingNextPage,
         loaderRef: loaderRef as React.RefObject<HTMLDivElement>,
       }}
       popoverContentClassName={popoverContentClassName}

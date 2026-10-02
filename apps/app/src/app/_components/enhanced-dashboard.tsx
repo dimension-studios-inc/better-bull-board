@@ -3,7 +3,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { getDashboardSummaryApiRoute } from "~/app/api/dashboard/summary/schemas"
-import { type TimePeriod, TimePeriodSelector } from "~/components/time-period-selector"
+import {
+  DEFAULT_TIME_PERIOD,
+  getTimePeriodLabel,
+  type TimePeriod,
+  TimePeriodSelector,
+} from "~/components/time-period-selector"
 import { apiFetch } from "~/lib/utils/client"
 import { EnhancedStatsCards } from "./enhanced-stats-cards"
 import { QueueCountChart } from "./queue-count-chart"
@@ -12,25 +17,27 @@ import { QueuePerformanceTable } from "./queue-performance-table"
 import { RunGraphChart } from "./run-graph-chart"
 
 export function EnhancedDashboard() {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("1")
-  const days = parseInt(timePeriod, 10)
+  const [minutes, setMinutes] = useState<TimePeriod>(DEFAULT_TIME_PERIOD)
+  const periodLabel = getTimePeriodLabel(minutes)
   const { data: dashboardSummary, isLoading } = useQuery({
-    queryKey: ["dashboard/summary", days],
+    queryKey: ["dashboard/summary", minutes],
     queryFn: apiFetch({
       apiRoute: getDashboardSummaryApiRoute,
-      body: { days },
+      body: { minutes },
     }),
+    // Short periods move fast: keep them live
+    refetchInterval: minutes <= 60 ? 15 * 1000 : false,
   })
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
       {/* Time Period Selector */}
       <div className="flex items-center">
-        <TimePeriodSelector value={timePeriod} onChange={setTimePeriod} />
+        <TimePeriodSelector value={minutes} onChange={setMinutes} />
       </div>
 
       {/* Enhanced Stats Cards */}
-      <EnhancedStatsCards days={days} stats={dashboardSummary?.enhancedStats} isLoading={isLoading} />
+      <EnhancedStatsCards periodLabel={periodLabel} stats={dashboardSummary?.enhancedStats} isLoading={isLoading} />
 
       {/* Queue Performance Table */}
       <QueuePerformanceTable queuePerformance={dashboardSummary?.queuePerformance} isLoading={isLoading} />
@@ -42,7 +49,12 @@ export function EnhancedDashboard() {
       </div>
 
       {/* Run Graph */}
-      <RunGraphChart days={days} runGraphData={dashboardSummary?.runGraph} isLoading={isLoading} />
+      <RunGraphChart
+        minutes={minutes}
+        periodLabel={periodLabel}
+        runGraphData={dashboardSummary?.runGraph}
+        isLoading={isLoading}
+      />
     </div>
   )
 }

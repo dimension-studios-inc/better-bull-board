@@ -9,6 +9,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@base-ui/react": "1.8.0",
     "@better-bull-board/client": "workspace:*",
     "@better-bull-board/core": "workspace:*",
     "@better-bull-board/db": "workspace:*",
@@ -36,6 +37,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "recharts": "3.10.1",
+    "shadcn": "4.21.0",
     "shiki": "4.4.3",
     "sonner": "2.0.8",
     "tailwindcss": "4.3.3",
