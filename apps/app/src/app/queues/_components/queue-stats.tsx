@@ -1,11 +1,18 @@
 "use client"
 
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@better-bull-board/ui/components/card"
+import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
 import { Activity, Clock, Server } from "lucide-react"
 import { getQueuesStatsApiRoute } from "~/app/api/queues/stats/schemas"
-import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
-import { Skeleton } from "~/components/ui/skeleton"
 import { apiFetch } from "~/lib/utils/client"
 
 export function QueueStats() {

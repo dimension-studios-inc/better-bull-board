@@ -1,13 +1,13 @@
 "use client"
 
+import { Button } from "@better-bull-board/ui/components/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Pause, Play, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { deleteQueueApiRoute } from "~/app/api/queues/delete/schemas"
 import { pauseQueueApiRoute } from "~/app/api/queues/pause/schemas"
 import { resumeQueueApiRoute } from "~/app/api/queues/resume/schemas"
-import { Button } from "~/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
 import { apiFetch } from "~/lib/utils/client"
 
 interface QueueActionsProps {

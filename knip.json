@@ -2,14 +2,14 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreWorkspaces": ["packages/_template"],
   "workspaces": {
-    "apps/app": {
-      "entry": ["src/components/ui/**.{ts,tsx}"]
-    },
     "packages/bull-demo": {
       "entry": ["debug/*.ts"]
     },
     "packages/typescript-config": {
       "ignoreUnresolved": ["next"]
+    },
+    "packages/ui": {
+      "entry": ["src/components/*.tsx", "src/hooks/*.ts"]
     }
   }
 }

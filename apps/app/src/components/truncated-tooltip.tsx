@@ -1,5 +1,5 @@
+import { Tooltip, TooltipContent, TooltipTrigger } from "@better-bull-board/ui/components/tooltip"
 import { cn } from "cn"
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 
 type TruncatedTooltipProps = {
   value: string

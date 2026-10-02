@@ -1,12 +1,7 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { RotateCcw, Trash2, X } from "lucide-react"
-import { useState } from "react"
-import { bulkCancelJobsApiRoute } from "~/app/api/jobs/bulk-cancel/schemas"
-import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas"
-import { Badge } from "~/components/ui/badge"
-import { Button } from "~/components/ui/button"
+import { Badge } from "@better-bull-board/ui/components/badge"
+import { Button } from "@better-bull-board/ui/components/button"
 import {
   Dialog,
   DialogContent,
@@ -14,8 +9,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog"
-import { ScrollArea } from "~/components/ui/scroll-area"
+} from "@better-bull-board/ui/components/dialog"
+import { ScrollArea } from "@better-bull-board/ui/components/scroll-area"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { RotateCcw, Trash2, X } from "lucide-react"
+import { useState } from "react"
+import { bulkCancelJobsApiRoute } from "~/app/api/jobs/bulk-cancel/schemas"
+import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas"
 import { apiFetch } from "~/lib/utils/client"
 
 interface BulkActionsProps {

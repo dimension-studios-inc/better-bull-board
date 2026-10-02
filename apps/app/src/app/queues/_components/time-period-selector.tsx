@@ -1,9 +1,9 @@
 "use client"
 
+import { Button } from "@better-bull-board/ui/components/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
 import { CalendarDays } from "lucide-react"
 import { useState } from "react"
-import { Button } from "~/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover"
 
 export type TimePeriod = "1" | "3" | "7" | "30"
 

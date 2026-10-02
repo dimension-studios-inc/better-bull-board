@@ -1,7 +1,6 @@
 "use client"
 
-import { EllipsisVertical, LogOut } from "lucide-react"
-import { Avatar, AvatarFallback } from "~/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@better-bull-board/ui/components/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,8 +8,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu"
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "~/components/ui/sidebar"
+} from "@better-bull-board/ui/components/dropdown-menu"
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@better-bull-board/ui/components/sidebar"
+import { EllipsisVertical, LogOut } from "lucide-react"
 import { useAuth } from "~/lib/auth/context"
 
 function UserIdentity({ email }: { email: string }) {

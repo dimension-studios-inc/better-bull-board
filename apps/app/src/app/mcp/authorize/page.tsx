@@ -1,8 +1,8 @@
 import { MCP_WRITE_SCOPE } from "@better-bull-board/mcp/scopes"
+import { Button } from "@better-bull-board/ui/components/button"
+import { Card } from "@better-bull-board/ui/components/card"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
-import { Button } from "~/components/ui/button"
-import { Card } from "~/components/ui/card"
 import { getAuthenticatedUser } from "~/lib/auth/server"
 import { getMcpResource, getOriginFromHeaders, validateAuthorizationRequest } from "~/lib/mcp/oauth"
 

@@ -1,8 +1,6 @@
 "use client"
 
-import { cn } from "cn"
-import type * as React from "react"
-import { Button } from "~/components/ui/button"
+import { Button } from "@better-bull-board/ui/components/button"
 import {
   Combobox,
   ComboboxContent,
@@ -11,8 +9,10 @@ import {
   ComboboxItem,
   ComboboxList,
   ComboboxTrigger,
-} from "~/components/ui/combobox"
-import { Loader } from "~/components/ui/loader"
+} from "@better-bull-board/ui/components/combobox"
+import { cn } from "cn"
+import type * as React from "react"
+import { Loader } from "~/components/loader"
 
 export type SearchSelectOption = {
   value: string
