@@ -171,7 +171,7 @@ importers:
         version: 2.5.14
       '@commitlint/cli':
         specifier: 21.2.2
-        version: 21.2.2(@types/node@25.9.7)(conventional-commits-parser@7.1.2)(typescript@7.0.2)
+        version: 21.2.2(@types/node@25.9.8)(conventional-commits-parser@7.1.2)(typescript@7.0.2)
       '@commitlint/config-conventional':
         specifier: 21.2.2
         version: 21.2.2
@@ -231,7 +231,7 @@ importers:
         version: 0.4.0
       cookies-next:
         specifier: 6.1.1
-        version: 6.1.1(next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.7)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+        version: 6.1.1(next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       date-fns:
         specifier: 4.4.0
         version: 4.4.0
@@ -252,10 +252,10 @@ importers:
         version: 13.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       next:
         specifier: 16.3.5
-        version: 16.3.5(@babel/core@7.29.7)(@types/node@25.9.7)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 16.3.5(@babel/core@7.29.7)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       nuqs:
         specifier: 2.10.1
-        version: 2.10.1(next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.7)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+        version: 2.10.1(next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       pg:
         specifier: 8.23.0
         version: 8.23.0
@@ -282,8 +282,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
-        specifier: 25.9.7
-        version: 25.9.7
+        specifier: 25.9.8
+        version: 25.9.8
       '@types/pg':
         specifier: 8.23.1
         version: 8.23.1
@@ -340,8 +340,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
-        specifier: 25.9.7
-        version: 25.9.7
+        specifier: 25.9.8
+        version: 25.9.8
       '@types/pg':
         specifier: 8.23.1
         version: 8.23.1
@@ -380,8 +380,8 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
-        specifier: 25.9.7
-        version: 25.9.7
+        specifier: 25.9.8
+        version: 25.9.8
       dotenv-cli:
         specifier: 11.0.0
         version: 11.0.0
@@ -426,8 +426,8 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
-        specifier: 25.9.7
-        version: 25.9.7
+        specifier: 25.9.8
+        version: 25.9.8
       dotenv-cli:
         specifier: 11.0.0
         version: 11.0.0
@@ -460,8 +460,8 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
-        specifier: 25.9.7
-        version: 25.9.7
+        specifier: 25.9.8
+        version: 25.9.8
       bullmq:
         specifier: 6.3.7
         version: 6.3.7(ioredis@6.0.0)(pg@8.23.0)
@@ -494,8 +494,8 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
-        specifier: 25.9.7
-        version: 25.9.7
+        specifier: 25.9.8
+        version: 25.9.8
       tsdown:
         specifier: 0.23.0
         version: 0.23.0(oxc-resolver@11.24.2)(tsx@4.23.13)(typescript@7.0.2)
@@ -531,8 +531,8 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
-        specifier: 25.9.7
-        version: 25.9.7
+        specifier: 25.9.8
+        version: 25.9.8
       '@types/pg':
         specifier: 8.23.1
         version: 8.23.1
@@ -580,8 +580,8 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
-        specifier: 25.9.7
-        version: 25.9.7
+        specifier: 25.9.8
+        version: 25.9.8
       dotenv-cli:
         specifier: 11.0.0
         version: 11.0.0
@@ -2361,8 +2361,8 @@ packages:
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
 
-  '@types/node@25.9.7':
-    resolution: {integrity: sha512-Y+axoNWOFLvDNFxNbDA+kqqV05imHwTu5bZWWO6tQM3Y2NX1jvzUJkYlf4nYnMCnvu4wQBKW6Nr+ok6yHWA9aQ==}
+  '@types/node@25.9.8':
+    resolution: {integrity: sha512-VfMrScDmMhUJQmd5hArdQnFvK0OIeD36uN2Va1FcpYaLB/BgkgM8Ulc50XtYISPMz7APJ30+N0T5EM0jlcdfRw==}
 
   '@types/pg@8.23.1':
     resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
@@ -5042,12 +5042,12 @@ snapshots:
   '@biomejs/cli-win32-x64@2.5.14':
     optional: true
 
-  '@commitlint/cli@21.2.2(@types/node@25.9.7)(conventional-commits-parser@7.1.2)(typescript@7.0.2)':
+  '@commitlint/cli@21.2.2(@types/node@25.9.8)(conventional-commits-parser@7.1.2)(typescript@7.0.2)':
     dependencies:
       '@commitlint/config-conventional': 21.2.2
       '@commitlint/format': 21.2.3
       '@commitlint/lint': 21.2.3
-      '@commitlint/load': 21.2.3(@types/node@25.9.7)(typescript@7.0.2)
+      '@commitlint/load': 21.2.3(@types/node@25.9.8)(typescript@7.0.2)
       '@commitlint/read': 21.2.3(conventional-commits-parser@7.1.2)
       '@commitlint/types': 21.2.3
       tinyexec: 1.3.1
@@ -5092,14 +5092,14 @@ snapshots:
       '@commitlint/rules': 21.2.3
       '@commitlint/types': 21.2.3
 
-  '@commitlint/load@21.2.3(@types/node@25.9.7)(typescript@7.0.2)':
+  '@commitlint/load@21.2.3(@types/node@25.9.8)(typescript@7.0.2)':
     dependencies:
       '@commitlint/config-validator': 21.2.3
       '@commitlint/execute-rule': 21.0.1
       '@commitlint/resolve-extends': 21.2.3
       '@commitlint/types': 21.2.3
       cosmiconfig: 9.0.2(typescript@7.0.2)
-      cosmiconfig-typescript-loader: 6.3.0(@types/node@25.9.7)(cosmiconfig@9.0.2(typescript@7.0.2))(typescript@7.0.2)
+      cosmiconfig-typescript-loader: 6.3.0(@types/node@25.9.8)(cosmiconfig@9.0.2(typescript@7.0.2))(typescript@7.0.2)
       es-toolkit: 1.52.0
       is-plain-obj: 4.1.0
       picocolors: 1.1.1
@@ -6093,13 +6093,13 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
-  '@types/node@25.9.7':
+  '@types/node@25.9.8':
     dependencies:
       undici-types: 7.24.6
 
   '@types/pg@8.23.1':
     dependencies:
-      '@types/node': 25.9.7
+      '@types/node': 25.9.8
       pg-protocol: 1.16.1
       pg-types: 2.2.0
 
@@ -6119,7 +6119,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 25.9.7
+      '@types/node': 25.9.8
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     optional: true
@@ -6446,10 +6446,10 @@ snapshots:
 
   cookie@1.1.1: {}
 
-  cookies-next@6.1.1(next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.7)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0):
+  cookies-next@6.1.1(next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0):
     dependencies:
       cookie: 1.1.1
-      next: 16.3.5(@babel/core@7.29.7)(@types/node@25.9.7)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      next: 16.3.5(@babel/core@7.29.7)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react: 19.3.0
 
   cors@2.8.6:
@@ -6457,9 +6457,9 @@ snapshots:
       object-assign: 4.1.1
       vary: 1.1.2
 
-  cosmiconfig-typescript-loader@6.3.0(@types/node@25.9.7)(cosmiconfig@9.0.2(typescript@7.0.2))(typescript@7.0.2):
+  cosmiconfig-typescript-loader@6.3.0(@types/node@25.9.8)(cosmiconfig@9.0.2(typescript@7.0.2))(typescript@7.0.2):
     dependencies:
-      '@types/node': 25.9.7
+      '@types/node': 25.9.8
       cosmiconfig: 9.0.2(typescript@7.0.2)
       jiti: 2.6.1
       typescript: 7.0.2
@@ -7353,7 +7353,7 @@ snapshots:
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
 
-  next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.7)(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
+  next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
     dependencies:
       '@next/env': 16.3.5
       '@swc/helpers': 0.5.23
@@ -7372,7 +7372,7 @@ snapshots:
       '@next/swc-linux-x64-musl': 16.3.5
       '@next/swc-win32-arm64-msvc': 16.3.5
       '@next/swc-win32-x64-msvc': 16.3.5
-      sharp: 0.35.5(@types/node@25.9.7)
+      sharp: 0.35.5(@types/node@25.9.8)
     transitivePeerDependencies:
       - '@babel/core'
       - '@types/node'
@@ -7398,12 +7398,12 @@ snapshots:
       path-key: 4.0.0
       unicorn-magic: 0.3.0
 
-  nuqs@2.10.1(next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.7)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0):
+  nuqs@2.10.1(next@16.3.5(@babel/core@7.29.7)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0):
     dependencies:
       '@standard-schema/spec': 1.1.0
       react: 19.3.0
     optionalDependencies:
-      next: 16.3.5(@babel/core@7.29.7)(@types/node@25.9.7)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      next: 16.3.5(@babel/core@7.29.7)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
 
   object-assign@4.1.1: {}
 
@@ -7881,7 +7881,7 @@ snapshots:
       - supports-color
       - typescript
 
-  sharp@0.35.5(@types/node@25.9.7):
+  sharp@0.35.5(@types/node@25.9.8):
     dependencies:
       '@img/colour': 1.1.0
       detect-libc: 2.1.2
@@ -7912,7 +7912,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.35.5
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
-      '@types/node': 25.9.7
+      '@types/node': 25.9.8
     optional: true
 
   shebang-command@2.0.0:
