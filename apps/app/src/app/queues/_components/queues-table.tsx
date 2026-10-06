@@ -16,6 +16,7 @@ import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas"
 import { apiFetch, smartFormatDuration } from "~/lib/utils/client"
 import { getQueueHref } from "~/lib/utils/queue-link"
+import { getRunsHref } from "~/lib/utils/runs-link"
 import { QueueActions } from "./queue-actions"
 import { QueueMiniChart } from "./queue-mini-chart"
 import { QueueStateBadge } from "./queue-state-badge"
@@ -24,6 +25,24 @@ import { type TimePeriod, TimePeriodSelector } from "./time-period-selector"
 type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string }
 type SortBy = "waitingJobs" | "activeJobs" | "pressure"
 type SortDirection = "asc" | "desc"
+
+const isInteractiveRowTarget = (target: EventTarget | null) =>
+  target instanceof Element && !!target.closest("a,button,input,select,textarea")
+
+function RunCountLink({ count, href, label }: { count: number; href: string; label: string }) {
+  if (count === 0) return <span className="font-mono text-muted-foreground">0</span>
+
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      title={label}
+      className="rounded-sm font-mono underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+    >
+      {count.toLocaleString()}
+    </Link>
+  )
+}
 
 const PRESSURE_DESCRIPTION =
   "Average time completed or failed jobs spend waiting before starting, from completed hourly rollups in the selected time period."
@@ -68,8 +87,23 @@ export function QueuesTable() {
     timePeriod: urlState.timePeriod as TimePeriod,
   }
 
-  const handleQueueClick = (queueName: string) => {
-    router.push(`/runs?queue=${encodeURIComponent(queueName)}`)
+  // The whole row opens the queue page, like its name; the counts open the matching runs
+  const handleRowClick = (event: React.MouseEvent<HTMLElement>, queueHref: string) => {
+    if (isInteractiveRowTarget(event.target)) return
+
+    if (event.metaKey || event.ctrlKey) {
+      window.open(queueHref, "_blank", "noopener,noreferrer")
+      return
+    }
+
+    router.push(queueHref)
+  }
+
+  const handleRowAuxClick = (event: React.MouseEvent<HTMLElement>, queueHref: string) => {
+    if (event.button !== 1 || isInteractiveRowTarget(event.target)) return
+
+    event.preventDefault()
+    window.open(queueHref, "_blank", "noopener,noreferrer")
   }
 
   const { data, isLoading } = useQuery({
@@ -226,7 +260,8 @@ export function QueuesTable() {
                 <motion.tr
                   key={queue.name}
                   className="group border-b transition-colors cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
-                  onClick={() => handleQueueClick(queue.name)}
+                  onClick={(event) => handleRowClick(event, getQueueHref(queue.name))}
+                  onAuxClick={(event) => handleRowAuxClick(event, getQueueHref(queue.name))}
                   initial={{ opacity: 0, y: -100 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
@@ -235,7 +270,6 @@ export function QueuesTable() {
                   <TableCell className="font-medium truncate">
                     <Link
                       href={getQueueHref(queue.name)}
-                      onClick={(e) => e.stopPropagation()}
                       className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
                     >
                       {queue.name}
@@ -259,10 +293,18 @@ export function QueuesTable() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono">{queue.waitingJobs}</span>
+                    <RunCountLink
+                      count={queue.waitingJobs}
+                      href={getRunsHref({ queue: queue.name, status: "waiting" })}
+                      label={`View waiting runs of ${queue.name}`}
+                    />
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono">{queue.activeJobs}</span>
+                    <RunCountLink
+                      count={queue.activeJobs}
+                      href={getRunsHref({ queue: queue.name, status: "active" })}
+                      label={`View active runs of ${queue.name}`}
+                    />
                   </TableCell>
                   <TableCell>
                     <span className="font-mono truncate">{smartFormatDuration(queue.pressure)}</span>
