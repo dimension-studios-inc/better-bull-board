@@ -1,6 +1,7 @@
 "use client"
 
 import { Badge } from "@better-bull-board/ui/components/badge"
+import { Button } from "@better-bull-board/ui/components/button"
 import { Checkbox } from "@better-bull-board/ui/components/checkbox"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
@@ -12,6 +13,7 @@ import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { useMemo, useRef, useState } from "react"
+import { countJobsApiRoute } from "~/app/api/jobs/count/schemas"
 import { getStuckRunsApiRoute } from "~/app/api/jobs/stuck/schemas"
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
 import { TruncatedTooltip } from "~/components/truncated-tooltip"
@@ -19,7 +21,7 @@ import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
 import { describeStuckRun, STUCK_RUNS_REFETCH_INTERVAL_MS, type StuckRun } from "~/lib/utils/stuck-runs"
-import { BulkActions } from "./bulk-actions"
+import { BulkActions, formatRunCount, type TMatchingFilters } from "./bulk-actions"
 import { RunActions } from "./run-actions"
 import { RunErrorPreview } from "./run-error-preview"
 import { RunsFilters } from "./runs-filters"
@@ -107,6 +109,7 @@ export function RunsTable() {
   })
 
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set())
+  const [selectAllMatching, setSelectAllMatching] = useState(false)
   const [liveUpdatesPaused, setLiveUpdatesPaused] = useState(false)
   const cursorHistoryRef = useRef<TRunFilters["cursor"][]>([])
   const cursorCreatedAt = urlFilters.cursor?.createdAt
@@ -167,6 +170,11 @@ export function RunsTable() {
     staleTime: liveUpdatesPaused ? Number.POSITIVE_INFINITY : undefined,
   })
 
+  const clearSelection = () => {
+    setSelectedJobIds(new Set())
+    setSelectAllMatching(false)
+  }
+
   const handleFiltersChange = (newFilters: TRunFilterUpdate) => {
     const isPaginationOnly = Object.keys(newFilters).every((key) => key === "cursor" || key === "cursorDirection")
     const urlUpdate: Record<string, unknown> = isPaginationOnly ? {} : { cursor: null, cursorDirection: "next" }
@@ -195,7 +203,7 @@ export function RunsTable() {
       }
     }
 
-    setSelectedJobIds(new Set())
+    clearSelection()
     setUrlFilters(urlUpdate)
   }
 
@@ -221,11 +229,13 @@ export function RunsTable() {
     if (checked) {
       setSelectedJobIds(new Set(jobs.map((job) => job.jobId)))
     } else {
-      setSelectedJobIds(new Set())
+      clearSelection()
     }
   }
 
   const handleSelectJob = (jobId: string, checked: boolean) => {
+    // Like Gmail: unchecking a run falls back to the runs of the page
+    setSelectAllMatching(false)
     const newSelection = new Set(selectedJobIds)
     if (checked) {
       newSelection.add(jobId)
@@ -235,8 +245,43 @@ export function RunsTable() {
     setSelectedJobIds(newSelection)
   }
 
-  const isAllSelected = jobs.length > 0 && selectedJobIds.size === jobs.length
-  const isPartiallySelected = selectedJobIds.size > 0 && selectedJobIds.size < jobs.length
+  const isPageSelected = jobs.length > 0 && selectedJobIds.size === jobs.length
+  const isAllSelected = selectAllMatching || isPageSelected
+  const isPartiallySelected = !isAllSelected && selectedJobIds.size > 0
+  const hasOtherPages = Boolean(runs?.nextCursor || runs?.prevCursor || filters.cursor)
+
+  // Same filters as the listing on screen, so the count and the bulk actions target the runs being looked at
+  const matchingFilters: TMatchingFilters = useMemo(
+    () => ({
+      queue: queryFilters.queue,
+      status: queryFilters.status,
+      search: queryFilters.search,
+      tags: queryFilters.tags,
+      createdFrom: queryFilters.createdFrom,
+      createdTo: queryFilters.createdTo,
+    }),
+    [
+      queryFilters.queue,
+      queryFilters.status,
+      queryFilters.search,
+      queryFilters.tags,
+      queryFilters.createdFrom,
+      queryFilters.createdTo,
+    ],
+  )
+
+  const { data: matchingCounts } = useQuery({
+    queryKey: ["jobs/count", matchingFilters],
+    queryFn: apiFetch({
+      apiRoute: countJobsApiRoute,
+      body: matchingFilters,
+    }),
+    enabled: selectAllMatching || (isPageSelected && hasOtherPages),
+  })
+
+  const canSelectAllMatching = !!matchingCounts && matchingCounts.total > jobs.length
+  const matchingSelection =
+    selectAllMatching && matchingCounts ? { filters: matchingFilters, counts: matchingCounts } : null
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -293,11 +338,38 @@ export function RunsTable() {
         liveUpdatesPaused={liveUpdatesPaused}
         onLiveUpdatesPausedChange={setLiveUpdatesPaused}
         startEndContent={
-          selectedJobs.length > 0 && (
-            <BulkActions selectedJobs={selectedJobs} onClearSelection={() => setSelectedJobIds(new Set())} />
+          (selectedJobs.length > 0 || matchingSelection) && (
+            <BulkActions
+              selectedJobs={selectedJobs}
+              matchingSelection={matchingSelection}
+              onClearSelection={clearSelection}
+            />
           )
         }
       />
+      {(selectAllMatching || (isPageSelected && hasOtherPages)) && (
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-lg border bg-muted/50 px-3 py-2 text-center text-sm">
+          {matchingSelection ? (
+            <>
+              <span>All {formatRunCount(matchingSelection.counts.total)} matching these filters are selected.</span>
+              <Button variant="link" size="sm" className="h-auto p-0" onClick={clearSelection}>
+                Clear selection
+              </Button>
+            </>
+          ) : (
+            <>
+              <span>All {formatRunCount(jobs.length)} on this page are selected.</span>
+              {canSelectAllMatching ? (
+                <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setSelectAllMatching(true)}>
+                  Select all {formatRunCount(matchingCounts.total)} matching these filters
+                </Button>
+              ) : (
+                !matchingCounts && <span className="text-muted-foreground">Counting matching runs...</span>
+              )}
+            </>
+          )}
+        </div>
+      )}
       {/* Mobile: card list */}
       <div className="space-y-2 md:hidden">
         <div className="flex items-center justify-between gap-2 px-1">
@@ -309,7 +381,11 @@ export function RunsTable() {
               className={INDETERMINATE_CHECKBOX_CLASS_NAME}
               aria-label="Select all jobs"
             />
-            {selectedJobIds.size > 0 ? `${selectedJobIds.size} selected` : "Select all"}
+            {matchingSelection
+              ? `${matchingSelection.counts.total.toLocaleString()} selected`
+              : selectedJobIds.size > 0
+                ? `${selectedJobIds.size} selected`
+                : "Select all"}
           </label>
           <button
             type="button"
@@ -322,7 +398,7 @@ export function RunsTable() {
         </div>
         {jobs.map((run) => {
           const runPath = `/runs/${run.id}`
-          const isSelected = selectedJobIds.has(run.jobId)
+          const isSelected = selectAllMatching || selectedJobIds.has(run.jobId)
           const duration =
             run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")
               ? formatDistanceStrict(run.startedAt, run.finishedAt)
@@ -437,7 +513,7 @@ export function RunsTable() {
                     key={run.id}
                     className={cn(
                       "group border-b transition-colors hover:bg-muted/50 cursor-pointer",
-                      selectedJobIds.has(run.jobId) && "bg-blue-50 dark:bg-blue-950",
+                      (selectAllMatching || selectedJobIds.has(run.jobId)) && "bg-blue-50 dark:bg-blue-950",
                     )}
                     initial={{ opacity: 0, y: -100 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -449,7 +525,7 @@ export function RunsTable() {
                     <TableCell>
                       <div className="flex items-center">
                         <Checkbox
-                          checked={selectedJobIds.has(run.jobId)}
+                          checked={selectAllMatching || selectedJobIds.has(run.jobId)}
                           onCheckedChange={(checked) => handleSelectJob(run.jobId, checked as boolean)}
                           onClick={(e) => {
                             e.stopPropagation()

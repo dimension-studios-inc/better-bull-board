@@ -1,5 +1,7 @@
 import { cancelJob as cancelBullMqJob } from "@better-bull-board/client/lib/cancellation"
+import { cancellableJobStatuses, replayableJobStatuses } from "@better-bull-board/core/job-schemas"
 import {
+  applyToJobsMatchingFilters,
   cancelJob as cancelCoreJob,
   deleteQueue as deleteCoreQueue,
   pauseQueue as pauseCoreQueue,
@@ -7,6 +9,7 @@ import {
   replayJob as replayCoreJob,
   resumeQueue as resumeCoreQueue,
 } from "@better-bull-board/core/mutations"
+import { logger } from "@rharkor/logger"
 import { Queue } from "bullmq"
 import { redis } from "./redis"
 
@@ -45,6 +48,27 @@ export const cancelJob = (input: { jobId: string; queueName: string }) =>
 export const replayJob = (input: { jobId: string; queueName: string }) =>
   replayCoreJob(input, {
     createQueue: createQueueAdapter,
+  })
+
+type JobFiltersInput = Parameters<typeof applyToJobsMatchingFilters>[0]["input"]
+
+const logBulkFailure = (action: string, job: { jobId: string; queueName: string }) => (error: unknown) => {
+  logger.error(`Bulk ${action} failed for job ${job.jobId} in queue ${job.queueName}`, error)
+  throw error
+}
+
+export const replayJobsMatchingFilters = (input: JobFiltersInput) =>
+  applyToJobsMatchingFilters({
+    input,
+    statuses: replayableJobStatuses,
+    action: (job) => replayJob(job).catch(logBulkFailure("replay", job)),
+  })
+
+export const cancelJobsMatchingFilters = (input: JobFiltersInput) =>
+  applyToJobsMatchingFilters({
+    input,
+    statuses: cancellableJobStatuses,
+    action: (job) => cancelJob(job).catch(logBulkFailure("cancel", job)),
   })
 
 export const pauseQueue = (input: { queueName: string }) =>

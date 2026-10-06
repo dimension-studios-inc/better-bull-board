@@ -13,7 +13,24 @@ const jobStatusValues = [
 
 const logLevelValues = ["log", "debug", "info", "warn", "error"] as const
 
-export const listJobsInputSchema = z.object({
+// Statuses the replay and cancel actions accept, shared by the UI and the bulk actions
+export const replayableJobStatuses = ["completed", "failed"] as const satisfies (typeof jobStatusValues)[number][]
+export const cancellableJobStatuses = [
+  "active",
+  "waiting",
+  "delayed",
+] as const satisfies (typeof jobStatusValues)[number][]
+
+export const jobFiltersSchema = z.object({
+  search: z.string().optional(),
+  status: z.string().optional(),
+  queue: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  createdFrom: z.string().optional(),
+  createdTo: z.string().optional(),
+})
+
+export const listJobsInputSchema = jobFiltersSchema.extend({
   cursor: z
     .object({
       createdAt: z.number(),
@@ -23,12 +40,6 @@ export const listJobsInputSchema = z.object({
     })
     .nullish(),
   cursorDirection: z.enum(["next", "prev"]).optional(),
-  search: z.string().optional(),
-  status: z.string().optional(),
-  queue: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  createdFrom: z.string().optional(),
-  createdTo: z.string().optional(),
   sortBy: z.enum(["createdAt", "durationMs"]).optional(),
   sortDirection: z.enum(["asc", "desc"]).optional(),
   limit: z.number().min(1).max(100).optional(),
@@ -70,6 +81,12 @@ export const listJobsOutputSchema = z.object({
       durationMs: z.number().nullable().optional(),
     })
     .nullable(),
+})
+
+export const countJobsOutputSchema = z.object({
+  total: z.number(),
+  replayable: z.number(),
+  cancellable: z.number(),
 })
 
 export const getJobByIdInputSchema = z.object({
