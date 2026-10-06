@@ -180,7 +180,7 @@ export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: 
                           count={queue.successes}
                           href={getRunsHref({ queue: queue.queue, status: "completed", minutes })}
                           label={`View completed runs of ${queue.queue}`}
-                          className="text-green-600 hover:bg-green-500/10 dark:text-green-400"
+                          className="text-success hover:bg-success/10"
                         />
                       </TableCell>
                       <TableCell className="text-right font-mono">
@@ -197,8 +197,8 @@ export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: 
                             queue.errorRate > 10
                               ? "text-destructive"
                               : queue.errorRate > 5
-                                ? "text-yellow-600 dark:text-yellow-400"
-                                : "text-green-600 dark:text-green-400"
+                                ? "text-warning"
+                                : "text-success"
                           }
                         >
                           {queue.errorRate.toFixed(1)}%

@@ -141,7 +141,7 @@ const getChartData = (graph: GraphPoint[] | undefined, minutes: number) => {
 }
 
 const runSeries: Series[] = [
-  { key: "completed", label: "Completed", color: "var(--color-green-600)", format: formatCount },
+  { key: "completed", label: "Completed", color: "var(--success)", format: formatCount },
   { key: "failed", label: "Failed", color: "var(--destructive)", format: formatCount },
 ]
 

@@ -38,7 +38,7 @@ export function QueueStats() {
       value: activeQueues,
       icon: Activity,
       description: "Currently running",
-      color: "text-green-600 dark:text-green-400",
+      color: "text-success",
     },
     {
       title: "With Scheduler",

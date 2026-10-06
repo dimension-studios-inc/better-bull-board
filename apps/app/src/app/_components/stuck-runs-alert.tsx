@@ -33,16 +33,16 @@ export function StuckRunsAlert() {
   const hiddenCount = data.total - data.runs.length
 
   return (
-    <Alert className="border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
+    <Alert variant="warning">
       <AlertTriangle />
       <AlertTitle>
         {data.total === 1 ? "1 run looks stuck" : `${data.total.toLocaleString()} runs look stuck`}
       </AlertTitle>
-      <AlertDescription className="text-amber-900/80 dark:text-amber-200/80">
+      <AlertDescription>
         <p className="mb-1">
           Active for far longer than their queue usually takes: check that their workers are alive.
         </p>
-        <ul className="divide-y divide-amber-200 dark:divide-amber-900/50">
+        <ul className="divide-y divide-warning/20">
           {data.runs.map((run) => (
             <li key={run.id} className="flex items-center gap-2 py-1">
               <Link
@@ -51,7 +51,7 @@ export function StuckRunsAlert() {
                 className="group/run flex min-w-0 flex-1 flex-col gap-x-2 no-underline! sm:flex-row sm:items-baseline"
               >
                 <span className="flex min-w-0 items-baseline gap-2">
-                  <span className="truncate font-medium text-amber-950 underline-offset-3 group-hover/run:underline dark:text-amber-100">
+                  <span className="truncate font-medium text-foreground underline-offset-3 group-hover/run:underline">
                     {run.queue}
                   </span>
                   <span className="shrink-0 font-mono text-xs">#{run.jobId}</span>

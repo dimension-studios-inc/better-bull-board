@@ -70,7 +70,7 @@ function StuckRunWarning({ stuckRun }: StuckRunWarningProps) {
 
   return (
     <span role="img" aria-label={`Looks stuck. ${description}`} title={`Looks stuck. ${description}`}>
-      <AlertTriangle className="size-4 text-amber-500" />
+      <AlertTriangle className="size-4 text-warning" />
     </span>
   )
 }
