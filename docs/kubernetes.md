@@ -33,6 +33,18 @@ kubectl apply -f k8s/
 
 Point `k8s/04-app.yaml` and `k8s/05-ingest.yaml` at your registry if you are not using the public ECR images. Postgres uses `public.ecr.aws/n5q7l0s4/better-bull-board-postgres:latest`; rebuild that image only when `.docker/db` changes — see [Docker images](docker-build.md).
 
+`deploy.yml` only restarts the workloads: apply the manifests again whenever `k8s/` changes.
+
+## Database migrations
+
+Migrations are SQL files in `packages/db/drizzle`, listed in `packages/db/drizzle/meta/_journal.json`. Since `0012` they are written by hand (there are no drizzle snapshots after `0011`, so `db:generate` would produce a wrong diff): add the SQL file and its journal entry, and keep `packages/db/src/schemas` in sync.
+
+The ingest applies them when it starts with `ENV=production` (`drizzle-kit migrate` under a Postgres advisory lock), so they reach production on the next deploy from `main`. Ingestion is paused meanwhile: events wait in the Redis Streams and are caught up afterwards. The ingest `startupProbe` allows up to 30 minutes before Kubernetes restarts the pod.
+
+`drizzle-kit migrate` runs each migration in a transaction, so an index cannot be built `CONCURRENTLY` there and blocks writes to its table while it builds. For an index on a large table such as `job_runs`, create it by hand with `CREATE INDEX CONCURRENTLY IF NOT EXISTS` before the deploy, and use `IF NOT EXISTS` in the migration.
+
+Locally, run them with `pnpm --filter @better-bull-board/db db:migrate`.
+
 ## Verify
 
 ```bash
