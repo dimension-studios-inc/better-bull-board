@@ -19,7 +19,7 @@ import type { TRunFilters, TRunFilterUpdate } from "./types"
 const MIN_TAG_SEARCH_LENGTH = 2
 
 // Filter values are UTC date times without time zone
-const formatCreatedFilterLabel = (value: string) => `${value.replace("T", " ")} UTC`
+export const formatCreatedFilterLabel = (value: string) => `${value.replace("T", " ")} UTC`
 
 export function RunsFilters({
   filters,
