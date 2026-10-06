@@ -55,7 +55,7 @@ export function EnhancedStatsCards({ minutes, periodLabel, stats, isLoading }: E
       value: stats?.failures,
       icon: AlertCircle,
       description: `Failed (${periodLabel.toLowerCase()})`,
-      color: "text-red-600 dark:text-red-400",
+      color: "text-destructive",
       href: getRunsHref({ status: "failed", minutes }),
     },
   ]

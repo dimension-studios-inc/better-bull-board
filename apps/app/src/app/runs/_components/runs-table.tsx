@@ -16,6 +16,7 @@ import { useMemo, useRef, useState } from "react"
 import { countJobsApiRoute } from "~/app/api/jobs/count/schemas"
 import { getStuckRunsApiRoute } from "~/app/api/jobs/stuck/schemas"
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
+import { RunStatusBadge } from "~/components/run-status-badge"
 import { TruncatedTooltip } from "~/components/truncated-tooltip"
 import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
@@ -283,27 +284,6 @@ export function RunsTable() {
   const matchingSelection =
     selectAllMatching && matchingCounts ? { filters: matchingFilters, counts: matchingCounts } : null
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-      case "failed":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-      case "active":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-      case "waiting":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-      case "delayed":
-      case "prioritized":
-      case "waiting-children":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300"
-      case "unknown":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
-    }
-  }
-
   const handleRowClick = (event: React.MouseEvent<HTMLElement>, runPath: string) => {
     if (isInteractiveRowTarget(event.target)) return
 
@@ -435,7 +415,7 @@ export function RunsTable() {
                     <span className="truncate text-sm font-medium">{run.queue}</span>
                     <span className="flex shrink-0 items-center gap-1">
                       {run.status === "active" && <StuckRunWarning stuckRun={stuckRunsById.get(run.id)} />}
-                      <Badge className={getStatusColor(run.status)}>{run.status}</Badge>
+                      <RunStatusBadge status={run.status} />
                     </span>
                   </div>
                   <div className="truncate font-mono text-xs text-muted-foreground">#{run.jobId}</div>
@@ -451,7 +431,7 @@ export function RunsTable() {
                 </div>
               )}
               {run.status === "failed" && run.errorMessage && (
-                <p className="ml-7 line-clamp-2 break-all rounded bg-red-50 px-2 py-1 font-mono text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                <p className="ml-7 line-clamp-2 break-all rounded bg-destructive/10 px-2 py-1 font-mono text-xs text-destructive">
                   {run.errorMessage}
                 </p>
               )}
@@ -549,7 +529,7 @@ export function RunsTable() {
                     </TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1">
-                        <Badge className={getStatusColor(run.status)}>{run.status}</Badge>
+                        <RunStatusBadge status={run.status} />
                         {run.status === "active" && <StuckRunWarning stuckRun={stuckRunsById.get(run.id)} />}
                       </span>
                     </TableCell>

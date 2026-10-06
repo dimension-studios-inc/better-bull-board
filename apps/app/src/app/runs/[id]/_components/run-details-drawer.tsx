@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { codeToHtml } from "shiki"
+import { RunStatusBadge } from "~/components/run-status-badge"
 import { smartFormatDuration } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
 
@@ -44,21 +45,6 @@ const getStatusIcon = (status: string) => {
       return <Clock className="h-4 w-4 text-yellow-500" />
     default:
       return <CircleQuestionMarkIcon className="h-4 w-4 text-gray-500" />
-  }
-}
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-    case "failed":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-    case "active":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-    case "waiting":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
   }
 }
 
@@ -147,7 +133,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
             {/* Status */}
             <div>
               <h3 className="text-sm font-medium mb-3">Status</h3>
-              <Badge className={getStatusColor(run.status)}>{run.status.toUpperCase()}</Badge>
+              <RunStatusBadge status={run.status} className="uppercase" />
             </div>
 
             <Separator />
@@ -276,11 +262,11 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
               <>
                 <Separator />
                 <div>
-                  <h3 className="text-sm font-medium mb-3 text-red-600 dark:text-red-400">Error Details</h3>
+                  <h3 className="text-sm font-medium mb-3 text-destructive">Error Details</h3>
                   {run.errorMessage && (
                     <div className="mb-3">
                       <div className="text-xs text-muted-foreground mb-1">Message</div>
-                      <div className="p-2 bg-red-50 border border-red-200 rounded text-sm dark:bg-red-950/30 dark:border-red-800">
+                      <div className="p-2 bg-destructive/5 border border-destructive/20 rounded text-sm dark:bg-destructive/10">
                         {run.errorMessage}
                       </div>
                     </div>
@@ -288,7 +274,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                   {run.errorStack && (
                     <div>
                       <div className="text-xs text-muted-foreground mb-1">Stack Trace</div>
-                      <ScrollArea className="p-2 bg-red-50 border border-red-200 rounded text-xs font-mono dark:bg-red-950/30 dark:border-red-800 [&>[data-slot=scroll-area-viewport]]:max-h-32">
+                      <ScrollArea className="p-2 bg-destructive/5 border border-destructive/20 rounded text-xs font-mono dark:bg-destructive/10 [&>[data-slot=scroll-area-viewport]]:max-h-32">
                         <pre className="whitespace-pre-wrap wrap-break-word">{run.errorStack}</pre>
                       </ScrollArea>
                     </div>

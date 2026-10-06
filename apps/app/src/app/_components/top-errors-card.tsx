@@ -48,7 +48,7 @@ function TopErrorRow({ error, minutes }: { error: TopError; minutes: number }) {
               delay={300}
               closeDelay={150}
               render={
-                <span className="inline-flex max-w-full items-center gap-1.5 self-start text-xs text-red-600 dark:text-red-400" />
+                <span className="inline-flex max-w-full items-center gap-1.5 self-start text-xs text-destructive" />
               }
             >
               <CircleAlert className="size-3.5 shrink-0" aria-hidden />
@@ -63,7 +63,7 @@ function TopErrorRow({ error, minutes }: { error: TopError; minutes: number }) {
               onClick={(event) => event.stopPropagation()}
             >
               <div className="flex items-center gap-2 border-b px-3 py-2">
-                <CircleAlert className="size-4 shrink-0 text-red-600 dark:text-red-400" aria-hidden />
+                <CircleAlert className="size-4 shrink-0 text-destructive" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{error.queue}</p>
                   <p className="truncate text-xs text-muted-foreground">
@@ -76,7 +76,7 @@ function TopErrorRow({ error, minutes }: { error: TopError; minutes: number }) {
                 </div>
               </div>
               <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-72">
-                <pre className="whitespace-pre-wrap break-words bg-red-50/60 px-3 py-2.5 font-mono text-xs leading-relaxed text-red-700 dark:bg-red-950/20 dark:text-red-300">
+                <pre className="whitespace-pre-wrap break-words bg-destructive/5 px-3 py-2.5 font-mono text-xs leading-relaxed text-destructive dark:bg-destructive/10">
                   {error.sampleMessage || "No error message"}
                 </pre>
               </ScrollArea>

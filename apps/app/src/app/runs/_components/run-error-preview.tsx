@@ -66,7 +66,7 @@ export function RunErrorPreview({ errorMessage, runPath, attempt, maxAttempts, f
         render={
           <Link
             href={runPath}
-            className="flex min-w-0 items-center gap-1.5 rounded-sm text-xs text-red-600 outline-none transition-colors hover:text-red-700 focus-visible:ring-2 focus-visible:ring-red-500/40 dark:text-red-400 dark:hover:text-red-300"
+            className="flex min-w-0 items-center gap-1.5 rounded-sm text-xs text-destructive outline-none transition-colors hover:text-destructive/80 focus-visible:ring-2 focus-visible:ring-destructive/40"
           />
         }
       >
@@ -75,7 +75,7 @@ export function RunErrorPreview({ errorMessage, runPath, attempt, maxAttempts, f
       </HoverCardTrigger>
       <HoverCardContent side="bottom" align="end" sideOffset={6} className="w-[min(36rem,calc(100vw-2rem))] gap-0 p-0">
         <div className="flex items-center gap-2 border-b px-3 py-2">
-          <CircleAlert className="size-4 shrink-0 text-red-600 dark:text-red-400" aria-hidden />
+          <CircleAlert className="size-4 shrink-0 text-destructive" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Error</p>
             <p className="truncate text-xs text-muted-foreground">
@@ -93,7 +93,7 @@ export function RunErrorPreview({ errorMessage, runPath, attempt, maxAttempts, f
           <CopyErrorButton errorMessage={errorMessage} />
         </div>
         <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-72">
-          <pre className="whitespace-pre-wrap break-words bg-red-50/60 px-3 py-2.5 font-mono text-xs leading-relaxed text-red-700 dark:bg-red-950/20 dark:text-red-300">
+          <pre className="whitespace-pre-wrap break-words bg-destructive/5 px-3 py-2.5 font-mono text-xs leading-relaxed text-destructive dark:bg-destructive/10">
             {errorMessage}
           </pre>
         </ScrollArea>

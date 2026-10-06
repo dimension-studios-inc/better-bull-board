@@ -38,7 +38,7 @@ export function QueueMiniChart({ data }: QueueMiniChartProps) {
           <Line
             type="monotone"
             dataKey="failed"
-            stroke="var(--color-red-600)"
+            stroke="var(--destructive)"
             strokeWidth={1.5}
             dot={false}
             activeDot={false}
