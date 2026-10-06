@@ -14,8 +14,8 @@ import { Activity, AlertCircle, CheckCircle, ChevronRight, Gauge, type LucideIco
 import Link from "next/link"
 import type { z } from "zod"
 import type { queueSummaryStatsOutput } from "~/app/api/queues/summary/schemas"
+import { formatDurationMs } from "~/lib/utils/duration"
 import { getRunsHref } from "~/lib/utils/runs-link"
-import { formatDurationMs } from "./format-duration"
 
 interface QueueSummaryCardsProps {
   queueName: string
@@ -28,6 +28,8 @@ interface QueueSummaryCardsProps {
 
 type StatCard = {
   title: string
+  /** Title on phones, where cards sit three in a row */
+  shortTitle?: string
   value: string | undefined
   icon: LucideIcon
   description: string
@@ -37,32 +39,39 @@ type StatCard = {
 
 const formatDurationValue = (ms: number | null | undefined) => (ms == null ? "-" : formatDurationMs(ms))
 
+// Compact cards side by side on phones, where the footer text would only push the charts down
 function StatCards({ cards, isLoading, className }: { cards: StatCard[]; isLoading: boolean; className: string }) {
   return (
-    <div className={cn("grid grid-cols-1 gap-4", className)}>
+    <div className={cn("grid gap-3 sm:grid-cols-1 sm:gap-4", className)}>
       {cards.map((card) => (
-        <Card key={card.title} className="relative">
-          <CardHeader>
-            <CardDescription>{card.title}</CardDescription>
-            <CardTitle>{isLoading ? <Skeleton className="h-8 w-24" /> : (card.value ?? "-")}</CardTitle>
+        <Card key={card.title} className="relative max-sm:gap-1 max-sm:py-3">
+          <CardHeader className="max-sm:px-3">
+            <CardDescription className="max-sm:text-xs">
+              <span className="sm:hidden">{card.shortTitle ?? card.title}</span>
+              <span className="max-sm:hidden">{card.title}</span>
+            </CardDescription>
+            <CardTitle>{isLoading ? <Skeleton className="h-6 w-16 sm:h-8 sm:w-24" /> : (card.value ?? "-")}</CardTitle>
             <CardAction>
               <card.icon className={cn("size-4", card.color)} />
             </CardAction>
           </CardHeader>
-          <CardFooter>
+          <CardFooter className="max-sm:hidden">
             {card.href ? (
-              <Link
-                href={card.href}
-                aria-label={`View ${card.title.toLowerCase()} runs`}
-                className="flex items-center gap-1 after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
-              >
+              <span className="flex items-center gap-1">
                 {card.description}
                 <ChevronRight className="size-4" />
-              </Link>
+              </span>
             ) : (
               card.description
             )}
           </CardFooter>
+          {card.href && (
+            <Link
+              href={card.href}
+              aria-label={`View ${card.title.toLowerCase()} runs`}
+              className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          )}
         </Card>
       ))}
     </div>
@@ -107,9 +116,24 @@ export function QueueSummaryCards({ queueName, minutes, periodLabel, stats, isLo
   ]
 
   const durationCards: StatCard[] = [
-    { title: "p50 Duration", value: formatDurationValue(stats?.p50DurationMs), description: "Median" },
-    { title: "p95 Duration", value: formatDurationValue(stats?.p95DurationMs), description: "95th percentile" },
-    { title: "p99 Duration", value: formatDurationValue(stats?.p99DurationMs), description: "99th percentile" },
+    {
+      title: "p50 Duration",
+      shortTitle: "p50",
+      value: formatDurationValue(stats?.p50DurationMs),
+      description: "Median",
+    },
+    {
+      title: "p95 Duration",
+      shortTitle: "p95",
+      value: formatDurationValue(stats?.p95DurationMs),
+      description: "95th percentile",
+    },
+    {
+      title: "p99 Duration",
+      shortTitle: "p99",
+      value: formatDurationValue(stats?.p99DurationMs),
+      description: "99th percentile",
+    },
   ].map((card) => ({
     ...card,
     icon: Timer,
@@ -121,8 +145,12 @@ export function QueueSummaryCards({ queueName, minutes, periodLabel, stats, isLo
 
   return (
     <>
-      <StatCards cards={runCards} isLoading={isLoading} className="@xl/main:grid-cols-2 @5xl/main:grid-cols-4" />
-      <StatCards cards={durationCards} isLoading={isLoading} className="@xl/main:grid-cols-3" />
+      <StatCards
+        cards={runCards}
+        isLoading={isLoading}
+        className="grid-cols-2 @xl/main:grid-cols-2 @5xl/main:grid-cols-4"
+      />
+      <StatCards cards={durationCards} isLoading={isLoading} className="grid-cols-3 @xl/main:grid-cols-3" />
     </>
   )
 }

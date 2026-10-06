@@ -37,11 +37,16 @@ export function QueueHeader({ queueName, details, isLoading }: QueueHeaderProps)
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0 space-y-1">
-        <div className="flex min-w-0 items-center gap-2">
-          <h2 className="truncate text-xl font-semibold" title={queueName}>
+        <div className="flex min-w-0 items-start gap-2 sm:items-center">
+          {/* Long queue names wrap on phones rather than hiding the part that tells them apart */}
+          <h2 className="min-w-0 wrap-break-word text-xl font-semibold sm:truncate" title={queueName}>
             {queueName}
           </h2>
-          {isLoading ? <Skeleton className="h-5 w-16" /> : details && <QueueStateBadge isPaused={details.isPaused} />}
+          {isLoading ? (
+            <Skeleton className="mt-1 h-5 w-16 shrink-0 sm:mt-0" />
+          ) : (
+            details && <QueueStateBadge isPaused={details.isPaused} className="mt-1 shrink-0 sm:mt-0" />
+          )}
         </div>
         {schedule && <p className="truncate font-mono text-sm text-muted-foreground">{schedule}</p>}
       </div>

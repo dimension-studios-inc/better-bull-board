@@ -325,7 +325,7 @@ export function RunsFilters({
         <div className="flex-1 relative min-w-40 max-w-96">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by job ID, name, or error..."
+            placeholder="Search job ID, name, error…"
             value={filters.search}
             onChange={(e) => setFilters({ search: e.target.value })}
             className="pl-10"

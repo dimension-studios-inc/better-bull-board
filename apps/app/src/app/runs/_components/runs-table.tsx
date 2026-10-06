@@ -1,14 +1,13 @@
 "use client"
 
-import { Badge } from "@better-bull-board/ui/components/badge"
 import { Button } from "@better-bull-board/ui/components/button"
 import { Checkbox } from "@better-bull-board/ui/components/checkbox"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { cn } from "cn"
-import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns"
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+import { formatDistanceToNowStrict } from "date-fns"
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
@@ -21,10 +20,12 @@ import { TruncatedTooltip } from "~/components/truncated-tooltip"
 import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
-import { describeStuckRun, STUCK_RUNS_REFETCH_INTERVAL_MS, type StuckRun } from "~/lib/utils/stuck-runs"
+import { STUCK_RUNS_REFETCH_INTERVAL_MS } from "~/lib/utils/stuck-runs"
 import { BulkActions, formatRunCount, type TMatchingFilters } from "./bulk-actions"
 import { RunActions } from "./run-actions"
+import { getRunDuration, StuckRunWarning } from "./run-display"
 import { RunErrorPreview } from "./run-error-preview"
+import { RunListItem } from "./run-list-item"
 import { RunTags } from "./run-tags"
 import { RunsFilters } from "./runs-filters"
 import type { TRunFilters, TRunFilterUpdate } from "./types"
@@ -57,22 +58,6 @@ function RunTimestamp({ value }: RunTimestampProps) {
       <span className="block truncate">{timestamp.relative}</span>
       <span className="block truncate text-xs text-muted-foreground">{timestamp.absolute}</span>
     </time>
-  )
-}
-
-type StuckRunWarningProps = {
-  stuckRun: StuckRun | undefined
-}
-
-function StuckRunWarning({ stuckRun }: StuckRunWarningProps) {
-  if (!stuckRun) return null
-
-  const description = describeStuckRun(stuckRun)
-
-  return (
-    <span role="img" aria-label={`Looks stuck. ${description}`} title={`Looks stuck. ${description}`}>
-      <AlertTriangle className="size-4 text-warning" />
-    </span>
   )
 }
 
@@ -382,79 +367,27 @@ export function RunsTable() {
             {getDurationSortIcon()}
           </button>
         </div>
-        {jobs.map((run) => {
-          const runPath = `/runs/${run.id}`
-          const isSelected = selectAllMatching || selectedJobIds.has(run.jobId)
-          const duration =
-            run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")
-              ? formatDistanceStrict(run.startedAt, run.finishedAt)
-              : null
+        <div className="divide-y overflow-hidden rounded-lg border bg-card">
+          {jobs.map((run) => {
+            const runPath = `/runs/${run.id}`
+            const isSelected = selectAllMatching || selectedJobIds.has(run.jobId)
 
-          return (
-            // biome-ignore lint/a11y/useSemanticElements: card contains nested interactive controls
-            <div
-              key={`${run.id}-${run.createdAt.getTime()}`}
-              role="link"
-              tabIndex={0}
-              className={cn(
-                "cursor-pointer space-y-2 rounded-lg border bg-card p-3 transition-colors active:bg-muted/50",
-                isSelected && "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950",
-              )}
-              onClick={(event) => handleRowClick(event, runPath)}
-              onAuxClick={(event) => handleRowAuxClick(event, runPath)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !isInteractiveRowTarget(event.target)) router.push(runPath)
-              }}
-            >
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  className="mt-0.5"
-                  checked={isSelected}
-                  onCheckedChange={(checked) => handleSelectJob(run.jobId, checked as boolean)}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                  }}
-                  aria-label={`Select job ${run.jobId}`}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="truncate text-sm font-medium">{run.queue}</span>
-                    <span className="flex shrink-0 items-center gap-1">
-                      {run.status === "active" && <StuckRunWarning stuckRun={stuckRunsById.get(run.id)} />}
-                      <RunStatusBadge status={run.status} />
-                    </span>
-                  </div>
-                  <div className="truncate font-mono text-xs text-muted-foreground">#{run.jobId}</div>
-                </div>
-              </div>
-              {run.tags && run.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 pl-7">
-                  {run.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="max-w-full truncate">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              {run.status === "failed" && run.errorMessage && (
-                <p className="ml-7 line-clamp-2 break-all rounded bg-destructive/10 px-2 py-1 font-mono text-xs text-destructive">
-                  {run.errorMessage}
-                </p>
-              )}
-              <div className="flex items-center justify-between gap-2 pl-7">
-                <div className="min-w-0 truncate text-xs text-muted-foreground">
-                  <time dateTime={run.createdAt.toISOString()} title={formatUtcDateTime(run.createdAt)}>
-                    {formatDistanceToNowStrict(run.createdAt, { addSuffix: true })}
-                  </time>
-                  {duration && <> · {duration}</>}
-                </div>
-                <div className="-my-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <RunActions jobId={run.jobId} queueName={run.queue} status={run.status} />
-                </div>
-              </div>
-            </div>
-          )
-        })}
+            return (
+              <RunListItem
+                key={`${run.id}-${run.createdAt.getTime()}`}
+                run={run}
+                isSelected={isSelected}
+                stuckRun={stuckRunsById.get(run.id)}
+                onSelectedChange={(checked) => handleSelectJob(run.jobId, checked)}
+                onClick={(event) => handleRowClick(event, runPath)}
+                onAuxClick={(event) => handleRowAuxClick(event, runPath)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !isInteractiveRowTarget(event.target)) router.push(runPath)
+                }}
+              />
+            )
+          })}
+        </div>
       </div>
 
       {/* Desktop: table */}
@@ -499,7 +432,7 @@ export function RunsTable() {
                     key={run.id}
                     className={cn(
                       "group border-b transition-colors hover:bg-muted/50 cursor-pointer",
-                      (selectAllMatching || selectedJobIds.has(run.jobId)) && "bg-blue-50 dark:bg-blue-950",
+                      (selectAllMatching || selectedJobIds.has(run.jobId)) && "bg-muted",
                     )}
                     initial={{ opacity: 0, y: -100 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -533,11 +466,7 @@ export function RunsTable() {
                         {run.status === "active" && <StuckRunWarning stuckRun={stuckRunsById.get(run.id)} />}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      {run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")
-                        ? formatDistanceStrict(run.startedAt, run.finishedAt)
-                        : "-"}
-                    </TableCell>
+                    <TableCell>{getRunDuration(run) ?? "-"}</TableCell>
                     <TableCell className="truncate">
                       <RunTimestamp value={run.createdAt} />
                     </TableCell>
