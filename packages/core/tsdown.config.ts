@@ -12,6 +12,8 @@ export default defineConfig({
     "./src/mutations.ts",
     "./src/overview.ts",
     "./src/queues.ts",
+    "./src/stuck-run-schemas.ts",
+    "./src/stuck-runs.ts",
     "./src/top-errors.ts",
   ],
   format: ["esm"],
