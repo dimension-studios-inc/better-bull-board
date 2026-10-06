@@ -25,6 +25,7 @@ import { describeStuckRun, STUCK_RUNS_REFETCH_INTERVAL_MS, type StuckRun } from 
 import { BulkActions, formatRunCount, type TMatchingFilters } from "./bulk-actions"
 import { RunActions } from "./run-actions"
 import { RunErrorPreview } from "./run-error-preview"
+import { RunTags } from "./run-tags"
 import { RunsFilters } from "./runs-filters"
 import type { TRunFilters, TRunFilterUpdate } from "./types"
 
@@ -161,7 +162,7 @@ export function RunsTable() {
   const queryFilters = filters.cursor || filters.cursorDirection === "prev" ? filters : debouncedFilters
   const liveQueryKey = useMemo(() => ["jobs/table", queryFilters] as const, [queryFilters])
 
-  const { data: runs, isFetching } = useQuery({
+  const { data: runs, isPending: isPageLoading } = useQuery({
     queryKey: liveUpdatesPaused ? (["jobs/table-paused", queryFilters] as const) : liveQueryKey,
     queryFn: apiFetch({
       apiRoute: getJobsTableApiRoute,
@@ -209,6 +210,11 @@ export function RunsTable() {
   }
 
   const jobs = runs?.jobs || []
+
+  const handleTagClick = (tag: string) => {
+    if (filters.tags.includes(tag)) return
+    handleFiltersChange({ tags: [...filters.tags, tag] })
+  }
 
   const activeRunIds = jobs.filter((job) => job.status === "active").map((job) => job.id)
   const { data: stuckRuns } = useQuery({
@@ -314,7 +320,7 @@ export function RunsTable() {
         filters={filters}
         setFilters={handleFiltersChange}
         runs={runs}
-        isFetching={isFetching}
+        isPageLoading={isPageLoading}
         liveUpdatesPaused={liveUpdatesPaused}
         onLiveUpdatesPausedChange={setLiveUpdatesPaused}
         startEndContent={
@@ -520,13 +526,7 @@ export function RunsTable() {
                     <TableCell>
                       <TruncatedTooltip value={run.queue} />
                     </TableCell>
-                    <TableCell className="overflow-hidden">
-                      {run.tags?.map((tag) => (
-                        <Badge key={tag} variant="outline">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </TableCell>
+                    <TableCell>{run.tags && <RunTags tags={run.tags} onTagClick={handleTagClick} />}</TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1">
                         <RunStatusBadge status={run.status} />
