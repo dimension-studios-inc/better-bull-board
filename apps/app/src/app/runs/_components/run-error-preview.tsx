@@ -46,7 +46,7 @@ function CopyErrorButton({ errorMessage }: { errorMessage: string }) {
       className="text-muted-foreground hover:text-foreground"
       onClick={handleCopy}
     >
-      {copied ? <Check className="text-green-600" /> : <Copy />}
+      {copied ? <Check className="text-green-600 dark:text-green-400" /> : <Copy />}
     </Button>
   )
 }

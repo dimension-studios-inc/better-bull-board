@@ -45,11 +45,11 @@ export default function LoginPage() {
   const passwordId = useId()
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-muted p-4">
       <Card className="w-full max-w-md p-6">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold">Better Bull Board</h1>
-          <p className="text-gray-600 mt-2">Admin Login</p>
+          <p className="text-muted-foreground mt-2">Admin Login</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -81,7 +81,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && <div className="text-red-600 text-sm text-center">{error}</div>}
+          {error && <div className="text-destructive text-sm text-center">{error}</div>}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Signing in..." : "Sign In"}

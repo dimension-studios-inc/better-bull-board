@@ -60,9 +60,20 @@ export function QueueDurationChart({ queueDuration, isLoading }: QueueDurationCh
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%" debounce={CHART_RESIZE_DEBOUNCE_MS}>
               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <XAxis dataKey="queue" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => formatDuration(value)} />
-                <Tooltip content={CustomTooltip} />
+                <XAxis
+                  dataKey="queue"
+                  stroke="var(--border)"
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis
+                  stroke="var(--border)"
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  tickFormatter={(value) => formatDuration(value)}
+                />
+                <Tooltip content={CustomTooltip} cursor={{ fill: "var(--muted)" }} />
                 <Bar
                   dataKey="value"
                   fill="var(--chart-4)"

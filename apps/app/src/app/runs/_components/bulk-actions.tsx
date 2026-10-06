@@ -114,7 +114,7 @@ export function BulkActions({ selectedJobs, onClearSelection }: BulkActionsProps
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-red-600">Cancel Jobs</DialogTitle>
+            <DialogTitle className="text-red-600 dark:text-red-400">Cancel Jobs</DialogTitle>
             <DialogDescription>
               Are you sure you want to cancel {cancellableJobs.length} job
               {cancellableJobs.length === 1 ? "" : "s"}? This action cannot be undone.

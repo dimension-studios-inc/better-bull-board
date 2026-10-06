@@ -31,7 +31,7 @@ export function EnhancedStatsCards({ minutes, periodLabel, stats, isLoading }: E
       value: stats?.runningTasks,
       icon: Activity,
       description: "Currently executing",
-      color: "text-blue-600",
+      color: "text-blue-600 dark:text-blue-400",
       href: getRunsHref({ status: "active" }),
     },
     {
@@ -39,7 +39,7 @@ export function EnhancedStatsCards({ minutes, periodLabel, stats, isLoading }: E
       value: stats?.waitingInQueue,
       icon: Clock,
       description: "Queued for execution",
-      color: "text-yellow-600",
+      color: "text-yellow-600 dark:text-yellow-400",
       href: getRunsHref({ status: "waiting" }),
     },
     {
@@ -47,7 +47,7 @@ export function EnhancedStatsCards({ minutes, periodLabel, stats, isLoading }: E
       value: stats?.successes,
       icon: CheckCircle,
       description: `Completed (${periodLabel.toLowerCase()})`,
-      color: "text-green-600",
+      color: "text-green-600 dark:text-green-400",
       href: getRunsHref({ status: "completed", minutes }),
     },
     {
@@ -55,7 +55,7 @@ export function EnhancedStatsCards({ minutes, periodLabel, stats, isLoading }: E
       value: stats?.failures,
       icon: AlertCircle,
       description: `Failed (${periodLabel.toLowerCase()})`,
-      color: "text-red-600",
+      color: "text-red-600 dark:text-red-400",
       href: getRunsHref({ status: "failed", minutes }),
     },
   ]
