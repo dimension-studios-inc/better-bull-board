@@ -5,7 +5,8 @@ import { Button } from "@better-bull-board/ui/components/button"
 import { Input } from "@better-bull-board/ui/components/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
 import { useQuery } from "@tanstack/react-query"
-import { ChevronLeft, ChevronRight, Filter, Pause, Play, Plus, Search, X } from "lucide-react"
+import { cn } from "cn"
+import { ChevronLeft, ChevronRight, Filter, Pause, Plus, Search, X } from "lucide-react"
 import Link from "next/link"
 import { useMemo, useState } from "react"
 import { getTagsApiRoute } from "~/app/api/tags/schemas"
@@ -170,34 +171,13 @@ export function RunsFilters({
 
   const activeFilters = getActiveFilters()
 
-  //* Pagination
-  const handleNextPage = () => {
-    if (runs?.nextCursor) {
-      setFilters({
-        cursor: runs.nextCursor,
-        cursorDirection: "next",
-      })
-    }
-  }
-
-  const handlePrevPage = () => {
-    if (runs?.prevCursor) {
-      setFilters({
-        cursor: runs.prevCursor,
-        cursorDirection: "prev",
-      })
-    } else {
-      setFilters({ cursor: null, cursorDirection: "next" })
-    }
-  }
-
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <div className="flex w-full flex-wrap items-center gap-2 min-w-0 lg:w-auto lg:flex-1">
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
         <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
-          <PopoverTrigger render={<Button variant="outline" />}>
+          <PopoverTrigger render={<Button variant="outline" aria-label="Filters" />}>
             <Filter className="h-4 w-4" />
-            Filters
+            <span className="max-md:hidden">Filters</span>
             {activeFilters.length > 0 && (
               <Badge variant="secondary" className="min-w-5">
                 {activeFilters.length}
@@ -322,66 +302,144 @@ export function RunsFilters({
             </div>
           </PopoverContent>
         </Popover>
-        <div className="flex-1 relative min-w-40 max-w-96">
+        <div className="relative min-w-0 flex-1 md:max-w-96">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by job ID, name, or error..."
+            placeholder="Search ID, name, error…"
             value={filters.search}
             onChange={(e) => setFilters({ search: e.target.value })}
             className="pl-10"
           />
         </div>
-        {activeFilters.map((filter) => (
-          <Badge key={`${filter.key}-${filter.value}`} variant="secondary" className="max-w-full">
-            <span className="truncate">{filter.label}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="size-4 p-0 hover:bg-transparent"
-              onClick={() => removeFilter(filter.key, filter.value)}
-            >
-              <X className="size-3" />
-            </Button>
-          </Badge>
-        ))}
-        {startEndContent}
-      </div>
-      <div className="flex w-full items-center gap-2 lg:w-auto">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => onLiveUpdatesPausedChange(!liveUpdatesPaused)}
-          aria-pressed={liveUpdatesPaused}
-          aria-label={liveUpdatesPaused ? "Resume live updates" : "Pause live updates"}
-          title={liveUpdatesPaused ? "Resume live updates" : "Pause live updates"}
-        >
-          {liveUpdatesPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-        </Button>
-        <Button nativeButton={false} render={<Link href="/runs/create" />}>
-          <Plus className="h-4 w-4" />
-          Create Run
-        </Button>
         <div className="ml-auto flex items-center gap-2">
+          {/* On phones the live toggle sits above the list and the pagination below it */}
+          <LiveUpdatesToggle
+            paused={liveUpdatesPaused}
+            onPausedChange={onLiveUpdatesPausedChange}
+            className="max-md:hidden"
+          />
           <Button
-            variant="outline"
-            onClick={handlePrevPage}
-            disabled={isPageLoading || (!runs?.prevCursor && !filters.cursor)}
-            aria-label="Previous page"
+            nativeButton={false}
+            render={<Link href="/runs/create" />}
+            aria-label="Create run"
+            className="max-md:w-8 max-md:px-0"
           >
-            <ChevronLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Previous</span>
+            <Plus className="h-4 w-4" />
+            <span className="max-md:hidden">Create Run</span>
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleNextPage}
-            disabled={isPageLoading || !runs?.nextCursor}
-            aria-label="Next page"
-          >
-            <span className="hidden sm:inline">Next</span>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <RunsPagination
+            runs={runs}
+            filters={filters}
+            setFilters={setFilters}
+            isPageLoading={isPageLoading}
+            className="max-md:hidden"
+          />
         </div>
       </div>
+      {(activeFilters.length > 0 || startEndContent) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {activeFilters.map((filter) => (
+            <Badge key={`${filter.key}-${filter.value}`} variant="secondary" className="max-w-full">
+              <span className="truncate">{filter.label}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-4 p-0 hover:bg-transparent"
+                onClick={() => removeFilter(filter.key, filter.value)}
+              >
+                <X className="size-3" />
+              </Button>
+            </Badge>
+          ))}
+          {startEndContent}
+        </div>
+      )}
     </div>
+  )
+}
+
+type RunsPaginationProps = {
+  runs?: {
+    nextCursor: { createdAt: number; jobId: string; id: string; durationMs?: number | null } | null
+    prevCursor: { createdAt: number; jobId: string; id: string; durationMs?: number | null } | null
+  }
+  filters: TRunFilters
+  setFilters: (filters: TRunFilterUpdate) => void
+  /** A page is loading: background refreshes of the current page keep the pagination usable */
+  isPageLoading?: boolean
+  className?: string
+}
+
+export function RunsPagination({ runs, filters, setFilters, isPageLoading, className }: RunsPaginationProps) {
+  const handleNextPage = () => {
+    if (runs?.nextCursor) {
+      setFilters({
+        cursor: runs.nextCursor,
+        cursorDirection: "next",
+      })
+    }
+  }
+
+  const handlePrevPage = () => {
+    if (runs?.prevCursor) {
+      setFilters({
+        cursor: runs.prevCursor,
+        cursorDirection: "prev",
+      })
+    } else {
+      setFilters({ cursor: null, cursorDirection: "next" })
+    }
+  }
+
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <Button
+        variant="outline"
+        onClick={handlePrevPage}
+        disabled={isPageLoading || (!runs?.prevCursor && !filters.cursor)}
+        aria-label="Previous page"
+        className="flex-1"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Previous
+      </Button>
+      <Button
+        variant="outline"
+        onClick={handleNextPage}
+        disabled={isPageLoading || !runs?.nextCursor}
+        aria-label="Next page"
+        className="flex-1"
+      >
+        Next
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  )
+}
+
+type LiveUpdatesToggleProps = {
+  paused: boolean
+  onPausedChange: (paused: boolean) => void
+  className?: string
+}
+
+/** Says whether the list follows new runs, rather than a bare pause icon */
+export function LiveUpdatesToggle({ paused, onPausedChange, className }: LiveUpdatesToggleProps) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => onPausedChange(!paused)}
+      aria-pressed={paused}
+      title={paused ? "Live updates paused: click to resume" : "Following new runs: click to pause"}
+      className={cn(paused && "text-muted-foreground", className)}
+    >
+      {paused ? (
+        <Pause className="size-3.5" />
+      ) : (
+        <span className="size-2 rounded-full bg-success motion-safe:animate-pulse" aria-hidden />
+      )}
+      {paused ? "Paused" : "Live"}
+    </Button>
   )
 }

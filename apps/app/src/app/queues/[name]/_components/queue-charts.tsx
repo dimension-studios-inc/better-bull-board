@@ -20,7 +20,7 @@ import { CHART_RESIZE_DEBOUNCE_MS } from "~/app/_components/chart-config"
 import { getTimeFormats } from "~/app/_components/run-graph-chart"
 import type { queueSummaryGraphOutput } from "~/app/api/queues/summary/schemas"
 import { formatUtc } from "~/lib/utils/date"
-import { formatDurationMs } from "./format-duration"
+import { formatDurationMs } from "~/lib/utils/duration"
 
 type GraphPoint = z.output<typeof queueSummaryGraphOutput>
 

@@ -1,14 +1,12 @@
 "use client"
 
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
-import { formatDuration } from "date-fns"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import type { z } from "zod"
 import type { queueDetailsOutput } from "~/app/api/queues/details/schemas"
-import { QueueActions } from "~/app/queues/_components/queue-actions"
 import { QueueStateBadge } from "~/app/queues/_components/queue-state-badge"
 import { getRunsHref } from "~/lib/utils/runs-link"
+import { describeSchedule } from "~/lib/utils/schedule"
 
 type QueueDetails = z.output<typeof queueDetailsOutput>
 
@@ -19,13 +17,14 @@ interface QueueHeaderProps {
 }
 
 const getSchedule = ({ patterns, everys }: QueueDetails) => {
-  if (patterns.length) return patterns.join(", ")
-  if (everys.length) return everys.map((every) => `Every ${formatDuration({ seconds: every / 1000 })}`).join(", ")
-  return null
+  const schedules = [
+    ...patterns.map((pattern) => describeSchedule({ pattern, every: null, tz: null })),
+    ...everys.map((every) => describeSchedule({ pattern: null, every, tz: null })),
+  ]
+  return schedules.length ? schedules.join(", ") : null
 }
 
 export function QueueHeader({ queueName, details, isLoading }: QueueHeaderProps) {
-  const router = useRouter()
   const schedule = details ? getSchedule(details) : null
 
   const counts = [
@@ -35,34 +34,34 @@ export function QueueHeader({ queueName, details, isLoading }: QueueHeaderProps)
   ]
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0 space-y-1">
-        <div className="flex min-w-0 items-center gap-2">
-          <h2 className="truncate text-xl font-semibold" title={queueName}>
-            {queueName}
-          </h2>
-          {isLoading ? <Skeleton className="h-5 w-16" /> : details && <QueueStateBadge isPaused={details.isPaused} />}
-        </div>
-        {schedule && <p className="truncate font-mono text-sm text-muted-foreground">{schedule}</p>}
+    <div className="min-w-0 space-y-1">
+      <div className="flex min-w-0 items-start gap-2 sm:items-center">
+        {/* Long queue names wrap on phones rather than hiding the part that tells them apart */}
+        <h2 className="min-w-0 wrap-break-word text-xl font-semibold sm:truncate" title={queueName}>
+          {queueName}
+        </h2>
+        {isLoading ? (
+          <Skeleton className="mt-1 h-5 w-16 shrink-0 sm:mt-0" />
+        ) : (
+          details && <QueueStateBadge isPaused={details.isPaused} className="mt-1 shrink-0 sm:mt-0" />
+        )}
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex h-8 items-center gap-3 rounded-lg border px-2.5 text-xs text-muted-foreground">
-          {isLoading ? (
-            <Skeleton className="h-4 w-40" />
-          ) : (
-            counts.map((count) => (
-              <Link
-                key={count.status}
-                href={getRunsHref({ queue: queueName, status: count.status })}
-                className="whitespace-nowrap rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
-              >
-                <span className="font-mono text-foreground">{(count.value ?? 0).toLocaleString()}</span> {count.label}
-              </Link>
-            ))
-          )}
-        </div>
-        {details && (
-          <QueueActions queueName={details.name} isPaused={details.isPaused} onDeleted={() => router.push("/queues")} />
+      {schedule && <p className="truncate text-sm text-muted-foreground">{schedule}</p>}
+      {/* What the queue holds right now, apart from the period controls below */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+        {isLoading ? (
+          <Skeleton className="h-5 w-48" />
+        ) : (
+          counts.map((count) => (
+            <Link
+              key={count.status}
+              href={getRunsHref({ queue: queueName, status: count.status })}
+              className="whitespace-nowrap rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              <span className="font-medium text-foreground tabular-nums">{(count.value ?? 0).toLocaleString()}</span>{" "}
+              {count.label}
+            </Link>
+          ))
         )}
       </div>
     </div>
