@@ -8,6 +8,15 @@ import { usePathname } from "next/navigation"
 
 type PageInfo = { title: string; parent?: { title: string; href: string } }
 
+// usePathname keeps the URL encoding, and a hand-typed URL can hold a stray "%"
+const decodePathSegment = (segment: string) => {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment
+  }
+}
+
 const getPageInfo = (pathname: string): PageInfo => {
   if (pathname === "/") return { title: "Dashboard" }
   if (pathname === "/queues") return { title: "Queues" }
@@ -15,6 +24,9 @@ const getPageInfo = (pathname: string): PageInfo => {
   if (pathname === "/runs") return { title: "Runs" }
   if (pathname === "/runs/create") return { title: "Create Run", parent: { title: "Runs", href: "/runs" } }
   if (pathname.startsWith("/runs/")) return { title: "Run Details", parent: { title: "Runs", href: "/runs" } }
+  if (pathname.startsWith("/queues/")) {
+    return { title: decodePathSegment(pathname.slice("/queues/".length)), parent: { title: "Queues", href: "/queues" } }
+  }
   return { title: "Better Bull Board" }
 }
 
