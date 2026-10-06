@@ -55,7 +55,10 @@ export const jobRunsTable = pgTable(
     index("ix_job_runs_job").on(t.jobId),
     index("ix_job_runs_status_created_at").on(t.status, t.createdAt),
     index("ix_job_runs_status").on(t.status),
-    index("ix_job_runs_repeat_key").on(t.repeatJobKey),
+    // Latest runs of a scheduler, for the schedulers page
+    index("ix_job_runs_repeat_key_created_at")
+      .on(t.repeatJobKey, t.createdAt)
+      .where(sql`${t.repeatJobKey} IS NOT NULL`),
     index("ix_job_runs_tags_gin").using("gin", t.tags),
     index("ix_job_runs_tags_text_trgm")
       .using("gin", sql`(public.job_runs_tags_search_text(${t.tags})) gin_trgm_ops`)

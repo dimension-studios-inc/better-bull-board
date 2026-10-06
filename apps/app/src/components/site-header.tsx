@@ -11,6 +11,7 @@ type PageInfo = { title: string; parent?: { title: string; href: string } }
 const getPageInfo = (pathname: string): PageInfo => {
   if (pathname === "/") return { title: "Dashboard" }
   if (pathname === "/queues") return { title: "Queues" }
+  if (pathname === "/schedulers") return { title: "Schedulers" }
   if (pathname === "/runs") return { title: "Runs" }
   if (pathname === "/runs/create") return { title: "Create Run", parent: { title: "Runs", href: "/runs" } }
   if (pathname.startsWith("/runs/")) return { title: "Run Details", parent: { title: "Runs", href: "/runs" } }
