@@ -1,24 +1,49 @@
 import { Badge } from "@better-bull-board/ui/components/badge"
 import { cn } from "cn"
+import {
+  CircleCheck,
+  CircleQuestionMark,
+  CircleX,
+  Clock,
+  Hourglass,
+  LoaderCircle,
+  type LucideIcon,
+  type LucideProps,
+} from "lucide-react"
+import type { ComponentProps } from "react"
 
-// The one palette of run statuses: errors elsewhere use the destructive token, statuses need a color each
-const statusClassNames: Record<string, string> = {
-  completed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  failed: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-  active: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-  waiting: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-  delayed: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-  prioritized: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-  "waiting-children": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+type BadgeVariant = ComponentProps<typeof Badge>["variant"]
+
+// The shadcn Badge variants carry the status, the icon tells statuses of the same variant apart
+const runStatuses: Record<string, { variant: BadgeVariant; icon: LucideIcon; iconClassName?: string }> = {
+  completed: { variant: "outline", icon: CircleCheck, iconClassName: "text-success" },
+  failed: { variant: "destructive", icon: CircleX, iconClassName: "text-destructive" },
+  active: { variant: "secondary", icon: LoaderCircle, iconClassName: "animate-spin" },
+  waiting: { variant: "outline", icon: Clock, iconClassName: "text-muted-foreground" },
+  delayed: { variant: "outline", icon: Hourglass, iconClassName: "text-muted-foreground" },
+  prioritized: { variant: "outline", icon: Hourglass, iconClassName: "text-muted-foreground" },
+  "waiting-children": { variant: "outline", icon: Hourglass, iconClassName: "text-muted-foreground" },
 }
 
-const unknownStatusClassName = "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+const unknownStatus = { variant: "outline", icon: CircleQuestionMark, iconClassName: "text-muted-foreground" } as const
 
-type RunStatusBadgeProps = {
+type RunStatusProps = {
   status: string
   className?: string
 }
 
-export function RunStatusBadge({ status, className }: RunStatusBadgeProps) {
-  return <Badge className={cn(statusClassNames[status] ?? unknownStatusClassName, className)}>{status}</Badge>
+export function RunStatusIcon({ status, className, ...props }: RunStatusProps & Omit<LucideProps, "ref">) {
+  const { icon: Icon, iconClassName } = runStatuses[status] ?? unknownStatus
+  return <Icon className={cn(iconClassName, className)} aria-hidden {...props} />
+}
+
+export function RunStatusBadge({ status, className }: RunStatusProps) {
+  const { variant } = runStatuses[status] ?? unknownStatus
+
+  return (
+    <Badge variant={variant} className={className}>
+      <RunStatusIcon status={status} data-icon="inline-start" />
+      {status}
+    </Badge>
+  )
 }

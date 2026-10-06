@@ -8,16 +8,13 @@ import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-a
 import { Separator } from "@better-bull-board/ui/components/separator"
 import { cn } from "cn"
 import {
-  AlertCircle,
   CalendarClock,
   CheckCircle,
   ChevronDown,
   ChevronRight,
-  CircleQuestionMarkIcon,
   Clock,
   Database,
   Hash,
-  Loader,
   PlayCircle,
   Settings,
   Tag,
@@ -25,27 +22,12 @@ import {
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { codeToHtml } from "shiki"
-import { RunStatusBadge } from "~/components/run-status-badge"
+import { RunStatusBadge, RunStatusIcon } from "~/components/run-status-badge"
 import { smartFormatDuration } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
 
 interface RunDetailsDrawerProps {
   run: typeof jobRunsTable.$inferSelect
-}
-
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "completed":
-      return <CheckCircle className="h-4 w-4 text-green-500" />
-    case "failed":
-      return <AlertCircle className="h-4 w-4 text-red-500" />
-    case "active":
-      return <Loader className="h-4 w-4 text-blue-500 animate-spin" />
-    case "waiting":
-      return <Clock className="h-4 w-4 text-yellow-500" />
-    default:
-      return <CircleQuestionMarkIcon className="h-4 w-4 text-gray-500" />
-  }
 }
 
 const DetailItem = ({
@@ -123,7 +105,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
     <Card className="lg:h-[calc(100vh-12rem)]">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          {getStatusIcon(run.status)}
+          <RunStatusIcon status={run.status} className="size-4" />
           <span>Run Details</span>
         </CardTitle>
       </CardHeader>
@@ -248,7 +230,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
                   <h3 className="text-sm font-medium mb-3">Tags</h3>
                   <div className="flex flex-wrap gap-1">
                     {run.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
+                      <Badge key={tag} variant="outline">
                         {tag}
                       </Badge>
                     ))}
