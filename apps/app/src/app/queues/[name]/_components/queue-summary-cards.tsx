@@ -94,7 +94,7 @@ export function QueueSummaryCards({ queueName, minutes, periodLabel, stats, isLo
       value: stats?.failures.toLocaleString(),
       icon: AlertCircle,
       description: `Failed (${period})`,
-      color: "text-red-600 dark:text-red-400",
+      color: "text-destructive",
       href: getRunsHref({ queue: queueName, status: "failed", minutes }),
     },
     {

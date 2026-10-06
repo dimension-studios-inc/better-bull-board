@@ -188,14 +188,14 @@ export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: 
                           count={queue.failures}
                           href={getRunsHref({ queue: queue.queue, status: "failed", minutes })}
                           label={`View failed runs of ${queue.queue}`}
-                          className="text-red-600 hover:bg-red-500/10 dark:text-red-400"
+                          className="text-destructive hover:bg-destructive/10"
                         />
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         <span
                           className={
                             queue.errorRate > 10
-                              ? "text-red-600 dark:text-red-400"
+                              ? "text-destructive"
                               : queue.errorRate > 5
                                 ? "text-yellow-600 dark:text-yellow-400"
                                 : "text-green-600 dark:text-green-400"

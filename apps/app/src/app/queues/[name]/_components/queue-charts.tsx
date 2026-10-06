@@ -142,7 +142,7 @@ const getChartData = (graph: GraphPoint[] | undefined, minutes: number) => {
 
 const runSeries: Series[] = [
   { key: "completed", label: "Completed", color: "var(--color-green-600)", format: formatCount },
-  { key: "failed", label: "Failed", color: "var(--color-red-600)", format: formatCount },
+  { key: "failed", label: "Failed", color: "var(--destructive)", format: formatCount },
 ]
 
 export function QueueRunsChart({ minutes, periodLabel, graph, isLoading }: QueueChartProps) {
@@ -196,7 +196,7 @@ export function QueueRunsChart({ minutes, periodLabel, graph, isLoading }: Queue
 }
 
 const errorRateSeries: Series[] = [
-  { key: "errorRate", label: "Error rate", color: "var(--color-red-600)", format: formatPercent },
+  { key: "errorRate", label: "Error rate", color: "var(--destructive)", format: formatPercent },
 ]
 
 export function QueueErrorRateChart({ minutes, periodLabel, graph, isLoading }: QueueChartProps) {
@@ -214,8 +214,8 @@ export function QueueErrorRateChart({ minutes, periodLabel, graph, isLoading }: 
       <AreaChart data={chartData} margin={{ left: 0, right: 12 }}>
         <defs>
           <linearGradient id="fillErrorRate" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-red-600)" stopOpacity={0.6} />
-            <stop offset="95%" stopColor="var(--color-red-600)" stopOpacity={0.05} />
+            <stop offset="5%" stopColor="var(--destructive)" stopOpacity={0.6} />
+            <stop offset="95%" stopColor="var(--destructive)" stopOpacity={0.05} />
           </linearGradient>
         </defs>
         <CartesianGrid vertical={false} stroke="var(--border)" />
@@ -244,7 +244,7 @@ export function QueueErrorRateChart({ minutes, periodLabel, graph, isLoading }: 
           dataKey="errorRate"
           name="Error rate"
           fill="url(#fillErrorRate)"
-          stroke="var(--color-red-600)"
+          stroke="var(--destructive)"
           strokeWidth={2}
           // Buckets without runs have no rate: bridge them rather than drawing a drop to 0%
           connectNulls
