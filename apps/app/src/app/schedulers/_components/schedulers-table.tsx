@@ -15,6 +15,7 @@ import { useState } from "react"
 import type { output } from "zod"
 import { getSchedulersTableApiRoute } from "~/app/api/schedulers/table/schemas"
 import { QueueSelector } from "~/components/queue-selector"
+import { RunStatusBadge } from "~/components/run-status-badge"
 import { TruncatedTooltip } from "~/components/truncated-tooltip"
 import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
@@ -26,12 +27,6 @@ type Scheduler = output<typeof getSchedulersTableApiRoute.outputSchema>["schedul
 
 // Missed runs only show up when time passes, not when data changes
 const REFETCH_INTERVAL_MS = 30_000
-
-const lastRunStatusClassNames: Record<NonNullable<Scheduler["lastRun"]>["status"], string> = {
-  completed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  failed: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-  active: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-}
 
 const isInteractiveRowTarget = (target: EventTarget | null) =>
   target instanceof Element && !!target.closest("a,button,input,select,textarea")
@@ -55,14 +50,11 @@ function NextRun({ scheduler, compact = false }: { scheduler: Scheduler; compact
 
   return (
     <div className="flex min-w-0 items-start gap-2">
-      <div className={cn("min-w-0", scheduler.isMissed && "text-red-700 dark:text-red-300")}>
+      <div className={cn("min-w-0", scheduler.isMissed && "text-destructive")}>
         <Timestamp value={scheduler.nextRunAt} compact={compact} />
       </div>
       {scheduler.isMissed && (
-        <Badge
-          className="shrink-0 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-          title="This run should have started by now"
-        >
+        <Badge variant="destructive" className="shrink-0" title="This run should have started by now">
           <CircleAlert data-icon="inline-start" />
           Missed
         </Badge>
@@ -82,7 +74,7 @@ function LastRun({ scheduler, compact = false }: { scheduler: Scheduler; compact
 
   return (
     <Link href={`/runs/${lastRun.id}`} className="flex min-w-0 items-start gap-2 hover:underline">
-      <Badge className={cn("shrink-0", lastRunStatusClassNames[lastRun.status])}>{lastRun.status}</Badge>
+      <RunStatusBadge status={lastRun.status} className="shrink-0" />
       <div className="min-w-0">
         <Timestamp value={lastRun.at} compact={compact} />
       </div>
@@ -187,7 +179,7 @@ export function SchedulersTable() {
             tabIndex={0}
             className={cn(
               "cursor-pointer space-y-2 rounded-lg border bg-card p-3 transition-colors active:bg-muted/50",
-              scheduler.isMissed && "border-red-300 dark:border-red-800",
+              scheduler.isMissed && "border-destructive/40",
             )}
             onClick={(event) => handleRowClick(event, scheduler)}
             onKeyDown={(event) => {
@@ -237,7 +229,7 @@ export function SchedulersTable() {
             {schedulers.map((scheduler) => (
               <TableRow
                 key={scheduler.id}
-                className={cn("cursor-pointer", scheduler.isMissed && "bg-red-50/50 dark:bg-red-950/20")}
+                className={cn("cursor-pointer", scheduler.isMissed && "bg-destructive/5")}
                 onClick={(event) => handleRowClick(event, scheduler)}
               >
                 <TableCell>

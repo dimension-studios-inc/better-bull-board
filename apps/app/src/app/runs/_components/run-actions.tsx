@@ -68,7 +68,7 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
               />
             }
           >
@@ -77,7 +77,7 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
           <PopoverContent className="w-80">
             <div className="space-y-4">
               <div className="space-y-2">
-                <h4 className="font-medium leading-none text-red-600 dark:text-red-400">Cancel Job</h4>
+                <h4 className="font-medium leading-none text-destructive">Cancel Job</h4>
                 <p className="text-sm text-muted-foreground">
                   Are you sure you want to cancel this job? This action cannot be undone.
                 </p>

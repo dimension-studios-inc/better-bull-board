@@ -246,7 +246,7 @@ export function BulkActions({ selectedJobs, matchingSelection, onClearSelection 
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-red-600 dark:text-red-400">Cancel Jobs</DialogTitle>
+            <DialogTitle className="text-destructive">Cancel Jobs</DialogTitle>
             <DialogDescription>
               {matchingSelection ? (
                 <>
