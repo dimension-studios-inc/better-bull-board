@@ -1,13 +1,12 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
 import { getDashboardSummaryApiRoute } from "~/app/api/dashboard/summary/schemas"
 import {
   DEFAULT_TIME_PERIOD,
   getTimePeriodLabel,
-  type TimePeriod,
   TimePeriodSelector,
+  useStoredTimePeriod,
 } from "~/components/time-period-selector"
 import { apiFetch } from "~/lib/utils/client"
 import { EnhancedStatsCards } from "./enhanced-stats-cards"
@@ -17,14 +16,17 @@ import { QueuePerformanceTable } from "./queue-performance-table"
 import { RunGraphChart } from "./run-graph-chart"
 
 export function EnhancedDashboard() {
-  const [minutes, setMinutes] = useState<TimePeriod>(DEFAULT_TIME_PERIOD)
+  const [storedMinutes, setMinutes] = useStoredTimePeriod()
+  const minutes = storedMinutes ?? DEFAULT_TIME_PERIOD
   const periodLabel = getTimePeriodLabel(minutes)
-  const { data: dashboardSummary, isLoading } = useQuery({
+  // Pending, not loading: the query waits for the stored period to be read
+  const { data: dashboardSummary, isPending: isLoading } = useQuery({
     queryKey: ["dashboard/summary", minutes],
     queryFn: apiFetch({
       apiRoute: getDashboardSummaryApiRoute,
       body: { minutes },
     }),
+    enabled: storedMinutes !== null,
     // Short periods move fast: keep them live
     refetchInterval: minutes <= 60 ? 15 * 1000 : false,
   })
