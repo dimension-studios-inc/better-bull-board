@@ -1,10 +1,13 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import { useQueryState } from "nuqs"
 import { getDashboardSummaryApiRoute } from "~/app/api/dashboard/summary/schemas"
 import {
   DEFAULT_TIME_PERIOD,
   getTimePeriodLabel,
+  parseAsTimePeriod,
+  type TimePeriod,
   TimePeriodSelector,
   useStoredTimePeriod,
 } from "~/components/time-period-selector"
@@ -16,20 +19,31 @@ import { QueuePerformanceTable } from "./queue-performance-table"
 import { RunGraphChart } from "./run-graph-chart"
 
 export function EnhancedDashboard() {
-  const [storedMinutes, setMinutes] = useStoredTimePeriod()
-  const minutes = storedMinutes ?? DEFAULT_TIME_PERIOD
+  const [linkedMinutes, setLinkedMinutes] = useQueryState(
+    "period",
+    parseAsTimePeriod.withOptions({ history: "replace" }),
+  )
+  const [storedMinutes, setStoredMinutes] = useStoredTimePeriod()
+  // A shared link wins over the period remembered in this browser, and is known on the server already
+  const knownMinutes = linkedMinutes ?? storedMinutes
+  const minutes = knownMinutes ?? DEFAULT_TIME_PERIOD
   const periodLabel = getTimePeriodLabel(minutes)
-  // Pending, not loading: the query waits for the stored period to be read
+  // Pending, not loading: without a link, the query waits for the stored period to be read
   const { data: dashboardSummary, isPending: isLoading } = useQuery({
     queryKey: ["dashboard/summary", minutes],
     queryFn: apiFetch({
       apiRoute: getDashboardSummaryApiRoute,
       body: { minutes },
     }),
-    enabled: storedMinutes !== null,
+    enabled: knownMinutes !== null,
     // Short periods move fast: keep them live
     refetchInterval: minutes <= 60 ? 15 * 1000 : false,
   })
+
+  const setMinutes = (period: TimePeriod) => {
+    void setLinkedMinutes(period)
+    setStoredMinutes(period)
+  }
 
   return (
     <div className="flex flex-col gap-4 md:gap-6">
@@ -40,8 +54,9 @@ export function EnhancedDashboard() {
 
       {/* Enhanced Stats Cards */}
       <EnhancedStatsCards
-        // The links hold the time they are rendered at: none while hydrating, or they would not match the server
-        minutes={storedMinutes}
+        // The links hold the time they are rendered at: none while hydrating (no stored period read yet),
+        // or they would not match the server
+        minutes={storedMinutes === null ? null : minutes}
         periodLabel={periodLabel}
         stats={dashboardSummary?.enhancedStats}
         isLoading={isLoading}
