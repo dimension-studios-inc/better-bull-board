@@ -272,10 +272,10 @@ const getTopQueuesDuration = (queuePerformance: DashboardSummary["queuePerforman
   [...queuePerformance]
     .map((row) => ({
       queue: row.queue,
-      totalDuration: row.avgDuration,
+      avgDuration: row.avgDuration,
     }))
-    .filter((row) => row.totalDuration > 0)
-    .sort((a, b) => b.totalDuration - a.totalDuration)
+    .filter((row) => row.avgDuration > 0)
+    .sort((a, b) => b.avgDuration - a.avgDuration)
     .slice(0, 20)
 
 export const getDashboardSummary = async ({ minutes }: { minutes: number }): Promise<DashboardSummary> => {

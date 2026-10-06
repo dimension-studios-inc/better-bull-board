@@ -71,8 +71,16 @@ export function EnhancedDashboard() {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 gap-4 md:gap-6 @4xl/main:grid-cols-2">
-        <QueueDurationChart queueDuration={dashboardSummary?.topQueuesDuration.slice(0, 10)} isLoading={isLoading} />
-        <QueueCountChart queueCounts={dashboardSummary?.topQueuesCount.slice(0, 10)} isLoading={isLoading} />
+        <QueueDurationChart
+          minutes={minutes}
+          queueDuration={dashboardSummary?.topQueuesDuration.slice(0, 10)}
+          isLoading={isLoading}
+        />
+        <QueueCountChart
+          minutes={minutes}
+          queueCounts={dashboardSummary?.topQueuesCount.slice(0, 10)}
+          isLoading={isLoading}
+        />
       </div>
 
       {/* Run Graph */}
