@@ -29,6 +29,10 @@
       "types": "./dist/queue-schemas.d.mts",
       "import": "./dist/queue-schemas.mjs"
     },
+    "./top-errors-schemas": {
+      "types": "./dist/top-errors-schemas.d.mts",
+      "import": "./dist/top-errors-schemas.mjs"
+    },
     "./jobs": {
       "types": "./dist/jobs.d.mts",
       "import": "./dist/jobs.mjs"
@@ -44,6 +48,10 @@
     "./queues": {
       "types": "./dist/queues.d.mts",
       "import": "./dist/queues.mjs"
+    },
+    "./top-errors": {
+      "types": "./dist/top-errors.d.mts",
+      "import": "./dist/top-errors.mjs"
     }
   },
   "type": "module",
