@@ -2,15 +2,15 @@
 
 import type { jobRunsTable } from "@better-bull-board/db"
 import { Alert, AlertDescription } from "@better-bull-board/ui/components/alert"
-import { Badge } from "@better-bull-board/ui/components/badge"
 import { ScrollArea } from "@better-bull-board/ui/components/scroll-area"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@better-bull-board/ui/components/tooltip"
 import { cn } from "cn"
-import { AlertCircle, AlertTriangle, Bug, Info } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 import { Loader } from "~/components/loader"
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll"
 import { smartFormatDuration } from "~/lib/utils/client"
+import { LogLevelBadge, LogLevelIcon } from "./log-level"
 
 interface LogEntry {
   id: string
@@ -30,51 +30,19 @@ interface LogsWaterfallProps {
   onLoadMore: () => void
 }
 
-const getLevelIcon = (level: string) => {
-  switch (level.toLowerCase()) {
-    case "error":
-      return <AlertCircle className="size-4 text-red-500" />
-    case "warn":
-    case "warning":
-      return <AlertTriangle className="size-4 text-yellow-500" />
-    case "debug":
-      return <Bug className="size-4 text-purple-500" />
-    case "info":
-      return <Info className="size-4 text-blue-500" />
-    default:
-      return <div className="size-4" />
-  }
-}
-
-const getLevelColor = (level: string) => {
-  switch (level.toLowerCase()) {
-    case "error":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-    case "warn":
-    case "warning":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-    case "debug":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
-    case "info":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-    default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
-  }
-}
-
 const getWaterfallColor = (level: string) => {
   switch (level.toLowerCase()) {
     case "error":
-      return "bg-red-500"
+      return "bg-destructive"
     case "warn":
     case "warning":
-      return "bg-yellow-500"
+      return "bg-warning"
     case "debug":
       return "bg-purple-500"
     case "info":
       return "bg-blue-500"
     default:
-      return "bg-gray-500"
+      return "bg-muted-foreground"
   }
 }
 
@@ -148,29 +116,24 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
           return (
             <div
               key={log.id}
-              className={cn(
-                "grid grid-cols-12 items-start",
-                "hover:bg-gray-50 hover:dark:bg-gray-950/30",
-                onLogClick && "cursor-pointer",
-                {
-                  "hover:bg-red-50 hover:dark:bg-red-950/30": log.level.toLowerCase() === "error",
-                  "hover:bg-yellow-50 hover:dark:bg-yellow-950/30": log.level.toLowerCase() === "warn",
-                  "hover:bg-purple-50 hover:dark:bg-purple-950/30": log.level.toLowerCase() === "debug",
-                  "hover:bg-blue-50 hover:dark:bg-blue-950/30": log.level.toLowerCase() === "info",
-                },
-              )}
+              className={cn("grid grid-cols-12 items-start", "hover:bg-muted/50", onLogClick && "cursor-pointer", {
+                "hover:bg-destructive/5": log.level.toLowerCase() === "error",
+                "hover:bg-warning/5": log.level.toLowerCase() === "warn",
+                "hover:bg-purple-50 hover:dark:bg-purple-950/30": log.level.toLowerCase() === "debug",
+                "hover:bg-blue-50 hover:dark:bg-blue-950/30": log.level.toLowerCase() === "info",
+              })}
               onClick={() => onLogClick?.(log)}
             >
               <div className={cn("col-span-7 md:col-span-6 flex items-center space-x-3 p-2 rounded font-mono")}>
                 {/* Timeline dot */}
                 <Tooltip>
                   <TooltipTrigger>
-                    <div className="shrink-0">{getLevelIcon(log.level)}</div>
+                    <div className="shrink-0">
+                      <LogLevelIcon level={log.level} />
+                    </div>
                   </TooltipTrigger>
-                  <TooltipContent className="bg-none p-0 m-0 [&>[data-side]]:hidden">
-                    <Badge className={getLevelColor(log.level)} variant="outline">
-                      {log.level.toUpperCase()}
-                    </Badge>
+                  <TooltipContent className="bg-transparent p-0 [&>[data-side]]:hidden">
+                    <LogLevelBadge level={log.level} />
                   </TooltipContent>
                 </Tooltip>
 

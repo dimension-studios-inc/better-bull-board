@@ -1,14 +1,13 @@
 "use client"
 
-import { Badge } from "@better-bull-board/ui/components/badge"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
-import { cn } from "cn"
 import { formatDuration } from "date-fns"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { z } from "zod"
 import type { queueDetailsOutput } from "~/app/api/queues/details/schemas"
 import { QueueActions } from "~/app/queues/_components/queue-actions"
+import { QueueStateBadge } from "~/app/queues/_components/queue-state-badge"
 import { getRunsHref } from "~/lib/utils/runs-link"
 
 type QueueDetails = z.output<typeof queueDetailsOutput>
@@ -42,15 +41,7 @@ export function QueueHeader({ queueName, details, isLoading }: QueueHeaderProps)
           <h2 className="truncate text-xl font-semibold" title={queueName}>
             {queueName}
           </h2>
-          {isLoading ? (
-            <Skeleton className="h-5 w-16" />
-          ) : (
-            details && (
-              <Badge variant="outline" className={cn({ "opacity-50": details.isPaused })}>
-                {details.isPaused ? "Paused" : "Running"}
-              </Badge>
-            )
-          )}
+          {isLoading ? <Skeleton className="h-5 w-16" /> : details && <QueueStateBadge isPaused={details.isPaused} />}
         </div>
         {schedule && <p className="truncate font-mono text-sm text-muted-foreground">{schedule}</p>}
       </div>
