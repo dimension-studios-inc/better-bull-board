@@ -17,6 +17,7 @@ import { QueueCountChart } from "./queue-count-chart"
 import { QueueDurationChart } from "./queue-duration-chart"
 import { QueuePerformanceTable } from "./queue-performance-table"
 import { RunGraphChart } from "./run-graph-chart"
+import { TopErrorsCard } from "./top-errors-card"
 
 export function EnhancedDashboard() {
   const [linkedMinutes, setLinkedMinutes] = useQueryState(
@@ -68,6 +69,9 @@ export function EnhancedDashboard() {
         queuePerformance={dashboardSummary?.queuePerformance}
         isLoading={isLoading}
       />
+
+      {/* Top Errors */}
+      <TopErrorsCard minutes={minutes} periodLabel={periodLabel} enabled={storedMinutes !== null} />
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 gap-4 md:gap-6 @4xl/main:grid-cols-2">
