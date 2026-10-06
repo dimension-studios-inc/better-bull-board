@@ -91,7 +91,8 @@ const JsonCollapsible = ({ title, data, icon }: { title: string; data: unknown; 
       try {
         const html = await codeToHtml(JSON.stringify(data, null, 2), {
           lang: "json",
-          theme: "vitesse-light",
+          themes: { light: "vitesse-light", dark: "vitesse-dark" },
+          defaultColor: false,
         })
         setFormattedData(html)
       } catch (error) {
@@ -275,7 +276,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
               <>
                 <Separator />
                 <div>
-                  <h3 className="text-sm font-medium mb-3 text-red-600">Error Details</h3>
+                  <h3 className="text-sm font-medium mb-3 text-red-600 dark:text-red-400">Error Details</h3>
                   {run.errorMessage && (
                     <div className="mb-3">
                       <div className="text-xs text-muted-foreground mb-1">Message</div>

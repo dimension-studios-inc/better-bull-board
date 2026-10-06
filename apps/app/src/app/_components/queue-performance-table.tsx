@@ -195,10 +195,10 @@ export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: 
                         <span
                           className={
                             queue.errorRate > 10
-                              ? "text-red-600"
+                              ? "text-red-600 dark:text-red-400"
                               : queue.errorRate > 5
-                                ? "text-yellow-600"
-                                : "text-green-600"
+                                ? "text-yellow-600 dark:text-yellow-400"
+                                : "text-green-600 dark:text-green-400"
                           }
                         >
                           {queue.errorRate.toFixed(1)}%

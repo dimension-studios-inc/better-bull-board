@@ -149,4 +149,17 @@
   .recharts-surface:focus {
     outline: none;
   }
+
+  /*
+   * Shiki renders with dual themes and no default color, so tokens only carry CSS variables: pick the set matching
+   * the current theme. The theme backgrounds are left out so code sits on its container.
+   */
+  .shiki,
+  .shiki span {
+    color: var(--shiki-light);
+  }
+  .dark .shiki,
+  .dark .shiki span {
+    color: var(--shiki-dark);
+  }
 }

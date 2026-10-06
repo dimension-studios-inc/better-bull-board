@@ -100,13 +100,21 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
 
       {/* Delete Button */}
       <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
-        <PopoverTrigger render={<Button variant="ghost" size="icon-sm" className="text-red-600 hover:text-red-700" />}>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+            />
+          }
+        >
           <Trash2 className="size-4" />
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none text-red-600">Delete Queue</h4>
+              <h4 className="font-medium leading-none text-red-600 dark:text-red-400">Delete Queue</h4>
               <p className="text-sm text-muted-foreground">
                 Are you sure you want to delete the queue "{queueName}"? This action will permanently remove the queue
                 and all its data. This action cannot be undone.
