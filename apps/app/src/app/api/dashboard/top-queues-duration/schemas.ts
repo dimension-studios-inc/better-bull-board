@@ -9,7 +9,7 @@ const getTopQueuesDurationInput = z.object({
 const getTopQueuesDurationOutput = z.array(
   z.object({
     queue: z.string(),
-    totalDuration: z.number(),
+    avgDuration: z.number(),
   }),
 )
 
