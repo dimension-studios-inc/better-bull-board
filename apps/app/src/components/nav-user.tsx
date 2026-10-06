@@ -7,12 +7,24 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@better-bull-board/ui/components/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@better-bull-board/ui/components/sidebar"
-import { EllipsisVertical, LogOut } from "lucide-react"
+import { EllipsisVertical, LogOut, Monitor, Moon, Sun, SunMoon } from "lucide-react"
+import { useTheme } from "next-themes"
 import { useAuth } from "~/lib/auth/context"
+
+const themes = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Monitor },
+]
 
 function UserIdentity({ email }: { email: string }) {
   const name = email.split("@")[0] || email
@@ -33,6 +45,7 @@ function UserIdentity({ email }: { email: string }) {
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { logout, user } = useAuth()
+  const { theme, setTheme } = useTheme()
   const email = user?.email ?? ""
 
   return (
@@ -58,6 +71,23 @@ export function NavUser() {
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <SunMoon />
+                Theme
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="min-w-36">
+                <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                  {themes.map(({ value, label, icon: Icon }) => (
+                    <DropdownMenuRadioItem key={value} value={value}>
+                      <Icon />
+                      {label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut />
