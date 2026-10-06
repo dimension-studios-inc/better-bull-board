@@ -21,6 +21,7 @@ Read access lets an agent:
 - Summarize active and waiting jobs across the system.
 - List queues and show active or waiting job counts.
 - Find recent failed jobs.
+- Spot runs that look stuck: active for far longer than their queue usually takes, often a dead or hung worker.
 - Open a specific job and explain its status, attempts, timing, payload, result, and error.
 - Read logs for a job and summarize what happened.
 
@@ -133,6 +134,10 @@ Find recent failed jobs and summarize the most common error messages.
 
 ```txt
 Show me what is currently running and call out anything that has been active for a long time.
+```
+
+```txt
+Is anything hung? List the stuck runs and tell me which queues and workers they belong to.
 ```
 
 ## Read Examples
