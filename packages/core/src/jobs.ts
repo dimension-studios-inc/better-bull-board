@@ -1,6 +1,25 @@
 import { jobLogsTable, jobRunsTable, jobStatusEnum } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
-import { and, arrayOverlaps, asc, desc, eq, gt, gte, ilike, lt, lte, or, sql } from "drizzle-orm"
+import {
+  and,
+  arrayOverlaps,
+  asc,
+  count,
+  desc,
+  eq,
+  exists,
+  gt,
+  gte,
+  ilike,
+  inArray,
+  lt,
+  lte,
+  not,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm"
+import { alias } from "drizzle-orm/pg-core"
 import { z } from "zod"
 import { withListJobsConcurrencyLimit } from "./list-jobs-limit"
 
@@ -14,14 +33,19 @@ export {
 } from "./job-schemas"
 
 import {
+  cancellableJobStatuses,
+  countJobsOutputSchema,
   getJobByIdInputSchema,
   getJobByIdOutputSchema,
+  jobFiltersSchema,
   listJobLogsInputSchema,
   listJobLogsOutputSchema,
   listJobsInputSchema,
   listJobsOutputSchema,
+  replayableJobStatuses,
 } from "./job-schemas"
 
+type JobStatus = (typeof jobStatusEnum.enumValues)[number]
 type CursorDirection = "next" | "prev"
 type SortBy = "createdAt" | "durationMs"
 type SortDirection = "asc" | "desc"
@@ -62,6 +86,58 @@ const parseCreatedBoundary = ({
   }
 
   return date
+}
+
+// Shared by the listing, the count and the bulk actions so they always target the same runs
+const getJobFilterConditions = ({
+  search,
+  queue,
+  status,
+  tags,
+  createdFrom,
+  createdTo,
+}: z.output<typeof jobFiltersSchema>) => {
+  const conditions: (SQL | undefined)[] = []
+
+  if (search) {
+    const searchConditions = [
+      ilike(jobRunsTable.name, `%${search}%`),
+      ilike(jobRunsTable.queue, `%${search}%`),
+      ilike(jobRunsTable.jobId, `%${search}%`),
+      ilike(jobRunsTable.errorMessage, `%${search}%`),
+    ]
+    if (z.uuid().safeParse(search).success) {
+      searchConditions.push(eq(jobRunsTable.id, search))
+    }
+    conditions.push(or(...searchConditions))
+  }
+
+  if (queue && queue !== "all") {
+    conditions.push(eq(jobRunsTable.queue, queue))
+  }
+
+  if (status && status !== "all" && jobStatusEnum.enumValues.includes(status as JobStatus)) {
+    conditions.push(eq(jobRunsTable.status, status as JobStatus))
+  }
+
+  if (tags && tags.length > 0) {
+    conditions.push(arrayOverlaps(jobRunsTable.tags, tags))
+  }
+
+  if (createdFrom) {
+    conditions.push(gte(jobRunsTable.createdAt, parseCreatedBoundary({ value: createdFrom, fallbackTime: "00:00" })))
+  }
+
+  if (createdTo) {
+    conditions.push(
+      lte(
+        jobRunsTable.createdAt,
+        parseCreatedBoundary({ value: createdTo, fallbackTime: "23:59:59.999", isUpperBoundary: true }),
+      ),
+    )
+  }
+
+  return conditions
 }
 
 const toCursor = (job: JobCursor) => ({
@@ -159,55 +235,13 @@ const getCursorComparison = ({
 export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) =>
   withListJobsConcurrencyLimit(async () => {
     const parsed = listJobsInputSchema.parse(input)
-    const { cursor, cursorDirection = "next", search, queue, status, tags, createdFrom, createdTo } = parsed
+    const { cursor, cursorDirection = "next" } = parsed
     const limit = parsed.limit ?? 20
     const sortBy = parsed.sortBy ?? "createdAt"
     const sortDirection = parsed.sortDirection ?? "desc"
     const durationSortExpression = sql<number>`COALESCE(${jobRunsTable.durationMs}, 0)`
 
-    const conditions = []
-
-    if (search) {
-      const searchConditions = [
-        ilike(jobRunsTable.name, `%${search}%`),
-        ilike(jobRunsTable.queue, `%${search}%`),
-        ilike(jobRunsTable.jobId, `%${search}%`),
-        ilike(jobRunsTable.errorMessage, `%${search}%`),
-      ]
-      if (z.uuid().safeParse(search).success) {
-        searchConditions.push(eq(jobRunsTable.id, search))
-      }
-      conditions.push(or(...searchConditions))
-    }
-
-    if (queue && queue !== "all") {
-      conditions.push(eq(jobRunsTable.queue, queue))
-    }
-
-    if (
-      status &&
-      status !== "all" &&
-      jobStatusEnum.enumValues.includes(status as (typeof jobStatusEnum.enumValues)[number])
-    ) {
-      conditions.push(eq(jobRunsTable.status, status as (typeof jobStatusEnum.enumValues)[number]))
-    }
-
-    if (tags && tags.length > 0) {
-      conditions.push(arrayOverlaps(jobRunsTable.tags, tags))
-    }
-
-    if (createdFrom) {
-      conditions.push(gte(jobRunsTable.createdAt, parseCreatedBoundary({ value: createdFrom, fallbackTime: "00:00" })))
-    }
-
-    if (createdTo) {
-      conditions.push(
-        lte(
-          jobRunsTable.createdAt,
-          parseCreatedBoundary({ value: createdTo, fallbackTime: "23:59:59.999", isUpperBoundary: true }),
-        ),
-      )
-    }
+    const conditions = getJobFilterConditions(parsed)
 
     if (cursor) {
       conditions.push(
@@ -253,6 +287,76 @@ export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) 
       prevCursor: hasNewerPage && firstJob ? toCursor(firstJob) : null,
     })
   })
+
+export const countJobs = async (input: z.input<typeof jobFiltersSchema> = {}) => {
+  const filters = jobFiltersSchema.parse(input)
+
+  const [row] = await db
+    .select({
+      total: count(),
+      replayable: count(sql`CASE WHEN ${inArray(jobRunsTable.status, [...replayableJobStatuses])} THEN 1 END`),
+      cancellable: count(sql`CASE WHEN ${inArray(jobRunsTable.status, [...cancellableJobStatuses])} THEN 1 END`),
+    })
+    .from(jobRunsTable)
+    .where(and(...getJobFilterConditions(filters)))
+
+  return countJobsOutputSchema.parse({
+    total: row?.total ?? 0,
+    replayable: row?.replayable ?? 0,
+    cancellable: row?.cancellable ?? 0,
+  })
+}
+
+const newerJobRunsTable = alias(jobRunsTable, "newer_job_runs")
+
+// Newest first, so runs created while a bulk action walks the pages (like replays) are never revisited
+export const listJobRunKeys = async ({
+  filters,
+  statuses,
+  cursor,
+  limit,
+}: {
+  filters: z.input<typeof jobFiltersSchema>
+  statuses: readonly JobStatus[]
+  cursor: { createdAt: Date; jobId: string; id: string } | null
+  limit: number
+}) => {
+  const conditions = [
+    ...getJobFilterConditions(jobFiltersSchema.parse(filters)),
+    inArray(jobRunsTable.status, [...statuses]),
+  ]
+
+  if (cursor) {
+    conditions.push(getCreatedAtCursorComparison({ ...cursor, useLessThan: true }))
+  }
+
+  return db
+    .select({
+      id: jobRunsTable.id,
+      jobId: jobRunsTable.jobId,
+      queue: jobRunsTable.queue,
+      createdAt: jobRunsTable.createdAt,
+      // A retried job gets a new run: acting on an older one would hit a job that already moved on
+      isLatestRun: sql<boolean>`${not(
+        exists(
+          db
+            .select({ id: newerJobRunsTable.id })
+            .from(newerJobRunsTable)
+            .where(
+              and(
+                eq(newerJobRunsTable.queue, jobRunsTable.queue),
+                eq(newerJobRunsTable.jobId, jobRunsTable.jobId),
+                gt(newerJobRunsTable.enqueuedAt, jobRunsTable.enqueuedAt),
+              ),
+            ),
+        ),
+      )}`,
+    })
+    .from(jobRunsTable)
+    .where(and(...conditions))
+    .orderBy(desc(jobRunsTable.createdAt), desc(jobRunsTable.jobId), desc(jobRunsTable.id))
+    .limit(limit)
+}
 
 export const getJobById = async (input: z.input<typeof getJobByIdInputSchema>) => {
   const { id } = getJobByIdInputSchema.parse(input)

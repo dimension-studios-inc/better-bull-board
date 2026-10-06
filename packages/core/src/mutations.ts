@@ -1,12 +1,22 @@
-import { jobRunsTable, queuesTable } from "@better-bull-board/db"
+import { jobRunsTable, type jobStatusEnum, queuesTable } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
 import { and, eq, inArray } from "drizzle-orm"
 import type { z } from "zod"
-import { jobMutationInputSchema, mutationResultSchema, queueMutationInputSchema } from "./mutation-schemas"
+import { listJobRunKeys } from "./jobs"
+import {
+  BULK_JOB_ACTION_LIMIT,
+  bulkJobMutationByFiltersInputSchema,
+  type bulkMutationResultSchema,
+  jobMutationInputSchema,
+  mutationResultSchema,
+  queueMutationInputSchema,
+} from "./mutation-schemas"
 
 export type MutationResult = z.infer<typeof mutationResultSchema>
+type BulkMutationResult = z.infer<typeof bulkMutationResultSchema>
 
 type JobMutationInput = z.input<typeof jobMutationInputSchema>
+type BulkJobMutationByFiltersInput = z.input<typeof bulkJobMutationByFiltersInputSchema>
 type QueueMutationInput = z.input<typeof queueMutationInputSchema>
 
 type CancelJobDependencies<RedisConnection> = {
@@ -211,4 +221,68 @@ export const deleteQueue = async (
   })
 
   return mutationResult(`Queue ${resolvedQueueName} has been deleted successfully`)
+}
+
+const BULK_JOB_ACTION_BATCH_SIZE = 100
+const BULK_JOB_ACTION_CONCURRENCY = 10
+
+export const applyToJobsMatchingFilters = async ({
+  input,
+  statuses,
+  action,
+}: {
+  input: BulkJobMutationByFiltersInput
+  statuses: readonly (typeof jobStatusEnum.enumValues)[number][]
+  action: (job: { jobId: string; queueName: string }) => Promise<unknown>
+}): Promise<BulkMutationResult> => {
+  const { filters } = bulkJobMutationByFiltersInputSchema.parse(input)
+  // Several runs can belong to the same BullMQ job: it must only be acted on once
+  const handledJobs = new Set<string>()
+  const result: BulkMutationResult = { succeeded: 0, skipped: 0, failed: 0, limitReached: false }
+  let visited = 0
+  let cursor: { createdAt: Date; jobId: string; id: string } | null = null
+
+  while (!result.limitReached) {
+    // One extra row tells whether runs remain past the limit
+    const batchSize = Math.min(BULK_JOB_ACTION_BATCH_SIZE, BULK_JOB_ACTION_LIMIT - visited + 1)
+    const rows = await listJobRunKeys({ filters, statuses, cursor, limit: batchSize })
+
+    if (visited + rows.length > BULK_JOB_ACTION_LIMIT) {
+      result.limitReached = true
+      rows.length = BULK_JOB_ACTION_LIMIT - visited
+    }
+    visited += rows.length
+
+    const jobs: { jobId: string; queueName: string }[] = []
+    for (const row of rows) {
+      const jobKey = JSON.stringify([row.queue, row.jobId])
+
+      if (!row.isLatestRun || handledJobs.has(jobKey)) {
+        result.skipped++
+        continue
+      }
+
+      handledJobs.add(jobKey)
+      jobs.push({ jobId: row.jobId, queueName: row.queue })
+    }
+
+    for (let index = 0; index < jobs.length; index += BULK_JOB_ACTION_CONCURRENCY) {
+      const outcomes = await Promise.allSettled(jobs.slice(index, index + BULK_JOB_ACTION_CONCURRENCY).map(action))
+
+      for (const outcome of outcomes) {
+        if (outcome.status === "fulfilled") {
+          result.succeeded++
+        } else {
+          result.failed++
+        }
+      }
+    }
+
+    const lastRow = rows.at(-1)
+    if (!lastRow || rows.length < batchSize) break
+
+    cursor = lastRow
+  }
+
+  return result
 }
