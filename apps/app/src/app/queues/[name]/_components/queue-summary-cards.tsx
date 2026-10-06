@@ -86,7 +86,7 @@ export function QueueSummaryCards({ queueName, minutes, periodLabel, stats, isLo
       value: stats?.successes.toLocaleString(),
       icon: CheckCircle,
       description: `Completed (${period})`,
-      color: "text-green-600 dark:text-green-400",
+      color: "text-success",
       href: getRunsHref({ queue: queueName, status: "completed", minutes }),
     },
     {
@@ -102,7 +102,7 @@ export function QueueSummaryCards({ queueName, minutes, periodLabel, stats, isLo
       value: stats ? `${stats.errorRate.toFixed(1)}%` : undefined,
       icon: Gauge,
       description: "Failed out of all runs",
-      color: "text-yellow-600 dark:text-yellow-400",
+      color: "text-warning",
     },
   ]
 

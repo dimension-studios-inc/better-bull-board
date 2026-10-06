@@ -47,7 +47,7 @@ export function EnhancedStatsCards({ minutes, periodLabel, stats, isLoading }: E
       value: stats?.successes,
       icon: CheckCircle,
       description: `Completed (${periodLabel.toLowerCase()})`,
-      color: "text-green-600 dark:text-green-400",
+      color: "text-success",
       href: getRunsHref({ status: "completed", minutes }),
     },
     {
