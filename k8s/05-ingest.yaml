@@ -27,11 +27,19 @@ spec:
                 name: bbb-ingest-config
             - secretRef:
                 name: bbb-ingest-secret
+          # Database migrations run at startup, before the health server listens: give them up to
+          # 30 minutes (a large index build) before the liveness probe can restart the pod
+          startupProbe:
+            httpGet:
+              path: /live
+              port: 3001
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 180
           livenessProbe:
             httpGet:
               path: /live
               port: 3001
-            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
@@ -39,7 +47,6 @@ spec:
             httpGet:
               path: /ready
               port: 3001
-            initialDelaySeconds: 15
             periodSeconds: 5
             timeoutSeconds: 10
             failureThreshold: 3
