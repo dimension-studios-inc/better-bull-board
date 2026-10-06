@@ -2,7 +2,7 @@ import { jobRunsTable, queuesTable } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { type Job, type JobType, Queue } from "bullmq"
-import { and, asc, eq, inArray } from "drizzle-orm"
+import { and, asc, eq, gt, inArray, isNull, or } from "drizzle-orm"
 import { mapWithConcurrency } from "~/lib/concurrency"
 import { acquireLock, releaseLock } from "~/lib/distributed-lock"
 import { env } from "~/lib/env"
@@ -14,12 +14,14 @@ import { safeUpsertJobRuns } from "~/sync/job-upsert"
 const JOB_TYPES: JobType[] = ["waiting", "active", "delayed", "prioritized", "waiting-children"]
 const NON_TERMINAL_STATUSES = ["waiting", "active", "delayed", "prioritized", "waiting-children", "unknown"] as const
 const JOB_RECONCILE_CONCURRENCY = 5
-/** A reschedule can briefly remove the Redis job; don't drop the row during that window. */
+/** A job that just ran can leave Redis before its events are ingested; don't retire its row in that window. */
 const ORPHAN_GRACE_MS = 15 * 60 * 1000
 
 let reconcileInterval: NodeJS.Timeout | null = null
 let reconcileRunning = false
 let queueCursor = 0
+/** Keyset position per queue, so live rows filling one page can't hide the stale rows behind them. */
+const missingRowCursors = new Map<string, { createdAt: Date; jobId: string; id: string }>()
 
 const isBullMqJob = (job: Job | undefined): job is Job => Boolean(job?.id && typeof job.getState === "function")
 
@@ -82,19 +84,44 @@ const reconcileRetainedBullMqJobs = async (queue: Queue, queueName: string) => {
 }
 
 const reconcileMissingNonTerminalRows = async (queue: Queue, queueName: string) => {
+  const cursor = missingRowCursors.get(queueName)
   const staleRows = await db
     .select({
       id: jobRunsTable.id,
       jobId: jobRunsTable.jobId,
       attempt: jobRunsTable.attempt,
+      delayMs: jobRunsTable.delayMs,
       enqueuedAt: jobRunsTable.enqueuedAt,
       startedAt: jobRunsTable.startedAt,
       createdAt: jobRunsTable.createdAt,
     })
     .from(jobRunsTable)
-    .where(and(eq(jobRunsTable.queue, queueName), inArray(jobRunsTable.status, NON_TERMINAL_STATUSES)))
-    .orderBy(asc(jobRunsTable.createdAt))
+    .where(
+      and(
+        eq(jobRunsTable.queue, queueName),
+        inArray(jobRunsTable.status, NON_TERMINAL_STATUSES),
+        cursor
+          ? or(
+              gt(jobRunsTable.createdAt, cursor.createdAt),
+              and(eq(jobRunsTable.createdAt, cursor.createdAt), gt(jobRunsTable.jobId, cursor.jobId)),
+              and(
+                eq(jobRunsTable.createdAt, cursor.createdAt),
+                eq(jobRunsTable.jobId, cursor.jobId),
+                gt(jobRunsTable.id, cursor.id),
+              ),
+            )
+          : undefined,
+      ),
+    )
+    .orderBy(asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id))
     .limit(env.JOB_RECONCILE_PAGE_SIZE)
+
+  const lastRow = staleRows.at(-1)
+  if (lastRow && staleRows.length === env.JOB_RECONCILE_PAGE_SIZE) {
+    missingRowCursors.set(queueName, { createdAt: lastRow.createdAt, jobId: lastRow.jobId, id: lastRow.id })
+  } else {
+    missingRowCursors.delete(queueName)
+  }
 
   const orphanIdsToDelete: string[] = []
   const orphanIdsToFail: string[] = []
@@ -116,38 +143,53 @@ const reconcileMissingNonTerminalRows = async (queue: Queue, queueName: string) 
       continue
     }
 
-    const observedAt = row.enqueuedAt ?? row.createdAt
-    if (Date.now() - observedAt.getTime() < ORPHAN_GRACE_MS) continue
+    // Measured from when the job was due to run, not when it was created: a delayed job is created hours early.
+    const dueAt = (row.enqueuedAt ?? row.createdAt).getTime() + row.delayMs
+    const lastExpectedActivity = Math.max(dueAt, row.startedAt?.getTime() ?? 0)
+    if (Date.now() - lastExpectedActivity < ORPHAN_GRACE_MS) continue
 
     if (!row.startedAt && row.attempt === 0) orphanIdsToDelete.push(row.id)
     else orphanIdsToFail.push(row.id)
   }
 
-  if (orphanIdsToDelete.length > 0) {
-    await db.delete(jobRunsTable).where(inArray(jobRunsTable.id, orphanIdsToDelete))
-  }
+  // Guarded like the failed update: an event may have started or finished the run since the read.
+  const deleted =
+    orphanIdsToDelete.length > 0
+      ? await db
+          .delete(jobRunsTable)
+          .where(
+            and(
+              inArray(jobRunsTable.id, orphanIdsToDelete),
+              inArray(jobRunsTable.status, NON_TERMINAL_STATUSES),
+              isNull(jobRunsTable.startedAt),
+            ),
+          )
+          .returning({ id: jobRunsTable.id })
+      : []
 
-  if (orphanIdsToFail.length > 0) {
-    await db
-      .update(jobRunsTable)
-      .set({
-        status: "failed",
-        finishedAt: new Date(),
-        errorMessage: "Job left Redis before a terminal status was recorded",
-      })
-      .where(and(inArray(jobRunsTable.id, orphanIdsToFail), inArray(jobRunsTable.status, NON_TERMINAL_STATUSES)))
-  }
+  const failed =
+    orphanIdsToFail.length > 0
+      ? await db
+          .update(jobRunsTable)
+          .set({
+            status: "failed",
+            finishedAt: new Date(),
+            errorMessage: "Job left Redis before a terminal status was recorded",
+          })
+          .where(and(inArray(jobRunsTable.id, orphanIdsToFail), inArray(jobRunsTable.status, NON_TERMINAL_STATUSES)))
+          .returning({ id: jobRunsTable.id })
+      : []
 
-  const retiredIds = [...orphanIdsToDelete, ...orphanIdsToFail]
-  if (retiredIds.length === 0) return
+  const retired = [...deleted, ...failed]
+  if (retired.length === 0) return
 
   logger.info("Retired job run snapshots that are no longer in Redis", {
-    deleted: orphanIdsToDelete.length,
-    failed: orphanIdsToFail.length,
+    deleted: deleted.length,
+    failed: failed.length,
     queueName,
   })
   await redis.publish("bbb:ingest:events:job-refresh", "1")
-  for (const id of retiredIds) {
+  for (const { id } of retired) {
     await redis.publish("bbb:ingest:events:single-job-refresh", id)
   }
 }
