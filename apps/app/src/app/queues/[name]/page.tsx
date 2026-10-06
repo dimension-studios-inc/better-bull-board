@@ -5,9 +5,10 @@ import { Button } from "@better-bull-board/ui/components/button"
 import { useQuery } from "@tanstack/react-query"
 import { AlertCircle, List } from "lucide-react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { getQueueDetailsApiRoute } from "~/app/api/queues/details/schemas"
 import { getQueueSummaryApiRoute } from "~/app/api/queues/summary/schemas"
+import { QueueActions } from "~/app/queues/_components/queue-actions"
 import { PageContainer } from "~/components/page-container"
 import {
   DEFAULT_TIME_PERIOD,
@@ -23,6 +24,7 @@ import { QueueSummaryCards } from "./_components/queue-summary-cards"
 
 export default function QueuePage() {
   const params = useParams<{ name: string }>()
+  const router = useRouter()
   // Next.js hands dynamic segments over URL encoded
   const queueName = decodeURIComponent(params.name)
 
@@ -68,7 +70,7 @@ export default function QueuePage() {
     <PageContainer>
       <QueueHeader queueName={queueName} details={details} isLoading={isLoadingDetails} />
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2">
         <TimePeriodSelector value={minutes} onChange={setMinutes} />
         <Button
           variant="outline"
@@ -79,6 +81,15 @@ export default function QueuePage() {
           <List className="size-4" />
           View runs
         </Button>
+        {details && (
+          <div className="ml-auto">
+            <QueueActions
+              queueName={details.name}
+              isPaused={details.isPaused}
+              onDeleted={() => router.push("/queues")}
+            />
+          </div>
+        )}
       </div>
 
       <QueueSummaryCards

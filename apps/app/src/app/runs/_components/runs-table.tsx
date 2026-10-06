@@ -27,7 +27,7 @@ import { getRunDuration, StuckRunWarning } from "./run-display"
 import { RunErrorPreview } from "./run-error-preview"
 import { RunListItem } from "./run-list-item"
 import { RunTags } from "./run-tags"
-import { RunsFilters } from "./runs-filters"
+import { LiveUpdatesToggle, RunsFilters, RunsPagination } from "./runs-filters"
 import type { TRunFilters, TRunFilterUpdate } from "./types"
 
 const parseAsCursor = createParser<NonNullable<TRunFilters["cursor"]>>({
@@ -358,14 +358,17 @@ export function RunsTable() {
                 ? `${selectedJobIds.size} selected`
                 : "Select all"}
           </label>
-          <button
-            type="button"
-            className="flex items-center gap-1 text-sm font-medium text-muted-foreground"
-            onClick={handleDurationSort}
-          >
-            Duration
-            {getDurationSortIcon()}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className="flex items-center gap-1 px-2 text-sm font-medium text-muted-foreground"
+              onClick={handleDurationSort}
+            >
+              Duration
+              {getDurationSortIcon()}
+            </button>
+            <LiveUpdatesToggle paused={liveUpdatesPaused} onPausedChange={setLiveUpdatesPaused} />
+          </div>
         </div>
         <div className="divide-y overflow-hidden rounded-lg border bg-card">
           {jobs.map((run) => {
@@ -388,6 +391,13 @@ export function RunsTable() {
             )
           })}
         </div>
+        <RunsPagination
+          runs={runs}
+          filters={filters}
+          setFilters={handleFiltersChange}
+          isPageLoading={isPageLoading}
+          className="pt-1"
+        />
       </div>
 
       {/* Desktop: table */}
