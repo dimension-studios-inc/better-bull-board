@@ -23,6 +23,7 @@
     "bullmq": "6.3.8",
     "cn": "0.4.0",
     "cookies-next": "6.1.1",
+    "cronstrue": "3.29.0",
     "date-fns": "4.4.0",
     "ioredis": "6.0.0",
     "jose": "6.2.12",

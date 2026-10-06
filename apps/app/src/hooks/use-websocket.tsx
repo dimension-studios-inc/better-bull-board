@@ -58,6 +58,7 @@ const useWebSocket = (options: UseWebSocketOptions) => {
         case "job-refresh":
           queryClient.invalidateQueries({ queryKey: ["jobs/table"] })
           queryClient.invalidateQueries({ queryKey: ["jobs/stats"] })
+          queryClient.invalidateQueries({ queryKey: ["schedulers/table"] })
           break
         case "single-job-refresh":
           queryClient.invalidateQueries({
@@ -71,6 +72,7 @@ const useWebSocket = (options: UseWebSocketOptions) => {
         case "job-scheduler-refresh":
           queryClient.invalidateQueries({ queryKey: ["queues/table"] })
           queryClient.invalidateQueries({ queryKey: ["queues/stats"] })
+          queryClient.invalidateQueries({ queryKey: ["schedulers/table"] })
           break
         case "job-log-refresh":
           queryClient.invalidateQueries({
