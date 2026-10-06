@@ -9,6 +9,7 @@
   "license": "ISC",
   "dependencies": {
     "@better-bull-board/db": "workspace:*",
+    "cron-parser": "5.10.1",
     "drizzle-orm": "0.45.3",
     "zod": "4.6.5"
   },
@@ -29,6 +30,10 @@
       "types": "./dist/queue-schemas.d.mts",
       "import": "./dist/queue-schemas.mjs"
     },
+    "./scheduler-schemas": {
+      "types": "./dist/scheduler-schemas.d.mts",
+      "import": "./dist/scheduler-schemas.mjs"
+    },
     "./top-errors-schemas": {
       "types": "./dist/top-errors-schemas.d.mts",
       "import": "./dist/top-errors-schemas.mjs"
@@ -48,6 +53,10 @@
     "./queues": {
       "types": "./dist/queues.d.mts",
       "import": "./dist/queues.mjs"
+    },
+    "./schedulers": {
+      "types": "./dist/schedulers.d.mts",
+      "import": "./dist/schedulers.mjs"
     },
     "./stuck-run-schemas": {
       "types": "./dist/stuck-run-schemas.d.mts",

@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@better-bull-board/ui/components/sidebar"
-import { CirclePlus, LayoutDashboard, List, Server } from "lucide-react"
+import { CalendarClock, CirclePlus, LayoutDashboard, List, Server } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -22,6 +22,7 @@ import { NavUser } from "~/components/nav-user"
 const navigation = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Queues", href: "/queues", icon: Server },
+  { title: "Schedulers", href: "/schedulers", icon: CalendarClock },
   { title: "Runs", href: "/runs", icon: List },
 ]
 
