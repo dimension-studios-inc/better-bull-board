@@ -7,16 +7,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { cn } from "cn"
 import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns"
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { useMemo, useRef, useState } from "react"
+import { getStuckRunsApiRoute } from "~/app/api/jobs/stuck/schemas"
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
 import { TruncatedTooltip } from "~/components/truncated-tooltip"
 import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
+import { describeStuckRun, STUCK_RUNS_REFETCH_INTERVAL_MS, type StuckRun } from "~/lib/utils/stuck-runs"
 import { BulkActions } from "./bulk-actions"
 import { RunActions } from "./run-actions"
 import { RunErrorPreview } from "./run-error-preview"
@@ -51,6 +53,22 @@ function RunTimestamp({ value }: RunTimestampProps) {
       <span className="block truncate">{timestamp.relative}</span>
       <span className="block truncate text-xs text-muted-foreground">{timestamp.absolute}</span>
     </time>
+  )
+}
+
+type StuckRunWarningProps = {
+  stuckRun: StuckRun | undefined
+}
+
+function StuckRunWarning({ stuckRun }: StuckRunWarningProps) {
+  if (!stuckRun) return null
+
+  const description = describeStuckRun(stuckRun)
+
+  return (
+    <span role="img" aria-label={`Looks stuck. ${description}`} title={`Looks stuck. ${description}`}>
+      <AlertTriangle className="size-4 text-amber-500" />
+    </span>
   )
 }
 
@@ -182,6 +200,18 @@ export function RunsTable() {
   }
 
   const jobs = runs?.jobs || []
+
+  const activeRunIds = jobs.filter((job) => job.status === "active").map((job) => job.id)
+  const { data: stuckRuns } = useQuery({
+    queryKey: ["jobs/stuck", { ids: activeRunIds }],
+    queryFn: apiFetch({
+      apiRoute: getStuckRunsApiRoute,
+      body: { ids: activeRunIds, limit: 100 },
+    }),
+    enabled: activeRunIds.length > 0,
+    refetchInterval: STUCK_RUNS_REFETCH_INTERVAL_MS,
+  })
+  const stuckRunsById = useMemo(() => new Map(stuckRuns?.runs.map((run) => [run.id, run])), [stuckRuns])
 
   const selectedJobs = useMemo(() => {
     return jobs.filter((job) => selectedJobIds.has(job.jobId))
@@ -327,7 +357,10 @@ export function RunsTable() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <span className="truncate text-sm font-medium">{run.queue}</span>
-                    <Badge className={cn("shrink-0", getStatusColor(run.status))}>{run.status}</Badge>
+                    <span className="flex shrink-0 items-center gap-1">
+                      {run.status === "active" && <StuckRunWarning stuckRun={stuckRunsById.get(run.id)} />}
+                      <Badge className={getStatusColor(run.status)}>{run.status}</Badge>
+                    </span>
                   </div>
                   <div className="truncate font-mono text-xs text-muted-foreground">#{run.jobId}</div>
                 </div>
@@ -439,7 +472,10 @@ export function RunsTable() {
                       ))}
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(run.status)}>{run.status}</Badge>
+                      <span className="flex items-center gap-1">
+                        <Badge className={getStatusColor(run.status)}>{run.status}</Badge>
+                        {run.status === "active" && <StuckRunWarning stuckRun={stuckRunsById.get(run.id)} />}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")

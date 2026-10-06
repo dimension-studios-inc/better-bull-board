@@ -17,6 +17,7 @@ import { QueueCountChart } from "./queue-count-chart"
 import { QueueDurationChart } from "./queue-duration-chart"
 import { QueuePerformanceTable } from "./queue-performance-table"
 import { RunGraphChart } from "./run-graph-chart"
+import { StuckRunsAlert } from "./stuck-runs-alert"
 import { TopErrorsCard } from "./top-errors-card"
 
 export function EnhancedDashboard() {
@@ -52,6 +53,8 @@ export function EnhancedDashboard() {
       <div className="flex items-center">
         <TimePeriodSelector value={minutes} onChange={setMinutes} />
       </div>
+
+      <StuckRunsAlert />
 
       {/* Enhanced Stats Cards */}
       <EnhancedStatsCards

@@ -49,6 +49,14 @@
       "types": "./dist/queues.d.mts",
       "import": "./dist/queues.mjs"
     },
+    "./stuck-run-schemas": {
+      "types": "./dist/stuck-run-schemas.d.mts",
+      "import": "./dist/stuck-run-schemas.mjs"
+    },
+    "./stuck-runs": {
+      "types": "./dist/stuck-runs.d.mts",
+      "import": "./dist/stuck-runs.mjs"
+    },
     "./top-errors": {
       "types": "./dist/top-errors.d.mts",
       "import": "./dist/top-errors.mjs"

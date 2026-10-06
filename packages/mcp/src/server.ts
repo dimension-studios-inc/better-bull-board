@@ -15,6 +15,8 @@ import {
 import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview"
 import { listQueuesBaseInputSchema, type listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas"
 import { listQueues } from "@better-bull-board/core/queues"
+import { listStuckRunsInputSchema, listStuckRunsOutputSchema } from "@better-bull-board/core/stuck-run-schemas"
+import { listStuckRuns } from "@better-bull-board/core/stuck-runs"
 import { listTopErrors } from "@better-bull-board/core/top-errors"
 import { listTopErrorsInputSchema, listTopErrorsOutputSchema } from "@better-bull-board/core/top-errors-schemas"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
@@ -227,6 +229,28 @@ const formatLogs = (result: z.infer<typeof listJobLogsOutputSchema>) =>
     ...result.logs.map((log) => `- ${new Date(log.ts).toISOString()} [${log.level}] #${log.logSeq}: ${log.message}`),
   ].join("\n")
 
+const formatStuckRuns = (result: z.infer<typeof listStuckRunsOutputSchema>) =>
+  [
+    "# Better Bull Board Stuck Runs",
+    "",
+    result.total === 0 ? "No active run looks stuck." : `Stuck runs: ${result.total} (showing ${result.runs.length})`,
+    "",
+    ...result.runs.map((run) =>
+      [
+        `- ${run.id}`,
+        `  jobId: ${run.jobId}`,
+        `  queue: ${run.queue}`,
+        `  name: ${run.name ?? "(none)"}`,
+        `  workerId: ${run.workerId ?? "(unknown)"}`,
+        `  startedAt: ${new Date(run.startedAt).toISOString()}`,
+        `  runningForMs: ${run.runningForMs}`,
+        `  thresholdMs: ${run.thresholdMs}`,
+        `  queueP95Ms: ${run.p95Ms ?? "(no completed runs)"}`,
+        `  sampleSize: ${run.sampleSize}`,
+      ].join("\n"),
+    ),
+  ].join("\n")
+
 const formatTopErrors = (result: z.infer<typeof listTopErrorsOutputSchema>) =>
   [
     "# Better Bull Board Top Errors",
@@ -386,6 +410,31 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
 
       return {
         content: [{ type: "text", text: formatLogs(result) }],
+        structuredContent: result,
+      }
+    },
+  )
+
+  server.registerTool(
+    "bbb_list_stuck_runs",
+    {
+      title: "List Better Bull Board Stuck Runs",
+      description:
+        "List active job runs that look stuck, a common sign of a dead or hung worker. A run is stuck when it has been active for longer than 3x the p95 duration of its queue's completed runs over the last 7 days, with a 5 minute floor (30 minutes when the queue has fewer than 20 completed runs). Returns the longest running first, with the threshold and p95 used. Pass ids to check specific runs.",
+      inputSchema: listStuckRunsInputSchema,
+      outputSchema: listStuckRunsOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      const result = await listStuckRuns(input)
+
+      return {
+        content: [{ type: "text", text: formatStuckRuns(result) }],
         structuredContent: result,
       }
     },

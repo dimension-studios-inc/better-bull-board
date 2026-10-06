@@ -27,6 +27,7 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
     }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["jobs/table"] })
+      await queryClient.invalidateQueries({ queryKey: ["jobs/stuck"] })
       setCancelPopoverOpen(false)
     },
   })
