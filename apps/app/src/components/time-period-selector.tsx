@@ -4,6 +4,7 @@ import { Button } from "@better-bull-board/ui/components/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
 import { Separator } from "@better-bull-board/ui/components/separator"
 import { CalendarDays } from "lucide-react"
+import { parseAsNumberLiteral } from "nuqs"
 import { Fragment, useState, useSyncExternalStore } from "react"
 
 const MINUTE = 1
@@ -40,6 +41,9 @@ const timePeriodOptions = timePeriodGroups.flat()
 export const DEFAULT_TIME_PERIOD: TimePeriod = 6 * HOUR
 
 const isTimePeriod = (value: unknown): value is TimePeriod => timePeriodOptions.some((option) => option.value === value)
+
+/** Period in a shared link, in minutes: anything other than the selector options is ignored */
+export const parseAsTimePeriod = parseAsNumberLiteral(timePeriodOptions.map((option) => option.value))
 
 export const getTimePeriodLabel = (value: TimePeriod) =>
   timePeriodOptions.find((option) => option.value === value)?.label ?? "Last 6 hours"
