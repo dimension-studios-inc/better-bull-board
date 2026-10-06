@@ -35,7 +35,7 @@ export const dashboardTopQueuesCountOutput = z.object({
 
 export const dashboardTopQueuesDurationOutput = z.object({
   queue: z.string(),
-  totalDuration: z.number(),
+  avgDuration: z.number(),
 })
 
 export const dashboardRunGraphOutput = z.object({
