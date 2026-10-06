@@ -4,7 +4,6 @@ import { Badge } from "@better-bull-board/ui/components/badge"
 import { Checkbox } from "@better-bull-board/ui/components/checkbox"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@better-bull-board/ui/components/tooltip"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { cn } from "cn"
 import { formatDistanceStrict, formatDistanceToNowStrict } from "date-fns"
@@ -20,6 +19,7 @@ import { apiFetch } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
 import { BulkActions } from "./bulk-actions"
 import { RunActions } from "./run-actions"
+import { RunErrorPreview } from "./run-error-preview"
 import { RunsFilters } from "./runs-filters"
 import type { TRunFilters, TRunFilterUpdate } from "./types"
 
@@ -57,9 +57,6 @@ function RunTimestamp({ value }: RunTimestampProps) {
 // The shadcn Checkbox shows a check for the indeterminate state too: show a dash on a filled box instead
 const INDETERMINATE_CHECKBOX_CLASS_NAME =
   "data-indeterminate:border-primary data-indeterminate:bg-primary data-indeterminate:text-primary-foreground data-indeterminate:[&_svg]:hidden data-indeterminate:before:h-0.5 data-indeterminate:before:w-2 data-indeterminate:before:rounded-full data-indeterminate:before:bg-current"
-
-// TooltipContent always renders an arrow, which does not fit these custom tooltip bodies
-const TOOLTIP_WITHOUT_ARROW_CLASS_NAME = "[&>[data-side]]:hidden"
 
 const isInteractiveRowTarget = (target: EventTarget | null) =>
   target instanceof Element && !!target.closest("a,button,input,select,textarea,[role='checkbox']")
@@ -393,7 +390,7 @@ export function RunsTable() {
               </TableHead>
               <TableHead style={{ width: "170px" }}>Created</TableHead>
               <TableHead style={{ width: "170px" }}>Finished</TableHead>
-              <TableHead style={{ width: "140px" }}>Error</TableHead>
+              <TableHead style={{ width: "240px" }}>Error</TableHead>
               <TableHead style={{ width: "90px" }}>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -455,38 +452,15 @@ export function RunsTable() {
                     <TableCell className="truncate">
                       {run.finishedAt ? <RunTimestamp value={run.finishedAt} /> : "-"}
                     </TableCell>
-                    <TableCell className="max-w-48">
+                    <TableCell>
                       {run.status === "failed" && run.errorMessage ? (
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <button
-                                type="button"
-                                className="block w-full truncate text-left font-mono text-xs text-red-600 underline decoration-red-400/40 decoration-dotted underline-offset-4 transition-colors hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 dark:text-red-400 dark:hover:text-red-300"
-                              />
-                            }
-                          >
-                            {run.errorMessage}
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="left"
-                            align="start"
-                            sideOffset={8}
-                            className={cn(
-                              "max-w-xl overflow-hidden rounded-lg border border-red-500/20 bg-background p-0 text-foreground shadow-xl",
-                              TOOLTIP_WITHOUT_ARROW_CLASS_NAME,
-                            )}
-                          >
-                            <div className="border-b border-red-500/10 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
-                              Error details
-                            </div>
-                            <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-72">
-                              <pre className="whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed text-red-700 dark:text-red-300">
-                                {run.errorMessage}
-                              </pre>
-                            </ScrollArea>
-                          </TooltipContent>
-                        </Tooltip>
+                        <RunErrorPreview
+                          errorMessage={run.errorMessage}
+                          runPath={runPath}
+                          attempt={run.attempt}
+                          maxAttempts={run.maxAttempts}
+                          finishedAt={run.finishedAt}
+                        />
                       ) : (
                         <span className="text-xs text-muted-foreground">-</span>
                       )}
