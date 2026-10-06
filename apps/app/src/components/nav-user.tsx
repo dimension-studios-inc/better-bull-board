@@ -19,7 +19,7 @@ function UserIdentity({ email }: { email: string }) {
 
   return (
     <>
-      <Avatar className="h-8 w-8 rounded-lg">
+      <Avatar className="size-8 rounded-lg after:rounded-lg">
         <AvatarFallback className="rounded-lg uppercase">{name.slice(0, 2)}</AvatarFallback>
       </Avatar>
       <div className="grid flex-1 text-left text-sm leading-tight">
