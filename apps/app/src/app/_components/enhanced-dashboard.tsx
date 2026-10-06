@@ -39,10 +39,20 @@ export function EnhancedDashboard() {
       </div>
 
       {/* Enhanced Stats Cards */}
-      <EnhancedStatsCards periodLabel={periodLabel} stats={dashboardSummary?.enhancedStats} isLoading={isLoading} />
+      <EnhancedStatsCards
+        // The links hold the time they are rendered at: none while hydrating, or they would not match the server
+        minutes={storedMinutes}
+        periodLabel={periodLabel}
+        stats={dashboardSummary?.enhancedStats}
+        isLoading={isLoading}
+      />
 
       {/* Queue Performance Table */}
-      <QueuePerformanceTable queuePerformance={dashboardSummary?.queuePerformance} isLoading={isLoading} />
+      <QueuePerformanceTable
+        minutes={minutes}
+        queuePerformance={dashboardSummary?.queuePerformance}
+        isLoading={isLoading}
+      />
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 gap-4 md:gap-6 @4xl/main:grid-cols-2">
