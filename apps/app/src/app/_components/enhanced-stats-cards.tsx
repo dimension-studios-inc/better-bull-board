@@ -14,14 +14,17 @@ import { Activity, AlertCircle, CheckCircle, ChevronRight, Clock } from "lucide-
 import Link from "next/link"
 import type { z } from "zod"
 import type { dashboardEnhancedStatsOutput } from "~/app/api/dashboard/summary/schemas"
+import { getRunsHref } from "~/lib/utils/runs-link"
 
 interface EnhancedStatsCardsProps {
+  /** Dashboard period for the runs links, `null` for links not limited to it */
+  minutes: number | null
   periodLabel: string
   stats: z.output<typeof dashboardEnhancedStatsOutput> | undefined
   isLoading: boolean
 }
 
-export function EnhancedStatsCards({ periodLabel, stats, isLoading }: EnhancedStatsCardsProps) {
+export function EnhancedStatsCards({ minutes, periodLabel, stats, isLoading }: EnhancedStatsCardsProps) {
   const cards = [
     {
       title: "Running Tasks",
@@ -29,7 +32,7 @@ export function EnhancedStatsCards({ periodLabel, stats, isLoading }: EnhancedSt
       icon: Activity,
       description: "Currently executing",
       color: "text-blue-600",
-      href: "/runs?status=active",
+      href: getRunsHref({ status: "active" }),
     },
     {
       title: "Waiting in Queue",
@@ -37,7 +40,7 @@ export function EnhancedStatsCards({ periodLabel, stats, isLoading }: EnhancedSt
       icon: Clock,
       description: "Queued for execution",
       color: "text-yellow-600",
-      href: "/runs?status=waiting",
+      href: getRunsHref({ status: "waiting" }),
     },
     {
       title: "Successes",
@@ -45,7 +48,7 @@ export function EnhancedStatsCards({ periodLabel, stats, isLoading }: EnhancedSt
       icon: CheckCircle,
       description: `Completed (${periodLabel.toLowerCase()})`,
       color: "text-green-600",
-      href: "/runs?status=completed",
+      href: getRunsHref({ status: "completed", minutes }),
     },
     {
       title: "Failures",
@@ -53,7 +56,7 @@ export function EnhancedStatsCards({ periodLabel, stats, isLoading }: EnhancedSt
       icon: AlertCircle,
       description: `Failed (${periodLabel.toLowerCase()})`,
       color: "text-red-600",
-      href: "/runs?status=failed",
+      href: getRunsHref({ status: "failed", minutes }),
     },
   ]
 

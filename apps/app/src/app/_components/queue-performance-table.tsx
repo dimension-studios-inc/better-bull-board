@@ -4,16 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
+import { cn } from "cn"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
 import type { z } from "zod"
 import type { dashboardQueuePerformanceOutput } from "~/app/api/dashboard/summary/schemas"
 import { TruncatedTooltip } from "~/components/truncated-tooltip"
+import { getRunsHref } from "~/lib/utils/runs-link"
 
 type QueuePerformance = z.output<typeof dashboardQueuePerformanceOutput>
 
 interface QueuePerformanceTableProps {
+  /** Dashboard period, so the runs links list the runs these counts are made of */
+  minutes: number
   queuePerformance: QueuePerformance[] | undefined
   isLoading: boolean
 }
@@ -35,7 +40,35 @@ const sortableColumns: { key: SortKey; label: string; align?: "right" }[] = [
   { key: "maxDuration", label: "Max Duration", align: "right" },
 ]
 
-export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerformanceTableProps) {
+const isLinkTarget = (target: EventTarget | null) => target instanceof Element && !!target.closest("a,button")
+
+type RunCountLinkProps = {
+  count: number
+  href: string
+  label: string
+  className?: string
+}
+
+/** Count cell opening the runs it counts; a zero has nothing to show */
+function RunCountLink({ count, href, label, className }: RunCountLinkProps) {
+  if (count === 0) return <span className="text-muted-foreground">0</span>
+
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      title={label}
+      className={cn(
+        "-mx-1.5 -my-0.5 rounded-md px-1.5 py-0.5 underline-offset-4 outline-none transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-ring/50",
+        className,
+      )}
+    >
+      {count.toLocaleString()}
+    </Link>
+  )
+}
+
+export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: QueuePerformanceTableProps) {
   const router = useRouter()
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: "totalRuns",
@@ -69,8 +102,16 @@ export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerf
     }))
   }
 
-  const handleQueueClick = (queue: string) => {
-    router.push(`/runs?queue=${encodeURIComponent(queue)}`)
+  // The whole row opens the queue runs; the cells with a link open a narrower list
+  const handleRowClick = (event: React.MouseEvent<HTMLTableRowElement>, queueHref: string) => {
+    if (isLinkTarget(event.target) || window.getSelection()?.toString()) return
+
+    if (event.metaKey || event.ctrlKey) {
+      window.open(queueHref, "_blank", "noopener,noreferrer")
+      return
+    }
+
+    router.push(queueHref)
   }
 
   const getSortIcon = (key: SortKey) => {
@@ -116,47 +157,59 @@ export function QueuePerformanceTable({ queuePerformance, isLoading }: QueuePerf
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedQueuePerformance.map((queue) => (
-                  <TableRow
-                    key={queue.queue}
-                    className="cursor-pointer transition-colors hover:bg-muted/50 focus-visible:bg-muted/50"
-                    tabIndex={0}
-                    onClick={() => handleQueueClick(queue.queue)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault()
-                        handleQueueClick(queue.queue)
-                      }
-                    }}
-                  >
-                    <TableCell className="max-w-48 font-medium">
-                      <TruncatedTooltip value={queue.queue} />
-                    </TableCell>
-                    <TableCell className="text-right font-mono">{queue.totalRuns.toLocaleString()}</TableCell>
-                    <TableCell className="text-right font-mono text-green-600">
-                      {queue.successes.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-red-600">
-                      {queue.failures.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      <span
-                        className={
-                          queue.errorRate > 10
-                            ? "text-red-600"
-                            : queue.errorRate > 5
-                              ? "text-yellow-600"
-                              : "text-green-600"
-                        }
-                      >
-                        {queue.errorRate.toFixed(1)}%
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-mono">{formatDuration(queue.avgDuration)}</TableCell>
-                    <TableCell className="text-right font-mono">{formatDuration(queue.minDuration)}</TableCell>
-                    <TableCell className="text-right font-mono">{formatDuration(queue.maxDuration)}</TableCell>
-                  </TableRow>
-                ))}
+                {sortedQueuePerformance.map((queue) => {
+                  const queueHref = getRunsHref({ queue: queue.queue, minutes })
+
+                  return (
+                    <TableRow
+                      key={queue.queue}
+                      className="group cursor-pointer"
+                      onClick={(event) => handleRowClick(event, queueHref)}
+                    >
+                      <TableCell className="max-w-48 font-medium">
+                        <Link
+                          href={queueHref}
+                          className="block rounded-sm underline-offset-4 outline-none group-hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+                        >
+                          <TruncatedTooltip value={queue.queue} />
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">{queue.totalRuns.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        <RunCountLink
+                          count={queue.successes}
+                          href={getRunsHref({ queue: queue.queue, status: "completed", minutes })}
+                          label={`View completed runs of ${queue.queue}`}
+                          className="text-green-600 hover:bg-green-500/10 dark:text-green-400"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        <RunCountLink
+                          count={queue.failures}
+                          href={getRunsHref({ queue: queue.queue, status: "failed", minutes })}
+                          label={`View failed runs of ${queue.queue}`}
+                          className="text-red-600 hover:bg-red-500/10 dark:text-red-400"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        <span
+                          className={
+                            queue.errorRate > 10
+                              ? "text-red-600"
+                              : queue.errorRate > 5
+                                ? "text-yellow-600"
+                                : "text-green-600"
+                          }
+                        >
+                          {queue.errorRate.toFixed(1)}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">{formatDuration(queue.avgDuration)}</TableCell>
+                      <TableCell className="text-right font-mono">{formatDuration(queue.minDuration)}</TableCell>
+                      <TableCell className="text-right font-mono">{formatDuration(queue.maxDuration)}</TableCell>
+                    </TableRow>
+                  )
+                })}
                 {!sortedQueuePerformance.length && (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center text-muted-foreground">
