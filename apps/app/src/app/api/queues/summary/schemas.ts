@@ -20,6 +20,8 @@ export const queueSummaryStatsOutput = z.object({
   p50DurationMs: z.number().nullable(),
   p95DurationMs: z.number().nullable(),
   p99DurationMs: z.number().nullable(),
+  // Set when the percentiles only cover this many of the latest completed runs
+  durationSampleLimit: z.number().nullable(),
 })
 
 export const queueSummaryGraphOutput = z.object({

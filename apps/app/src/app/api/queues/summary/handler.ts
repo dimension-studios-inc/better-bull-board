@@ -22,9 +22,13 @@ type DurationRow = {
   p50_ms: string | number | null
   p95_ms: string | number | null
   p99_ms: string | number | null
+  sample_size: string | number
 }
 
 const toNullableNumber = (value: string | number | null) => (value == null ? null : Number(value))
+
+// Percentiles sort every sample: on a busy queue over a long period, only the latest runs are read
+const MAX_DURATION_SAMPLES = 100_000
 
 /**
  * Duration percentiles of the completed runs, per graph bucket and for the whole period in one scan.
@@ -37,7 +41,8 @@ const getDurationRows = async (queue: string, { dateFrom, dateTo, bucketSeconds 
       "bucket_epoch",
       percentile_cont(0.5) WITHIN GROUP (ORDER BY "duration_ms") AS "p50_ms",
       percentile_cont(0.95) WITHIN GROUP (ORDER BY "duration_ms") AS "p95_ms",
-      percentile_cont(0.99) WITHIN GROUP (ORDER BY "duration_ms") AS "p99_ms"
+      percentile_cont(0.99) WITHIN GROUP (ORDER BY "duration_ms") AS "p99_ms",
+      COUNT(*) AS "sample_size"
     FROM (
       SELECT
         (FLOOR(EXTRACT(EPOCH FROM "created_at") / ${bucket}) * ${bucket})::bigint AS "bucket_epoch",
@@ -48,6 +53,8 @@ const getDurationRows = async (queue: string, { dateFrom, dateTo, bucketSeconds 
         AND "duration_ms" IS NOT NULL
         AND "created_at" >= ${utcTimestamp(dateFrom)}
         AND "created_at" < ${utcTimestamp(dateTo)}
+      ORDER BY "created_at" DESC
+      LIMIT ${sql.raw(String(MAX_DURATION_SAMPLES))}
     ) AS "completed_runs"
     GROUP BY GROUPING SETS (("bucket_epoch"), ())
   `)
@@ -72,6 +79,8 @@ const getStats = (bucketRows: BucketRow[], periodDurations: DurationRow | undefi
     p50DurationMs: toNullableNumber(periodDurations?.p50_ms ?? null),
     p95DurationMs: toNullableNumber(periodDurations?.p95_ms ?? null),
     p99DurationMs: toNullableNumber(periodDurations?.p99_ms ?? null),
+    // Older completed runs of the period were left out of the percentiles
+    durationSampleLimit: toNumber(periodDurations?.sample_size) >= MAX_DURATION_SAMPLES ? MAX_DURATION_SAMPLES : null,
   }
 }
 
