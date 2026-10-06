@@ -23,6 +23,7 @@ import { bulkCancelJobsApiRoute } from "~/app/api/jobs/bulk-cancel/schemas"
 import { bulkCancelJobsByFiltersApiRoute } from "~/app/api/jobs/bulk-cancel-by-filters/schemas"
 import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas"
 import { bulkReplayJobsByFiltersApiRoute } from "~/app/api/jobs/bulk-replay-by-filters/schemas"
+import { RunStatusBadge } from "~/components/run-status-badge"
 import { apiFetch } from "~/lib/utils/client"
 import { formatCreatedFilterLabel } from "./runs-filters"
 import type { TRunFilters } from "./types"
@@ -272,10 +273,10 @@ export function BulkActions({ selectedJobs, matchingSelection, onClearSelection 
             <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-60">
               <div className="space-y-2">
                 {cancellableJobs.map((job) => (
-                  <div key={job.jobId} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <div key={job.jobId} className="flex items-center gap-2 p-2 bg-muted rounded">
                     <Badge variant="outline">{job.queue}</Badge>
                     <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
-                    <Badge className="ml-auto">{job.status}</Badge>
+                    <RunStatusBadge status={job.status} className="ml-auto" />
                   </div>
                 ))}
               </div>
@@ -323,10 +324,10 @@ export function BulkActions({ selectedJobs, matchingSelection, onClearSelection 
             <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-60">
               <div className="space-y-2">
                 {replayableJobs.map((job) => (
-                  <div key={job.jobId} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <div key={job.jobId} className="flex items-center gap-2 p-2 bg-muted rounded">
                     <Badge variant="outline">{job.queue}</Badge>
                     <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
-                    <Badge className="ml-auto">{job.status}</Badge>
+                    <RunStatusBadge status={job.status} className="ml-auto" />
                   </div>
                 ))}
               </div>

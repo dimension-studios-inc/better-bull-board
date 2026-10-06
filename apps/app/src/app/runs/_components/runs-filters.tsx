@@ -251,7 +251,7 @@ export function RunsFilters({
                     {filters.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {filters.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
+                          <Badge key={tag} variant="secondary">
                             {tag}
                             <Button
                               variant="ghost"

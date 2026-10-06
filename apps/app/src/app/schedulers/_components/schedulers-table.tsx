@@ -14,6 +14,7 @@ import { parseAsString, useQueryStates } from "nuqs"
 import { useState } from "react"
 import type { output } from "zod"
 import { getSchedulersTableApiRoute } from "~/app/api/schedulers/table/schemas"
+import { QueueStateBadge } from "~/app/queues/_components/queue-state-badge"
 import { QueueSelector } from "~/components/queue-selector"
 import { RunStatusBadge } from "~/components/run-status-badge"
 import { TruncatedTooltip } from "~/components/truncated-tooltip"
@@ -59,11 +60,7 @@ function NextRun({ scheduler, compact = false }: { scheduler: Scheduler; compact
           Missed
         </Badge>
       )}
-      {scheduler.queueIsPaused && (
-        <Badge variant="outline" className="shrink-0 opacity-50">
-          Paused
-        </Badge>
-      )}
+      {scheduler.queueIsPaused && <QueueStateBadge isPaused className="shrink-0" />}
     </div>
   )
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import { Badge } from "@better-bull-board/ui/components/badge"
 import { Button } from "@better-bull-board/ui/components/button"
 import { Input } from "@better-bull-board/ui/components/input"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
@@ -8,7 +7,6 @@ import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@better-bull-board/ui/components/tooltip"
 import { useQuery } from "@tanstack/react-query"
-import { cn } from "cn"
 import { formatDuration } from "date-fns"
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Info, Search } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
@@ -20,6 +18,7 @@ import { apiFetch, smartFormatDuration } from "~/lib/utils/client"
 import { getQueueHref } from "~/lib/utils/queue-link"
 import { QueueActions } from "./queue-actions"
 import { QueueMiniChart } from "./queue-mini-chart"
+import { QueueStateBadge } from "./queue-state-badge"
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector"
 
 type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string }
@@ -243,14 +242,7 @@ export function QueuesTable() {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={"outline"}
-                      className={cn({
-                        "opacity-50": queue.isPaused,
-                      })}
-                    >
-                      {queue.isPaused ? "Paused" : "Running"}
-                    </Badge>
+                    <QueueStateBadge isPaused={queue.isPaused} />
                   </TableCell>
                   <TableCell>
                     <span className="font-mono truncate block">
