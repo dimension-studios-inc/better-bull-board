@@ -22,7 +22,7 @@ import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
 import { getRunsHref } from "~/lib/utils/runs-link"
-import { describeSchedule } from "./describe-schedule"
+import { describeSchedule } from "~/lib/utils/schedule"
 
 type Scheduler = output<typeof getSchedulersTableApiRoute.outputSchema>["schedulers"][number]
 
