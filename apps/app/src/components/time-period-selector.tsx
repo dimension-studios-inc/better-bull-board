@@ -4,7 +4,7 @@ import { Button } from "@better-bull-board/ui/components/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
 import { Separator } from "@better-bull-board/ui/components/separator"
 import { CalendarDays } from "lucide-react"
-import { Fragment, useState } from "react"
+import { Fragment, useState, useSyncExternalStore } from "react"
 
 const MINUTE = 1
 const HOUR = 60 * MINUTE
@@ -35,10 +35,70 @@ const timePeriodGroups: TimePeriodOption[][] = [
   ],
 ]
 
-export const DEFAULT_TIME_PERIOD: TimePeriod = 1 * DAY
+const timePeriodOptions = timePeriodGroups.flat()
+
+export const DEFAULT_TIME_PERIOD: TimePeriod = 6 * HOUR
+
+const isTimePeriod = (value: unknown): value is TimePeriod => timePeriodOptions.some((option) => option.value === value)
 
 export const getTimePeriodLabel = (value: TimePeriod) =>
-  timePeriodGroups.flat().find((option) => option.value === value)?.label ?? "Last 1 day"
+  timePeriodOptions.find((option) => option.value === value)?.label ?? "Last 6 hours"
+
+const STORAGE_KEY = "better-bull-board:dashboard-time-period"
+const listeners = new Set<() => void>()
+// The stored value, read once: also keeps the choice for this page when storage is unavailable
+let currentTimePeriod: TimePeriod | undefined
+
+const readStorage = (): TimePeriod => {
+  try {
+    const value = Number(window.localStorage.getItem(STORAGE_KEY))
+    return isTimePeriod(value) ? value : DEFAULT_TIME_PERIOD
+  } catch {
+    return DEFAULT_TIME_PERIOD
+  }
+}
+
+const getTimePeriodSnapshot = () => {
+  currentTimePeriod ??= readStorage()
+  return currentTimePeriod
+}
+
+const notifyListeners = () => {
+  for (const listener of listeners) listener()
+}
+
+// A choice made in another tab
+const handleStorage = (event: StorageEvent) => {
+  if (event.key !== STORAGE_KEY) return
+  currentTimePeriod = readStorage()
+  notifyListeners()
+}
+
+const subscribeToTimePeriod = (listener: () => void) => {
+  if (listeners.size === 0) window.addEventListener("storage", handleStorage)
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+    if (listeners.size === 0) window.removeEventListener("storage", handleStorage)
+  }
+}
+
+const setStoredTimePeriod = (value: TimePeriod) => {
+  currentTimePeriod = value
+  try {
+    window.localStorage.setItem(STORAGE_KEY, String(value))
+  } catch {
+    // Storage unavailable (private mode, blocked site data): the choice lasts until the page is reloaded
+  }
+  notifyListeners()
+}
+
+/**
+ * Dashboard time period, remembered in this browser so it survives navigating away and back.
+ * `null` while hydrating: the server cannot know the stored value, and fetching the default first would be wasted.
+ */
+export const useStoredTimePeriod = () =>
+  [useSyncExternalStore(subscribeToTimePeriod, getTimePeriodSnapshot, () => null), setStoredTimePeriod] as const
 
 interface TimePeriodSelectorProps {
   value: TimePeriod
