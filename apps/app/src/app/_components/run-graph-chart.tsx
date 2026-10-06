@@ -16,7 +16,7 @@ interface RunGraphChartProps {
 }
 
 // Graph buckets go from 10 seconds (last 5 minutes) to 1 day (last 30 days)
-const getTimeFormats = (minutes: number) => {
+export const getTimeFormats = (minutes: number) => {
   if (minutes <= 15) return { axis: "HH:mm:ss", tooltip: "HH:mm:ss" }
   if (minutes <= 12 * 60) return { axis: "HH:mm", tooltip: "HH:mm" }
   if (minutes <= 7 * 24 * 60) return { axis: "EEEEEE HH:mm", tooltip: "EEEEEE HH:mm" }
