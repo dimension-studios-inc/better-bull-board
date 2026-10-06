@@ -25,7 +25,7 @@ export function RunsFilters({
   filters,
   setFilters,
   runs,
-  isFetching,
+  isPageLoading,
   liveUpdatesPaused,
   onLiveUpdatesPausedChange,
   startEndContent,
@@ -36,7 +36,8 @@ export function RunsFilters({
     nextCursor: { createdAt: number; jobId: string; id: string; durationMs?: number | null } | null
     prevCursor: { createdAt: number; jobId: string; id: string; durationMs?: number | null } | null
   }
-  isFetching?: boolean
+  /** A page is loading: background refreshes of the current page keep the pagination usable */
+  isPageLoading?: boolean
   liveUpdatesPaused: boolean
   onLiveUpdatesPausedChange: (paused: boolean) => void
   startEndContent?: React.ReactNode
@@ -69,7 +70,6 @@ export function RunsFilters({
     { value: "delayed", label: "Delayed" },
     { value: "prioritized", label: "Prioritized" },
     { value: "waiting-children", label: "Waiting Children" },
-    { value: "unknown", label: "Unknown" },
   ]
 
   const tagsOptions: SearchSelectOption[] = useMemo(() => {
@@ -365,7 +365,7 @@ export function RunsFilters({
           <Button
             variant="outline"
             onClick={handlePrevPage}
-            disabled={isFetching || (!runs?.prevCursor && !filters.cursor)}
+            disabled={isPageLoading || (!runs?.prevCursor && !filters.cursor)}
             aria-label="Previous page"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -374,7 +374,7 @@ export function RunsFilters({
           <Button
             variant="outline"
             onClick={handleNextPage}
-            disabled={isFetching || !runs?.nextCursor}
+            disabled={isPageLoading || !runs?.nextCursor}
             aria-label="Next page"
           >
             <span className="hidden sm:inline">Next</span>

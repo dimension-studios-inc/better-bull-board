@@ -115,7 +115,7 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
             {/* Status */}
             <div>
               <h3 className="text-sm font-medium mb-3">Status</h3>
-              <RunStatusBadge status={run.status} className="uppercase" />
+              <RunStatusBadge status={run.status} />
             </div>
 
             <Separator />
