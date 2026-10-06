@@ -140,4 +140,13 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+  /*
+   * Recharts makes the chart surface focusable for its keyboard layer, so a click left a focus outline around the
+   * whole chart. The tooltip already shows which point the keyboard is on.
+   */
+  .recharts-wrapper:focus,
+  .recharts-surface:focus {
+    outline: none;
+  }
 }
