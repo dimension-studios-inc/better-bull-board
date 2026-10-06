@@ -13,9 +13,11 @@ import { apiFetch } from "~/lib/utils/client"
 interface QueueActionsProps {
   queueName: string
   isPaused: boolean
+  /** Called once the queue is deleted, e.g. to leave its page */
+  onDeleted?: () => void
 }
 
-export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
+export function QueueActions({ queueName, isPaused, onDeleted }: QueueActionsProps) {
   const [pausePopoverOpen, setPausePopoverOpen] = useState(false)
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false)
   const queryClient = useQueryClient()
@@ -26,7 +28,10 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
       body: { queueName },
     }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["queues/table"] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["queues/table"] }),
+        queryClient.invalidateQueries({ queryKey: ["queues/details", queueName] }),
+      ])
       setPausePopoverOpen(false)
     },
   })
@@ -37,7 +42,10 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
       body: { queueName },
     }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["queues/table"] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["queues/table"] }),
+        queryClient.invalidateQueries({ queryKey: ["queues/details", queueName] }),
+      ])
       setPausePopoverOpen(false)
     },
   })
@@ -47,9 +55,11 @@ export function QueueActions({ queueName, isPaused }: QueueActionsProps) {
       apiRoute: deleteQueueApiRoute,
       body: { queueName },
     }),
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ["queues/table"] })
       setDeletePopoverOpen(false)
+      // The route reports a failed delete in its result rather than as an error
+      if (deleteQueueApiRoute.outputSchema.parse(result).success) onDeleted?.()
     },
   })
 

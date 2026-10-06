@@ -12,10 +12,12 @@ import { cn } from "cn"
 import { formatDuration } from "date-fns"
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Info, Search } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas"
 import { apiFetch, smartFormatDuration } from "~/lib/utils/client"
+import { getQueueHref } from "~/lib/utils/queue-link"
 import { QueueActions } from "./queue-actions"
 import { QueueMiniChart } from "./queue-mini-chart"
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector"
@@ -231,7 +233,15 @@ export function QueuesTable() {
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   layoutId={queue.name}
                 >
-                  <TableCell className="font-medium truncate">{queue.name}</TableCell>
+                  <TableCell className="font-medium truncate">
+                    <Link
+                      href={getQueueHref(queue.name)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+                    >
+                      {queue.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant={"outline"}

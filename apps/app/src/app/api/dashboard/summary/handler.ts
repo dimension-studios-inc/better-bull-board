@@ -12,7 +12,7 @@ type StatsRow = {
   waiting_in_queue: string | number | null
 }
 
-type BucketRow = {
+export type BucketRow = {
   bucket_epoch: string | number
   queue: string
   total_runs: string | number
@@ -26,7 +26,7 @@ type BucketRow = {
 
 type TimeRange = { from: Date; to: Date }
 
-type DashboardWindow = {
+export type DashboardWindow = {
   dateFrom: Date
   dateTo: Date
   bucketSeconds: number
@@ -42,11 +42,11 @@ const RAW_ONLY_MAX_MINUTES = 3 * 60
 // Bound the raw tail scanned when the ingest rollups lag behind (ingest down, cron not run yet)
 const MAX_ROLLUP_LAG_MS = 3 * HOUR_MS
 
-const toNumber = (value: string | number | null | undefined) => Number(value ?? 0)
+export const toNumber = (value: string | number | null | undefined) => Number(value ?? 0)
 
 const toSeconds = (milliseconds: string | number | null | undefined) => toNumber(milliseconds) / 1000
 
-const floorTo = (date: Date, ms: number) => new Date(Math.floor(date.getTime() / ms) * ms)
+export const floorTo = (date: Date, ms: number) => new Date(Math.floor(date.getTime() / ms) * ms)
 
 const ceilTo = (date: Date, ms: number) => new Date(Math.ceil(date.getTime() / ms) * ms)
 
@@ -70,7 +70,7 @@ const getLastRollupEnd = async () => {
   return lastBucketEpoch == null ? null : new Date(toNumber(lastBucketEpoch) * 1000 + HOUR_MS)
 }
 
-const getDashboardWindow = async (minutes: number): Promise<DashboardWindow> => {
+export const getDashboardWindow = async (minutes: number): Promise<DashboardWindow> => {
   const dateTo = new Date()
   const dateFrom = new Date(dateTo.getTime() - minutes * 60 * 1000)
   const bucketSeconds = getBucketSeconds(minutes)
@@ -129,8 +129,9 @@ const getStats = async () => {
  * Per queue and per graph bucket counters for the window, merging the hourly rollups (complete hours)
  * with the same aggregation computed on job_runs for the rest of the window.
  */
-const getBucketRows = async ({ bucketSeconds, rollupRange, rawRanges }: DashboardWindow) => {
+export const getBucketRows = async ({ bucketSeconds, rollupRange, rawRanges }: DashboardWindow, queue?: string) => {
   const bucket = sql.raw(String(bucketSeconds))
+  const queueFilter = queue ? sql` AND "queue" = ${queue}` : sql``
   const parts: SQL[] = []
 
   if (rollupRange) {
@@ -147,7 +148,7 @@ const getBucketRows = async ({ bucketSeconds, rollupRange, rawRanges }: Dashboar
         MAX("duration_max_ms") AS "duration_max_ms"
       FROM ${dashboardQueueHourlyStatsTable}
       WHERE "bucket_start" >= ${utcTimestamp(rollupRange.from)}
-        AND "bucket_start" < ${utcTimestamp(rollupRange.to)}
+        AND "bucket_start" < ${utcTimestamp(rollupRange.to)}${queueFilter}
       GROUP BY 1, 2
     `)
   }
@@ -182,7 +183,7 @@ const getBucketRows = async ({ bucketSeconds, rollupRange, rawRanges }: Dashboar
           WHERE "status" = 'completed'::"job_status" AND "duration_ms" IS NOT NULL
         ) AS "duration_max_ms"
       FROM ${jobRunsTable}
-      WHERE ${rawRangesFilter}
+      WHERE (${rawRangesFilter})${queueFilter}
       GROUP BY 1, 2
     `)
   }
