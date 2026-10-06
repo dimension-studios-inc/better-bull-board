@@ -15,6 +15,8 @@ import {
 import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview"
 import { listQueuesBaseInputSchema, type listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas"
 import { listQueues } from "@better-bull-board/core/queues"
+import { listTopErrors } from "@better-bull-board/core/top-errors"
+import { listTopErrorsInputSchema, listTopErrorsOutputSchema } from "@better-bull-board/core/top-errors-schemas"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
 import { cancelJob, deleteQueue, pauseQueue, replayJob, resumeQueue } from "./actions"
@@ -225,6 +227,27 @@ const formatLogs = (result: z.infer<typeof listJobLogsOutputSchema>) =>
     ...result.logs.map((log) => `- ${new Date(log.ts).toISOString()} [${log.level}] #${log.logSeq}: ${log.message}`),
   ].join("\n")
 
+const formatTopErrors = (result: z.infer<typeof listTopErrorsOutputSchema>) =>
+  [
+    "# Better Bull Board Top Errors",
+    "",
+    result.isPartial
+      ? `Grouped the latest ${result.scannedRuns} failed runs of the period (more failed runs exist)`
+      : `Grouped ${result.scannedRuns} failed runs`,
+    "",
+    ...result.errors.map((error) =>
+      [
+        `- ${error.count}x in ${error.queue}: ${error.normalizedMessage || "(no error message)"}`,
+        `  firstSeen: ${new Date(error.firstSeenAt).toISOString()}`,
+        `  lastSeen: ${new Date(error.lastSeenAt).toISOString()}`,
+        error.search ? `  search: ${error.search}` : undefined,
+        `  sample: ${error.sampleMessage.split("\n")[0]}`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    ),
+  ].join("\n")
+
 const formatMutationResult = (title: string, result: z.infer<typeof mutationResultSchema>) =>
   [`# ${title}`, "", result.message].join("\n")
 
@@ -363,6 +386,31 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
 
       return {
         content: [{ type: "text", text: formatLogs(result) }],
+        structuredContent: result,
+      }
+    },
+  )
+
+  server.registerTool(
+    "bbb_list_top_errors",
+    {
+      title: "List Better Bull Board Top Errors",
+      description:
+        "Group the failed job runs of a recent period (in minutes, default the last 24 hours) by queue and error message, with ids, numbers and dates replaced by placeholders, to find recurring failures. Returns the 20 largest groups with a sample message, first and last seen times, and a search term to list the runs of a group with bbb_list_jobs (queue, status failed, search). Groups at most the latest 50,000 failed runs of the period.",
+      inputSchema: listTopErrorsInputSchema,
+      outputSchema: listTopErrorsOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async (input) => {
+      const result = await listTopErrors(input)
+
+      return {
+        content: [{ type: "text", text: formatTopErrors(result) }],
         structuredContent: result,
       }
     },
