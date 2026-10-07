@@ -17,7 +17,7 @@
   "dependencies": {
     "@better-bull-board/client": "workspace:*",
     "@better-bull-board/core": "workspace:*",
-    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/sdk": "1.30.1",
     "@t3-oss/env-core": "0.13.11",
     "bullmq": "6.3.8",
     "dotenv": "18.0.3",
