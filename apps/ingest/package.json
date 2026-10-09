@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
-    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+    "dev": "bun --watch src/index.ts",
     "type-check": "tsc --noEmit",
     "debug": "bun debug/index.ts"
   },
@@ -41,7 +41,6 @@
     "@types/pg": "8.23.1",
     "@types/ws": "8.18.1",
     "tsdown": "0.23.0",
-    "tsx": "4.23.15",
     "typescript": "7.0.2"
   }
 }

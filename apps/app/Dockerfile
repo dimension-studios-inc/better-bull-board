@@ -12,12 +12,15 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME="0.0.0.0"
 
-# Pin matches package.json packageManager. Bun only installs; Node runs everything.
+#* ---- Tools stage ----
+# Pin matches package.json packageManager. Bun only installs and builds; Node runs
+# everything, so the runner starts from base and never ships the 70 MB bun binary.
+FROM base AS tools
 COPY --from=oven/bun:1.4.2-alpine /usr/local/bin/bun /usr/local/bin/
 RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
 
 #* ---- Prepare stage ----
-FROM base AS prepare
+FROM tools AS prepare
 COPY . .
 # Same turbo as package.json: bunx without a version fetches the latest.
 RUN TURBO_VERSION=$(bun -p 'require("./package.json").devDependencies.turbo') \
@@ -29,7 +32,7 @@ RUN TURBO_VERSION=$(bun -p 'require("./package.json").devDependencies.turbo') \
 # only copies Next's standalone output, so devDependencies never leak into runtime.
 # `--ignore-scripts` skips the root `lefthook install` prepare hook (git/lefthook
 # are not available in this image, and lefthook is a devDependency).
-FROM base AS installer
+FROM tools AS installer
 COPY --from=prepare /app/out/json/ .
 # No store cache mount: it restored nothing on ephemeral builders, and a mount is
 # a separate filesystem, so bun copies instead of hardlinking out of its cache.
@@ -37,7 +40,7 @@ RUN bun ci --ignore-scripts
 COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
-FROM base AS builder
+FROM tools AS builder
 ENV NODE_OPTIONS="--max-old-space-size=6144"
 COPY --from=installer /app .
 
@@ -68,6 +71,10 @@ ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
 ENV DATABASE_URL=$DATABASE_URL
 
 RUN bun run build:app
+# bun installs both libc builds of sharp and Next's trace keeps both; the runner is Alpine (musl).
+RUN find apps/app/.next/standalone/node_modules/.bun -maxdepth 1 \
+  \( -name '@img+sharp-linux-*' -o -name '@img+sharp-libvips-linux-*' -o -name '*-gnu@*' \) \
+  -exec rm -rf {} +
 
 #* ---- Runner stage ----
 FROM base AS runner
