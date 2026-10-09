@@ -1,7 +1,5 @@
 {
   "name": "@better-bull-board/template",
-  "main": "dist/index.mjs",
-  "types": "dist/index.d.mts",
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",

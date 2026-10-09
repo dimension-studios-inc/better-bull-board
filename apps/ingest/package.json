@@ -1,8 +1,5 @@
 {
   "name": "@better-bull-board/ingest",
-  "main": "dist/index.mjs",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.mts",
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
