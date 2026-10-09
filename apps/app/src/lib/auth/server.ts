@@ -1,3 +1,5 @@
+import { createHash, timingSafeEqual } from "node:crypto"
+
 import { jwtVerify, SignJWT } from "jose"
 import type { ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies"
 import { cookies, headers } from "next/headers"
@@ -11,17 +13,18 @@ export interface User {
   email: string
 }
 
+// Hashing first gives equal-length buffers, so the comparison doesn't leak the secret's length either
+const sha256 = (value: string) => createHash("sha256").update(value).digest()
+const safeEqual = (a: string, b: string) => timingSafeEqual(sha256(a), sha256(b))
+
 /**
- * Verify admin credentials
+ * Verify admin credentials in constant time
  */
 export function verifyAdminCredentials(email: string, password: string): boolean {
-  if (email !== env.ADMIN_EMAIL) {
-    return false
-  }
-
-  // For simple authentication, we can do a direct comparison
-  // In production, you might want to hash the password in the env
-  return password === env.ADMIN_PASSWORD
+  // Compare both before deciding, so the response time doesn't reveal whether the email matched
+  const emailMatches = safeEqual(email, env.ADMIN_EMAIL)
+  const passwordMatches = safeEqual(password, env.ADMIN_PASSWORD)
+  return emailMatches && passwordMatches
 }
 
 /**
