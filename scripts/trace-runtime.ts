@@ -1,6 +1,6 @@
 // Copies only the files the entries need at runtime (Next's `standalone` approach) into <out-dir>.
-// Adapted from the main repo's scripts/trace-runtime.ts, for a Node runner on Alpine (musl).
-// Usage: node scripts/trace-runtime.ts <entry>... <out-dir>
+// Adapted from the main repo's scripts/trace-runtime.ts, for runners on Alpine (musl).
+// Usage: bun|node scripts/trace-runtime.ts <entry>... <out-dir>
 import {
   cpSync,
   existsSync,
@@ -44,10 +44,15 @@ const SHIP_WHOLE: Record<string, string[]> = {
 // A path built from process.cwd() (ingest's `packages/db` for drizzle-kit) makes nft ship the whole folder as
 // assets; its build config would then pull tsdown, rolldown and typescript.
 const ignore = ["**/tsdown.config.*", "**/.turbo/**", "**/debug/**"]
-// Run with node, the runner's runtime: nft skips `module.builtinModules`, which under bun include `ws`.
+// Run with the image's runtime: nft skips `module.builtinModules`, which under bun include `ws`.
+// Bun resolves the `bun` export condition first; under node, the trace also covers node's own set.
+// nft adds `import` or `require` per call itself.
+const conditionSets = [["bun", "node"], ...(process.versions.bun ? [] : [["node"]])]
 const trace = async (entries: string[]) => {
-  const { fileList } = await nodeFileTrace(entries, { base, conditions: ["node"], ignore })
-  return new Set(fileList)
+  const lists = await Promise.all(
+    conditionSets.map((conditions) => nodeFileTrace(entries, { base, conditions, ignore })),
+  )
+  return new Set(lists.flatMap(({ fileList }) => [...fileList]))
 }
 let fileList = await trace(entries)
 const wholeFiles = Object.entries(SHIP_WHOLE)

@@ -42,7 +42,8 @@ async function migratePostgreSQL(): Promise<void> {
 
       const dbDir = path.resolve(process.cwd(), "packages/db")
       const drizzleKit = path.join(dbDir, "node_modules", ".bin", "drizzle-kit")
-      const { stderr } = await execAsync(`"${drizzleKit}" migrate`, {
+      // Same runtime as ingest: the bin's `node` shebang would need Node in the image.
+      const { stderr } = await execAsync(`"${process.execPath}" "${drizzleKit}" migrate`, {
         cwd: dbDir,
         env: {
           ...process.env,

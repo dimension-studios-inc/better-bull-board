@@ -12,15 +12,12 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME="0.0.0.0"
 
-#* ---- Tools stage ----
-# Pin matches package.json packageManager. Bun only installs and builds; Node runs
-# everything, so the runner starts from base and never ships the 70 MB bun binary.
-FROM base AS tools
+# Pin matches package.json packageManager. Node runs the build tools; the runner stage is bun only.
 COPY --from=oven/bun:1.4.2-alpine /usr/local/bin/bun /usr/local/bin/
 RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
 
 #* ---- Prepare stage ----
-FROM tools AS prepare
+FROM base AS prepare
 COPY . .
 # Same turbo as package.json: bunx without a version fetches the latest.
 RUN TURBO_VERSION=$(bun -p 'require("./package.json").devDependencies.turbo') \
@@ -32,7 +29,7 @@ RUN TURBO_VERSION=$(bun -p 'require("./package.json").devDependencies.turbo') \
 # only copies Next's standalone output, so devDependencies never leak into runtime.
 # `--ignore-scripts` skips the root `lefthook install` prepare hook (git/lefthook
 # are not available in this image, and lefthook is a devDependency).
-FROM tools AS installer
+FROM base AS installer
 COPY --from=prepare /app/out/json/ .
 # No store cache mount: it restored nothing on ephemeral builders, and a mount is
 # a separate filesystem, so bun copies instead of hardlinking out of its cache.
@@ -40,7 +37,7 @@ RUN bun ci --ignore-scripts
 COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
-FROM tools AS builder
+FROM base AS builder
 ENV NODE_OPTIONS="--max-old-space-size=6144"
 COPY --from=installer /app .
 
@@ -77,13 +74,20 @@ RUN find apps/app/.next/standalone/node_modules/.bun -maxdepth 1 \
   -exec rm -rf {} +
 
 #* ---- Runner stage ----
-FROM base AS runner
-RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 nextjs
+# Bun serves the standalone server.js; `next dev` and `next build` stay on Node.
+FROM oven/bun:1.4.2-alpine AS runner
+RUN apk add --no-cache libc6-compat \
+  && addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
+WORKDIR /app
+ENV NODE_ENV=production \
+  NEXT_TELEMETRY_DISABLED=1 \
+  HOSTNAME="0.0.0.0"
 USER nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/app/.next/static ./apps/app/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/app/public ./apps/app/public
 
-CMD ["node", "apps/app/server.js"]
+# Exec form: bun is PID 1 and receives SIGTERM directly.
+CMD ["bun", "apps/app/server.js"]
