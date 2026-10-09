@@ -148,11 +148,12 @@
   }
 
   /*
-   * Recharts makes the chart surface focusable for its keyboard layer, so a click left a focus outline around the
-   * whole chart. The tooltip already shows which point the keyboard is on.
+   * Recharts makes the chart surface focusable for its keyboard layer, and the z-index layers it draws bars and areas
+   * in take tabindex="-1", so a click left a focus outline around the whole chart or around the clicked layer. The
+   * tooltip already shows which point the keyboard is on.
    */
   .recharts-wrapper:focus,
-  .recharts-surface:focus {
+  .recharts-wrapper :focus {
     outline: none;
   }
 
