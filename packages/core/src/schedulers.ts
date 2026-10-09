@@ -86,8 +86,33 @@ const getIntervalMs = ({ pattern, every, tz }: Schedule, at: number) => {
   return following === null ? null : following - at
 }
 
+type SchedulerPosition = NonNullable<z.output<typeof listSchedulersOutputSchema>["nextCursor"]>
+
+const compareSchedulers = (a: SchedulerPosition, b: SchedulerPosition, sortDirection: "asc" | "desc") => {
+  // Schedulers without a next run go last in both directions
+  if (a.nextRunAt === null || b.nextRunAt === null) {
+    if (a.nextRunAt !== b.nextRunAt) return a.nextRunAt === null ? 1 : -1
+  } else if (a.nextRunAt !== b.nextRunAt) {
+    return (a.nextRunAt - b.nextRunAt) * (sortDirection === "asc" ? 1 : -1)
+  }
+  return a.queue.localeCompare(b.queue) || a.key.localeCompare(b.key)
+}
+
+const getPosition = (scheduler: { nextRunAt: Date | null; queue: string; key: string }): SchedulerPosition => ({
+  nextRunAt: scheduler.nextRunAt?.getTime() ?? null,
+  queue: scheduler.queue,
+  key: scheduler.key,
+})
+
 export const listSchedulers = async (input: z.input<typeof listSchedulersInputSchema> = {}) => {
-  const { queue, search, sortDirection = "asc" } = listSchedulersInputSchema.parse(input)
+  const {
+    queue,
+    search,
+    sortDirection = "asc",
+    cursor,
+    cursorDirection = "next",
+    limit = 20,
+  } = listSchedulersInputSchema.parse(input)
 
   const rows = await db
     .select({
@@ -184,16 +209,27 @@ export const listSchedulers = async (input: z.input<typeof listSchedulersInputSc
     }
   })
 
-  const direction = sortDirection === "asc" ? 1 : -1
-  schedulers.sort((a, b) => {
-    // Schedulers without a next run go last in both directions
-    if (a.nextRunAt === null || b.nextRunAt === null) {
-      if (a.nextRunAt !== b.nextRunAt) return a.nextRunAt === null ? 1 : -1
-    } else if (a.nextRunAt.getTime() !== b.nextRunAt.getTime()) {
-      return (a.nextRunAt.getTime() - b.nextRunAt.getTime()) * direction
-    }
-    return a.queue.localeCompare(b.queue) || a.key.localeCompare(b.key)
-  })
+  schedulers.sort((a, b) => compareSchedulers(getPosition(a), getPosition(b), sortDirection))
 
-  return listSchedulersOutputSchema.parse({ schedulers })
+  // The next run is computed here, not in SQL, so pages are cut from the sorted list; the cursor is the position of a
+  // page's edge, like the queues table, so a page does not shift when schedulers before it come and go
+  const candidates = cursor
+    ? schedulers.filter((scheduler) => {
+        const comparison = compareSchedulers(getPosition(scheduler), cursor, sortDirection)
+        return cursorDirection === "next" ? comparison > 0 : comparison < 0
+      })
+    : schedulers
+  const hasExtra = candidates.length > limit
+  const page = cursorDirection === "prev" ? candidates.slice(-limit) : candidates.slice(0, limit)
+  const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra
+  const hasOlderPage = cursorDirection === "prev" ? Boolean(cursor) : hasExtra
+  const firstScheduler = page[0]
+  const lastScheduler = page.at(-1)
+
+  return listSchedulersOutputSchema.parse({
+    schedulers: page,
+    nextCursor: hasOlderPage && lastScheduler ? getPosition(lastScheduler) : null,
+    prevCursor: hasNewerPage && firstScheduler ? getPosition(firstScheduler) : null,
+    total: schedulers.length,
+  })
 }
