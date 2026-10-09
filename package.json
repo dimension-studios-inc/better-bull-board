@@ -11,6 +11,7 @@
     "lint": "biome check",
     "format": "biome format --write",
     "type-check": "turbo run type-check",
+    "test": "turbo run test",
     "knip": "knip",
     "setup": "turbo run build --filter='@better-bull-board/*'^...",
     "build:app": "turbo run build --filter=@better-bull-board/app --env-mode=loose",

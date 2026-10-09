@@ -34,6 +34,7 @@ jobs:
       - run: bun ci
       - run: bun run lint
       - run: bun run type-check
+      - run: bun run test
 
       - name: Verify client pack includes types
         working-directory: packages/client

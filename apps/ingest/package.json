@@ -8,6 +8,7 @@
     "clean": "rm -rf dist",
     "dev": "bun --watch src/index.ts",
     "type-check": "tsc --noEmit",
+    "test": "bun test",
     "debug": "bun debug/index.ts"
   },
   "license": "ISC",
@@ -37,6 +38,7 @@
   "type": "module",
   "devDependencies": {
     "@better-bull-board/typescript-config": "workspace:*",
+    "@types/bun": "1.4.2",
     "@types/node": "25.9.8",
     "@types/pg": "8.23.1",
     "@types/ws": "8.18.1",
