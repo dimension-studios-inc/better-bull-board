@@ -18,6 +18,8 @@ export default function CreateRunPage() {
   const router = useRouter()
   const [selectedQueue, setSelectedQueue] = useState<string>("")
   const [jobName, setJobName] = useState<string>("")
+  // Until the user types a job name, it follows the selected queue and its last run
+  const [isJobNameEdited, setIsJobNameEdited] = useState(false)
   const [jobData, setJobData] = useState<string>("{}")
   const [queueOpen, setQueueOpen] = useState(false)
   const [queueSearch, setQueueSearch] = useState("")
@@ -49,8 +51,8 @@ export default function CreateRunPage() {
   const handleQueueChange = (value: string) => {
     setSelectedQueue(value)
 
-    // Set default job name based on queue if not already set
-    if (!jobName && value && value !== "all") {
+    // Default the job name to the queue, unless the user typed one
+    if (!isJobNameEdited && value && value !== "all") {
       setJobName(`${value}-job`)
     }
   }
@@ -63,8 +65,8 @@ export default function CreateRunPage() {
     if (lastRunData?.data && selectedQueue) {
       setJobData(JSON.stringify(lastRunData.data, null, 2))
 
-      // Update job name if we have a previous job name
-      if (lastRunData.jobName && !jobName.endsWith("-job")) {
+      // Prefer the last run's job name over the queue default, but never overwrite a typed name
+      if (lastRunData.jobName && !isJobNameEdited) {
         setJobName(lastRunData.jobName)
       }
     }
@@ -135,7 +137,11 @@ export default function CreateRunPage() {
           <Input
             id={jobNameId}
             value={jobName}
-            onChange={(e) => setJobName(e.target.value)}
+            onChange={(e) => {
+              setJobName(e.target.value)
+              // Clearing the field hands the name back to the queue and last run defaults
+              setIsJobNameEdited(e.target.value !== "")
+            }}
             placeholder="Enter job name..."
             required
           />
