@@ -2,6 +2,9 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreWorkspaces": ["packages/_template"],
   "workspaces": {
+    ".": {
+      "entry": ["scripts/**"]
+    },
     "packages/bull-demo": {
       "entry": ["debug/*.ts"]
     },

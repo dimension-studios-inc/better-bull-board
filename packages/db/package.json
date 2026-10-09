@@ -8,7 +8,7 @@
     "clean": "rm -rf dist",
     "dev": "tsdown --watch",
     "type-check": "tsc --noEmit",
-    "debug": "dotenv -e .env -- tsx debug/index.ts",
+    "debug": "bun debug/index.ts",
     "db:check": "drizzle-kit check",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -58,9 +58,7 @@
     "@better-bull-board/typescript-config": "workspace:*",
     "@types/node": "25.9.8",
     "@types/pg": "8.23.1",
-    "dotenv-cli": "11.0.0",
     "tsdown": "0.23.0",
-    "tsx": "4.23.15",
     "typescript": "7.0.2"
   }
 }

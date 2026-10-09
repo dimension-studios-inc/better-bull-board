@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { formatDistance } from "date-fns"
 import { lt } from "drizzle-orm"
+import { runBackgroundTask } from "~/lib/background-tasks"
 import { withLock } from "~/lib/distributed-lock"
 import { env } from "~/lib/env"
 import { instanceId } from "~/lib/instance"
@@ -30,11 +31,11 @@ export const clearData = async () => {
 
   setInterval(
     () => {
-      deleteData()
+      runBackgroundTask(deleteData)
     },
     1000 * 60 * 60,
   )
-  deleteData()
+  runBackgroundTask(deleteData)
 
   logger.log(`🧹 Clearing data every ${formatDistance(autoDeletePostgresData, 0)}`)
 }

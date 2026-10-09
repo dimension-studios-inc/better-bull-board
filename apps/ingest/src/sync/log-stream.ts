@@ -4,18 +4,23 @@ import { env } from "~/lib/env"
 import { instanceId } from "~/lib/instance"
 import { redis } from "~/lib/redis"
 import { persistLogEvents } from "~/sync/log-buffer"
-import { ackAndDeleteEntries, cleanupStaleConsumers, trimAcknowledgedEntries } from "~/sync/stream-consumers"
+import {
+  ackAndDeleteEntries,
+  cleanupStaleConsumers,
+  getField,
+  parseAutoClaimResponse,
+  parseReadGroupResponse,
+  type StreamMessage,
+  trimAcknowledgedEntries,
+} from "~/sync/stream-consumers"
 
 const streamRedis = redis.duplicate()
+let stopping = false
+let loopDone: Promise<void> | undefined
 
 streamRedis.on("error", (error) => {
   logger.error("Job log stream Redis connection error", { error })
 })
-
-type StreamMessage = {
-  id: string
-  fields: string[]
-}
 
 const logSyncEventSchema = z.object({
   version: z.literal(1),
@@ -30,34 +35,6 @@ const logSyncEventSchema = z.object({
 })
 
 type LogSyncEvent = z.infer<typeof logSyncEventSchema>
-
-const getField = (fields: string[], key: string) => {
-  const index = fields.indexOf(key)
-  return index === -1 ? undefined : fields[index + 1]
-}
-
-const parseReadGroupResponse = (response: unknown): StreamMessage[] => {
-  if (!Array.isArray(response)) return []
-  const messages: StreamMessage[] = []
-  for (const stream of response) {
-    if (!Array.isArray(stream) || !Array.isArray(stream[1])) continue
-    for (const message of stream[1]) {
-      if (!Array.isArray(message) || typeof message[0] !== "string" || !Array.isArray(message[1])) continue
-      messages.push({ id: message[0], fields: message[1].map(String) })
-    }
-  }
-  return messages
-}
-
-const parseAutoClaimResponse = (response: unknown): StreamMessage[] => {
-  if (!Array.isArray(response) || !Array.isArray(response[1])) return []
-  return response[1]
-    .map((message): StreamMessage | undefined => {
-      if (!Array.isArray(message) || typeof message[0] !== "string" || !Array.isArray(message[1])) return undefined
-      return { id: message[0], fields: message[1].map(String) }
-    })
-    .filter((message): message is StreamMessage => Boolean(message))
-}
 
 const parseLogSyncEvent = (payload: string): LogSyncEvent => logSyncEventSchema.parse(JSON.parse(payload))
 
@@ -143,7 +120,7 @@ const readPendingMessages = async () => {
     )
     return parseAutoClaimResponse(response)
   } catch (error) {
-    logger.warn("Unable to reclaim pending job log sync messages", { error })
+    if (!stopping) logger.warn("Unable to reclaim pending job log sync messages", { error })
     return []
   }
 }
@@ -182,7 +159,7 @@ export const startJobLogStreamIngestion = async () => {
   })
 
   const loop = async () => {
-    while (true) {
+    while (!stopping) {
       try {
         const pendingMessages = await readPendingMessages()
         if (pendingMessages.length > 0) {
@@ -190,7 +167,11 @@ export const startJobLogStreamIngestion = async () => {
           continue
         }
 
-        const messages = await readNewMessages()
+        // The shutdown disconnects the stream connection to cut this blocking read.
+        const messages = await readNewMessages().catch((error) => {
+          if (stopping) return []
+          throw error
+        })
         await processMessages(messages)
       } catch (error) {
         logger.error("Job log stream ingestion loop failed", { error })
@@ -199,5 +180,15 @@ export const startJobLogStreamIngestion = async () => {
     }
   }
 
-  void loop()
+  loopDone = loop()
+}
+
+/**
+ * Cuts the blocking read, then lets the batch being processed finish: it is acknowledged on the main connection.
+ * Entries read but not acknowledged stay pending and are reclaimed by XAUTOCLAIM.
+ */
+export const stopJobLogStreamIngestion = async () => {
+  stopping = true
+  streamRedis.disconnect()
+  await loopDone
 }

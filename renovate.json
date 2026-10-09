@@ -4,5 +4,12 @@
   "baseBranchPatterns": ["develop"],
   "automerge": true,
   "platformAutomerge": true,
-  "minimumReleaseAge": "14 days"
+  "minimumReleaseAge": "14 days",
+  "packageRules": [
+    {
+      "description": "Keep the Dockerfile oven/bun images in step with packageManager",
+      "groupName": "bun",
+      "matchPackageNames": ["bun", "oven/bun"]
+    }
+  ]
 }

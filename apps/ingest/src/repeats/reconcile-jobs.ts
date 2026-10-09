@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { type Job, type JobType, Queue } from "bullmq"
 import { and, asc, eq, gt, inArray, isNull, or } from "drizzle-orm"
+import { runBackgroundTask } from "~/lib/background-tasks"
 import { mapWithConcurrency } from "~/lib/concurrency"
 import { acquireLock, releaseLock } from "~/lib/distributed-lock"
 import { env } from "~/lib/env"
@@ -248,9 +249,9 @@ export const autoReconcileJobs = () => {
     }
   }
 
-  reconcileInterval = setInterval(run, env.JOB_RECONCILE_INTERVAL_MS)
+  reconcileInterval = setInterval(() => runBackgroundTask(run), env.JOB_RECONCILE_INTERVAL_MS)
 
-  run().catch((error) => {
+  runBackgroundTask(run).catch((error) => {
     logger.error("Error in initial job reconciliation", { error })
   })
 

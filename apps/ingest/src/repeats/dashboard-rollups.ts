@@ -3,6 +3,7 @@ import { utcTimestamp } from "@better-bull-board/db/utils/timestamp"
 import { logger } from "@rharkor/logger"
 import { sql } from "drizzle-orm"
 import cron from "node-cron"
+import { runBackgroundTask } from "~/lib/background-tasks"
 import { withLock } from "~/lib/distributed-lock"
 import { env } from "~/lib/env"
 import { instanceId } from "~/lib/instance"
@@ -112,7 +113,7 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
 
 export const startDashboardRollups = () => {
   cron.schedule("0 * * * *", () => {
-    refreshLastCompletedDashboardRollupHour().catch((error) => {
+    runBackgroundTask(refreshLastCompletedDashboardRollupHour).catch((error) => {
       logger.error("Failed to refresh dashboard rollups", { error })
     })
   })

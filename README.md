@@ -41,7 +41,7 @@ We are clearing the data from the following entities:
 
 ```bash
 docker-compose -f .docker/compose.local.yaml up -d
-pnpm dev
+bun run dev
 ```
 
 ## Docs

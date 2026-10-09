@@ -15,74 +15,63 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV API_HOSTNAME=0.0.0.0
 ENV PORT=8080
 
-# Pin matches package.json packageManager (base has no package.json yet).
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME/bin:$PATH"
-RUN corepack enable && corepack prepare pnpm@12.0.0 --activate
+# Pin matches package.json packageManager. Node runs the build tools; the runner stage is bun only.
+COPY --from=oven/bun:1.4.2-alpine /usr/local/bin/bun /usr/local/bin/
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
 
 #* ---- Prepare stage ----
 FROM base AS prepare
 COPY . .
+# Same turbo as package.json: bunx without a version fetches the latest.
 RUN --mount=type=cache,target=/root/.cache/turbo \
-  pnpm dlx turbo@2.10.11 prune @better-bull-board/ingest --docker
+  TURBO_VERSION=$(bun -p 'require("./package.json").devDependencies.turbo') \
+  && bunx turbo@$TURBO_VERSION prune @better-bull-board/ingest --docker
 
 #* ---- Installer stage (dev deps for build) ----
 # `--ignore-scripts` skips the root `lefthook install` prepare hook (git/lefthook
 # are not available in this image, and lefthook is a devDependency).
 FROM base AS installer
-ENV NODE_ENV=development
-
 COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-  pnpm ci --ignore-scripts
+# No store cache mount: it restored nothing on ephemeral builders, and a mount is
+# a separate filesystem, so bun copies instead of hardlinking out of its cache.
+RUN bun ci --ignore-scripts
 COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
 FROM base AS builder
 ENV NODE_OPTIONS="--max-old-space-size=6144"
 COPY --from=installer /app /app
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-  --mount=type=cache,target=/root/.cache/turbo \
-  pnpm run build:ingest
+RUN --mount=type=cache,target=/root/.cache/turbo \
+  bun run build:ingest
 
 #* ---- Runtime files stage ----
+# Only the files the entries import (Next's standalone approach), like the main repo's service
+# images: `bun install --production` would still ship every workspace package's devDependencies.
+# ingest runs `drizzle-kit migrate` from packages/db at startup, so the CLI and its config are
+# traced too, and the migrations are copied explicitly.
 FROM builder AS runtime-files
-
-RUN set -eux; \
-  mkdir -p /app/runtime/apps/ingest; \
-  cp -r /app/apps/ingest/dist /app/runtime/apps/ingest/dist; \
-  \
-  find /app/packages \
-  -type d -name dist \
-  -not -path "*/node_modules/*" \
-  -print0 \
-  | while IFS= read -r -d '' d; do \
-  pkg_dir="$(dirname "$d")"; \
-  rel="${pkg_dir#/app/}"; \
-  mkdir -p "/app/runtime/$rel"; \
-  cp -r "$d" "/app/runtime/$rel/"; \
-  done; \
-  \
-  # ingest runs `drizzle-kit migrate` from packages/db at startup
-  mkdir -p /app/runtime/packages/db; \
-  cp /app/packages/db/drizzle.config.ts /app/runtime/packages/db/drizzle.config.ts; \
-  cp -r /app/packages/db/drizzle /app/runtime/packages/db/drizzle; \
-  cp -r /app/packages/db/src /app/runtime/packages/db/src
+COPY scripts/trace-runtime.ts scripts/
+# Traced with bun, the runner's runtime: bun's own `ws` replaces the package, and the
+# `bun` export condition picks its files.
+RUN bun scripts/trace-runtime.ts \
+  apps/ingest/dist/index.mjs \
+  packages/db/node_modules/drizzle-kit/bin.cjs \
+  packages/db/drizzle.config.ts \
+  /app/runtime \
+  && cp -r packages/db/drizzle /app/runtime/packages/db/
 
 #* ---- Runtime stage ----
-FROM base AS runner
+FROM oven/bun:1.4.2-alpine AS runner
+# msgpackr-extract (bullmq) ships a glibc build.
+RUN apk add --no-cache libc6-compat \
+  && addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 --home /home/nodeapp nodeapp
 WORKDIR /app
+ENV NODE_ENV=production \
+  HOME=/home/nodeapp
 
-RUN addgroup --system --gid 1001 nodejs \
- && adduser --system --uid 1001 --home /home/nodeapp nodeapp
-
-ENV HOME=/home/nodeapp
-
-COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-  pnpm ci --ignore-scripts --prod
 COPY --from=runtime-files --chown=nodeapp:nodejs /app/runtime/ /app/
 
 USER nodeapp
-
-CMD ["node", "apps/ingest/dist/index.mjs"]
+# Exec form: bun is PID 1 and receives SIGTERM directly.
+CMD ["bun", "apps/ingest/dist/index.mjs"]

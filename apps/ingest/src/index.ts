@@ -1,4 +1,4 @@
-import { monitorEventLoopDelay, performance } from "node:perf_hooks"
+import { monitorEventLoopDelay } from "node:perf_hooks"
 import { logger } from "@rharkor/logger"
 import { env } from "./lib/env"
 import { startHealthServer } from "./lib/health-server"
@@ -9,12 +9,14 @@ import { startDashboardRollups } from "./repeats/dashboard-rollups"
 import { startJobTagsRefresh } from "./repeats/job-tags"
 import { autoIngestQueues } from "./repeats/queues"
 import { autoReconcileJobs } from "./repeats/reconcile-jobs"
+import { handleShutdownSignals } from "./shutdown"
 import { startJobStreamIngestion } from "./sync/job-stream"
 import { autoResolveBufferedJobLogs } from "./sync/log-buffer"
 import { startJobLogStreamIngestion } from "./sync/log-stream"
 
 const main = async () => {
   await logger.init()
+  handleShutdownSignals()
 
   // Run database migrations first (only in production)
   await migrateDatabases()
@@ -52,13 +54,12 @@ const main = async () => {
 //   }, 10_000);
 // }
 
+// No eventLoopUtilization: bun returns zeros for it, while the delay histogram works.
 const h = monitorEventLoopDelay({ resolution: 20 })
-let eventLoopUsage = performance.eventLoopUtilization()
 let resourceUsage = process.resourceUsage()
 h.enable()
 setInterval(() => {
   const p99 = h.percentile(99) / 1e6 // ms
-  const nextEventLoopUsage = performance.eventLoopUtilization(eventLoopUsage)
   const nextResourceUsage = process.resourceUsage()
   const memoryUsage = process.memoryUsage()
   const cpuUsage = {
@@ -66,17 +67,11 @@ setInterval(() => {
     userMs: (nextResourceUsage.userCPUTime - resourceUsage.userCPUTime) / 1000,
   }
 
-  eventLoopUsage = performance.eventLoopUtilization()
   resourceUsage = nextResourceUsage
   h.reset()
   if (p99 > 100) {
     logger.warn("Event loop p99", {
       cpuUsage,
-      eventLoopUtilization: {
-        activeMs: nextEventLoopUsage.active,
-        idleMs: nextEventLoopUsage.idle,
-        utilization: nextEventLoopUsage.utilization,
-      },
       memoryUsage: {
         externalMb: memoryUsage.external / 1024 / 1024,
         heapTotalMb: memoryUsage.heapTotal / 1024 / 1024,
