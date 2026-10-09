@@ -91,18 +91,6 @@ jobs:
         with:
           registry-type: public
 
-      # Docker Hub rate-limits anonymous pulls per runner IP (429 on node and oven/bun): the daemon pulls
-      # its images through Google's mirror, which serves the same digests, and falls back to Docker Hub.
-      # The Dockerfiles keep their Docker Hub names, which Renovate tracks.
-      - name: Pull Docker Hub images through mirror.gcr.io
-        if: steps.changes.outputs.changed == 'true'
-        run: |
-          config=/etc/docker/daemon.json
-          current="$(sudo cat "$config" 2>/dev/null || echo '{}')"
-          echo "$current" | jq '."registry-mirrors" = ["https://mirror.gcr.io"]' | sudo tee "$config" >/dev/null
-          sudo systemctl restart docker
-          docker info --format 'Registry mirrors: {{.RegistryConfig.Mirrors}}'
-
       # Docker's default BuildKit builder, without a GitHub Actions cache: every promotion changes
       # the sources or the lockfile, so the cache served 1-2 steps out of 20 while exporting it took
       # twice as long as the build itself (165 s for the app).
