@@ -33,9 +33,11 @@ kubectl apply -f k8s/
 
 Point `k8s/04-app.yaml` and `k8s/05-ingest.yaml` at your registry if you are not using the public ECR images. Postgres uses `public.ecr.aws/n5q7l0s4/better-bull-board-postgres:latest`; rebuild that image only when `.docker/db` changes — see [Docker images](docker-build.md).
 
-`deploy.yml` does not apply the manifests: it points `bbb-app` and `bbb-ingest` at the images tagged with the deployed commit (`kubectl set image`) and waits for the rollout. Apply the manifests again whenever `k8s/` changes; they reference `:latest`, the last image built from `main`, until the next deploy pins the commit again.
+`deploy.yml` does not apply the manifests. For each image it compares the deployed commit with the previous one (`github.event.before`): when neither the package, its workspace dependencies (`turbo ls --affected`) nor the root files it is built from changed, it skips the image and keeps the running one ([`.github/scripts/image-changed.sh`](../.github/scripts/image-changed.sh)). Otherwise it builds the image, points the workload at the tag of the deployed commit (`kubectl set image`) and waits for that rollout, without waiting for the other image. A manual **Run workflow** builds both.
 
-To roll back, `kubectl rollout undo deployment/bbb-app -n better-bull-board` (and `statefulset/bbb-ingest`) returns to the previous commit's image.
+Apply the manifests again whenever `k8s/` changes (probes, resources…); they reference `:latest`, the last image built from `main`, until the next deploy pins a commit again.
+
+To roll back, `kubectl rollout undo deployment/bbb-app -n better-bull-board` (and `statefulset/bbb-ingest`) returns to the previous image.
 
 ## Database migrations
 
