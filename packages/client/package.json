@@ -50,7 +50,7 @@
   "devDependencies": {
     "@better-bull-board/typescript-config": "workspace:*",
     "@types/node": "26.6.2",
-    "bullmq": "6.3.8",
+    "bullmq": "6.3.9",
     "tsdown": "0.23.0",
     "typescript": "7.0.2"
   }
