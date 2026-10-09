@@ -55,11 +55,25 @@ jobs:
           # packageManager in package.json pins the bun version.
           bun-version-file: package.json
 
+      - name: Setup kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_CONTENT }}" | base64 -d > ~/.kube/config
+
+      # Deploys tag images with their commit: the running tag says what is in production.
+      - name: Read the deployed commit
+        id: deployed
+        run: |
+          image="$(kubectl get "${{ matrix.workload }}" -n "$K8S_NAMESPACE" \
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="${{ matrix.container }}")].image}')"
+          echo "Running: $image"
+          echo "sha=${image##*:}" >> "$GITHUB_OUTPUT"
+
       - name: Check whether the image changed
         id: changes
         env:
           EVENT: ${{ github.event_name }}
-          BEFORE: ${{ github.event.before }}
+          DEPLOYED: ${{ steps.deployed.outputs.sha }}
         run: .github/scripts/image-changed.sh "${{ matrix.package }}" ${{ matrix.extra-inputs }}
 
       - name: Configure AWS credentials
@@ -91,12 +105,6 @@ jobs:
           tags: |
             ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
             ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:latest
-
-      - name: Setup kubeconfig
-        if: steps.changes.outputs.changed == 'true'
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_CONTENT }}" | base64 -d > ~/.kube/config
 
       # Pin the workload to this commit's image rather than restarting on :latest: the pods run
       # exactly what this run built, overlapping deploys cannot swap images, and
