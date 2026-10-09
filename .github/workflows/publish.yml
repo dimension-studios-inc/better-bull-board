@@ -1,5 +1,7 @@
 name: Publish
 
+# Releases @better-bull-board/client with semantic-release when Promote moves main: the next
+# version comes from the conventional commits touching packages/client (docs/publishing.md).
 on:
   push:
     branches:
@@ -12,17 +14,23 @@ concurrency:
 
 permissions:
   contents: read
-  # npmjs trusted publishing (OIDC). Do not add NODE_AUTH_TOKEN / NPM_TOKEN.
-  id-token: write
 
 jobs:
   publish:
     name: Publish client
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write # client-v* tags and GitHub releases
+      issues: write # "released in" comments
+      pull-requests: write
+      id-token: write # npmjs trusted publishing (OIDC). Do not add NODE_AUTH_TOKEN / NPM_TOKEN.
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
+        with:
+          # semantic-release reads the client-v* tags and the commits since the last one.
+          fetch-depth: 0
 
       - name: Setup bun
         uses: oven-sh/setup-bun@v2.2.0
@@ -30,7 +38,7 @@ jobs:
           # packageManager in package.json pins the bun version.
           bun-version-file: package.json
 
-      # Official Node+npm on PATH for the OIDC publish: bun packs, npm publishes.
+      # Official Node+npm on PATH for the OIDC publish (npm >= 11.5.1).
       # Do not set registry-url: it writes an empty _authToken and breaks trusted publishing.
       - name: Setup Node.js
         uses: actions/setup-node@v7.0.0
@@ -39,17 +47,6 @@ jobs:
 
       - run: bun ci
 
-      - name: Publish @better-bull-board/client
-        working-directory: packages/client
-        run: |
-          NAME="$(bun -p "require('./package.json').name")"
-          VERSION="$(bun -p "require('./package.json').version")"
-          PUBLISHED="$(npm view "${NAME}@${VERSION}" version 2>/dev/null || true)"
-          if [ "$PUBLISHED" = "$VERSION" ]; then
-            echo "Version ${VERSION} is already published; skipping."
-            exit 0
-          fi
-          bun run pack:check
-          # bun pm pack rewrites workspace: ranges, which npm publish would ship as-is.
-          TARBALL="$(bun pm pack --quiet)"
-          npm publish "$TARBALL" --access public
+      - run: bun run release:client
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

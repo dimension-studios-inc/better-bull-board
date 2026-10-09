@@ -3,10 +3,21 @@
   "ignoreWorkspaces": ["packages/_template"],
   "workspaces": {
     ".": {
-      "entry": ["scripts/**"]
+      "entry": ["scripts/**"],
+      "ignoreDependencies": [
+        "@semantic-release/commit-analyzer",
+        "@semantic-release/exec",
+        "@semantic-release/github",
+        "@semantic-release/release-notes-generator",
+        "conventional-changelog-conventionalcommits",
+        "semantic-release-monorepo"
+      ]
     },
     "packages/bull-demo": {
       "entry": ["debug/*.ts"]
+    },
+    "packages/client": {
+      "entry": ["release.config.mjs"]
     },
     "packages/typescript-config": {
       "ignoreUnresolved": ["next"]
