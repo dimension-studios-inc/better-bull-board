@@ -102,8 +102,7 @@ export function QueuePerformanceTable({
   }
 
   const sortedQueuePerformance = useMemo(() => {
-    // oxlint-disable-next-line unicorn/no-array-sort -- sorts a fresh copy; the app tsconfig lib (ES2022) has no toSorted
-    return [...(queuePerformance ?? [])].sort((a, b) => {
+    return (queuePerformance ?? []).toSorted((a, b) => {
       const direction = sort.direction === "asc" ? 1 : -1
       const aValue = a[sort.key]
       const bValue = b[sort.key]

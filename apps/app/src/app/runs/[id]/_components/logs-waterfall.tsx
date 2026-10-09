@@ -100,8 +100,7 @@ export function LogsWaterfall({
   }
 
   // Sort logs by timestamp ascending to show chronological order
-  // oxlint-disable-next-line unicorn/no-array-sort -- sorts a fresh copy; the app tsconfig lib (ES2022) has no toSorted
-  const sortedLogs = [...logs].sort((a, b) => a.ts - b.ts)
+  const sortedLogs = logs.toSorted((a, b) => a.ts - b.ts)
 
   const scheduledTime = (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs
   const startTime = Math.max(run.createdAt.getTime(), scheduledTime)
