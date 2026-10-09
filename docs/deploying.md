@@ -1,6 +1,6 @@
 # Deploying
 
-`develop` is the integration branch: pull requests target it and are squash merged. `main` is what runs in production. A push to `main` runs [Deploy](../.github/workflows/deploy.yml) (app and ingest images, Kubernetes rollout) and [Publish](../.github/workflows/publish.yml) (`@better-bull-board/client`, when its version is new).
+`develop` is the integration branch: pull requests target it and are squash merged. `main` is what runs in production. A push to `main` runs [Deploy](../.github/workflows/deploy.yml) (app and ingest images, Kubernetes rollout) and [Publish](../.github/workflows/publish.yml) (a semantic-release of `@better-bull-board/client` when its commits call for one, see [Publishing](publishing.md)).
 
 To deploy, run **Actions** → **Promote** → **Run workflow**. [`promote.yml`](../.github/workflows/promote.yml):
 

@@ -10,6 +10,14 @@
       "description": "Keep the Dockerfile oven/bun images in step with packageManager",
       "groupName": "bun",
       "matchPackageNames": ["bun", "oven/bun"]
+    },
+    {
+      "description": "Client devDependencies get their own PRs: grouped with the other packages' fix(deps) updates, they would publish a client release",
+      "matchFileNames": ["packages/client/package.json"],
+      "matchDepTypes": ["devDependencies"],
+      "additionalBranchPrefix": "client-",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "client-deps"
     }
   ]
 }
