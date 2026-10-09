@@ -16,10 +16,6 @@
     "source.fixAll.oxc": "explicit"
   },
 
-  // Show type-aware findings (floating promises, no-unsafe-*, …) in the editor too. Needs the
-  // workspace packages built (`bun run setup`, or `bun run dev` running).
-  "oxc.typeAware": true,
-
   // Optional: format on paste & type
   "editor.formatOnPaste": true,
   "editor.formatOnType": false,
