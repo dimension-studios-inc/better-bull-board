@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from "motion/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
+import { useRef } from "react"
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas"
 import { apiFetch, smartFormatDuration } from "~/lib/utils/client"
 import { getQueueHref } from "~/lib/utils/queue-link"
@@ -74,6 +75,7 @@ export function QueuesTable() {
     sortDirection: parseAsString.withDefault("desc"),
   })
 
+  const cursorHistoryRef = useRef<(QueueCursor | null)[]>([])
   const cursorDirection: "next" | "prev" = urlState.cursorDirection === "prev" ? "prev" : "next"
   const sortBy: SortBy =
     urlState.sortBy === "activeJobs" ? "activeJobs" : urlState.sortBy === "pressure" ? "pressure" : "waitingJobs"
@@ -116,32 +118,41 @@ export function QueuesTable() {
 
   const handleNextPage = () => {
     if (data?.nextCursor) {
+      cursorHistoryRef.current.push(urlState.cursor)
       setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
     }
   }
 
+  // Like the runs table: Previous returns to the cursor of the page it came from, so the first page drops the
+  // cursor from the URL. The server's prevCursor only serves when there is no history (a reloaded page).
   const handlePrevPage = () => {
-    if (data?.prevCursor) {
+    const previousCursor = cursorHistoryRef.current.pop()
+    if (previousCursor !== undefined) {
+      setUrlState({ cursor: previousCursor, cursorDirection: "next" })
+    } else if (data?.prevCursor) {
       setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
     } else {
       setUrlState({ cursor: null, cursorDirection: "next" })
     }
   }
 
+  // Filters and sort go back to the first page
+  const firstPage = () => {
+    cursorHistoryRef.current = []
+    return { cursor: null, cursorDirection: "next" } as const
+  }
+
   const handleSearchChange = (search: string) => {
-    // Reset pagination when search changes
-    setUrlState({ cursor: null, cursorDirection: "next", search })
+    setUrlState({ ...firstPage(), search })
   }
 
   const handleTimePeriodChange = (timePeriod: TimePeriod) => {
-    // Reset pagination when time period changes
-    setUrlState({ cursor: null, cursorDirection: "next", timePeriod })
+    setUrlState({ ...firstPage(), timePeriod })
   }
 
   const handleSort = (nextSortBy: SortBy) => {
     setUrlState({
-      cursor: null,
-      cursorDirection: "next",
+      ...firstPage(),
       sortBy: nextSortBy,
       sortDirection: sortBy === nextSortBy && sortDirection === "desc" ? "asc" : "desc",
     })

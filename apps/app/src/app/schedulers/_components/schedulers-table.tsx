@@ -12,7 +12,7 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, CircleAlert, Search } fr
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import type { output } from "zod"
 import { getSchedulersTableApiRoute } from "~/app/api/schedulers/table/schemas"
 import { QueueStateBadge } from "~/app/queues/_components/queue-state-badge"
@@ -105,6 +105,7 @@ export function SchedulersTable() {
     cursorDirection: parseAsString.withDefault("next"),
   })
 
+  const cursorHistoryRef = useRef<(SchedulerCursor | null)[]>([])
   const sortDirection = urlState.sortDirection === "desc" ? "desc" : "asc"
   const cursorDirection = urlState.cursorDirection === "prev" ? "prev" : "next"
   const debouncedSearch = useDebounce(urlState.search, 300)
@@ -139,21 +140,32 @@ export function SchedulersTable() {
 
   const handleNextPage = () => {
     if (data?.nextCursor) {
+      cursorHistoryRef.current.push(urlState.cursor)
       setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
     }
   }
 
+  // Like the runs table: Previous returns to the cursor of the page it came from, so the first page drops the
+  // cursor from the URL. The server's prevCursor only serves when there is no history (a reloaded page).
   const handlePrevPage = () => {
-    if (data?.prevCursor) {
+    const previousCursor = cursorHistoryRef.current.pop()
+    if (previousCursor !== undefined) {
+      setUrlState({ cursor: previousCursor, cursorDirection: "next" })
+    } else if (data?.prevCursor) {
       setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
     } else {
       setUrlState({ cursor: null, cursorDirection: "next" })
     }
   }
 
-  // Filters and sort reset the pagination
+  // Filters and sort go back to the first page
+  const firstPage = () => {
+    cursorHistoryRef.current = []
+    return { cursor: null, cursorDirection: "next" } as const
+  }
+
   const handleSort = () => {
-    setUrlState({ cursor: null, cursorDirection: "next", sortDirection: sortDirection === "asc" ? "desc" : "asc" })
+    setUrlState({ ...firstPage(), sortDirection: sortDirection === "asc" ? "desc" : "asc" })
   }
 
   const sortIcon = sortDirection === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
@@ -167,7 +179,7 @@ export function SchedulersTable() {
       <div className="flex flex-wrap items-center gap-2">
         <QueueSelector
           value={urlState.queue}
-          onValueChange={(queue) => setUrlState({ cursor: null, cursorDirection: "next", queue })}
+          onValueChange={(queue) => setUrlState({ ...firstPage(), queue })}
           search={queueSearch}
           setSearch={setQueueSearch}
           open={queueOpen}
@@ -183,7 +195,7 @@ export function SchedulersTable() {
           <Input
             placeholder="Search by scheduler or queue..."
             value={urlState.search}
-            onChange={(e) => setUrlState({ cursor: null, cursorDirection: "next", search: e.target.value })}
+            onChange={(e) => setUrlState({ ...firstPage(), search: e.target.value })}
             className="pl-10"
           />
         </div>
