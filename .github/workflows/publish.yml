@@ -24,26 +24,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
 
-      # Trusted publishing uses GitHub OIDC. Do not add NODE_AUTH_TOKEN / NPM_TOKEN.
-      - name: Setup pnpm
-        uses: pnpm/setup@v3.0.0
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2.2.0
         with:
-          runtime: node@24.21.0
-          cache: true
-          install: false
+          # packageManager in package.json pins the bun version.
+          bun-version-file: package.json
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      # Official Node+npm on PATH for the OIDC publish: bun packs, npm publishes.
+      # Do not set registry-url: it writes an empty _authToken and breaks trusted publishing.
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "24.21.0"
+
+      - run: bun ci
 
       - name: Publish @better-bull-board/client
         working-directory: packages/client
         run: |
-          NAME="$(node -p "require('./package.json').name")"
-          VERSION="$(node -p "require('./package.json').version")"
-          PUBLISHED="$(pnpm view "${NAME}@${VERSION}" version 2>/dev/null || true)"
+          NAME="$(bun -p "require('./package.json').name")"
+          VERSION="$(bun -p "require('./package.json').version")"
+          PUBLISHED="$(npm view "${NAME}@${VERSION}" version 2>/dev/null || true)"
           if [ "$PUBLISHED" = "$VERSION" ]; then
             echo "Version ${VERSION} is already published; skipping."
             exit 0
           fi
-          pnpm run pack:check
-          pnpm publish --access public --no-git-checks
+          bun run pack:check
+          # bun pm pack rewrites workspace: ranges, which npm publish would ship as-is.
+          TARBALL="$(bun pm pack --quiet)"
+          npm publish "$TARBALL" --access public

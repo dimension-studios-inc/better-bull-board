@@ -1,12 +1,17 @@
 {
   "name": "better-bull-board",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "biome check",
     "format": "biome format --write",
     "type-check": "turbo run type-check",
+    "test": "turbo run test",
     "knip": "knip",
     "setup": "turbo run build --filter='@better-bull-board/*'^...",
     "build:app": "turbo run build --filter=@better-bull-board/app --env-mode=loose",
@@ -17,6 +22,7 @@
     "@biomejs/biome": "2.5.14",
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
+    "@vercel/nft": "1.11.0",
     "knip": "6.38.0",
     "lefthook": "2.1.14",
     "turbo": "2.11.4",
@@ -25,5 +31,10 @@
   "engines": {
     "node": ">=22.18.0"
   },
-  "packageManager": "pnpm@12.7.0"
+  "trustedDependencies": [
+    "esbuild",
+    "lefthook",
+    "msgpackr-extract"
+  ],
+  "packageManager": "bun@1.4.2"
 }

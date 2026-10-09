@@ -1,4 +1,4 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import { URL } from "node:url"
 import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
@@ -189,8 +189,10 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
   )
 }
 
+let server: Server | undefined
+
 export function startHealthServer(port: number = 3001): void {
-  const server = createServer(handleRequest)
+  server = createServer(handleRequest)
 
   server.listen(port, () => {
     logger.log(`🏥 Health server listening on port ${port}`)
@@ -200,3 +202,10 @@ export function startHealthServer(port: number = 3001): void {
     logger.error("Health server error:", error)
   })
 }
+
+export const stopHealthServer = () =>
+  new Promise<void>((resolve) => {
+    if (!server) return resolve()
+    server.close(() => resolve())
+    server.closeAllConnections()
+  })

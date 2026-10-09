@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-
-import "dotenv/config"
+#!/usr/bin/env bun
 
 import { timingSafeEqual } from "node:crypto"
 import { createServer, type ServerResponse } from "node:http"
@@ -106,3 +104,15 @@ httpServer.listen(env.BBB_MCP_PORT, env.BBB_MCP_HOST, () => {
     }),
   )
 })
+
+const shutdown = (signal: NodeJS.Signals) => {
+  console.error(JSON.stringify({ level: "info", message: `Received ${signal}, shutting down` }))
+  // In-flight requests finish; a connection still open after 10 s is cut.
+  setTimeout(() => process.exit(1), 10_000).unref()
+  httpServer.close(() => process.exit(0))
+  httpServer.closeIdleConnections()
+}
+
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.once(signal, () => shutdown(signal))
+}
