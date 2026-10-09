@@ -1,5 +1,6 @@
 import { pauseQueue } from "~/lib/queue-mutations"
 import { createAuthenticatedApiRoute } from "~/lib/utils/server"
+
 import { pauseQueueApiRoute } from "./schemas"
 
 export const POST = createAuthenticatedApiRoute({

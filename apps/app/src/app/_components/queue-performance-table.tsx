@@ -3,13 +3,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@better-bull-board/ui/components/table"
 import { cn } from "cn"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
 import type { z } from "zod"
+
 import type { dashboardQueuePerformanceOutput } from "~/app/api/dashboard/summary/schemas"
 import { TruncatedTooltip } from "~/components/truncated-tooltip"
 import { getRunsHref } from "~/lib/utils/runs-link"
@@ -25,7 +33,14 @@ interface QueuePerformanceTableProps {
 
 type SortKey = keyof Pick<
   QueuePerformance,
-  "queue" | "totalRuns" | "successes" | "failures" | "errorRate" | "avgDuration" | "minDuration" | "maxDuration"
+  | "queue"
+  | "totalRuns"
+  | "successes"
+  | "failures"
+  | "errorRate"
+  | "avgDuration"
+  | "minDuration"
+  | "maxDuration"
 >
 type SortDirection = "asc" | "desc"
 
@@ -40,7 +55,8 @@ const sortableColumns: { key: SortKey; label: string; align?: "right" }[] = [
   { key: "maxDuration", label: "Max Duration", align: "right" },
 ]
 
-const isLinkTarget = (target: EventTarget | null) => target instanceof Element && !!target.closest("a,button")
+const isLinkTarget = (target: EventTarget | null) =>
+  target instanceof Element && !!target.closest("a,button")
 
 type RunCountLinkProps = {
   count: number
@@ -59,7 +75,7 @@ function RunCountLink({ count, href, label, className }: RunCountLinkProps) {
       aria-label={label}
       title={label}
       className={cn(
-        "-mx-1.5 -my-0.5 rounded-md px-1.5 py-0.5 underline-offset-4 outline-none transition-colors hover:underline focus-visible:ring-2 focus-visible:ring-ring/50",
+        "-mx-1.5 -my-0.5 rounded-md px-1.5 py-0.5 underline-offset-4 transition-colors outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50",
         className,
       )}
     >
@@ -68,7 +84,11 @@ function RunCountLink({ count, href, label, className }: RunCountLinkProps) {
   )
 }
 
-export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: QueuePerformanceTableProps) {
+export function QueuePerformanceTable({
+  minutes,
+  queuePerformance,
+  isLoading,
+}: QueuePerformanceTableProps) {
   const router = useRouter()
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: "totalRuns",
@@ -82,7 +102,7 @@ export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: 
   }
 
   const sortedQueuePerformance = useMemo(() => {
-    return [...(queuePerformance ?? [])].sort((a, b) => {
+    return (queuePerformance ?? []).toSorted((a, b) => {
       const direction = sort.direction === "asc" ? 1 : -1
       const aValue = a[sort.key]
       const bValue = b[sort.key]
@@ -127,9 +147,9 @@ export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: 
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="space-y-3 h-96">
+          <div className="h-96 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
+              // oxlint-disable-next-line react/no-array-index-key -- static skeleton placeholders never reorder
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
@@ -139,7 +159,10 @@ export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: 
               <TableHeader className="z-10">
                 <TableRow>
                   {sortableColumns.map((column) => (
-                    <TableHead key={column.key} className={column.align === "right" ? "text-right" : undefined}>
+                    <TableHead
+                      key={column.key}
+                      className={column.align === "right" ? "text-right" : undefined}
+                    >
                       <button
                         type="button"
                         className={
@@ -174,7 +197,9 @@ export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: 
                           <TruncatedTooltip value={queue.queue} />
                         </Link>
                       </TableCell>
-                      <TableCell className="text-right font-mono">{queue.totalRuns.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        {queue.totalRuns.toLocaleString()}
+                      </TableCell>
                       <TableCell className="text-right font-mono">
                         <RunCountLink
                           count={queue.successes}
@@ -204,9 +229,15 @@ export function QueuePerformanceTable({ minutes, queuePerformance, isLoading }: 
                           {queue.errorRate.toFixed(1)}%
                         </span>
                       </TableCell>
-                      <TableCell className="text-right font-mono">{formatDuration(queue.avgDuration)}</TableCell>
-                      <TableCell className="text-right font-mono">{formatDuration(queue.minDuration)}</TableCell>
-                      <TableCell className="text-right font-mono">{formatDuration(queue.maxDuration)}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatDuration(queue.avgDuration)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatDuration(queue.minDuration)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatDuration(queue.maxDuration)}
+                      </TableCell>
                     </TableRow>
                   )
                 })}

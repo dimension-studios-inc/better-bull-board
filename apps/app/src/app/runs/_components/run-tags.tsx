@@ -1,7 +1,11 @@
 "use client"
 
 import { Badge } from "@better-bull-board/ui/components/badge"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@better-bull-board/ui/components/hover-card"
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@better-bull-board/ui/components/hover-card"
 
 type RunTagsProps = {
   tags: string[]
@@ -22,7 +26,12 @@ export function RunTags({ tags, onTagClick }: RunTagsProps) {
       <HoverCardTrigger
         delay={300}
         closeDelay={150}
-        render={<div className="flex min-w-0 items-center gap-1" title={tags.length === 1 ? firstTag : undefined} />}
+        render={
+          <div
+            className="flex min-w-0 items-center gap-1"
+            title={tags.length === 1 ? firstTag : undefined}
+          />
+        }
       >
         <Badge variant="outline" className="min-w-0 shrink">
           <span className="truncate">{firstTag}</span>
@@ -30,7 +39,11 @@ export function RunTags({ tags, onTagClick }: RunTagsProps) {
         {otherTags.length > 0 && <Badge variant="secondary">+{otherTags.length}</Badge>}
       </HoverCardTrigger>
       {/* Portaled, but React events still bubble to the row: a click in the card must not open the run */}
-      <HoverCardContent align="start" className="w-auto max-w-sm" onClick={(event) => event.stopPropagation()}>
+      <HoverCardContent
+        align="start"
+        className="w-auto max-w-sm"
+        onClick={(event) => event.stopPropagation()}
+      >
         <p className="text-xs text-muted-foreground">
           {tags.length === 1 ? "1 tag" : `${tags.length} tags`} · click one to filter
         </p>
@@ -40,7 +53,13 @@ export function RunTags({ tags, onTagClick }: RunTagsProps) {
               key={tag}
               variant="outline"
               className="max-w-full cursor-pointer hover:bg-muted"
-              render={<button type="button" onClick={() => onTagClick(tag)} />}
+              render={
+                <button
+                  type="button"
+                  aria-label={`Filter by tag ${tag}`}
+                  onClick={() => onTagClick(tag)}
+                />
+              }
             >
               <span className="truncate">{tag}</span>
             </Badge>

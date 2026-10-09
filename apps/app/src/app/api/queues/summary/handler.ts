@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server"
 import { utcTimestamp } from "@better-bull-board/db/utils/timestamp"
 import { sql } from "drizzle-orm"
 import type { z } from "zod"
+
 import {
   type BucketRow,
   type DashboardWindow,
@@ -11,7 +12,10 @@ import {
   getDashboardWindow,
   toNumber,
 } from "~/app/api/dashboard/summary/handler"
-import type { queueSummaryGraphOutput, queueSummaryStatsOutput } from "~/app/api/queues/summary/schemas"
+import type {
+  queueSummaryGraphOutput,
+  queueSummaryStatsOutput,
+} from "~/app/api/queues/summary/schemas"
 
 type QueueSummaryStats = z.output<typeof queueSummaryStatsOutput>
 type QueueSummaryGraphPoint = z.output<typeof queueSummaryGraphOutput>
@@ -34,7 +38,10 @@ const MAX_DURATION_SAMPLES = 100_000
  * Duration percentiles of the completed runs, per graph bucket and for the whole period in one scan.
  * The rollups only keep sums, so this reads job_runs (index on queue, status, created_at).
  */
-const getDurationRows = async (queue: string, { dateFrom, dateTo, bucketSeconds }: DashboardWindow) => {
+const getDurationRows = async (
+  queue: string,
+  { dateFrom, dateTo, bucketSeconds }: DashboardWindow,
+) => {
   const bucket = sql.raw(String(bucketSeconds))
   const result = await db.execute(sql`
     SELECT
@@ -61,7 +68,10 @@ const getDurationRows = async (queue: string, { dateFrom, dateTo, bucketSeconds 
   return result.rows as DurationRow[]
 }
 
-const getStats = (bucketRows: BucketRow[], periodDurations: DurationRow | undefined): QueueSummaryStats => {
+const getStats = (
+  bucketRows: BucketRow[],
+  periodDurations: DurationRow | undefined,
+): QueueSummaryStats => {
   let totalRuns = 0
   let successes = 0
   let failures = 0
@@ -80,7 +90,8 @@ const getStats = (bucketRows: BucketRow[], periodDurations: DurationRow | undefi
     p95DurationMs: toNullableNumber(periodDurations?.p95_ms ?? null),
     p99DurationMs: toNullableNumber(periodDurations?.p99_ms ?? null),
     // Older completed runs of the period were left out of the percentiles
-    durationSampleLimit: toNumber(periodDurations?.sample_size) >= MAX_DURATION_SAMPLES ? MAX_DURATION_SAMPLES : null,
+    durationSampleLimit:
+      toNumber(periodDurations?.sample_size) >= MAX_DURATION_SAMPLES ? MAX_DURATION_SAMPLES : null,
   }
 }
 
@@ -119,7 +130,13 @@ const getGraph = (
   return graph
 }
 
-export const getQueueSummary = async ({ queueName, minutes }: { queueName: string; minutes: number }) => {
+export const getQueueSummary = async ({
+  queueName,
+  minutes,
+}: {
+  queueName: string
+  minutes: number
+}) => {
   const dashboardWindow = await getDashboardWindow(minutes)
 
   const [bucketRows, durationRows] = await Promise.all([

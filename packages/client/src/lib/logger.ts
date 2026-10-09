@@ -1,8 +1,10 @@
 import { AsyncLocalStorage } from "node:async_hooks"
+
 import type { Job, SandboxedJob } from "bullmq"
+
 import type { JobLogSyncEventInput } from "./log-events"
 
-// biome-ignore lint/suspicious/noControlCharactersInRegex: we don't want to colorize the logs
+// oxlint-disable-next-line eslint/no-control-regex -- matches ANSI escape sequences (ESC) to strip colors from the logs
 const ansiRegex = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g
 
 export function decolorize(input: string): string {
@@ -23,8 +25,16 @@ function nextLogTimestamp() {
   return { ts: now, seq: counter }
 }
 
+// An Error cause keeps its `Error: message` form (no recursion through cyclic causes); other causes are formatted
+// like any logged value rather than as `[object Object]`.
+const formatCause = (cause: unknown) =>
+  cause instanceof Error ? String(cause) : formatForLogger(cause)
+
 export function formatForLogger(data: unknown): string {
-  if (data instanceof Error) return data.stack ? `${data.stack}${data.cause ? `\n${data.cause}` : ""}` : data.message
+  if (data instanceof Error)
+    return data.stack
+      ? `${data.stack}${data.cause ? `\n${formatCause(data.cause)}` : ""}`
+      : data.message
   if (typeof data === "object" && data !== null) {
     try {
       return JSON.stringify(data, null, 2)
@@ -40,7 +50,7 @@ function safeStringify(obj: unknown): string {
   const seen = new WeakSet()
   return JSON.stringify(
     obj,
-    (_k, v) => {
+    (_k, v: unknown) => {
       if (typeof v === "object" && v !== null) {
         if (seen.has(v)) return "[Circular]"
         seen.add(v)
@@ -70,9 +80,7 @@ export function installConsoleRelay({
   addPendingPublish,
   removePendingPublish,
 }: {
-  // biome-ignore lint/suspicious/noConfusingVoidType: _
   addPendingPublish: (publish: Promise<number | void>) => void
-  // biome-ignore lint/suspicious/noConfusingVoidType: _
   removePendingPublish: (publish: Promise<number | void>) => void
 }) {
   if (patched) return
@@ -91,7 +99,9 @@ export function installConsoleRelay({
     (...params: unknown[]) => {
       const ctx = jobStore.getStore()
       if (ctx?.job) {
-        const message = params.map((p) => (typeof p === "string" ? decolorize(p) : formatForLogger(p))).join(" ")
+        const message = params
+          .map((p) => (typeof p === "string" ? decolorize(p) : formatForLogger(p)))
+          .join(" ")
         // Fire-and-forget so console stays sync; swallow errors.
         if (ctx.autoEmitBBBLogs && ctx.job.id) {
           const { ts, seq } = nextLogTimestamp()
@@ -105,9 +115,9 @@ export function installConsoleRelay({
               message,
               level,
             })
-            .catch((err) => original.error("🔍 Error writing log to Redis stream", err))
+            .catch((err: unknown) => original.error("🔍 Error writing log to Redis stream", err))
           addPendingPublish(p)
-          p.finally(() => removePendingPublish(p))
+          void p.finally(() => removePendingPublish(p))
         }
         if (ctx.autoEmitJobLogs) {
           try {

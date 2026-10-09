@@ -1,8 +1,11 @@
 import { patch } from "@better-bull-board/client"
 import type { SandboxedJob } from "bullmq"
+
 import { redis } from "../lib/redis"
 
-export default patch(async (job: SandboxedJob) => {
+type DemoJobData = { wait?: number; shouldFail?: boolean }
+
+export default patch(async (job: SandboxedJob<DemoJobData>) => {
   console.log(`Processing job ${job.id}`)
 
   await new Promise((resolve) => setTimeout(resolve, job.data.wait))

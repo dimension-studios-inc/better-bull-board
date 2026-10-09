@@ -4,7 +4,14 @@ import { Badge } from "@better-bull-board/ui/components/badge"
 import { Button } from "@better-bull-board/ui/components/button"
 import { Input } from "@better-bull-board/ui/components/input"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@better-bull-board/ui/components/table"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
 import { formatDistanceToNowStrict } from "date-fns"
@@ -14,6 +21,7 @@ import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { useRef, useState } from "react"
 import type { output } from "zod"
+
 import { getSchedulersTableApiRoute } from "~/app/api/schedulers/table/schemas"
 import { QueueStateBadge } from "~/app/queues/_components/queue-state-badge"
 import { QueueSelector } from "~/components/queue-selector"
@@ -38,7 +46,7 @@ const isInteractiveRowTarget = (target: EventTarget | null) =>
 const parseAsCursor = createParser<SchedulerCursor>({
   parse: (value) => {
     try {
-      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"))
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8")) as SchedulerCursor
     } catch {
       return null
     }
@@ -51,15 +59,26 @@ function Timestamp({ value, compact = false }: { value: Date; compact?: boolean 
 
   return (
     <time dateTime={value.toISOString()} title={absolute}>
-      <span className="block truncate">{formatDistanceToNowStrict(value, { addSuffix: true })}</span>
+      <span className="block truncate">
+        {formatDistanceToNowStrict(value, { addSuffix: true })}
+      </span>
       {!compact && <span className="block truncate text-xs text-muted-foreground">{absolute}</span>}
     </time>
   )
 }
 
-function NextRun({ scheduler, compact = false }: { scheduler: Scheduler; compact?: boolean }) {
+function NextRun({
+  scheduler,
+  fetchedAt,
+  compact = false,
+}: {
+  scheduler: Scheduler
+  /** When the schedulers were fetched, so an end date is compared with the data it came with */
+  fetchedAt: number
+  compact?: boolean
+}) {
   if (!scheduler.nextRunAt) {
-    const hasEnded = scheduler.endDate !== null && scheduler.endDate.getTime() < Date.now()
+    const hasEnded = scheduler.endDate !== null && scheduler.endDate.getTime() < fetchedAt
     return <span className="text-muted-foreground">{hasEnded ? "Ended" : "-"}</span>
   }
 
@@ -69,7 +88,11 @@ function NextRun({ scheduler, compact = false }: { scheduler: Scheduler; compact
         <Timestamp value={scheduler.nextRunAt} compact={compact} />
       </div>
       {scheduler.isMissed && (
-        <Badge variant="destructive" className="shrink-0" title="This run should have started by now">
+        <Badge
+          variant="destructive"
+          className="shrink-0"
+          title="This run should have started by now"
+        >
           <CircleAlert data-icon="inline-start" />
           Missed
         </Badge>
@@ -117,7 +140,7 @@ export function SchedulersTable() {
     cursorDirection,
   } as const
 
-  const { data, isLoading } = useQuery({
+  const { data, dataUpdatedAt, isLoading } = useQuery({
     queryKey: ["schedulers/table", options],
     queryFn: apiFetch({
       apiRoute: getSchedulersTableApiRoute,
@@ -141,7 +164,7 @@ export function SchedulersTable() {
   const handleNextPage = () => {
     if (data?.nextCursor) {
       cursorHistoryRef.current.push(urlState.cursor)
-      setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
+      void setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
     }
   }
 
@@ -150,11 +173,11 @@ export function SchedulersTable() {
   const handlePrevPage = () => {
     const previousCursor = cursorHistoryRef.current.pop()
     if (previousCursor !== undefined) {
-      setUrlState({ cursor: previousCursor, cursorDirection: "next" })
+      void setUrlState({ cursor: previousCursor, cursorDirection: "next" })
     } else if (data?.prevCursor) {
-      setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
+      void setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
     } else {
-      setUrlState({ cursor: null, cursorDirection: "next" })
+      void setUrlState({ cursor: null, cursorDirection: "next" })
     }
   }
 
@@ -165,10 +188,11 @@ export function SchedulersTable() {
   }
 
   const handleSort = () => {
-    setUrlState({ ...firstPage(), sortDirection: sortDirection === "asc" ? "desc" : "asc" })
+    void setUrlState({ ...firstPage(), sortDirection: sortDirection === "asc" ? "desc" : "asc" })
   }
 
-  const sortIcon = sortDirection === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+  const sortIcon =
+    sortDirection === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
 
   const emptyState = !isLoading && schedulers.length === 0 && (
     <p className="py-10 text-center text-sm text-muted-foreground">No schedulers found</p>
@@ -179,7 +203,7 @@ export function SchedulersTable() {
       <div className="flex flex-wrap items-center gap-2">
         <QueueSelector
           value={urlState.queue}
-          onValueChange={(queue) => setUrlState({ ...firstPage(), queue })}
+          onValueChange={(queue) => void setUrlState({ ...firstPage(), queue })}
           search={queueSearch}
           setSearch={setQueueSearch}
           open={queueOpen}
@@ -190,12 +214,12 @@ export function SchedulersTable() {
           includeAllOption={true}
           allOptionLabel="All Queues"
         />
-        <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-[350px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative w-full sm:w-auto sm:max-w-[350px] sm:flex-1">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by scheduler or queue..."
             value={urlState.search}
-            onChange={(e) => setUrlState({ ...firstPage(), search: e.target.value })}
+            onChange={(e) => void setUrlState({ ...firstPage(), search: e.target.value })}
             className="pl-10"
           />
         </div>
@@ -239,9 +263,9 @@ export function SchedulersTable() {
           </button>
         </div>
         {schedulers.map((scheduler) => (
-          // biome-ignore lint/a11y/useSemanticElements: card contains a nested link to the last run
           <div
             key={scheduler.id}
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the card contains a nested link to the last run, which an <a> cannot wrap
             role="link"
             tabIndex={0}
             className={cn(
@@ -263,7 +287,7 @@ export function SchedulersTable() {
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="min-w-0 space-y-1">
                 <div className="text-muted-foreground">Next run</div>
-                <NextRun scheduler={scheduler} compact />
+                <NextRun scheduler={scheduler} fetchedAt={dataUpdatedAt} compact />
               </div>
               <div className="min-w-0 space-y-1">
                 <div className="text-muted-foreground">Last run</div>
@@ -277,14 +301,18 @@ export function SchedulersTable() {
 
       {/* Desktop: table */}
       <ScrollArea className="hidden rounded-lg border md:block">
-        <Table className="table-fixed w-full">
+        <Table className="w-full table-fixed">
           <TableHeader className="z-10">
             <TableRow>
               <TableHead style={{ width: "200px" }}>Queue</TableHead>
               <TableHead style={{ width: "220px" }}>Scheduler</TableHead>
               <TableHead style={{ width: "260px" }}>Schedule</TableHead>
               <TableHead style={{ width: "240px" }}>
-                <button type="button" className="flex items-center gap-1 font-medium" onClick={handleSort}>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 font-medium"
+                  onClick={handleSort}
+                >
                   Next Run
                   {sortIcon}
                 </button>
@@ -305,7 +333,9 @@ export function SchedulersTable() {
                 <TableCell>
                   <TruncatedTooltip value={scheduler.key} className="font-medium" />
                   {scheduler.name !== scheduler.key && (
-                    <span className="block truncate text-xs text-muted-foreground">{scheduler.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {scheduler.name}
+                    </span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -315,7 +345,7 @@ export function SchedulersTable() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <NextRun scheduler={scheduler} />
+                  <NextRun scheduler={scheduler} fetchedAt={dataUpdatedAt} />
                 </TableCell>
                 <TableCell>
                   <LastRun scheduler={scheduler} />

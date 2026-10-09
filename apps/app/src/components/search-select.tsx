@@ -12,6 +12,7 @@ import {
 } from "@better-bull-board/ui/components/combobox"
 import { cn } from "cn"
 import type * as React from "react"
+
 import { Loader } from "~/components/loader"
 
 export type SearchSelectOption = {
@@ -20,6 +21,8 @@ export type SearchSelectOption = {
 }
 
 interface SearchSelectProps {
+  /** Id of the trigger button, for a label */
+  id?: string
   value: string
   onValueChange: (value: string) => void
   options: SearchSelectOption[]
@@ -32,10 +35,9 @@ interface SearchSelectProps {
   setOpen: (open: boolean) => void
   renderValue: (value: string) => React.ReactNode
   isFetching?: boolean
-  infiniteLoadingProps?: {
-    hasNextPage: boolean
-    loaderRef: React.RefObject<HTMLDivElement | null>
-  }
+  /** Shows a loader at the end of the list, attached to `loaderRef`, to load the next page when it scrolls into view */
+  hasNextPage?: boolean
+  loaderRef?: React.Ref<HTMLDivElement>
   className?: string
   popoverContentClassName?: string
 }
@@ -44,6 +46,7 @@ interface SearchSelectProps {
  * Select with a search input in its popup. Options are filtered by the caller (often server side), from `search`.
  */
 export function SearchSelect({
+  id,
   value,
   onValueChange,
   options,
@@ -56,12 +59,14 @@ export function SearchSelect({
   setOpen,
   renderValue,
   isFetching,
-  infiniteLoadingProps,
+  hasNextPage,
+  loaderRef,
   className,
   popoverContentClassName,
 }: SearchSelectProps) {
   // The selected value may be missing from the loaded (paginated / searched) options
-  const selectedOption = options.find((option) => option.value === value) ?? (value ? { value, label: value } : null)
+  const selectedOption =
+    options.find((option) => option.value === value) ?? (value ? { value, label: value } : null)
 
   return (
     <Combobox
@@ -75,10 +80,18 @@ export function SearchSelect({
       filter={null}
       itemToStringLabel={(option: SearchSelectOption) => option.label}
       itemToStringValue={(option: SearchSelectOption) => option.value}
-      isItemEqualToValue={(option: SearchSelectOption, selected: SearchSelectOption) => option.value === selected.value}
+      isItemEqualToValue={(option: SearchSelectOption, selected: SearchSelectOption) =>
+        option.value === selected.value
+      }
     >
       <ComboboxTrigger
-        render={<Button variant="outline" className={cn("w-[200px] justify-between font-normal", className)} />}
+        render={
+          <Button
+            id={id}
+            variant="outline"
+            className={cn("w-[200px] justify-between font-normal", className)}
+          />
+        }
       >
         <span className={cn("truncate", !value && "text-muted-foreground")}>
           {value ? renderValue(value) : placeholder}
@@ -93,8 +106,8 @@ export function SearchSelect({
               {option.label}
             </ComboboxItem>
           ))}
-          {infiniteLoadingProps?.hasNextPage && (
-            <div ref={infiniteLoadingProps.loaderRef} className="flex items-center justify-center py-2">
+          {hasNextPage && (
+            <div ref={loaderRef} className="flex items-center justify-center py-2">
               <Loader />
             </div>
           )}

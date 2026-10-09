@@ -10,11 +10,14 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  type TooltipContentProps,
   XAxis,
   YAxis,
   type YAxisTickContentProps,
 } from "recharts"
+
 import { getRunsHref } from "~/lib/utils/runs-link"
+
 import { CHART_RESIZE_DEBOUNCE_MS } from "./chart-config"
 
 type QueueBarChartItem = {
@@ -48,7 +51,8 @@ const measureLabel = (text: string) => {
 
   if (measureContext === undefined) {
     measureContext = document.createElement("canvas").getContext("2d")
-    if (measureContext) measureContext.font = `${TICK_FONT_SIZE}px ${getComputedStyle(document.body).fontFamily}`
+    if (measureContext)
+      measureContext.font = `${TICK_FONT_SIZE}px ${getComputedStyle(document.body).fontFamily}`
   }
   return measureContext ? measureContext.measureText(text).width : estimate
 }
@@ -61,25 +65,20 @@ const truncateLabel = (text: string, maxWidth: number) => {
   return `${text.slice(0, length)}…`
 }
 
-const isModifiedClick = (event: React.MouseEvent) => event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+const isModifiedClick = (event: React.MouseEvent) =>
+  event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
 
-const CustomTooltip =
+const createTooltipContent =
   ({ valueLabel, formatValue }: Pick<QueueBarChartProps, "valueLabel" | "formatValue">) =>
-  ({
-    active,
-    payload,
-  }: {
-    active: boolean
-    // biome-ignore lint/suspicious/noExplicitAny: _
-    payload: any
-  }) => {
+  ({ active, payload }: TooltipContentProps) => {
     if (active && payload?.length) {
-      const data: QueueBarChartItem = payload[0].payload
+      const data = payload[0]?.payload as QueueBarChartItem
       return (
-        <div className="bg-background border rounded p-3 shadow-lg text-sm max-w-72">
+        <div className="max-w-72 rounded border bg-background p-3 text-sm shadow-lg">
           <p className="font-medium break-all">{data.queue}</p>
           <p className="text-muted-foreground">
-            {valueLabel}: <span className="font-mono font-medium text-foreground">{formatValue(data.value)}</span>
+            {valueLabel}:{" "}
+            <span className="font-mono font-medium text-foreground">{formatValue(data.value)}</span>
           </p>
         </div>
       )
@@ -88,7 +87,15 @@ const CustomTooltip =
   }
 
 /** Top queues as horizontal bars, each bar and queue name opening the runs of its queue */
-export function QueueBarChart({ title, minutes, data, isLoading, color, valueLabel, formatValue }: QueueBarChartProps) {
+export function QueueBarChart({
+  title,
+  minutes,
+  data,
+  isLoading,
+  color,
+  valueLabel,
+  formatValue,
+}: QueueBarChartProps) {
   const router = useRouter()
   const [chartWidth, setChartWidth] = useState(0)
 
@@ -148,7 +155,7 @@ export function QueueBarChart({ title, minutes, data, isLoading, color, valueLab
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="h-80 flex items-center justify-center">
+          <div className="flex h-80 items-center justify-center">
             <Skeleton className="h-80 w-full" />
           </div>
         ) : data?.length ? (
@@ -182,21 +189,26 @@ export function QueueBarChart({ title, minutes, data, isLoading, color, valueLab
                   axisLine={false}
                   tick={renderQueueTick}
                 />
-                <Tooltip content={CustomTooltip({ valueLabel, formatValue })} cursor={{ fill: "var(--muted)" }} />
+                <Tooltip
+                  content={createTooltipContent({ valueLabel, formatValue })}
+                  cursor={{ fill: "var(--muted)" }}
+                />
                 <Bar
                   dataKey="value"
                   fill={color}
                   radius={[0, 4, 4, 0]}
                   // The transparent track makes the whole row clickable, short bars included
                   background={{ fill: "transparent" }}
-                  onClick={(entry, _index, event) => openQueueRuns((entry.payload as QueueBarChartItem).queue, event)}
-                  className="hover:opacity-80 transition-opacity"
+                  onClick={(entry, _index, event) =>
+                    openQueueRuns((entry.payload as QueueBarChartItem).queue, event)
+                  }
+                  className="transition-opacity hover:opacity-80"
                 />
               </BarChart>
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="h-80 flex items-center justify-center">
+          <div className="flex h-80 items-center justify-center">
             <p className="text-muted-foreground">No data available</p>
           </div>
         )}

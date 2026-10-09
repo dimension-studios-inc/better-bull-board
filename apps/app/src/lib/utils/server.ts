@@ -2,7 +2,10 @@ import { HttpError } from "@better-bull-board/core/errors"
 import { logger } from "@rharkor/logger"
 import { type NextRequest, NextResponse } from "next/server"
 import type { output, ZodType } from "zod"
+
 import { getAuthenticatedUser } from "../auth/server"
+
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : undefined)
 
 type AppRouteContext = {
   params: Promise<Record<string, string | string[]>>
@@ -23,7 +26,7 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
   ) => Promise<output<OS>>
 }) => {
   const inputSchema = apiRoute.inputSchema as IS
-  const outputSchema = apiRoute.outputSchema as OS
+  const outputSchema = apiRoute.outputSchema
   return async (req: NextRequest, ctx: AppRouteContext) => {
     // Check authentication first
     const user = await getAuthenticatedUser()
@@ -31,20 +34,24 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    const json =
+    const json: unknown =
       req.method === "GET" || !apiRoute.inputSchema
         ? undefined
-        : await req.json().catch((e) => {
-            logger.error(`Error parsing JSON in ${req.url}: ${e}`)
+        : await req.json().catch((e: unknown) => {
+            logger.error(`Error parsing JSON in ${req.url}: ${String(e)}`)
             throw e
           })
-    const parsed = await inputSchema?.parseAsync(json).catch((error) => {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    const parsed = await inputSchema?.parseAsync(json).catch((error: unknown) => {
+      return NextResponse.json({ error: getErrorMessage(error) }, { status: 400 })
     })
     if (parsed instanceof NextResponse) {
       return parsed
     }
-    const data = await handler(parsed as IS extends ZodType ? output<IS> : undefined, req, ctx).catch((error) => {
+    const data = await handler(
+      parsed as IS extends ZodType ? output<IS> : undefined,
+      req,
+      ctx,
+    ).catch((error: unknown) => {
       if (error instanceof HttpError) {
         return NextResponse.json({ error: error.message }, { status: error.statusCode })
       }
@@ -53,9 +60,9 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
     if (data instanceof NextResponse) {
       return data
     }
-    const validated = await outputSchema.parseAsync(data).catch((error) => {
+    const validated = await outputSchema.parseAsync(data).catch((error: unknown) => {
       logger.error(error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 })
     })
     if (validated instanceof NextResponse) {
       return validated

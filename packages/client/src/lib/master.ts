@@ -61,9 +61,10 @@ export const onlyMaster = async ({
   }
 
   //* Then we need to renew the lock
-  setInterval(async () => {
+  const renew = async () => {
     isMaster = await renewLock({ lockKey, lockTtlMs, id, redis })
-  }, lockRenewMs)
+  }
+  setInterval(() => void renew(), lockRenewMs)
 
   return () => isMaster
 }

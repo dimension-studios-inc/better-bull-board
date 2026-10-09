@@ -1,5 +1,10 @@
 import { createHash, randomBytes } from "node:crypto"
-import { mcpOAuthAuthorizationCodesTable, mcpOAuthClientsTable, mcpOAuthTokensTable } from "@better-bull-board/db"
+
+import {
+  mcpOAuthAuthorizationCodesTable,
+  mcpOAuthClientsTable,
+  mcpOAuthTokensTable,
+} from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
 import { MCP_READ_SCOPE, MCP_SUPPORTED_SCOPES } from "@better-bull-board/mcp/scopes"
 import { and, eq, gt, isNull } from "drizzle-orm"
@@ -28,7 +33,8 @@ const inferProtocol = (host: string) =>
 const isHttpProtocol = (protocol: string | null) => protocol === "http" || protocol === "https"
 
 export const getOriginFromHeaders = (headers: Headers, fallbackOrigin = "http://localhost") => {
-  const host = firstHeaderValue(headers.get("x-forwarded-host")) ?? firstHeaderValue(headers.get("host"))
+  const host =
+    firstHeaderValue(headers.get("x-forwarded-host")) ?? firstHeaderValue(headers.get("host"))
 
   if (!host) {
     return fallbackOrigin
@@ -65,7 +71,8 @@ const validateRedirectUri = (redirectUri: string) => {
 
   const scheme = url.protocol.toLowerCase()
   const blockedSchemes = new Set(["data:", "file:", "javascript:", "vbscript:"])
-  const isAllowedScheme = scheme === "http:" || scheme === "https:" || /^[a-z][a-z0-9+.-]*:$/.test(scheme)
+  const isAllowedScheme =
+    scheme === "http:" || scheme === "https:" || /^[a-z][a-z0-9+.-]*:$/.test(scheme)
 
   if (!isAllowedScheme || blockedSchemes.has(scheme)) {
     throw new OAuthError("invalid_client_metadata", "redirect_uris use an unsupported scheme")
@@ -77,7 +84,8 @@ const validateRedirectUri = (redirectUri: string) => {
 const parseScopes = (scope?: string | null) => {
   const requestedScopes = new Set((scope ?? MCP_READ_SCOPE).split(/\s+/).filter(Boolean))
   const unsupportedScopes = [...requestedScopes].filter(
-    (requestedScope) => !MCP_SUPPORTED_SCOPES.includes(requestedScope as (typeof MCP_SUPPORTED_SCOPES)[number]),
+    (requestedScope) =>
+      !MCP_SUPPORTED_SCOPES.includes(requestedScope as (typeof MCP_SUPPORTED_SCOPES)[number]),
   )
 
   if (unsupportedScopes.length > 0) {
@@ -88,7 +96,9 @@ const parseScopes = (scope?: string | null) => {
     throw new OAuthError("invalid_scope", "bbb:read is required")
   }
 
-  return MCP_SUPPORTED_SCOPES.filter((supportedScope) => requestedScopes.has(supportedScope)).join(" ")
+  return MCP_SUPPORTED_SCOPES.filter((supportedScope) => requestedScopes.has(supportedScope)).join(
+    " ",
+  )
 }
 
 const requireString = (formData: FormData, key: string) => {
@@ -99,6 +109,12 @@ const requireString = (formData: FormData, key: string) => {
   }
 
   return value
+}
+
+// Missing or non-string (file upload) values are treated as absent
+const optionalString = (formData: FormData, key: string) => {
+  const value = formData.get(key)
+  return typeof value === "string" ? value : undefined
 }
 
 export const createOAuthErrorRedirect = ({
@@ -124,7 +140,8 @@ export const createOAuthErrorRedirect = ({
 }
 
 export const normalizeClientRegistration = async (body: unknown) => {
-  const metadata = typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {}
+  const metadata =
+    typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {}
   const redirectUris = Array.isArray(metadata.redirect_uris)
     ? metadata.redirect_uris
         .filter((value): value is string => typeof value === "string" && value.length > 0)
@@ -142,9 +159,13 @@ export const normalizeClientRegistration = async (body: unknown) => {
     ? metadata.response_types.filter((value): value is string => typeof value === "string")
     : ["code"]
   const tokenEndpointAuthMethod =
-    typeof metadata.token_endpoint_auth_method === "string" ? metadata.token_endpoint_auth_method : "none"
+    typeof metadata.token_endpoint_auth_method === "string"
+      ? metadata.token_endpoint_auth_method
+      : "none"
   const clientName =
-    typeof metadata.client_name === "string" && metadata.client_name.length > 0 ? metadata.client_name : "MCP Client"
+    typeof metadata.client_name === "string" && metadata.client_name.length > 0
+      ? metadata.client_name
+      : "MCP Client"
   const scope = parseScopes(typeof metadata.scope === "string" ? metadata.scope : undefined)
 
   if (!grantTypes.includes("authorization_code")) {
@@ -158,7 +179,8 @@ export const normalizeClientRegistration = async (body: unknown) => {
   }
 
   const clientId = randomToken(24)
-  const clientSecret = tokenEndpointAuthMethod === "client_secret_post" ? randomToken(32) : undefined
+  const clientSecret =
+    tokenEndpointAuthMethod === "client_secret_post" ? randomToken(32) : undefined
 
   await db.insert(mcpOAuthClientsTable).values({
     clientId,
@@ -185,16 +207,26 @@ export const normalizeClientRegistration = async (body: unknown) => {
 }
 
 const getClient = async (clientId: string) => {
-  const [client] = await db.select().from(mcpOAuthClientsTable).where(eq(mcpOAuthClientsTable.clientId, clientId))
+  const [client] = await db
+    .select()
+    .from(mcpOAuthClientsTable)
+    .where(eq(mcpOAuthClientsTable.clientId, clientId))
   return client ?? null
 }
 
-const validateClientSecret = (client: NonNullable<Awaited<ReturnType<typeof getClient>>>, clientSecret?: string) => {
+const validateClientSecret = (
+  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
+  clientSecret?: string,
+) => {
   if (client.tokenEndpointAuthMethod === "none") {
     return
   }
 
-  if (!client.clientSecretHash || !clientSecret || hashToken(clientSecret) !== client.clientSecretHash) {
+  if (
+    !client.clientSecretHash ||
+    !clientSecret ||
+    hashToken(clientSecret) !== client.clientSecretHash
+  ) {
     throw new OAuthError("invalid_client", "Invalid client credentials", 401)
   }
 }
@@ -207,12 +239,15 @@ const getAuthenticatedClient = async (formData: FormData) => {
     throw new OAuthError("invalid_client", "Unknown OAuth client", 401)
   }
 
-  validateClientSecret(client, formData.get("client_secret")?.toString())
+  validateClientSecret(client, optionalString(formData, "client_secret"))
 
   return { clientId }
 }
 
-export const validateAuthorizationRequest = async (url: URL, options?: { expectedResource?: string }) => {
+export const validateAuthorizationRequest = async (
+  url: URL,
+  options?: { expectedResource?: string },
+) => {
   const responseType = url.searchParams.get("response_type")
   const clientId = url.searchParams.get("client_id")
   const redirectUri = url.searchParams.get("redirect_uri")
@@ -227,7 +262,10 @@ export const validateAuthorizationRequest = async (url: URL, options?: { expecte
     throw new OAuthError("unsupported_response_type", "Only authorization code flow is supported")
   }
   if (!clientId || !redirectUri || !codeChallenge) {
-    throw new OAuthError("invalid_request", "client_id, redirect_uri, and code_challenge are required")
+    throw new OAuthError(
+      "invalid_request",
+      "client_id, redirect_uri, and code_challenge are required",
+    )
   }
   if (codeChallengeMethod !== "S256" && codeChallengeMethod !== "plain") {
     throw new OAuthError("invalid_request", "Only S256 and plain PKCE methods are supported")
@@ -286,7 +324,8 @@ export const createAuthorizationCode = async ({
 }
 
 const verifyPkce = (codeVerifier: string, codeChallenge: string, method: string) => {
-  const actual = method === "S256" ? createHash("sha256").update(codeVerifier).digest("base64url") : codeVerifier
+  const actual =
+    method === "S256" ? createHash("sha256").update(codeVerifier).digest("base64url") : codeVerifier
 
   return actual === codeChallenge
 }
@@ -342,7 +381,7 @@ export const exchangeAuthorizationCode = async (formData: FormData) => {
   const code = requireString(formData, "code")
   const redirectUri = requireString(formData, "redirect_uri")
   const codeVerifier = requireString(formData, "code_verifier")
-  const resource = formData.get("resource")?.toString()
+  const resource = optionalString(formData, "resource")
 
   return db.transaction(async (tx) => {
     const [authorizationCode] = await tx
@@ -363,9 +402,18 @@ export const exchangeAuthorizationCode = async (formData: FormData) => {
       throw new OAuthError("invalid_grant", "Authorization code is invalid or expired")
     }
     if (resource && authorizationCode.resource !== resource) {
-      throw new OAuthError("invalid_target", "Authorization code was issued for a different resource")
+      throw new OAuthError(
+        "invalid_target",
+        "Authorization code was issued for a different resource",
+      )
     }
-    if (!verifyPkce(codeVerifier, authorizationCode.codeChallenge, authorizationCode.codeChallengeMethod)) {
+    if (
+      !verifyPkce(
+        codeVerifier,
+        authorizationCode.codeChallenge,
+        authorizationCode.codeChallengeMethod,
+      )
+    ) {
       throw new OAuthError("invalid_grant", "PKCE verification failed")
     }
 
@@ -423,7 +471,12 @@ export const verifyAccessToken = async (accessToken: string, resource: string) =
   const [token] = await db
     .select()
     .from(mcpOAuthTokensTable)
-    .where(and(eq(mcpOAuthTokensTable.accessTokenHash, hashToken(accessToken)), isNull(mcpOAuthTokensTable.revokedAt)))
+    .where(
+      and(
+        eq(mcpOAuthTokensTable.accessTokenHash, hashToken(accessToken)),
+        isNull(mcpOAuthTokensTable.revokedAt),
+      ),
+    )
 
   if (!token || token.accessTokenExpiresAt <= new Date() || token.resource !== resource) {
     return null
@@ -433,7 +486,10 @@ export const verifyAccessToken = async (accessToken: string, resource: string) =
     return null
   }
 
-  await db.update(mcpOAuthTokensTable).set({ lastUsedAt: new Date() }).where(eq(mcpOAuthTokensTable.id, token.id))
+  await db
+    .update(mcpOAuthTokensTable)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(mcpOAuthTokensTable.id, token.id))
 
   return {
     token: accessToken,
@@ -450,15 +506,27 @@ export const revokeToken = async (formData: FormData) => {
   const tokenHash = hashToken(token)
   const revokedAt = new Date()
 
-  await db.update(mcpOAuthTokensTable).set({ revokedAt }).where(eq(mcpOAuthTokensTable.accessTokenHash, tokenHash))
-  await db.update(mcpOAuthTokensTable).set({ revokedAt }).where(eq(mcpOAuthTokensTable.refreshTokenHash, tokenHash))
+  await db
+    .update(mcpOAuthTokensTable)
+    .set({ revokedAt })
+    .where(eq(mcpOAuthTokensTable.accessTokenHash, tokenHash))
+  await db
+    .update(mcpOAuthTokensTable)
+    .set({ revokedAt })
+    .where(eq(mcpOAuthTokensTable.refreshTokenHash, tokenHash))
 }
 
 export const toOAuthErrorResponse = (error: unknown) => {
   if (error instanceof OAuthError) {
-    return Response.json({ error: error.code, error_description: error.message }, { status: error.status })
+    return Response.json(
+      { error: error.code, error_description: error.message },
+      { status: error.status },
+    )
   }
 
   console.error("MCP OAuth error:", error)
-  return Response.json({ error: "server_error", error_description: "Unexpected OAuth error" }, { status: 500 })
+  return Response.json(
+    { error: "server_error", error_description: "Unexpected OAuth error" },
+    { status: 500 },
+  )
 }

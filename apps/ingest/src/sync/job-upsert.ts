@@ -4,8 +4,10 @@ import { conflictUpdateSet } from "@better-bull-board/db/utils/conflict-update"
 import { logger } from "@rharkor/logger"
 import { DrizzleQueryError, getTableName, sql } from "drizzle-orm"
 import { DatabaseError } from "pg"
+
 import { env } from "~/lib/env"
 import { publishIngestEvent } from "~/lib/ingest-events"
+
 import type { JobRunInsert } from "./job-format"
 
 async function withDeadlockRetry<T>(fn: () => Promise<T>, tries = 5): Promise<T> {
@@ -14,7 +16,11 @@ async function withDeadlockRetry<T>(fn: () => Promise<T>, tries = 5): Promise<T>
     try {
       return await fn()
     } catch (error: unknown) {
-      if (error instanceof DrizzleQueryError && error.cause instanceof DatabaseError && error.cause.code === "40P01") {
+      if (
+        error instanceof DrizzleQueryError &&
+        error.cause instanceof DatabaseError &&
+        error.cause.code === "40P01"
+      ) {
         lastErr = error
         if (i === tries - 1) break
         const backoff = 25 * (i + 1) + Math.floor(Math.random() * 50)
@@ -55,11 +61,11 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
   for (const run of runs) {
     if (!isWithinRetention(run, retentionCutoff)) continue
 
-    const key = `${run.queue}-${run.jobId}-${run.enqueuedAt?.getTime?.() ?? run.enqueuedAt}`
+    const key = `${run.queue}-${run.jobId}-${run.enqueuedAt?.getTime?.() ?? String(run.enqueuedAt)}`
     deduped.set(key, run)
   }
 
-  const values = Array.from(deduped.values()).sort((a, b) => {
+  const values = Array.from(deduped.values()).toSorted((a, b) => {
     const queueCompare = a.queue.localeCompare(b.queue)
     if (queueCompare !== 0) return queueCompare
     const jobCompare = a.jobId.localeCompare(b.jobId)

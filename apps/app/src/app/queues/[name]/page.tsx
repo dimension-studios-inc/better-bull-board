@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 import { AlertCircle, List } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
+
 import { getQueueDetailsApiRoute } from "~/app/api/queues/details/schemas"
 import { getQueueSummaryApiRoute } from "~/app/api/queues/summary/schemas"
 import { QueueActions } from "~/app/queues/_components/queue-actions"
@@ -18,6 +19,7 @@ import {
 } from "~/components/time-period-selector"
 import { apiFetch } from "~/lib/utils/client"
 import { getRunsHref } from "~/lib/utils/runs-link"
+
 import { QueueDurationChart, QueueErrorRateChart, QueueRunsChart } from "./_components/queue-charts"
 import { QueueHeader } from "./_components/queue-header"
 import { QueueSummaryCards } from "./_components/queue-summary-cards"
@@ -57,7 +59,8 @@ export default function QueuePage() {
         <Alert variant="destructive">
           <AlertCircle className="size-4" />
           <AlertDescription>
-            Failed to load the queue {queueName}. The queue might not exist or there was an error loading it.
+            Failed to load the queue {queueName}. The queue might not exist or there was an error
+            loading it.
           </AlertDescription>
         </Alert>
       </PageContainer>

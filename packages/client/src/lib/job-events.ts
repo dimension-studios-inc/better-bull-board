@@ -6,9 +6,9 @@ export const JOB_SYNC_STREAM_KEY = "bbb:worker:jobs"
 export type JobSyncPhase = "waiting" | "active" | "terminal" | "snapshot"
 
 export const emitJobSyncEvent = async <
-  // biome-ignore lint/suspicious/noExplicitAny: extends bullmq
+  // oxlint-disable-next-line typescript/no-explicit-any -- same defaults as BullMQ's Job<DataType = any, ResultType = any>
   DataType = any,
-  // biome-ignore lint/suspicious/noExplicitAny: extends bullmq
+  // oxlint-disable-next-line typescript/no-explicit-any -- same defaults as BullMQ's Job<DataType = any, ResultType = any>
   ResultType = any,
   NameType extends string = string,
 >({

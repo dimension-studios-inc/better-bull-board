@@ -12,6 +12,7 @@ import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
 import { Activity, Clock, Server } from "lucide-react"
+
 import { getQueuesStatsApiRoute } from "~/app/api/queues/stats/schemas"
 import { apiFetch } from "~/lib/utils/client"
 
@@ -56,7 +57,11 @@ export function QueueStats() {
           <CardHeader>
             <CardDescription>{stat.title}</CardDescription>
             <CardTitle>
-              {isLoading ? <Skeleton className="h-8 w-16" /> : (stat.value?.toLocaleString() ?? "-")}
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                (stat.value?.toLocaleString() ?? "-")
+              )}
             </CardTitle>
             <CardAction>
               <stat.icon className={cn("size-4", stat.color)} />

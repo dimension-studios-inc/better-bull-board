@@ -4,10 +4,12 @@ import { Checkbox } from "@better-bull-board/ui/components/checkbox"
 import { cn } from "cn"
 import { formatDistanceToNowStrict } from "date-fns"
 import type { output } from "zod"
+
 import type { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
 import { RunStatusBadge } from "~/components/run-status-badge"
 import { formatUtcDateTime } from "~/lib/utils/date"
 import type { StuckRun } from "~/lib/utils/stuck-runs"
+
 import { RunActions } from "./run-actions"
 import { getRunDuration, StuckRunWarning } from "./run-display"
 
@@ -37,8 +39,8 @@ export function RunListItem({
   const [firstTag, ...otherTags] = run.tags ?? []
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: row contains nested interactive controls
     <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the row contains nested interactive controls, which an <a> cannot wrap
       role="link"
       tabIndex={0}
       className={cn(
@@ -77,7 +79,7 @@ export function RunListItem({
           )}
         </div>
         {run.status === "failed" && run.errorMessage && (
-          <p className="line-clamp-2 break-all rounded bg-destructive/10 px-2 py-1 font-mono text-xs text-destructive">
+          <p className="line-clamp-2 rounded bg-destructive/10 px-2 py-1 font-mono text-xs break-all text-destructive">
             {run.errorMessage}
           </p>
         )}
@@ -88,7 +90,12 @@ export function RunListItem({
             </time>
             {duration && <> · {duration}</>}
           </div>
-          <div className="-my-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div
+            // Only keeps clicks on the actions (and their portaled menus) from opening the run
+            role="presentation"
+            className="-my-1.5 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
             <RunActions jobId={run.jobId} queueName={run.queue} status={run.status} />
           </div>
         </div>

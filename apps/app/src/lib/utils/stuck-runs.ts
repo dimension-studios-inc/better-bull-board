@@ -1,4 +1,5 @@
 import type { z } from "zod"
+
 import type { getStuckRunsApiRoute } from "~/app/api/jobs/stuck/schemas"
 
 export type StuckRun = z.output<(typeof getStuckRunsApiRoute)["outputSchema"]>["runs"][number]
@@ -14,7 +15,8 @@ export const formatShortDuration = (ms: number) => {
   if (totalMinutes < 60) return `${totalMinutes}m`
 
   const totalHours = Math.floor(totalMinutes / 60)
-  if (totalHours < 24) return totalMinutes % 60 ? `${totalHours}h ${totalMinutes % 60}m` : `${totalHours}h`
+  if (totalHours < 24)
+    return totalMinutes % 60 ? `${totalHours}h ${totalMinutes % 60}m` : `${totalHours}h`
 
   const days = Math.floor(totalHours / 24)
   return totalHours % 24 ? `${days}d ${totalHours % 24}h` : `${days}d`
@@ -22,7 +24,9 @@ export const formatShortDuration = (ms: number) => {
 
 /** "usually under 3.4s": 95% of the queue's completed runs of the last 7 days took less */
 export const formatUsualDuration = (run: StuckRun) =>
-  run.p95Ms === null ? "no completed run in 7 days" : `usually under ${formatShortDuration(run.p95Ms)}`
+  run.p95Ms === null
+    ? "no completed run in 7 days"
+    : `usually under ${formatShortDuration(run.p95Ms)}`
 
 /** The full reasoning, for a tooltip */
 export const describeStuckRun = (run: StuckRun) => {

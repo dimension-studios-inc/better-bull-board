@@ -10,9 +10,18 @@ import {
 } from "@better-bull-board/ui/components/card"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { cn } from "cn"
-import { Activity, AlertCircle, CheckCircle, ChevronRight, Gauge, type LucideIcon, Timer } from "lucide-react"
+import {
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  ChevronRight,
+  Gauge,
+  type LucideIcon,
+  Timer,
+} from "lucide-react"
 import Link from "next/link"
 import type { z } from "zod"
+
 import type { queueSummaryStatsOutput } from "~/app/api/queues/summary/schemas"
 import { formatDurationMs } from "~/lib/utils/duration"
 import { getRunsHref } from "~/lib/utils/runs-link"
@@ -37,10 +46,19 @@ type StatCard = {
   href?: string
 }
 
-const formatDurationValue = (ms: number | null | undefined) => (ms == null ? "-" : formatDurationMs(ms))
+const formatDurationValue = (ms: number | null | undefined) =>
+  ms == null ? "-" : formatDurationMs(ms)
 
 // Compact cards side by side on phones, where the footer text would only push the charts down
-function StatCards({ cards, isLoading, className }: { cards: StatCard[]; isLoading: boolean; className: string }) {
+function StatCards({
+  cards,
+  isLoading,
+  className,
+}: {
+  cards: StatCard[]
+  isLoading: boolean
+  className: string
+}) {
   return (
     <div className={cn("grid gap-3 sm:grid-cols-1 sm:gap-4", className)}>
       {cards.map((card) => (
@@ -50,7 +68,9 @@ function StatCards({ cards, isLoading, className }: { cards: StatCard[]; isLoadi
               <span className="sm:hidden">{card.shortTitle ?? card.title}</span>
               <span className="max-sm:hidden">{card.title}</span>
             </CardDescription>
-            <CardTitle>{isLoading ? <Skeleton className="h-6 w-16 sm:h-8 sm:w-24" /> : (card.value ?? "-")}</CardTitle>
+            <CardTitle>
+              {isLoading ? <Skeleton className="h-6 w-16 sm:h-8 sm:w-24" /> : (card.value ?? "-")}
+            </CardTitle>
             <CardAction>
               <card.icon className={cn("size-4", card.color)} />
             </CardAction>
@@ -69,7 +89,7 @@ function StatCards({ cards, isLoading, className }: { cards: StatCard[]; isLoadi
             <Link
               href={card.href}
               aria-label={`View ${card.title.toLowerCase()} runs`}
-              className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="absolute inset-0 rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           )}
         </Card>
@@ -78,7 +98,13 @@ function StatCards({ cards, isLoading, className }: { cards: StatCard[]; isLoadi
   )
 }
 
-export function QueueSummaryCards({ queueName, minutes, periodLabel, stats, isLoading }: QueueSummaryCardsProps) {
+export function QueueSummaryCards({
+  queueName,
+  minutes,
+  periodLabel,
+  stats,
+  isLoading,
+}: QueueSummaryCardsProps) {
   const period = periodLabel.toLowerCase()
 
   const runCards: StatCard[] = [
@@ -150,7 +176,11 @@ export function QueueSummaryCards({ queueName, minutes, periodLabel, stats, isLo
         isLoading={isLoading}
         className="grid-cols-2 @xl/main:grid-cols-2 @5xl/main:grid-cols-4"
       />
-      <StatCards cards={durationCards} isLoading={isLoading} className="grid-cols-3 @xl/main:grid-cols-3" />
+      <StatCards
+        cards={durationCards}
+        isLoading={isLoading}
+        className="grid-cols-3 @xl/main:grid-cols-3"
+      />
     </>
   )
 }

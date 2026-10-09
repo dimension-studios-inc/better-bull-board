@@ -11,6 +11,7 @@ import {
 } from "@better-bull-board/core/mutations"
 import { logger } from "@rharkor/logger"
 import { Queue } from "bullmq"
+
 import { redis } from "./redis"
 
 const createQueueAdapter = (queueName: string): QueueAdapter => {
@@ -31,7 +32,8 @@ const createQueueAdapter = (queueName: string): QueueAdapter => {
         retry: () => job.retry(),
       }
     },
-    add: (name: string, data: unknown, options: Record<string, unknown>) => queue.add(name, data, options),
+    add: (name: string, data: unknown, options: Record<string, unknown>) =>
+      queue.add(name, data, options),
     pause: () => queue.pause(),
     resume: () => queue.resume(),
     obliterate: (options: { force: true }) => queue.obliterate(options),
@@ -52,10 +54,11 @@ export const replayJob = (input: { jobId: string; queueName: string }) =>
 
 type JobFiltersInput = Parameters<typeof applyToJobsMatchingFilters>[0]["input"]
 
-const logBulkFailure = (action: string, job: { jobId: string; queueName: string }) => (error: unknown) => {
-  logger.error(`Bulk ${action} failed for job ${job.jobId} in queue ${job.queueName}`, error)
-  throw error
-}
+const logBulkFailure =
+  (action: string, job: { jobId: string; queueName: string }) => (error: unknown) => {
+    logger.error(`Bulk ${action} failed for job ${job.jobId} in queue ${job.queueName}`, error)
+    throw error
+  }
 
 export const replayJobsMatchingFilters = (input: JobFiltersInput) =>
   applyToJobsMatchingFilters({

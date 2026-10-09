@@ -59,7 +59,7 @@ https://<your-better-bull-board-host>/mcp
 If you want a one-click Cursor link for your own host, base64-encode this JSON and put it in the `config` parameter:
 
 ```json
-{"url":"https://<your-better-bull-board-host>/mcp"}
+{ "url": "https://<your-better-bull-board-host>/mcp" }
 ```
 
 ```txt

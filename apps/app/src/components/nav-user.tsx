@@ -15,9 +15,15 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@better-bull-board/ui/components/dropdown-menu"
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@better-bull-board/ui/components/sidebar"
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@better-bull-board/ui/components/sidebar"
 import { EllipsisVertical, LogOut, Monitor, Moon, Sun, SunMoon } from "lucide-react"
 import { useTheme } from "next-themes"
+
 import { useAuth } from "~/lib/auth/context"
 
 const themes = [
@@ -63,7 +69,12 @@ export function NavUser() {
             <UserIdentity email={email} />
             <EllipsisVertical className="ml-auto size-4" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="min-w-56" side={isMobile ? "bottom" : "right"} align="end" sideOffset={4}>
+          <DropdownMenuContent
+            className="min-w-56"
+            side={isMobile ? "bottom" : "right"}
+            align="end"
+            sideOffset={4}
+          >
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
@@ -89,7 +100,7 @@ export function NavUser() {
               </DropdownMenuSubContent>
             </DropdownMenuSub>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
+            <DropdownMenuItem onClick={() => void logout()}>
               <LogOut />
               Log out
             </DropdownMenuItem>

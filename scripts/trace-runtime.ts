@@ -48,23 +48,31 @@ const ignore = ["**/tsdown.config.*", "**/.turbo/**", "**/debug/**"]
 // Bun resolves the `bun` export condition first; under node, the trace also covers node's own set.
 // nft adds `import` or `require` per call itself.
 const conditionSets = [["bun", "node"], ...(process.versions.bun ? [] : [["node"]])]
-const trace = async (entries: string[]) => {
+const trace = async (entryFiles: string[]) => {
   const lists = await Promise.all(
-    conditionSets.map((conditions) => nodeFileTrace(entries, { base, conditions, ignore })),
+    conditionSets.map((conditions) => nodeFileTrace(entryFiles, { base, conditions, ignore })),
   )
   return new Set(lists.flatMap(({ fileList }) => [...fileList]))
 }
 let fileList = await trace(entries)
 const wholeFiles = Object.entries(SHIP_WHOLE)
-  .filter(([key]) => [...fileList].some((file) => packageDirOf(file)?.endsWith(`/node_modules/${key}`)))
-  .flatMap(([, names]) => names.flatMap((name) => listTree(relative(base, realpathSync(join(base, HOISTED, name))))))
+  .filter(([key]) =>
+    [...fileList].some((file) => packageDirOf(file)?.endsWith(`/node_modules/${key}`)),
+  )
+  .flatMap(([, names]) =>
+    names.flatMap((name) => listTree(relative(base, realpathSync(join(base, HOISTED, name))))),
+  )
 // Their files become entries too, so the dependencies they load are traced; not their published tool configs.
-const wholeEntries = wholeFiles.filter((file) => /\.(c|m)?js$/.test(file) && !/\.config\.(c|m)?js$/.test(file))
+const wholeEntries = wholeFiles.filter(
+  (file) => /\.(c|m)?js$/.test(file) && !/\.config\.(c|m)?js$/.test(file),
+)
 if (wholeEntries.length > 0) fileList = await trace([...entries, ...wholeEntries])
 const files = new Set([...fileList, ...wholeFiles])
 
 // Only for packages whose code is traced: some libraries read other tools' package.json just to sniff versions.
-const tracedPackageDirs = new Set([...fileList].filter((file) => !file.endsWith("/package.json")).map(packageDirOf))
+const tracedPackageDirs = new Set(
+  [...fileList].filter((file) => !file.endsWith("/package.json")).map(packageDirOf),
+)
 
 // Platform binaries are optional dependencies picked by a computed require(), which tracing cannot follow.
 for (const file of fileList) {
@@ -85,7 +93,9 @@ for (const file of fileList) {
 // Links a computed require() resolves through: a package's siblings in the store, and the hoisted folder.
 const linkDirs = new Set([
   HOISTED,
-  ...[...tracedPackageDirs].filter((dir) => dir?.includes(".bun/")).map((dir) => dirname(dir as string)),
+  ...[...tracedPackageDirs]
+    .filter((dir) => dir?.includes(".bun/"))
+    .map((dir) => dirname(dir as string)),
 ])
 for (const dir of linkDirs) {
   if (!existsSync(join(base, dir))) continue
@@ -104,7 +114,7 @@ for (const dir of linkDirs) {
 // bun installs both libc builds of a native package: ship the runner's (musl). Filtered last, since some
 // packages require both by literal name.
 for (const file of files) {
-  if (/-gnu/.test(packageDirOf(file)?.split("node_modules/").pop() ?? "")) continue
+  if ((packageDirOf(file)?.split("node_modules/").pop() ?? "").includes("-gnu")) continue
   const src = join(base, file)
   const dest = join(outDir, file)
   mkdirSync(dirname(dest), { recursive: true })

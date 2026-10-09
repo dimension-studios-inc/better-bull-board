@@ -1,8 +1,10 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import { URL } from "node:url"
+
 import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { sql } from "drizzle-orm"
+
 import { redis } from "./redis"
 
 interface HealthCheckResult {
@@ -14,7 +16,11 @@ interface HealthCheckResult {
 
 const HEALTH_CHECK_TIMEOUT_MS = 2_000
 
-const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, service: string): Promise<T> => {
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  service: string,
+): Promise<T> => {
   let timeout: NodeJS.Timeout | undefined
   try {
     return await Promise.race([
@@ -125,9 +131,33 @@ async function handleHealthCheck(): Promise<{
   }
 }
 
+async function respondWithHealthCheck(res: ServerResponse) {
+  try {
+    const { response, statusCode } = await handleHealthCheck()
+    res.setHeader("Content-Type", "application/json")
+    res.writeHead(statusCode)
+    res.end(response)
+  } catch (error) {
+    logger.error("Health check error:", error)
+    res.setHeader("Content-Type", "application/json")
+    res.writeHead(500)
+    res.end(
+      JSON.stringify(
+        {
+          status: "unhealthy",
+          error: "Internal server error",
+          timestamp: new Date().toISOString(),
+        },
+        null,
+        2,
+      ),
+    )
+  }
+}
+
 function handleRequest(req: IncomingMessage, res: ServerResponse) {
-  // biome-ignore lint/style/noNonNullAssertion: _
-  const url = new URL(req.url!, `http://${req.headers.host}`)
+  // Always set on requests received by an http.Server.
+  const url = new URL(req.url ?? "/", `http://${req.headers.host}`)
 
   // Enable CORS for health checks
   res.setHeader("Access-Control-Allow-Origin", "*")
@@ -149,28 +179,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
   }
 
   if (req.method === "GET" && (url.pathname === "/health" || url.pathname === "/ready")) {
-    handleHealthCheck()
-      .then(({ response, statusCode }) => {
-        res.setHeader("Content-Type", "application/json")
-        res.writeHead(statusCode)
-        res.end(response)
-      })
-      .catch((error) => {
-        logger.error("Health check error:", error)
-        res.setHeader("Content-Type", "application/json")
-        res.writeHead(500)
-        res.end(
-          JSON.stringify(
-            {
-              status: "unhealthy",
-              error: "Internal server error",
-              timestamp: new Date().toISOString(),
-            },
-            null,
-            2,
-          ),
-        )
-      })
+    void respondWithHealthCheck(res)
     return
   }
 

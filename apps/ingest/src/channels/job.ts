@@ -1,4 +1,5 @@
 import { logger } from "@rharkor/logger"
+
 import { formatJobRun, type JobRunInsert, type JobSnapshot } from "~/sync/job-format"
 import { safeUpsertJobRuns } from "~/sync/job-upsert"
 
@@ -34,17 +35,19 @@ async function flushJobRunBuffer() {
   }
 }
 
+async function flushAndReschedule() {
+  await flushJobRunBuffer()
+  if (jobRunBuffer.length > 0) {
+    scheduleFlush() // Reschedule if there are still items
+  }
+}
+
 // Schedule periodic flushes
 function scheduleFlush() {
   if (flushTimer) {
     clearTimeout(flushTimer)
   }
-  flushTimer = setTimeout(async () => {
-    await flushJobRunBuffer()
-    if (jobRunBuffer.length > 0) {
-      scheduleFlush() // Reschedule if there are still items
-    }
-  }, FLUSH_INTERVAL)
+  flushTimer = setTimeout(() => void flushAndReschedule(), FLUSH_INTERVAL)
 }
 
 // Queue a job run for batched processing
@@ -54,7 +57,7 @@ function queueJobRun(jobData: JobRunInsert) {
 
   // Flush immediately if buffer is full
   if (jobRunBuffer.length >= FLUSH_SIZE) {
-    setTimeout(flushJobRunBuffer, 0)
+    setTimeout(() => void flushJobRunBuffer(), 0)
   } else {
     // Schedule a flush if not already scheduled
     scheduleFlush()
@@ -74,7 +77,7 @@ function queueJobRun(jobData: JobRunInsert) {
   }
 }
 
-export const handleJobChannel = async (_channel: string, message: string) => {
+export const handleJobChannel = (_channel: string, message: string) => {
   try {
     const {
       id,

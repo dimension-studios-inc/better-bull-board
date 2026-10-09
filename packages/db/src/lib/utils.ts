@@ -1,5 +1,5 @@
-import { sql, Table } from "drizzle-orm"
-import type { PgTable, PgTableWithColumns } from "drizzle-orm/pg-core"
+import { getTableColumns, sql, Table } from "drizzle-orm"
+import type { PgTable } from "drizzle-orm/pg-core"
 
 /**
  * Omits specified properties from an object
@@ -13,7 +13,10 @@ import type { PgTable, PgTableWithColumns } from "drizzle-orm/pg-core"
  * omit(obj, ['a', 'b']); // { c: 3 }
  * ```
  */
-export function omit<T extends Record<string, unknown>, K extends keyof T>(obj: T, keys: K | K[]): Omit<T, K> {
+export function omit<T extends Record<string, unknown>, K extends keyof T>(
+  obj: T,
+  keys: K | K[],
+): Omit<T, K> {
   const keysToOmit = Array.isArray(keys) ? keys : [keys]
   const result = { ...obj }
 
@@ -24,19 +27,15 @@ export function omit<T extends Record<string, unknown>, K extends keyof T>(obj: 
   return result
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: _
-export const tableToJsonColumn = <T extends PgTableWithColumns<any>>(table: T) => {
-  const columns = table[
-    // biome-ignore lint/suspicious/noExplicitAny: _
-    (Table as any).Symbol.Columns
-  ] as PgTable["_"]["columns"]
+// drizzle keeps its table symbols off the public types.
+const tableBaseNameSymbol = (Table as unknown as { Symbol: { BaseName: symbol } }).Symbol.BaseName
 
-  const content = Object.entries(columns).reduce((acc, [key, column]) => {
-    acc.push(
-      `'${column.name}'`,
-      // biome-ignore lint/suspicious/noExplicitAny: _
-      `"${table[(Table as any).Symbol.BaseName]}"."${table[key].name}"`,
-    )
+export const tableToJsonColumn = (table: PgTable) => {
+  const columns = getTableColumns(table)
+  const baseName = (table as unknown as Record<symbol, string>)[tableBaseNameSymbol]
+
+  const content = Object.values(columns).reduce((acc, column) => {
+    acc.push(`'${column.name}'`, `"${baseName}"."${column.name}"`)
     return acc
   }, [] as string[])
 

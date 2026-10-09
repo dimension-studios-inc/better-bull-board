@@ -1,5 +1,6 @@
 import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
+
 import { stopBackgroundTasks } from "./lib/background-tasks"
 import { stopHealthServer } from "./lib/health-server"
 import { redis } from "./lib/redis"
@@ -27,7 +28,11 @@ const shutdown = async (signal: NodeJS.Signals) => {
 
   try {
     // Finish the batches and ticks in flight before closing the connections they use.
-    await Promise.all([stopJobStreamIngestion(), stopJobLogStreamIngestion(), stopBackgroundTasks()])
+    await Promise.all([
+      stopJobStreamIngestion(),
+      stopJobLogStreamIngestion(),
+      stopBackgroundTasks(),
+    ])
     await Promise.all([stopWebSocketServer(), stopHealthServer()])
     await Promise.all([redis.quit(), db.$client.end()])
     logger.log("👋 Ingest stopped")

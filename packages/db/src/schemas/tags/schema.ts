@@ -8,7 +8,9 @@ export const jobTagsTable = pgTable(
     tag: text("tag").notNull(),
     tagLower: text("tag_lower").notNull(),
     lastSeenAt: timestamp("last_seen_at", { precision: 3, mode: "date" }).notNull(),
-    updatedAt: timestamp("updated_at", { precision: 3, mode: "date" }).notNull().default(sql`now()`),
+    updatedAt: timestamp("updated_at", { precision: 3, mode: "date" })
+      .notNull()
+      .default(sql`now()`),
   },
   (t) => [
     primaryKey({ name: "pk_job_tags", columns: [t.tag] }),

@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/c
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Pause, Play, Trash2 } from "lucide-react"
 import { useState } from "react"
+
 import { deleteQueueApiRoute } from "~/app/api/queues/delete/schemas"
 import { pauseQueueApiRoute } from "~/app/api/queues/pause/schemas"
 import { resumeQueueApiRoute } from "~/app/api/queues/resume/schemas"
@@ -85,7 +86,9 @@ export function QueueActions({ queueName, isPaused, onDeleted }: QueueActionsPro
         <PopoverContent className="w-80">
           <div className="space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">{isPaused ? "Resume Queue" : "Pause Queue"}</h4>
+              <h4 className="leading-none font-medium">
+                {isPaused ? "Resume Queue" : "Pause Queue"}
+              </h4>
               <p className="text-sm text-muted-foreground">
                 {isPaused
                   ? `Are you sure you want to resume the queue "${queueName}"? This will allow jobs to be processed again.`
@@ -124,17 +127,22 @@ export function QueueActions({ queueName, isPaused, onDeleted }: QueueActionsPro
         <PopoverContent className="w-80">
           <div className="space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none text-destructive">Delete Queue</h4>
+              <h4 className="leading-none font-medium text-destructive">Delete Queue</h4>
               <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete the queue "{queueName}"? This action will permanently remove the queue
-                and all its data. This action cannot be undone.
+                Are you sure you want to delete the queue "{queueName}"? This action will
+                permanently remove the queue and all its data. This action cannot be undone.
               </p>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setDeletePopoverOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteMutation.isPending}>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+              >
                 Delete
               </Button>
             </div>

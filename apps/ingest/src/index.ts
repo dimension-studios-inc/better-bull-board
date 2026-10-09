@@ -1,5 +1,7 @@
 import { monitorEventLoopDelay } from "node:perf_hooks"
+
 import { logger } from "@rharkor/logger"
+
 import { env } from "./lib/env"
 import { startHealthServer } from "./lib/health-server"
 import { startWebSocketServer } from "./lib/websocket-server"
@@ -22,10 +24,10 @@ const main = async () => {
   await migrateDatabases()
 
   //! Do not await
-  startJobStreamIngestion().catch((error) => {
+  startJobStreamIngestion().catch((error: unknown) => {
     logger.error("Failed to start job stream ingestion", { error })
   })
-  startJobLogStreamIngestion().catch((error) => {
+  startJobLogStreamIngestion().catch((error: unknown) => {
     logger.error("Failed to start job log stream ingestion", { error })
   })
   autoResolveBufferedJobLogs()
@@ -83,4 +85,4 @@ setInterval(() => {
   }
 }, 2000)
 
-main()
+void main()

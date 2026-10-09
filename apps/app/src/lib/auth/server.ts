@@ -1,6 +1,7 @@
 import { jwtVerify, SignJWT } from "jose"
 import type { ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies"
 import { cookies, headers } from "next/headers"
+
 import { env } from "../env"
 import { COOKIE_NAME } from "./client"
 
@@ -13,7 +14,7 @@ export interface User {
 /**
  * Verify admin credentials
  */
-export async function verifyAdminCredentials(email: string, password: string): Promise<boolean> {
+export function verifyAdminCredentials(email: string, password: string): boolean {
   if (email !== env.ADMIN_EMAIL) {
     return false
   }

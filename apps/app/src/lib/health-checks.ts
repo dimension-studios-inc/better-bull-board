@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm"
 import { NextResponse } from "next/server"
+
 import { healthDb } from "~/lib/health-db"
 import { redis } from "~/lib/redis"
 
@@ -12,7 +13,11 @@ interface HealthCheckResult {
   error?: string
 }
 
-const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, service: string): Promise<T> => {
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  service: string,
+): Promise<T> => {
   let timeout: NodeJS.Timeout | undefined
   try {
     return await Promise.race([

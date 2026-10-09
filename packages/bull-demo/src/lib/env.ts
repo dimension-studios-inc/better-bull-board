@@ -1,5 +1,3 @@
-/* eslint-disable no-process-env */
-
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod/v4"
 
@@ -10,7 +8,7 @@ export const env = createEnv({
     REDIS_PORT: z
       .string()
       .optional()
-      .transform((value) => (value ? parseInt(value, 10) : undefined)),
+      .transform((value) => (value ? Number.parseInt(value, 10) : undefined)),
     REDIS_USERNAME: z.string().optional(),
     REDIS_PASSWORD: z.string().optional(),
     REDIS_USE_TLS: z
@@ -21,17 +19,21 @@ export const env = createEnv({
       .string()
       .nullish()
       .transform((value) =>
-        value !== null && value !== undefined ? (value === "null" ? null : parseInt(value, 10)) : value,
+        value !== null && value !== undefined
+          ? value === "null"
+            ? null
+            : Number.parseInt(value, 10)
+          : value,
       ),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
   onValidationError: (error) => {
     console.error(error)
-    throw "Invalid environment variables in bull-demo"
+    throw new Error("Invalid environment variables in bull-demo")
   },
   onInvalidAccess(variable) {
     console.error(`Invalid access to ${variable}`)
-    throw "Invalid environment variables in bull-demo"
+    throw new Error("Invalid environment variables in bull-demo")
   },
 })

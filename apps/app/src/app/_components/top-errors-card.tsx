@@ -1,7 +1,17 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@better-bull-board/ui/components/hover-card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@better-bull-board/ui/components/card"
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@better-bull-board/ui/components/hover-card"
 import { ScrollArea } from "@better-bull-board/ui/components/scroll-area"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { useQuery } from "@tanstack/react-query"
@@ -9,6 +19,7 @@ import { formatDistanceToNowStrict } from "date-fns"
 import { CircleAlert } from "lucide-react"
 import Link from "next/link"
 import type { z } from "zod"
+
 import { getDashboardTopErrorsApiRoute } from "~/app/api/dashboard/top-errors/schemas"
 import { apiFetch } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
@@ -40,7 +51,7 @@ function TopErrorRow({ error, minutes }: { error: TopError; minutes: number }) {
     <li>
       <Link
         href={getRunsHref({ queue: error.queue, status: "failed", minutes, search: error.search })}
-        className="flex items-center gap-3 rounded-md px-2 py-2.5 outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/50"
       >
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <HoverCard>
@@ -76,14 +87,16 @@ function TopErrorRow({ error, minutes }: { error: TopError; minutes: number }) {
                 </div>
               </div>
               <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-72">
-                <pre className="whitespace-pre-wrap break-words bg-destructive/5 px-3 py-2.5 font-mono text-xs leading-relaxed text-destructive dark:bg-destructive/10">
+                <pre className="bg-destructive/5 px-3 py-2.5 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-destructive dark:bg-destructive/10">
                   {error.sampleMessage || "No error message"}
                 </pre>
               </ScrollArea>
               {error.sampleMessage !== error.normalizedMessage && (
                 <div className="border-t px-3 py-2">
                   <p className="text-xs text-muted-foreground">Grouped as</p>
-                  <p className="line-clamp-3 break-words font-mono text-xs">{error.normalizedMessage}</p>
+                  <p className="line-clamp-3 font-mono text-xs break-words">
+                    {error.normalizedMessage}
+                  </p>
                 </div>
               )}
             </HoverCardContent>
@@ -96,7 +109,9 @@ function TopErrorRow({ error, minutes }: { error: TopError; minutes: number }) {
             </span>
           </div>
         </div>
-        <span className="shrink-0 font-mono text-sm font-medium">{error.count.toLocaleString()}</span>
+        <span className="shrink-0 font-mono text-sm font-medium">
+          {error.count.toLocaleString()}
+        </span>
       </Link>
     </li>
   )
@@ -128,17 +143,23 @@ export function TopErrorsCard({ minutes, periodLabel, enabled }: TopErrorsCardPr
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
+              // oxlint-disable-next-line react/no-array-index-key -- static skeleton placeholders never reorder
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
         ) : !data?.errors.length ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">No failed runs in the selected period</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            No failed runs in the selected period
+          </p>
         ) : (
           <ScrollArea className="-mx-2 [&>[data-slot=scroll-area-viewport]]:max-h-96">
             <ul className="divide-y px-2">
               {data.errors.map((error) => (
-                <TopErrorRow key={`${error.queue}:${error.normalizedMessage}`} error={error} minutes={minutes} />
+                <TopErrorRow
+                  key={`${error.queue}:${error.normalizedMessage}`}
+                  error={error}
+                  minutes={minutes}
+                />
               ))}
             </ul>
           </ScrollArea>

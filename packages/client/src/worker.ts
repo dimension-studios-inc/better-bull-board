@@ -1,15 +1,16 @@
 import { logger } from "@rharkor/logger"
 import { Worker as BullMQWorker, type Job, Queue, QueueEvents, type WorkerOptions } from "bullmq"
 import type Redis from "ioredis"
+
 import { emitJobSyncEvent } from "./lib/job-events"
 import { onlyMaster } from "./lib/master"
 
 const isDefinedString = (value: string | undefined): value is string => value !== undefined
 
 export class Worker<
-  // biome-ignore lint/suspicious/noExplicitAny: extends of bullmq
+  // oxlint-disable-next-line typescript/no-explicit-any -- same defaults as the BullMQ Worker it extends
   DataType = any,
-  // biome-ignore lint/suspicious/noExplicitAny: extends of bullmq
+  // oxlint-disable-next-line typescript/no-explicit-any -- same defaults as the BullMQ Worker it extends
   ResultType = any,
   NameType extends string = string,
 > extends BullMQWorker<DataType, ResultType, NameType> {
@@ -34,7 +35,7 @@ export class Worker<
     this.getJobTags = opts.getJobTags
     // this.startLivenessProbe();
 
-    this.waitingJobsEvent()
+    void this.waitingJobsEvent()
   }
 
   // private startLivenessProbe() {
@@ -74,10 +75,12 @@ export class Worker<
         // ✅ we became master → subscribe
         listener ??= new QueueEvents(queueName, { connection: this.ioredis })
 
-        const onMessage = async (args: { jobId: string; prev?: string }) => {
+        const emitWaitingJob = async (args: { jobId: string; prev?: string }) => {
           const job = await queue.getJob(args.jobId)
           if (!job) return
-          const tags = this.getJobTags?.(job as Job<DataType, ResultType, NameType>).filter(isDefinedString)
+          const tags = this.getJobTags?.(job as Job<DataType, ResultType, NameType>).filter(
+            isDefinedString,
+          )
           const isWaiting = await job.isWaiting()
           if (!isWaiting) return
           await emitJobSyncEvent({
@@ -91,7 +94,7 @@ export class Worker<
           })
         }
 
-        messageHandler = onMessage
+        messageHandler = (args) => void emitWaitingJob(args)
         await listener.waitUntilReady()
         listener.on("waiting", messageHandler)
         logger.log(`[${this.id}] subscribed to ${channel}`)
@@ -108,7 +111,7 @@ export class Worker<
     }
 
     // run every 2s (tweak to your needs)
-    setInterval(ensureSubscription, 2000)
+    setInterval(() => void ensureSubscription(), 2000)
     await ensureSubscription()
   }
 
@@ -128,7 +131,6 @@ export class Worker<
     job: Job<DataType, ResultType, NameType>,
     token: string,
     fetchNextCallback?: () => boolean,
-    // biome-ignore lint/suspicious/noConfusingVoidType: override
   ): Promise<void | Job<DataType, ResultType, NameType>> {
     if (!job.id) {
       throw new Error("Job ID is required")

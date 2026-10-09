@@ -99,8 +99,8 @@ function bytesToFloat64(bytes: Uint8Array, offset: number): number {
   const buffer = new ArrayBuffer(8)
   const view = new DataView(buffer)
   for (let i = 0; i < 8; i++) {
-    // biome-ignore lint/style/noNonNullAssertion: _
-    view.setUint8(i, bytes[offset + i]!)
+    // An out-of-range byte reads as 0, as setUint8(undefined) would.
+    view.setUint8(i, bytes[offset + i] ?? 0)
   }
   return view.getFloat64(0, true)
 }

@@ -1,4 +1,5 @@
 import { listTopErrors } from "@better-bull-board/core/top-errors"
+
 import { getDashboardTopErrorsApiRoute } from "~/app/api/dashboard/top-errors/schemas"
 import { createAuthenticatedApiRoute } from "~/lib/utils/server"
 

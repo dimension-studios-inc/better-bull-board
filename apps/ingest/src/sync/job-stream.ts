@@ -1,7 +1,9 @@
 import { logger } from "@rharkor/logger"
+
 import { env } from "~/lib/env"
 import { instanceId } from "~/lib/instance"
 import { redis } from "~/lib/redis"
+
 import { formatJobRun, parseJobSyncEvent } from "./job-format"
 import { safeUpsertJobRuns } from "./job-upsert"
 import {
@@ -16,6 +18,8 @@ import {
 
 const streamRedis = redis.duplicate()
 let stopping = false
+// Read through a function: the loop condition is flipped by stopJobStreamIngestion, outside the loop.
+const isStopping = () => stopping
 let loopDone: Promise<void> | undefined
 
 streamRedis.on("error", (error) => {
@@ -24,7 +28,14 @@ streamRedis.on("error", (error) => {
 
 const ensureGroup = async () => {
   try {
-    await redis.call("XGROUP", "CREATE", env.JOB_SYNC_STREAM_KEY, env.JOB_SYNC_CONSUMER_GROUP, "0", "MKSTREAM")
+    await redis.call(
+      "XGROUP",
+      "CREATE",
+      env.JOB_SYNC_STREAM_KEY,
+      env.JOB_SYNC_CONSUMER_GROUP,
+      "0",
+      "MKSTREAM",
+    )
   } catch (error) {
     if (error instanceof Error && error.message.includes("BUSYGROUP")) return
     throw error
@@ -32,7 +43,12 @@ const ensureGroup = async () => {
 }
 
 const ackAndDelete = (ids: string[]) =>
-  ackAndDeleteEntries({ client: redis, group: env.JOB_SYNC_CONSUMER_GROUP, ids, stream: env.JOB_SYNC_STREAM_KEY })
+  ackAndDeleteEntries({
+    client: redis,
+    group: env.JOB_SYNC_CONSUMER_GROUP,
+    ids,
+    stream: env.JOB_SYNC_STREAM_KEY,
+  })
 
 const STREAM_TRIM_INTERVAL_MS = 60 * 60 * 1000
 
@@ -123,7 +139,7 @@ export const startJobStreamIngestion = async () => {
   })
   const trim = () => trimAcknowledgedEntries({ client: redis, stream: env.JOB_SYNC_STREAM_KEY })
   void trim()
-  setInterval(trim, STREAM_TRIM_INTERVAL_MS).unref()
+  setInterval(() => void trim(), STREAM_TRIM_INTERVAL_MS).unref()
   logger.log("📥 Job stream ingestion started", {
     stream: env.JOB_SYNC_STREAM_KEY,
     group: env.JOB_SYNC_CONSUMER_GROUP,
@@ -131,7 +147,7 @@ export const startJobStreamIngestion = async () => {
   })
 
   const loop = async () => {
-    while (!stopping) {
+    while (!isStopping()) {
       try {
         const pendingMessages = await readPendingMessages()
         if (pendingMessages.length > 0) {
@@ -140,7 +156,7 @@ export const startJobStreamIngestion = async () => {
         }
 
         // The shutdown disconnects the stream connection to cut this blocking read.
-        const messages = await readNewMessages().catch((error) => {
+        const messages = await readNewMessages().catch((error: unknown) => {
           if (stopping) return []
           throw error
         })

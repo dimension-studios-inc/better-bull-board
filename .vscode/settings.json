@@ -6,31 +6,35 @@
   // Disable prettier by default
   "prettier.enable": false,
 
-  // Use Biome as the default formatter
-  "editor.defaultFormatter": "biomejs.biome",
+  // Use oxfmt as the default formatter
+  "editor.defaultFormatter": "oxc.oxc-vscode",
 
   // Format on save
   "editor.formatOnSave": true,
+
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit"
+  },
 
   // Optional: format on paste & type
   "editor.formatOnPaste": true,
   "editor.formatOnType": false,
 
-  // Ensure Biome is used for specific languages
+  // Ensure oxfmt is used for specific languages
   "[javascript]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[json]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[markdown]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
 
   // Tabs -> spaces (2 spaces)
@@ -38,9 +42,12 @@
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
   "[yaml]": {
-    "editor.defaultFormatter": "redhat.vscode-yaml"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   }
 }

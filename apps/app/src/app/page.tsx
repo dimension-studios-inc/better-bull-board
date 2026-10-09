@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation"
 import { useEffect } from "react"
 import { toast } from "sonner"
+
 import { EnhancedDashboard } from "~/app/_components/enhanced-dashboard"
 import { PageContainer } from "~/components/page-container"
 

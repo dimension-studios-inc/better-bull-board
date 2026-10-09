@@ -1,6 +1,12 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@better-bull-board/ui/components/card"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import {
   Area,
@@ -12,10 +18,12 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
+  type TooltipContentProps,
   XAxis,
   YAxis,
 } from "recharts"
 import type { z } from "zod"
+
 import { CHART_RESIZE_DEBOUNCE_MS } from "~/app/_components/chart-config"
 import { getTimeFormats } from "~/app/_components/run-graph-chart"
 import type { queueSummaryGraphOutput } from "~/app/api/queues/summary/schemas"
@@ -43,20 +51,13 @@ const formatPercent = (value: number) => `${value.toFixed(1)}%`
 
 const axisTick = { fontSize: 12, fill: "var(--muted-foreground)" }
 
-const ChartTooltip =
+const createTooltipContent =
   ({ tooltipFormat, series }: { tooltipFormat: string; series: Series[] }) =>
-  ({
-    active,
-    payload,
-  }: {
-    active: boolean
-    // biome-ignore lint/suspicious/noExplicitAny: _
-    payload: any
-  }) => {
+  ({ active, payload }: TooltipContentProps) => {
     if (active && payload?.length) {
-      const data = payload[0].payload as GraphPoint
+      const data = payload[0]?.payload as GraphPoint
       return (
-        <div className="bg-background border rounded-lg px-2.5 py-1.5 text-xs shadow-xl">
+        <div className="rounded-lg border bg-background px-2.5 py-1.5 text-xs shadow-xl">
           <p className="font-medium">{`${formatUtc(data.timestamp, tooltipFormat)} UTC`}</p>
           {series.map((item) => {
             const value = data[item.key]
@@ -116,11 +117,11 @@ function ChartCard({
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {isLoading ? (
-          <div className="h-64 sm:h-80 flex items-center justify-center">
+          <div className="flex h-64 items-center justify-center sm:h-80">
             <Skeleton className="h-full w-full" />
           </div>
         ) : emptyMessage ? (
-          <div className="h-64 sm:h-80 flex items-center justify-center">
+          <div className="flex h-64 items-center justify-center sm:h-80">
             <p className="text-muted-foreground">{emptyMessage}</p>
           </div>
         ) : (
@@ -137,7 +138,9 @@ function ChartCard({
 
 const getChartData = (graph: GraphPoint[] | undefined, minutes: number) => {
   const { axis } = getTimeFormats(minutes)
-  return graph?.map((point) => ({ ...point, formattedTime: formatUtc(point.timestamp, axis) })) ?? []
+  return (
+    graph?.map((point) => ({ ...point, formattedTime: formatUtc(point.timestamp, axis) })) ?? []
+  )
 }
 
 const runSeries: Series[] = [
@@ -176,7 +179,10 @@ export function QueueRunsChart({ minutes, periodLabel, graph, isLoading }: Queue
           tickFormatter={formatCount}
         />
         <Tooltip
-          content={ChartTooltip({ tooltipFormat: getTimeFormats(minutes).tooltip, series: runSeries })}
+          content={createTooltipContent({
+            tooltipFormat: getTimeFormats(minutes).tooltip,
+            series: runSeries,
+          })}
           cursor={{ fill: "var(--muted)", opacity: 0.5 }}
         />
         {runSeries.map((item, index) => (
@@ -236,7 +242,10 @@ export function QueueErrorRateChart({ minutes, periodLabel, graph, isLoading }: 
           tickFormatter={(value) => `${value}%`}
         />
         <Tooltip
-          content={ChartTooltip({ tooltipFormat: getTimeFormats(minutes).tooltip, series: errorRateSeries })}
+          content={createTooltipContent({
+            tooltipFormat: getTimeFormats(minutes).tooltip,
+            series: errorRateSeries,
+          })}
           cursor={{ stroke: "var(--border)" }}
         />
         <Area
@@ -281,9 +290,18 @@ export function QueueDurationChart({ minutes, periodLabel, graph, isLoading }: Q
           minTickGap={32}
           tick={axisTick}
         />
-        <YAxis tickLine={false} axisLine={false} width={56} tick={axisTick} tickFormatter={formatDurationMs} />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          width={56}
+          tick={axisTick}
+          tickFormatter={formatDurationMs}
+        />
         <Tooltip
-          content={ChartTooltip({ tooltipFormat: getTimeFormats(minutes).tooltip, series: durationSeries })}
+          content={createTooltipContent({
+            tooltipFormat: getTimeFormats(minutes).tooltip,
+            series: durationSeries,
+          })}
           cursor={{ stroke: "var(--border)" }}
         />
         {durationSeries.map((item) => (

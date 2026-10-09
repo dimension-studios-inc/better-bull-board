@@ -1,7 +1,9 @@
 "use client"
 
 import type { z } from "zod"
+
 import type { dashboardTopQueuesCountOutput } from "~/app/api/dashboard/summary/schemas"
+
 import { QueueBarChart } from "./queue-bar-chart"
 
 interface QueueCountChartProps {

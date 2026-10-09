@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError("")
@@ -25,12 +25,13 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await response.json()
+      const data = (await response.json()) as { success: boolean; error?: string }
 
       if (data.success) {
         const searchParams = new URLSearchParams(window.location.search)
         const nextPath = searchParams.get("next")
-        window.location.href = nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/"
+        window.location.href =
+          nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/"
       } else {
         setError(data.error || "Login failed")
       }
@@ -45,16 +46,16 @@ export default function LoginPage() {
   const passwordId = useId()
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-muted p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-muted p-4">
       <Card className="w-full max-w-md p-6">
-        <div className="text-center mb-6">
+        <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold">Better Bull Board</h1>
-          <p className="text-muted-foreground mt-2">Admin Login</p>
+          <p className="mt-2 text-muted-foreground">Admin Login</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
           <div>
-            <label htmlFor={emailId} className="block text-sm font-medium mb-2">
+            <label htmlFor={emailId} className="mb-2 block text-sm font-medium">
               Email
             </label>
             <Input
@@ -68,7 +69,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor={passwordId} className="block text-sm font-medium mb-2">
+            <label htmlFor={passwordId} className="mb-2 block text-sm font-medium">
               Password
             </label>
             <Input
@@ -81,7 +82,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && <div className="text-destructive text-sm text-center">{error}</div>}
+          {error && <div className="text-center text-sm text-destructive">{error}</div>}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Signing in..." : "Sign In"}

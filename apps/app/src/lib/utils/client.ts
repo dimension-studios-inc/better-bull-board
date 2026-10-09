@@ -4,8 +4,8 @@ import type { output, ZodType } from "zod"
 export type TApiRoute = {
   route:
     | `/${string}`
-    // biome-ignore lint/suspicious/noExplicitAny: hard to type
-    | ((input: any) => `/${string}`)
+    // `never` accepts any route builder regardless of its parameter type
+    | ((input: never) => `/${string}`)
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD"
   inputSchema?: ZodType | undefined
   urlSchema?: ZodType | undefined
@@ -33,17 +33,17 @@ export function apiFetch<
     const parsedBody = inputSchema?.parse(body)
     const parsedUrlParams = urlSchema?.parse(urlParams)
     const data = await fetch(
-      `${typeof apiRoute.route === "function" ? apiRoute.route(parsedUrlParams as US) : apiRoute.route}`,
+      typeof apiRoute.route === "function"
+        ? apiRoute.route(parsedUrlParams as never)
+        : apiRoute.route,
       {
         method: apiRoute.method,
         body: apiRoute.method === "GET" ? undefined : JSON.stringify(parsedBody),
-        headers: {
-          ...(apiRoute.method === "GET" ? {} : { "Content-Type": "application/json" }),
-        },
+        headers: apiRoute.method === "GET" ? {} : { "Content-Type": "application/json" },
         credentials: "include", // Include cookies for authentication
       },
     )
-    const json = await data.json()
+    const json: unknown = await data.json()
     return outputSchema.parse(json)
   }
 }

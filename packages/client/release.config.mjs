@@ -11,7 +11,7 @@
 export default {
   extends: "semantic-release-monorepo",
   branches: ["main"],
-  // biome-ignore lint/suspicious/noTemplateCurlyInString: semantic-release expands this placeholder at runtime.
+  // oxlint-disable-next-line eslint/no-template-curly-in-string -- semantic-release expands this placeholder at runtime.
   tagFormat: "client-v${version}",
   plugins: [
     // Defaults for a library: feat → minor, fix/perf/revert → patch, `!` or BREAKING CHANGE → major
@@ -20,7 +20,7 @@ export default {
     [
       "@semantic-release/exec",
       {
-        // biome-ignore lint/suspicious/noTemplateCurlyInString: semantic-release expands this placeholder at runtime.
+        // oxlint-disable-next-line eslint/no-template-curly-in-string -- semantic-release expands this placeholder at runtime.
         prepareCmd: "bun ../../scripts/set-package-version.ts package.json ${nextRelease.version}",
         // bun pm pack rewrites workspace: ranges; npm publishes the tarball through trusted publishing (OIDC)
         publishCmd: 'bun run pack:check && npm publish "$(bun pm pack --quiet)" --access public',

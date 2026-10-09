@@ -1,8 +1,10 @@
 import path from "node:path"
 import { EventEmitter } from "node:stream"
 import { fileURLToPath } from "node:url"
+
 import { Worker } from "@better-bull-board/client"
 import { logger } from "@rharkor/logger"
+
 import { redis } from "./lib/redis"
 
 EventEmitter.setMaxListeners(0)
@@ -27,4 +29,4 @@ const main = async () => {
   logger.info("Worker started")
 }
 
-main()
+void main()

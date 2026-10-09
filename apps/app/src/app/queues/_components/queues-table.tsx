@@ -4,20 +4,37 @@ import { Button } from "@better-bull-board/ui/components/button"
 import { Input } from "@better-bull-board/ui/components/input"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@better-bull-board/ui/components/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@better-bull-board/ui/components/tooltip"
 import { useQuery } from "@tanstack/react-query"
 import { formatDuration } from "date-fns"
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Info, Search } from "lucide-react"
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Search,
+} from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { useRef } from "react"
+
 import { getQueuesTableApiRoute } from "~/app/api/queues/table/schemas"
 import { apiFetch, smartFormatDuration } from "~/lib/utils/client"
 import { getQueueHref } from "~/lib/utils/queue-link"
 import { getRunsHref } from "~/lib/utils/runs-link"
+
 import { QueueActions } from "./queue-actions"
 import { QueueMiniChart } from "./queue-mini-chart"
 import { QueueStateBadge } from "./queue-state-badge"
@@ -56,7 +73,7 @@ const sortableQueueColumns: { key: SortBy; label: string }[] = [
 const parseAsCursor = createParser<QueueCursor>({
   parse: (value) => {
     try {
-      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"))
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8")) as QueueCursor
     } catch {
       return null
     }
@@ -78,7 +95,11 @@ export function QueuesTable() {
   const cursorHistoryRef = useRef<(QueueCursor | null)[]>([])
   const cursorDirection: "next" | "prev" = urlState.cursorDirection === "prev" ? "prev" : "next"
   const sortBy: SortBy =
-    urlState.sortBy === "activeJobs" ? "activeJobs" : urlState.sortBy === "pressure" ? "pressure" : "waitingJobs"
+    urlState.sortBy === "activeJobs"
+      ? "activeJobs"
+      : urlState.sortBy === "pressure"
+        ? "pressure"
+        : "waitingJobs"
   const sortDirection: SortDirection = urlState.sortDirection === "asc" ? "asc" : "desc"
   const options = {
     cursor: urlState.cursor,
@@ -119,7 +140,7 @@ export function QueuesTable() {
   const handleNextPage = () => {
     if (data?.nextCursor) {
       cursorHistoryRef.current.push(urlState.cursor)
-      setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
+      void setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
     }
   }
 
@@ -128,11 +149,11 @@ export function QueuesTable() {
   const handlePrevPage = () => {
     const previousCursor = cursorHistoryRef.current.pop()
     if (previousCursor !== undefined) {
-      setUrlState({ cursor: previousCursor, cursorDirection: "next" })
+      void setUrlState({ cursor: previousCursor, cursorDirection: "next" })
     } else if (data?.prevCursor) {
-      setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
+      void setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
     } else {
-      setUrlState({ cursor: null, cursorDirection: "next" })
+      void setUrlState({ cursor: null, cursorDirection: "next" })
     }
   }
 
@@ -143,15 +164,15 @@ export function QueuesTable() {
   }
 
   const handleSearchChange = (search: string) => {
-    setUrlState({ ...firstPage(), search })
+    void setUrlState({ ...firstPage(), search })
   }
 
   const handleTimePeriodChange = (timePeriod: TimePeriod) => {
-    setUrlState({ ...firstPage(), timePeriod })
+    void setUrlState({ ...firstPage(), timePeriod })
   }
 
   const handleSort = (nextSortBy: SortBy) => {
-    setUrlState({
+    void setUrlState({
       ...firstPage(),
       sortBy: nextSortBy,
       sortDirection: sortBy === nextSortBy && sortDirection === "desc" ? "asc" : "desc",
@@ -170,8 +191,8 @@ export function QueuesTable() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <TimePeriodSelector value={options.timePeriod} onChange={handleTimePeriodChange} />
-        <div className="relative order-1 w-full sm:order-none sm:w-auto sm:flex-1 sm:max-w-[350px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative order-1 w-full sm:order-none sm:w-auto sm:max-w-[350px] sm:flex-1">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
           <Input
             placeholder="Search by queue name..."
             value={options.search}
@@ -186,16 +207,22 @@ export function QueuesTable() {
             ) : (
               <>
                 <span className="whitespace-nowrap">
-                  <span className="font-mono text-foreground">{selectedQueueStats?.waitingJobs ?? 0}</span> waiting
+                  <span className="font-mono text-foreground">
+                    {selectedQueueStats?.waitingJobs ?? 0}
+                  </span>{" "}
+                  waiting
                 </span>
                 <span className="whitespace-nowrap">
-                  <span className="font-mono text-foreground">{selectedQueueStats?.activeJobs ?? 0}</span> active
+                  <span className="font-mono text-foreground">
+                    {selectedQueueStats?.activeJobs ?? 0}
+                  </span>{" "}
+                  active
                 </span>
               </>
             )}
           </div>
         )}
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <Button
             variant="outline"
             onClick={handlePrevPage}
@@ -217,7 +244,7 @@ export function QueuesTable() {
         </div>
       </div>
       <ScrollArea className="rounded-lg border">
-        <Table className="table-fixed w-full">
+        <Table className="w-full table-fixed">
           <TableHeader className="z-10">
             <TableRow>
               <TableHead style={{ width: "200px" }}>Queue Name</TableHead>
@@ -250,14 +277,16 @@ export function QueuesTable() {
                       render={
                         <button
                           type="button"
-                          className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                           aria-label="What pressure means"
                         />
                       }
                     >
                       <Info className="size-3.5" />
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-64 text-left">{PRESSURE_DESCRIPTION}</TooltipContent>
+                    <TooltipContent className="max-w-64 text-left">
+                      {PRESSURE_DESCRIPTION}
+                    </TooltipContent>
                   </Tooltip>
                 </div>
               </TableHead>
@@ -270,7 +299,7 @@ export function QueuesTable() {
               <AnimatePresence key={queue.name}>
                 <motion.tr
                   key={queue.name}
-                  className="group border-b transition-colors cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-muted"
+                  className="group cursor-pointer border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
                   onClick={(event) => handleRowClick(event, getQueueHref(queue.name))}
                   onAuxClick={(event) => handleRowAuxClick(event, getQueueHref(queue.name))}
                   initial={{ opacity: 0, y: -100 }}
@@ -278,7 +307,7 @@ export function QueuesTable() {
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   layoutId={queue.name}
                 >
-                  <TableCell className="font-medium truncate">
+                  <TableCell className="truncate font-medium">
                     <Link
                       href={getQueueHref(queue.name)}
                       className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
@@ -290,14 +319,14 @@ export function QueuesTable() {
                     <QueueStateBadge isPaused={queue.isPaused} />
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono truncate block">
+                    <span className="block truncate font-mono">
                       {queue.patterns.length
                         ? queue.patterns.join(", ")
                         : queue.everys.length
                           ? queue.everys.map(
                               (every) =>
                                 `Every ${formatDuration({
-                                  seconds: Number(every) / 1000,
+                                  seconds: every / 1000,
                                 })}`,
                             )
                           : undefined}
@@ -318,13 +347,15 @@ export function QueuesTable() {
                     />
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono truncate">{smartFormatDuration(queue.pressure)}</span>
+                    <span className="truncate font-mono">
+                      {smartFormatDuration(queue.pressure)}
+                    </span>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <QueueMiniChart data={queue.chartData} />
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="transition-opacity duration-200 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-within:opacity-100">
+                    <div className="transition-opacity duration-200 focus-within:opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100">
                       <QueueActions queueName={queue.name} isPaused={queue.isPaused} />
                     </div>
                   </TableCell>

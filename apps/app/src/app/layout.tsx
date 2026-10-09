@@ -1,13 +1,17 @@
-import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import "@better-bull-board/ui/globals.css"
 import { Toaster } from "@better-bull-board/ui/components/sonner"
 import { cn } from "cn"
-import { headers } from "next/headers"
+
+// oxlint-disable-next-line import/no-unassigned-import -- the global stylesheet is a side-effect import
+import "@better-bull-board/ui/globals.css"
+import type { Metadata } from "next"
 import { ThemeProvider } from "next-themes"
+import { Geist, Geist_Mono } from "next/font/google"
+import { headers } from "next/headers"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
+
 import { AuthGuard } from "~/components/auth-guard"
 import { env } from "~/lib/env"
+
 import { Providers } from "./providers"
 
 const geistSans = Geist({
@@ -33,9 +37,18 @@ export default async function RootLayout({
   const pathname = (await headers()).get("x-pathname") as string
 
   return (
-    <html lang="en" className={cn("font-sans", geistSans.variable, geistMono.variable)} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={cn("font-sans", geistSans.variable, geistMono.variable)}
+      suppressHydrationWarning
+    >
       <body className="antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <NuqsAdapter>
             <Providers WEBSOCKET_URL={env.WEBSOCKET_URL}>
               <AuthGuard pathname={pathname}>{children}</AuthGuard>

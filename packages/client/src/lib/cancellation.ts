@@ -1,6 +1,7 @@
 import { logger } from "@rharkor/logger"
 import { Queue, type SandboxedJob } from "bullmq"
 import type Redis from "ioredis"
+
 import { repeat } from "./utils"
 
 export const registerCancellationListener = async (redis: Redis, jobId: string) => {
@@ -12,19 +13,21 @@ export const registerCancellationListener = async (redis: Redis, jobId: string) 
   await listener.subscribe(`bbb:cancellation:${jobId}`, (err) => {
     if (err) throw err
   })
-  listener.on("message", async (channel, message) => {
+  const onMessage = async (channel: string, message: string) => {
     if (channel === `bbb:cancellation:${jobId}`) {
-      const { id: cancelledJobId } = JSON.parse(message)
+      const { id: cancelledJobId } = JSON.parse(message) as { id?: unknown }
       if (cancelledJobId === jobId) {
         logger.warn(`Job ${jobId} was cancelled`)
         await redis.publish(`bbb:cancellation:${jobId}:pong`, JSON.stringify({ id: jobId }))
         throw new CancellationError(`Job ${jobId} was cancelled`)
       }
     }
-  })
+  }
+  // The CancellationError is left unhandled on purpose: it is what aborts the sandboxed job.
+  listener.on("message", (channel, message) => void onMessage(channel, message))
   return {
     stop: () => {
-      listener.quit()
+      void listener.quit()
     },
   }
 }
@@ -36,20 +39,29 @@ export class CancellationError extends Error {
   }
 }
 
-export const cancelable = (run: (job: SandboxedJob) => Promise<unknown>, redis: Redis) => async (job: SandboxedJob) => {
-  const jobId = job.id
+export const cancelable =
+  (run: (job: SandboxedJob) => Promise<unknown>, redis: Redis) => async (job: SandboxedJob) => {
+    const jobId = job.id
 
-  const { stop } = await registerCancellationListener(redis, jobId)
+    const { stop } = await registerCancellationListener(redis, jobId)
 
-  try {
-    const result = await run(job)
-    return result
-  } finally {
-    stop()
+    try {
+      const result = await run(job)
+      return result
+    } finally {
+      stop()
+    }
   }
-}
 
-export const cancelJob = async ({ redis, jobId, queueName }: { redis: Redis; jobId: string; queueName: string }) => {
+export const cancelJob = async ({
+  redis,
+  jobId,
+  queueName,
+}: {
+  redis: Redis
+  jobId: string
+  queueName: string
+}) => {
   //* Cancel if still in queue
   const queue = new Queue(queueName, { connection: redis })
   const job = await queue.getJob(jobId)
@@ -75,18 +87,18 @@ export const cancelJob = async ({ redis, jobId, queueName }: { redis: Redis; job
   const listener = redis.duplicate()
   await listener.connect().catch(() => {})
   let subscribed = false
-  listener.subscribe(pongKey, (err) => {
+  void listener.subscribe(pongKey, (err) => {
     if (err) throw err
     subscribed = true
   })
   return new Promise<void>((resolve, reject) => {
     const { cleanup: stopRepeat } = repeat(() => {
-      if (subscribed) redis.publish(key, JSON.stringify({ id: jobId }))
+      if (subscribed) void redis.publish(key, JSON.stringify({ id: jobId }))
     }).every(100)
     const cleanup = () => {
       clearTimeout(timeout)
       stopRepeat()
-      listener.quit()
+      void listener.quit()
     }
     // Timeout
     const timeout = setTimeout(() => {
@@ -96,7 +108,7 @@ export const cancelJob = async ({ redis, jobId, queueName }: { redis: Redis; job
     // Listen for pong
     listener.on("message", (channel, message) => {
       if (channel === pongKey) {
-        const { id: cancelledJobId } = JSON.parse(message)
+        const { id: cancelledJobId } = JSON.parse(message) as { id?: unknown }
         if (cancelledJobId === jobId) {
           cleanup()
           resolve()

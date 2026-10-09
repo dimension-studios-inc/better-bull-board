@@ -1,6 +1,7 @@
 import { jobRunsInsertSchema } from "@better-bull-board/db/schemas/job/schema"
 import type { Job } from "bullmq"
 import { z } from "zod/v4"
+
 import { stripNullCharacters } from "~/lib/sanitize"
 
 export const jobSyncEventSchema = z.object({
@@ -10,7 +11,16 @@ export const jobSyncEventSchema = z.object({
   queueName: z.string(),
   phase: z.enum(["waiting", "active", "terminal", "snapshot"]).default("snapshot"),
   state: z
-    .enum(["active", "completed", "failed", "waiting", "delayed", "prioritized", "waiting-children", "unknown"])
+    .enum([
+      "active",
+      "completed",
+      "failed",
+      "waiting",
+      "delayed",
+      "prioritized",
+      "waiting-children",
+      "unknown",
+    ])
     .optional(),
   tags: z.array(z.string()).optional(),
   job: z.record(z.string(), z.unknown()),
@@ -18,7 +28,8 @@ export const jobSyncEventSchema = z.object({
 
 export type JobSyncEvent = z.infer<typeof jobSyncEventSchema>
 export type JobRunInsert = z.infer<typeof jobRunsInsertSchema>
-export type JobSnapshot = ReturnType<Job["toJSON"]>
+// Parsed from a JSON payload: the job's data and return value are unknown, not BullMQ's `any` defaults.
+export type JobSnapshot = ReturnType<Job<unknown, unknown>["toJSON"]>
 export type PersistedJobStatus = JobRunInsert["status"]
 
 const terminalStatuses = new Set<PersistedJobStatus>(["completed", "failed"])
@@ -26,6 +37,7 @@ const terminalStatuses = new Set<PersistedJobStatus>(["completed", "failed"])
 export const isTerminalStatus = (status: PersistedJobStatus) => terminalStatuses.has(status)
 
 export const bullStateToPersistedStatus = (state?: string): PersistedJobStatus | undefined => {
+  if (state === undefined) return undefined
   switch (state) {
     case "completed":
     case "failed":
@@ -90,7 +102,8 @@ export const formatJobRun = ({
     priority: job.opts.priority,
     delayMs: job.opts.delay,
     backoff: job.opts.backoff,
-    data: job.data,
+    // Validated as JSON by jobRunsInsertSchema below.
+    data: job.data as JobRunInsert["data"],
     enqueuedAt,
     startedAt: job.processedOn ? new Date(job.processedOn) : undefined,
     finishedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
@@ -99,7 +112,7 @@ export const formatJobRun = ({
     name: job.name,
     parentJobId: job.opts.parent?.id,
     repeatJobKey: job.repeatJobKey,
-    result: job.returnvalue,
+    result: job.returnvalue as JobRunInsert["result"],
     tags,
     createdAt: enqueuedAt,
   }

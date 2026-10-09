@@ -1,8 +1,10 @@
 #!/usr/bin/env bun
 
 import { timingSafeEqual } from "node:crypto"
-import { createServer, type ServerResponse } from "node:http"
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
+
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
+
 import { env } from "./env"
 import { createBetterBullBoardMcpServer } from "./server"
 
@@ -36,7 +38,7 @@ const isAuthorized = (authorization: string | undefined) => {
   return actualToken.length === expectedToken.length && timingSafeEqual(actualToken, expectedToken)
 }
 
-const httpServer = createServer(async (req, res) => {
+const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
   if (req.url !== "/mcp") {
     sendJson(res, 404, { error: "Not found" })
     return
@@ -60,7 +62,7 @@ const httpServer = createServer(async (req, res) => {
     })
 
     res.on("close", () => {
-      transport.close()
+      void transport.close()
     })
 
     await server.connect(transport)
@@ -80,7 +82,9 @@ const httpServer = createServer(async (req, res) => {
       res.end()
     }
   }
-})
+}
+
+const httpServer = createServer((req, res) => void handleRequest(req, res))
 
 httpServer.on("error", (error) => {
   console.error(

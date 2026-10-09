@@ -14,7 +14,11 @@ interface QueueMiniChartProps {
 
 export function QueueMiniChart({ data }: QueueMiniChartProps) {
   if (!data || data.length === 0) {
-    return <div className="h-16 w-32 flex items-center justify-center text-xs text-muted-foreground">No data</div>
+    return (
+      <div className="flex h-16 w-32 items-center justify-center text-xs text-muted-foreground">
+        No data
+      </div>
+    )
   }
 
   // Process data to ensure we have valid timestamps

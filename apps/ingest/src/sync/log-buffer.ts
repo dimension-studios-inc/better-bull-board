@@ -1,8 +1,13 @@
-import { jobLogBufferTable, jobLogsTable, jobRunsTable } from "@better-bull-board/db/schemas/job/schema"
+import {
+  jobLogBufferTable,
+  jobLogsTable,
+  jobRunsTable,
+} from "@better-bull-board/db/schemas/job/schema"
 import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { and, DrizzleQueryError, eq, inArray, or, sql } from "drizzle-orm"
 import { DatabaseError } from "pg"
+
 import { runBackgroundTask } from "~/lib/background-tasks"
 import { acquireLock, releaseLock } from "~/lib/distributed-lock"
 import { env } from "~/lib/env"
@@ -46,7 +51,11 @@ async function withDeadlockRetry<T>(fn: () => Promise<T>, label: string, tries =
     try {
       return await fn()
     } catch (error: unknown) {
-      if (error instanceof DrizzleQueryError && error.cause instanceof DatabaseError && error.cause.code === "40P01") {
+      if (
+        error instanceof DrizzleQueryError &&
+        error.cause instanceof DatabaseError &&
+        error.cause.code === "40P01"
+      ) {
         lastErr = error
         if (i === tries - 1) break
         const backoff = 25 * (i + 1) + Math.floor(Math.random() * 50)
@@ -93,14 +102,17 @@ const resolveJobRunIds = async (events: LogEventForPersistence[]) => {
   return new Map(
     rows
       .filter((row): row is typeof row & { enqueuedAt: Date } => Boolean(row.enqueuedAt))
-      .map((row) => [getJobKey({ queue: row.queue, jobId: row.jobId, jobTimestamp: row.enqueuedAt }), row.id]),
+      .map((row) => [
+        getJobKey({ queue: row.queue, jobId: row.jobId, jobTimestamp: row.enqueuedAt }),
+        row.id,
+      ]),
   )
 }
 
 const insertResolvedLogs = async (events: ResolvedLogEvent[]) => {
   if (events.length === 0) return
 
-  const sorted = [...events].sort((a, b) => {
+  const sorted = events.toSorted((a, b) => {
     const queueCompare = a.queue.localeCompare(b.queue)
     if (queueCompare !== 0) return queueCompare
 
@@ -217,10 +229,12 @@ export const resolveBufferedJobLogs = async () => {
     .orderBy(jobLogBufferTable.createdAt)
     .limit(env.JOB_LOG_BUFFER_BATCH_SIZE)
 
-  const [{ count = 0, oldestCreatedAt = null } = { count: 0, oldestCreatedAt: null }] = await db
+  const [{ count, oldestCreatedAt } = { count: 0, oldestCreatedAt: null }] = await db
     .select({
       count: sql<number>`count(*)::int`,
-      oldestCreatedAt: sql<Date | null>`min(${jobLogBufferTable.createdAt})`.mapWith(jobLogBufferTable.createdAt),
+      oldestCreatedAt: sql<Date | null>`min(${jobLogBufferTable.createdAt})`.mapWith(
+        jobLogBufferTable.createdAt,
+      ),
     })
     .from(jobLogBufferTable)
 
@@ -281,7 +295,11 @@ export const autoResolveBufferedJobLogs = () => {
   const run = async () => {
     const owner = `${instanceId}:${Date.now()}`
     const lockKey = "bbb:job-log-buffer-resolver-lock"
-    const acquired = await acquireLock({ key: lockKey, owner, ttlMs: env.JOB_LOG_BUFFER_FLUSH_INTERVAL_MS * 2 })
+    const acquired = await acquireLock({
+      key: lockKey,
+      owner,
+      ttlMs: env.JOB_LOG_BUFFER_FLUSH_INTERVAL_MS * 2,
+    })
     if (!acquired) return
 
     try {
@@ -293,8 +311,12 @@ export const autoResolveBufferedJobLogs = () => {
     }
   }
 
-  logBufferInterval = setInterval(() => runBackgroundTask(run), env.JOB_LOG_BUFFER_FLUSH_INTERVAL_MS)
-  runBackgroundTask(run).catch((error) => {
+  logBufferInterval = setInterval(() => {
+    runBackgroundTask(run).catch((error: unknown) => {
+      logger.error("Error resolving buffered job logs", { error })
+    })
+  }, env.JOB_LOG_BUFFER_FLUSH_INTERVAL_MS)
+  runBackgroundTask(run).catch((error: unknown) => {
     logger.error("Error in initial buffered job log resolution", { error })
   })
 

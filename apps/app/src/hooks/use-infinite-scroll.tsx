@@ -1,4 +1,4 @@
-import { type RefObject, useCallback, useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
 
 interface UseInfiniteScrollOptions {
   /**
@@ -20,21 +20,14 @@ interface UseInfiniteScrollOptions {
    */
   rootMargin?: string
   /**
-   * Ref for the loader element
-   */
-  loaderRef?: RefObject<HTMLDivElement | HTMLTableCellElement | HTMLLIElement | null>
-  /**
-   * State to watch for changes
-   */
-  watchState?: unknown[]
-  /**
    * Enable infinite scroll
    */
   enabled?: boolean
 }
 
 /**
- * Hook for implementing infinite scrolling with an intersection observer
+ * Hook for implementing infinite scrolling with an intersection observer. `loaderRef` is a callback ref to attach to
+ * the loader element.
  *
  * @example
  * ```tsx
@@ -61,56 +54,29 @@ export function useInfiniteScroll({
   hasNextPage,
   isFetchingNextPage,
   rootMargin = "0px",
-  loaderRef,
-  watchState,
   enabled = true,
 }: UseInfiniteScrollOptions) {
-  // Create a ref for the loader element
-  const localLoaderRef = useRef<HTMLDivElement | HTMLTableCellElement | null>(null)
-  const observerRef = useRef<IntersectionObserver | null>(null)
-  const _loaderRef = loaderRef ?? localLoaderRef
+  // A callback ref kept in state, so the observer is set up whenever the loader element mounts (e.g. in a popover
+  // that opens later) and torn down when it unmounts
+  const [loader, setLoader] = useState<Element | null>(null)
 
-  const setupWatcher = useCallback(async () => {
-    let currentLoaderRef = _loaderRef.current
+  useEffect(() => {
+    if (!enabled || !loader) return undefined
 
-    if (!currentLoaderRef) {
-      // Auto retry before logging
-      await new Promise((resolve) => setTimeout(resolve, 100))
-      currentLoaderRef = _loaderRef.current
-    }
-
-    // Debug information
-    if (!currentLoaderRef) {
-      console.warn("Loader ref is not initialized. Make sure the ref is properly attached to a DOM element.")
-      return
-    }
-
-    observerRef.current = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         // If the loader is intersecting and we have a next page, fetch it
         if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
           fetchNextPage()
         }
       },
-      {
-        rootMargin,
-      },
+      { rootMargin },
     )
+    observer.observe(loader)
 
-    // Start observing the loader element
-    observerRef.current.observe(currentLoaderRef)
-  }, [hasNextPage, isFetchingNextPage, rootMargin, _loaderRef, ...(watchState ?? []), fetchNextPage])
+    return () => observer.disconnect()
+  }, [loader, enabled, hasNextPage, isFetchingNextPage, rootMargin, fetchNextPage])
 
-  // Set up the intersection observer
-  useEffect(() => {
-    if (!enabled) return
-
-    setupWatcher()
-
-    return () => {
-      observerRef.current?.disconnect()
-    }
-  }, [setupWatcher, enabled])
-
-  return { loaderRef: _loaderRef }
+  const loaderRef: (element: Element | null) => void = setLoader
+  return { loaderRef }
 }

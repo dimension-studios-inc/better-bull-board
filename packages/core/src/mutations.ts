@@ -2,6 +2,7 @@ import { jobRunsTable, type jobStatusEnum, queuesTable } from "@better-bull-boar
 import { db } from "@better-bull-board/db/server"
 import { and, eq, inArray } from "drizzle-orm"
 import type { z } from "zod"
+
 import { listJobRunKeys } from "./jobs"
 import {
   BULK_JOB_ACTION_LIMIT,
@@ -21,7 +22,11 @@ type QueueMutationInput = z.input<typeof queueMutationInputSchema>
 
 type CancelJobDependencies<RedisConnection> = {
   redis: RedisConnection
-  cancelBullMqJob: (input: { redis: RedisConnection; jobId: string; queueName: string }) => Promise<void>
+  cancelBullMqJob: (input: {
+    redis: RedisConnection
+    jobId: string
+    queueName: string
+  }) => Promise<void>
 }
 
 export type QueueJob = {
@@ -159,7 +164,10 @@ export const cancelJob = async <RedisConnection>(
   return mutationResult(`Job ${jobId} has been cancelled successfully`)
 }
 
-export const replayJob = async (input: JobMutationInput, dependencies: QueueDependencies): Promise<MutationResult> => {
+export const replayJob = async (
+  input: JobMutationInput,
+  dependencies: QueueDependencies,
+): Promise<MutationResult> => {
   const { jobId, queueName } = jobMutationInputSchema.parse(input)
   const resolvedQueueName = await resolveTrackedQueueName(queueName)
 
@@ -191,10 +199,14 @@ export const pauseQueue = async (
   input: QueueMutationInput,
   dependencies: QueueDependencies,
 ): Promise<MutationResult> => {
-  const resolvedQueueName = await withResolvedQueue(input, dependencies, async (queue, queueName) => {
-    await queue.pause()
-    await updateTrackedQueuePausedState(queueName, true)
-  })
+  const resolvedQueueName = await withResolvedQueue(
+    input,
+    dependencies,
+    async (queue, queueName) => {
+      await queue.pause()
+      await updateTrackedQueuePausedState(queueName, true)
+    },
+  )
 
   return mutationResult(`Queue ${resolvedQueueName} has been paused successfully`)
 }
@@ -203,10 +215,14 @@ export const resumeQueue = async (
   input: QueueMutationInput,
   dependencies: QueueDependencies,
 ): Promise<MutationResult> => {
-  const resolvedQueueName = await withResolvedQueue(input, dependencies, async (queue, queueName) => {
-    await queue.resume()
-    await updateTrackedQueuePausedState(queueName, false)
-  })
+  const resolvedQueueName = await withResolvedQueue(
+    input,
+    dependencies,
+    async (queue, queueName) => {
+      await queue.resume()
+      await updateTrackedQueuePausedState(queueName, false)
+    },
+  )
 
   return mutationResult(`Queue ${resolvedQueueName} has been resumed successfully`)
 }
@@ -215,10 +231,14 @@ export const deleteQueue = async (
   input: QueueMutationInput,
   dependencies: QueueDependencies,
 ): Promise<MutationResult> => {
-  const resolvedQueueName = await withResolvedQueue(input, dependencies, async (queue, queueName) => {
-    await queue.obliterate({ force: true })
-    await db.delete(queuesTable).where(eq(queuesTable.name, queueName))
-  })
+  const resolvedQueueName = await withResolvedQueue(
+    input,
+    dependencies,
+    async (queue, queueName) => {
+      await queue.obliterate({ force: true })
+      await db.delete(queuesTable).where(eq(queuesTable.name, queueName))
+    },
+  )
 
   return mutationResult(`Queue ${resolvedQueueName} has been deleted successfully`)
 }
@@ -267,7 +287,9 @@ export const applyToJobsMatchingFilters = async ({
     }
 
     for (let index = 0; index < jobs.length; index += BULK_JOB_ACTION_CONCURRENCY) {
-      const outcomes = await Promise.allSettled(jobs.slice(index, index + BULK_JOB_ACTION_CONCURRENCY).map(action))
+      const outcomes = await Promise.allSettled(
+        jobs.slice(index, index + BULK_JOB_ACTION_CONCURRENCY).map(action),
+      )
 
       for (const outcome of outcomes) {
         if (outcome.status === "fulfilled") {

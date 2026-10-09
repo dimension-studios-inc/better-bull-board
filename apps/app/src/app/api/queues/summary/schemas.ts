@@ -1,4 +1,5 @@
-import z from "zod"
+import { z } from "zod"
+
 import { registerApiRoute } from "~/lib/utils/client"
 
 const getQueueSummaryInput = z.object({

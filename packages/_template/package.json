@@ -1,5 +1,13 @@
 {
   "name": "@better-bull-board/template",
+  "license": "ISC",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
@@ -7,20 +15,12 @@
     "type-check": "tsc --noEmit",
     "debug": "bun debug/index.ts"
   },
-  "license": "ISC",
   "dependencies": {
     "@rharkor/logger": "1.3.3",
     "@t3-oss/env-core": "0.13.11",
     "dotenv": "18.0.4",
     "zod": "4.6.5"
   },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    }
-  },
-  "type": "module",
   "devDependencies": {
     "@better-bull-board/typescript-config": "workspace:*",
     "@types/node": "26.6.2",

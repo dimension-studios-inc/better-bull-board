@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { type Job, type JobType, Queue } from "bullmq"
 import { and, asc, eq, gt, inArray, isNull, or } from "drizzle-orm"
+
 import { runBackgroundTask } from "~/lib/background-tasks"
 import { mapWithConcurrency } from "~/lib/concurrency"
 import { acquireLock, releaseLock } from "~/lib/distributed-lock"
@@ -13,7 +14,14 @@ import { bullStateToPersistedStatus, formatJobRun, type JobRunInsert } from "~/s
 import { safeUpsertJobRuns } from "~/sync/job-upsert"
 
 const JOB_TYPES: JobType[] = ["waiting", "active", "delayed", "prioritized", "waiting-children"]
-const NON_TERMINAL_STATUSES = ["waiting", "active", "delayed", "prioritized", "waiting-children", "unknown"] as const
+const NON_TERMINAL_STATUSES = [
+  "waiting",
+  "active",
+  "delayed",
+  "prioritized",
+  "waiting-children",
+  "unknown",
+] as const
 const JOB_RECONCILE_CONCURRENCY = 5
 /** A job that just ran can leave Redis before its events are ingested; don't retire its row in that window. */
 const ORPHAN_GRACE_MS = 15 * 60 * 1000
@@ -24,11 +32,12 @@ let queueCursor = 0
 /** Keyset position per queue, so live rows filling one page can't hide the stale rows behind them. */
 const missingRowCursors = new Map<string, { createdAt: Date; jobId: string; id: string }>()
 
-const isBullMqJob = (job: Job | undefined): job is Job => Boolean(job?.id && typeof job.getState === "function")
+const isBullMqJob = (job: Job | undefined): job is Job =>
+  Boolean(job?.id && typeof job.getState === "function")
 
 const getQueueNames = async () => {
   const queues = await db.select({ name: queuesTable.name }).from(queuesTable)
-  return queues.map((queue) => queue.name).sort()
+  return queues.map((queue) => queue.name).toSorted()
 }
 
 const selectQueueBatch = (queueNames: string[]) => {
@@ -46,7 +55,12 @@ const reconcileRetainedBullMqJobs = async (queue: Queue, queueName: string) => {
   const rows: JobRunInsert[] = []
 
   while (true) {
-    const jobs = await queue.getJobs(JOB_TYPES, start, start + env.JOB_RECONCILE_PAGE_SIZE - 1, true)
+    const jobs = await queue.getJobs(
+      JOB_TYPES,
+      start,
+      start + env.JOB_RECONCILE_PAGE_SIZE - 1,
+      true,
+    )
     if (jobs.length === 0) break
 
     let unexpectedCount = 0
@@ -104,7 +118,10 @@ const reconcileMissingNonTerminalRows = async (queue: Queue, queueName: string) 
         cursor
           ? or(
               gt(jobRunsTable.createdAt, cursor.createdAt),
-              and(eq(jobRunsTable.createdAt, cursor.createdAt), gt(jobRunsTable.jobId, cursor.jobId)),
+              and(
+                eq(jobRunsTable.createdAt, cursor.createdAt),
+                gt(jobRunsTable.jobId, cursor.jobId),
+              ),
               and(
                 eq(jobRunsTable.createdAt, cursor.createdAt),
                 eq(jobRunsTable.jobId, cursor.jobId),
@@ -119,7 +136,11 @@ const reconcileMissingNonTerminalRows = async (queue: Queue, queueName: string) 
 
   const lastRow = staleRows.at(-1)
   if (lastRow && staleRows.length === env.JOB_RECONCILE_PAGE_SIZE) {
-    missingRowCursors.set(queueName, { createdAt: lastRow.createdAt, jobId: lastRow.jobId, id: lastRow.id })
+    missingRowCursors.set(queueName, {
+      createdAt: lastRow.createdAt,
+      jobId: lastRow.jobId,
+      id: lastRow.id,
+    })
   } else {
     missingRowCursors.delete(queueName)
   }
@@ -177,7 +198,12 @@ const reconcileMissingNonTerminalRows = async (queue: Queue, queueName: string) 
             finishedAt: new Date(),
             errorMessage: "Job left Redis before a terminal status was recorded",
           })
-          .where(and(inArray(jobRunsTable.id, orphanIdsToFail), inArray(jobRunsTable.status, NON_TERMINAL_STATUSES)))
+          .where(
+            and(
+              inArray(jobRunsTable.id, orphanIdsToFail),
+              inArray(jobRunsTable.status, NON_TERMINAL_STATUSES),
+            ),
+          )
           .returning({ id: jobRunsTable.id })
       : []
 
@@ -199,7 +225,11 @@ const reconcileQueue = async (queueName: string) => {
   const start = Date.now()
   const lockKey = `bbb:job-reconcile-lock:${queueName}`
   const owner = `${instanceId}:${Date.now()}`
-  const acquired = await acquireLock({ key: lockKey, owner, ttlMs: env.JOB_RECONCILE_INTERVAL_MS * 2 })
+  const acquired = await acquireLock({
+    key: lockKey,
+    owner,
+    ttlMs: env.JOB_RECONCILE_INTERVAL_MS * 2,
+  })
   if (!acquired) return
 
   const queue = new Queue(queueName, { connection: redis })
@@ -249,9 +279,13 @@ export const autoReconcileJobs = () => {
     }
   }
 
-  reconcileInterval = setInterval(() => runBackgroundTask(run), env.JOB_RECONCILE_INTERVAL_MS)
+  reconcileInterval = setInterval(() => {
+    runBackgroundTask(run).catch((error: unknown) => {
+      logger.error("Error in job reconciliation", { error })
+    })
+  }, env.JOB_RECONCILE_INTERVAL_MS)
 
-  runBackgroundTask(run).catch((error) => {
+  runBackgroundTask(run).catch((error: unknown) => {
     logger.error("Error in initial job reconciliation", { error })
   })
 

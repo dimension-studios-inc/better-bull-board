@@ -15,24 +15,39 @@ import type { ComponentProps } from "react"
 type BadgeVariant = ComponentProps<typeof Badge>["variant"]
 
 // The shadcn Badge variants carry the status, the icon tells statuses of the same variant apart
-const runStatuses: Record<string, { variant: BadgeVariant; icon: LucideIcon; iconClassName?: string }> = {
+const runStatuses: Record<
+  string,
+  { variant: BadgeVariant; icon: LucideIcon; iconClassName?: string }
+> = {
   completed: { variant: "outline", icon: CircleCheck, iconClassName: "text-success" },
   failed: { variant: "destructive", icon: CircleX, iconClassName: "text-destructive" },
   active: { variant: "secondary", icon: LoaderCircle, iconClassName: "animate-spin" },
   waiting: { variant: "outline", icon: Clock, iconClassName: "text-muted-foreground" },
   delayed: { variant: "outline", icon: Hourglass, iconClassName: "text-muted-foreground" },
   prioritized: { variant: "outline", icon: Hourglass, iconClassName: "text-muted-foreground" },
-  "waiting-children": { variant: "outline", icon: Hourglass, iconClassName: "text-muted-foreground" },
+  "waiting-children": {
+    variant: "outline",
+    icon: Hourglass,
+    iconClassName: "text-muted-foreground",
+  },
 }
 
-const unknownStatus = { variant: "outline", icon: CircleQuestionMark, iconClassName: "text-muted-foreground" } as const
+const unknownStatus = {
+  variant: "outline",
+  icon: CircleQuestionMark,
+  iconClassName: "text-muted-foreground",
+} as const
 
 type RunStatusProps = {
   status: string
   className?: string
 }
 
-export function RunStatusIcon({ status, className, ...props }: RunStatusProps & Omit<LucideProps, "ref">) {
+export function RunStatusIcon({
+  status,
+  className,
+  ...props
+}: RunStatusProps & Omit<LucideProps, "ref">) {
   const { icon: Icon, iconClassName } = runStatuses[status] ?? unknownStatus
   return <Icon className={cn(iconClassName, className)} aria-hidden {...props} />
 }

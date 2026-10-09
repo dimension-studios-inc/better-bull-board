@@ -5,4 +5,4 @@ const main = async () => {
   logger.debug("Hello, world!")
 }
 
-main().then(() => process.exit(0))
+void main().then(() => process.exit(0))

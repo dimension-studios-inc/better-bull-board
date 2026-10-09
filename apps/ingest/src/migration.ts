@@ -1,9 +1,11 @@
 import { exec } from "node:child_process"
 import path from "node:path"
 import { promisify } from "node:util"
+
 import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { sql } from "drizzle-orm"
+
 import { env } from "./lib/env"
 
 const execAsync = promisify(exec)
@@ -64,6 +66,6 @@ async function migratePostgreSQL(): Promise<void> {
     })
   } catch (error) {
     logger.error("❌ PostgreSQL migration failed", error)
-    throw new Error(`PostgreSQL migration failed: ${error}`)
+    throw new Error(`PostgreSQL migration failed: ${String(error)}`, { cause: error })
   }
 }

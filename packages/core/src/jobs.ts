@@ -21,6 +21,7 @@ import {
 } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 import { z } from "zod"
+
 import { withListJobsConcurrencyLimit } from "./list-jobs-limit"
 
 export {
@@ -125,14 +126,23 @@ const getJobFilterConditions = ({
   }
 
   if (createdFrom) {
-    conditions.push(gte(jobRunsTable.createdAt, parseCreatedBoundary({ value: createdFrom, fallbackTime: "00:00" })))
+    conditions.push(
+      gte(
+        jobRunsTable.createdAt,
+        parseCreatedBoundary({ value: createdFrom, fallbackTime: "00:00" }),
+      ),
+    )
   }
 
   if (createdTo) {
     conditions.push(
       lte(
         jobRunsTable.createdAt,
-        parseCreatedBoundary({ value: createdTo, fallbackTime: "23:59:59.999", isUpperBoundary: true }),
+        parseCreatedBoundary({
+          value: createdTo,
+          fallbackTime: "23:59:59.999",
+          isUpperBoundary: true,
+        }),
       ),
     )
   }
@@ -167,8 +177,18 @@ const getSortOrder = ({
 
   if (sortBy === "durationMs") {
     return orderDirection === "desc"
-      ? [desc(durationSortExpression), desc(jobRunsTable.createdAt), desc(jobRunsTable.jobId), desc(jobRunsTable.id)]
-      : [asc(durationSortExpression), asc(jobRunsTable.createdAt), asc(jobRunsTable.jobId), asc(jobRunsTable.id)]
+      ? [
+          desc(durationSortExpression),
+          desc(jobRunsTable.createdAt),
+          desc(jobRunsTable.jobId),
+          desc(jobRunsTable.id),
+        ]
+      : [
+          asc(durationSortExpression),
+          asc(jobRunsTable.createdAt),
+          asc(jobRunsTable.jobId),
+          asc(jobRunsTable.id),
+        ]
   }
 
   return orderDirection === "desc"
@@ -191,12 +211,20 @@ const getCreatedAtCursorComparison = ({
     ? or(
         lt(jobRunsTable.createdAt, createdAt),
         and(eq(jobRunsTable.createdAt, createdAt), lt(jobRunsTable.jobId, jobId)),
-        and(eq(jobRunsTable.createdAt, createdAt), eq(jobRunsTable.jobId, jobId), lt(jobRunsTable.id, id)),
+        and(
+          eq(jobRunsTable.createdAt, createdAt),
+          eq(jobRunsTable.jobId, jobId),
+          lt(jobRunsTable.id, id),
+        ),
       )
     : or(
         gt(jobRunsTable.createdAt, createdAt),
         and(eq(jobRunsTable.createdAt, createdAt), gt(jobRunsTable.jobId, jobId)),
-        and(eq(jobRunsTable.createdAt, createdAt), eq(jobRunsTable.jobId, jobId), gt(jobRunsTable.id, id)),
+        and(
+          eq(jobRunsTable.createdAt, createdAt),
+          eq(jobRunsTable.jobId, jobId),
+          gt(jobRunsTable.id, id),
+        ),
       )
 
 const getCursorComparison = ({
@@ -213,7 +241,8 @@ const getCursorComparison = ({
   sortDirection: SortDirection
 }) => {
   const createdAt = new Date(cursor.createdAt)
-  const useLessThan = cursorDirection === "next" ? sortDirection === "desc" : sortDirection === "asc"
+  const useLessThan =
+    cursorDirection === "next" ? sortDirection === "desc" : sortDirection === "asc"
   const createdAtComparison = getCreatedAtCursorComparison({
     createdAt,
     id: cursor.id,
@@ -275,7 +304,7 @@ export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) 
       rows.pop()
     }
 
-    const jobs = cursorDirection === "prev" ? rows.reverse() : rows
+    const jobs = cursorDirection === "prev" ? rows.toReversed() : rows
     const firstJob = jobs[0]
     const lastJob = jobs.at(-1)
     const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra
@@ -294,8 +323,12 @@ export const countJobs = async (input: z.input<typeof jobFiltersSchema> = {}) =>
   const [row] = await db
     .select({
       total: count(),
-      replayable: count(sql`CASE WHEN ${inArray(jobRunsTable.status, [...replayableJobStatuses])} THEN 1 END`),
-      cancellable: count(sql`CASE WHEN ${inArray(jobRunsTable.status, [...cancellableJobStatuses])} THEN 1 END`),
+      replayable: count(
+        sql`CASE WHEN ${inArray(jobRunsTable.status, [...replayableJobStatuses])} THEN 1 END`,
+      ),
+      cancellable: count(
+        sql`CASE WHEN ${inArray(jobRunsTable.status, [...cancellableJobStatuses])} THEN 1 END`,
+      ),
     })
     .from(jobRunsTable)
     .where(and(...getJobFilterConditions(filters)))
@@ -378,7 +411,13 @@ export const getJobById = async (input: z.input<typeof getJobByIdInputSchema>) =
 }
 
 export const listJobLogs = async (input: z.input<typeof listJobLogsInputSchema>) => {
-  const { id, level, messageContains, limit = 100, offset = 0 } = listJobLogsInputSchema.parse(input)
+  const {
+    id,
+    level,
+    messageContains,
+    limit = 100,
+    offset = 0,
+  } = listJobLogsInputSchema.parse(input)
   const conditions = [eq(jobLogsTable.jobRunId, id)]
 
   if (level) {
@@ -399,7 +438,11 @@ export const listJobLogs = async (input: z.input<typeof listJobLogsInputSchema>)
       .orderBy(asc(jobLogsTable.ts), asc(jobLogsTable.logSeq))
       .limit(limit)
       .offset(offset),
-    db.select({ count: sql<number>`count(*)` }).from(jobLogsTable).where(whereClause),
+    db
+      // count(*) is a bigint, which node-postgres returns as a string.
+      .select({ count: sql<string>`count(*)` })
+      .from(jobLogsTable)
+      .where(whereClause),
   ])
 
   return listJobLogsOutputSchema.parse({
