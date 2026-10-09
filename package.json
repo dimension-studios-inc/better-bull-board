@@ -8,8 +8,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "biome check",
-    "format": "biome format --write",
+    "lint": "bun run setup && oxlint --type-aware && oxfmt --check",
+    "format": "oxfmt",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "knip": "knip",
@@ -20,7 +20,6 @@
     "prepare": "lefthook install"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.14",
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
     "@semantic-release/commit-analyzer": "13.0.1",
@@ -31,6 +30,9 @@
     "conventional-changelog-conventionalcommits": "9.3.1",
     "knip": "6.38.0",
     "lefthook": "2.1.14",
+    "oxfmt": "0.70.0",
+    "oxlint": "1.85.0",
+    "oxlint-tsgolint": "7.0.2003",
     "semantic-release": "25.0.9",
     "semantic-release-monorepo": "8.0.2",
     "turbo": "2.11.4",
@@ -39,10 +41,10 @@
   "engines": {
     "node": ">=22.18.0"
   },
+  "packageManager": "bun@1.4.2",
   "trustedDependencies": [
     "esbuild",
     "lefthook",
     "msgpackr-extract"
-  ],
-  "packageManager": "bun@1.4.2"
+  ]
 }

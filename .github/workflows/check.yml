@@ -42,8 +42,9 @@ jobs:
           bun-version-file: package.json
 
       - run: bun ci
-      - run: bun run lint
+      # Type-aware lint resolves workspace packages through their built dist/ types.
       - run: bun run type-check
+      - run: bun run lint
       - run: bun run test
 
       - name: Verify client pack includes types

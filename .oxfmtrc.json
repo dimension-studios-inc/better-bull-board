@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": false,
+  "sortImports": true,
+  "sortTailwindcss": {
+    "stylesheet": "./packages/ui/src/styles/globals.css",
+    "functions": ["cn", "cva", "clsx"]
+  },
+  "ignorePatterns": ["packages/ui/src/components", "packages/ui/src/hooks", "**/drizzle/meta"]
+}
