@@ -3,6 +3,44 @@ import type Redis from "ioredis"
 
 const STALE_CONSUMER_IDLE_MS = 60 * 60 * 1000
 
+export type StreamMessage = {
+  id: string
+  fields: string[]
+}
+
+export const getField = (fields: string[], key: string) => {
+  const index = fields.indexOf(key)
+  return index === -1 ? undefined : fields[index + 1]
+}
+
+const parseEntries = (entries: unknown): StreamMessage[] => {
+  if (!Array.isArray(entries)) return []
+  return entries
+    .map((entry): StreamMessage | undefined => {
+      if (!Array.isArray(entry) || typeof entry[0] !== "string" || !Array.isArray(entry[1])) return undefined
+      return { id: entry[0], fields: entry[1].map(String) }
+    })
+    .filter((message): message is StreamMessage => Boolean(message))
+}
+
+/**
+ * XREADGROUP replies with one `[stream, entries]` pair per stream under RESP2, and with a map that ioredis flattens
+ * to `[stream, entries, stream, entries, …]` under RESP3, which ioredis 6 negotiates by default. Read with the RESP2
+ * parser only, every entry was delivered but none parsed: they waited for XAUTOCLAIM to reclaim them.
+ */
+export const parseReadGroupResponse = (response: unknown): StreamMessage[] => {
+  if (!Array.isArray(response)) return []
+  const entryLists =
+    typeof response[0] === "string"
+      ? response.filter((_, index) => index % 2 === 1)
+      : response.map((stream) => (Array.isArray(stream) ? stream[1] : undefined))
+  return entryLists.flatMap(parseEntries)
+}
+
+/** XAUTOCLAIM replies `[nextCursor, entries, deletedIds]` under both protocols. */
+export const parseAutoClaimResponse = (response: unknown): StreamMessage[] =>
+  Array.isArray(response) ? parseEntries(response[1]) : []
+
 type StreamConsumer = {
   idle: number
   name: string

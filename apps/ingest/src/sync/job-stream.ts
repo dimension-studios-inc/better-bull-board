@@ -4,7 +4,15 @@ import { instanceId } from "~/lib/instance"
 import { redis } from "~/lib/redis"
 import { formatJobRun, parseJobSyncEvent } from "./job-format"
 import { safeUpsertJobRuns } from "./job-upsert"
-import { ackAndDeleteEntries, cleanupStaleConsumers, trimAcknowledgedEntries } from "./stream-consumers"
+import {
+  ackAndDeleteEntries,
+  cleanupStaleConsumers,
+  getField,
+  parseAutoClaimResponse,
+  parseReadGroupResponse,
+  type StreamMessage,
+  trimAcknowledgedEntries,
+} from "./stream-consumers"
 
 const streamRedis = redis.duplicate()
 let stopping = false
@@ -13,39 +21,6 @@ let loopDone: Promise<void> | undefined
 streamRedis.on("error", (error) => {
   logger.error("Job stream Redis connection error", { error })
 })
-
-type StreamMessage = {
-  id: string
-  fields: string[]
-}
-
-const getField = (fields: string[], key: string) => {
-  const index = fields.indexOf(key)
-  return index === -1 ? undefined : fields[index + 1]
-}
-
-const parseReadGroupResponse = (response: unknown): StreamMessage[] => {
-  if (!Array.isArray(response)) return []
-  const messages: StreamMessage[] = []
-  for (const stream of response) {
-    if (!Array.isArray(stream) || !Array.isArray(stream[1])) continue
-    for (const message of stream[1]) {
-      if (!Array.isArray(message) || typeof message[0] !== "string" || !Array.isArray(message[1])) continue
-      messages.push({ id: message[0], fields: message[1].map(String) })
-    }
-  }
-  return messages
-}
-
-const parseAutoClaimResponse = (response: unknown): StreamMessage[] => {
-  if (!Array.isArray(response) || !Array.isArray(response[1])) return []
-  return response[1]
-    .map((message): StreamMessage | undefined => {
-      if (!Array.isArray(message) || typeof message[0] !== "string" || !Array.isArray(message[1])) return undefined
-      return { id: message[0], fields: message[1].map(String) }
-    })
-    .filter((message): message is StreamMessage => Boolean(message))
-}
 
 const ensureGroup = async () => {
   try {
