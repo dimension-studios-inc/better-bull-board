@@ -7,6 +7,9 @@
     "perf": "error"
   },
   "options": {
+    // Type-aware rules resolve workspace packages through their built dist/ types:
+    // `bun run lint` and the pre-commit hook build them first (turbo-cached).
+    "typeAware": true,
     "reportUnusedDisableDirectives": "error",
     "denyWarnings": true
   },
