@@ -16,6 +16,9 @@
     "packages/bull-demo": {
       "entry": ["debug/*.ts"]
     },
+    "packages/client": {
+      "entry": ["release.config.mjs"]
+    },
     "packages/typescript-config": {
       "ignoreUnresolved": ["next"]
     },
