@@ -19,8 +19,10 @@ env:
   K8S_NAMESPACE: better-bull-board
 
 jobs:
-  build:
-    name: Build ${{ matrix.image }}
+  # One job per image: it builds and rolls out as soon as its own image is ready, and skips both
+  # when nothing it is built from changed since the last deploy.
+  deploy:
+    name: ${{ matrix.image }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
@@ -30,13 +32,38 @@ jobs:
         include:
           - image: better-bull-board-app
             dockerfile: apps/app/Dockerfile
+            package: "@better-bull-board/app"
+            workload: deployment/bbb-app
+            container: app
+            extra-inputs: ""
           - image: better-bull-board-ingest
             dockerfile: apps/ingest/Dockerfile
+            package: "@better-bull-board/ingest"
+            workload: statefulset/bbb-ingest
+            container: bbb-ingest
+            extra-inputs: scripts/trace-runtime.ts
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
+        with:
+          # Compared with the previously deployed commit (github.event.before)
+          fetch-depth: 0
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2.2.0
+        with:
+          # packageManager in package.json pins the bun version.
+          bun-version-file: package.json
+
+      - name: Check whether the image changed
+        id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: .github/scripts/image-changed.sh "${{ matrix.package }}" ${{ matrix.extra-inputs }}
 
       - name: Configure AWS credentials
+        if: steps.changes.outputs.changed == 'true'
         uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
           aws-region: ${{ env.AWS_REGION }}
@@ -45,6 +72,7 @@ jobs:
           mask-aws-account-id: "false"
 
       - name: Login to Amazon ECR Public
+        if: steps.changes.outputs.changed == 'true'
         uses: aws-actions/amazon-ecr-login@v2.1.7
         with:
           registry-type: public
@@ -53,6 +81,7 @@ jobs:
       # the sources or the lockfile, so the cache served 1-2 steps out of 20 while exporting it took
       # twice as long as the build itself (165 s for the app).
       - name: Build and push
+        if: steps.changes.outputs.changed == 'true'
         uses: docker/build-push-action@v7.4.0
         with:
           context: .
@@ -63,29 +92,19 @@ jobs:
             ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
             ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:latest
 
-  deploy:
-    name: Rollout
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: production
-    needs: build
-    steps:
       - name: Setup kubeconfig
+        if: steps.changes.outputs.changed == 'true'
         run: |
           mkdir -p ~/.kube
           echo "${{ secrets.KUBECONFIG_CONTENT }}" | base64 -d > ~/.kube/config
 
-      # Pin the workloads to this commit's images rather than restarting on :latest: the pods run
+      # Pin the workload to this commit's image rather than restarting on :latest: the pods run
       # exactly what this run built, overlapping deploys cannot swap images, and
-      # `kubectl rollout undo` goes back to the previous commit.
-      - name: Deploy this commit's images
+      # `kubectl rollout undo` goes back to the previous image.
+      - name: Roll out
+        if: steps.changes.outputs.changed == 'true'
         env:
-          SHA: ${{ github.sha }}
+          IMAGE: ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
         run: |
-          kubectl set image deployment/bbb-app app="$ECR_REGISTRY/better-bull-board-app:$SHA" -n "$K8S_NAMESPACE"
-          kubectl set image statefulset/bbb-ingest bbb-ingest="$ECR_REGISTRY/better-bull-board-ingest:$SHA" -n "$K8S_NAMESPACE"
-
-      - name: Wait for rollouts
-        run: |
-          kubectl rollout status deployment/bbb-app -n "$K8S_NAMESPACE" --timeout=5m
-          kubectl rollout status statefulset/bbb-ingest -n "$K8S_NAMESPACE" --timeout=5m
+          kubectl set image "${{ matrix.workload }}" "${{ matrix.container }}=$IMAGE" -n "$K8S_NAMESPACE"
+          kubectl rollout status "${{ matrix.workload }}" -n "$K8S_NAMESPACE" --timeout=5m

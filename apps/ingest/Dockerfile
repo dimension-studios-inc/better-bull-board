@@ -38,9 +38,9 @@ RUN bun ci --ignore-scripts
 COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
-FROM base AS builder
+# Continues from the installer instead of copying its /app into a new stage (12 s for the app's node_modules)
+FROM installer AS builder
 ENV NODE_OPTIONS="--max-old-space-size=6144"
-COPY --from=installer /app /app
 RUN --mount=type=cache,target=/root/.cache/turbo \
   bun run build:ingest
 

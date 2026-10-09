@@ -27,11 +27,20 @@ spec:
                 name: bbb-app-config
             - secretRef:
                 name: bbb-app-secret
+          # The server listens within a second: probe often while it starts, so the new pod takes
+          # traffic (and the old one stops) as soon as it is up instead of after fixed delays.
+          # Liveness and readiness only begin once it succeeds; 30 x 2 s covers a slow start.
+          startupProbe:
+            httpGet:
+              path: /live
+              port: 3000
+            periodSeconds: 2
+            timeoutSeconds: 3
+            failureThreshold: 30
           livenessProbe:
             httpGet:
               path: /live
               port: 3000
-            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
@@ -39,7 +48,6 @@ spec:
             httpGet:
               path: /ready
               port: 3000
-            initialDelaySeconds: 15
             periodSeconds: 5
             timeoutSeconds: 10
             failureThreshold: 3
