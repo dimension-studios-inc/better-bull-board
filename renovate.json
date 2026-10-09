@@ -7,6 +7,11 @@
   "minimumReleaseAge": "14 days",
   "packageRules": [
     {
+      "description": "oxlint and oxlint-tsgolint must stay compatible, so update the oxc toolchain in one PR",
+      "groupName": "oxc",
+      "matchPackageNames": ["oxlint", "oxlint-tsgolint", "oxfmt"]
+    },
+    {
       "description": "Keep the Dockerfile oven/bun images in step with packageManager",
       "groupName": "bun",
       "matchPackageNames": ["bun", "oven/bun"]
