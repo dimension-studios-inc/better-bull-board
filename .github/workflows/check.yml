@@ -34,6 +34,9 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v7.0.1
+        with:
+          # React Doctor compares the PR against its base branch.
+          fetch-depth: 0
 
       - name: Setup bun
         uses: oven-sh/setup-bun@v2.2.0
@@ -46,6 +49,13 @@ jobs:
       - run: bun run type-check
       - run: bun run lint
       - run: bun run test
+
+      # Fails only on findings the PR introduces; `bun run doctor` lists the existing backlog.
+      - name: React Doctor
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bun run doctor --scope changed --base "origin/$BASE_REF"
 
       - name: Verify client pack includes types
         working-directory: packages/client

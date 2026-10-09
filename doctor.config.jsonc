@@ -1,0 +1,11 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "projects": ["@better-bull-board/app", "@better-bull-board/ui"],
+  // oxlint already runs on its own (`bun run lint`); re-running .oxlintrc.json here duplicates its findings and drops its overrides.
+  "adoptExistingLintConfig": false,
+  // Renovate's minimumReleaseAge already vets dependencies; skip the per-dependency Socket.dev requests.
+  "supplyChain": { "enabled": false },
+  // Keep scans local: no score API, share URL or crash reporting.
+  "noScore": true,
+  "share": false,
+}
