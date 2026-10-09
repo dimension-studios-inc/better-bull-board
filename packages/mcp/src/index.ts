@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-
-import "dotenv/config"
+#!/usr/bin/env bun
 
 import { timingSafeEqual } from "node:crypto"
 import { createServer, type ServerResponse } from "node:http"
