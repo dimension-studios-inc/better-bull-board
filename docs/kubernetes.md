@@ -43,7 +43,7 @@ The ingest applies them when it starts with `ENV=production` (`drizzle-kit migra
 
 `drizzle-kit migrate` runs each migration in a transaction, so an index cannot be built `CONCURRENTLY` there and blocks writes to its table while it builds. For an index on a large table such as `job_runs`, create it by hand with `CREATE INDEX CONCURRENTLY IF NOT EXISTS` before the deploy, and use `IF NOT EXISTS` in the migration.
 
-Locally, run them with `pnpm --filter @better-bull-board/db db:migrate`.
+Locally, run them with `bun run --cwd packages/db db:migrate`.
 
 ## Verify
 

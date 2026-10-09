@@ -105,13 +105,13 @@ The app-hosted endpoint is the normal path. The standalone package is useful for
 Build the package first:
 
 ```bash
-pnpm --filter @better-bull-board/mcp build
+bun run --cwd packages/mcp build
 ```
 
 Then start it:
 
 ```bash
-pnpm --filter @better-bull-board/mcp start
+bun run --cwd packages/mcp start
 ```
 
 Standalone mode uses environment variables from `packages/mcp/.env` and requires a bearer token configured manually. Prefer the app-hosted OAuth flow when your client supports it.

@@ -12,29 +12,28 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME="0.0.0.0"
 
-# Pin matches package.json packageManager (base has no package.json yet).
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME/bin:$PATH"
-RUN corepack enable && corepack prepare pnpm@12.0.0 --activate
+# Pin matches package.json packageManager. Bun only installs; Node runs everything.
+COPY --from=oven/bun:1.4.2-alpine /usr/local/bin/bun /usr/local/bin/
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
 
 #* ---- Prepare stage ----
 FROM base AS prepare
 COPY . .
-RUN pnpm dlx turbo@2.10.11 prune @better-bull-board/app --docker
+# Same turbo as package.json: bunx without a version fetches the latest.
+RUN TURBO_VERSION=$(bun -p 'require("./package.json").devDependencies.turbo') \
+  && bunx turbo@$TURBO_VERSION prune @better-bull-board/app --docker
 
 #* ---- Installer stage ----
 # Install full dependencies (including devDependencies) because `next build` needs
 # type definitions, PostCSS plugins, and other build-time tooling. The final image
 # only copies Next's standalone output, so devDependencies never leak into runtime.
-# `NODE_ENV=development` overrides `production` from `base`; pnpm 12 otherwise
-# skips devDependencies, and `--prod` is a flag with no `--prod=false` form.
 # `--ignore-scripts` skips the root `lefthook install` prepare hook (git/lefthook
 # are not available in this image, and lefthook is a devDependency).
 FROM base AS installer
-ENV NODE_ENV=development
 COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-  pnpm ci --ignore-scripts
+# No store cache mount: it restored nothing on ephemeral builders, and a mount is
+# a separate filesystem, so bun copies instead of hardlinking out of its cache.
+RUN bun ci --ignore-scripts
 COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
@@ -68,7 +67,7 @@ ENV WEBSOCKET_PORT=$WEBSOCKET_PORT
 ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
 ENV DATABASE_URL=$DATABASE_URL
 
-RUN pnpm run build:app
+RUN bun run build:app
 
 #* ---- Runner stage ----
 FROM base AS runner

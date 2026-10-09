@@ -1,6 +1,10 @@
 {
   "name": "better-bull-board",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -25,5 +29,10 @@
   "engines": {
     "node": ">=22.18.0"
   },
-  "packageManager": "pnpm@12.7.0"
+  "trustedDependencies": [
+    "esbuild",
+    "lefthook",
+    "msgpackr-extract"
+  ],
+  "packageManager": "bun@1.4.2"
 }

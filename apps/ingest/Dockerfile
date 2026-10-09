@@ -15,35 +15,34 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV API_HOSTNAME=0.0.0.0
 ENV PORT=8080
 
-# Pin matches package.json packageManager (base has no package.json yet).
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME/bin:$PATH"
-RUN corepack enable && corepack prepare pnpm@12.0.0 --activate
+# Pin matches package.json packageManager. Bun only installs; Node runs everything.
+COPY --from=oven/bun:1.4.2-alpine /usr/local/bin/bun /usr/local/bin/
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
 
 #* ---- Prepare stage ----
 FROM base AS prepare
 COPY . .
+# Same turbo as package.json: bunx without a version fetches the latest.
 RUN --mount=type=cache,target=/root/.cache/turbo \
-  pnpm dlx turbo@2.10.11 prune @better-bull-board/ingest --docker
+  TURBO_VERSION=$(bun -p 'require("./package.json").devDependencies.turbo') \
+  && bunx turbo@$TURBO_VERSION prune @better-bull-board/ingest --docker
 
 #* ---- Installer stage (dev deps for build) ----
 # `--ignore-scripts` skips the root `lefthook install` prepare hook (git/lefthook
 # are not available in this image, and lefthook is a devDependency).
 FROM base AS installer
-ENV NODE_ENV=development
-
 COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-  pnpm ci --ignore-scripts
+# No store cache mount: it restored nothing on ephemeral builders, and a mount is
+# a separate filesystem, so bun copies instead of hardlinking out of its cache.
+RUN bun ci --ignore-scripts
 COPY --from=prepare /app/out/full/ .
 
 #* ---- Builder stage ----
 FROM base AS builder
 ENV NODE_OPTIONS="--max-old-space-size=6144"
 COPY --from=installer /app /app
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-  --mount=type=cache,target=/root/.cache/turbo \
-  pnpm run build:ingest
+RUN --mount=type=cache,target=/root/.cache/turbo \
+  bun run build:ingest
 
 #* ---- Runtime files stage ----
 FROM builder AS runtime-files
@@ -79,8 +78,10 @@ RUN addgroup --system --gid 1001 nodejs \
 ENV HOME=/home/nodeapp
 
 COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-  pnpm ci --ignore-scripts --prod
+# Drop bun's cache in the same layer so it never ships; node_modules hardlinks
+# already hold the file data.
+RUN bun ci --ignore-scripts --production \
+  && bun pm cache rm
 COPY --from=runtime-files --chown=nodeapp:nodejs /app/runtime/ /app/
 
 USER nodeapp
