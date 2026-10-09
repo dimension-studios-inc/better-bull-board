@@ -19,7 +19,7 @@
     "@commitlint/config-conventional": "21.2.3",
     "knip": "6.38.0",
     "lefthook": "2.1.14",
-    "turbo": "2.11.3",
+    "turbo": "2.11.4",
     "typescript": "7.0.2"
   },
   "engines": {
