@@ -151,7 +151,7 @@ export const getBucketRows = async (
   { bucketSeconds, rollupRange, rawRanges }: DashboardWindow,
   queue?: string,
 ) => {
-  const bucket = sql.raw(String(bucketSeconds))
+  const bucket = sql`${bucketSeconds}`
   const queueFilter = queue ? sql` AND "queue" = ${queue}` : sql``
   const parts: SQL[] = []
 

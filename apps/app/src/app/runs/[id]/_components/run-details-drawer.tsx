@@ -31,8 +31,10 @@ import { RunStatusBadge, RunStatusIcon } from "~/components/run-status-badge"
 import { smartFormatDuration } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
 
+type TRun = typeof jobRunsTable.$inferSelect
+
 interface RunDetailsDrawerProps {
-  run: typeof jobRunsTable.$inferSelect
+  run: TRun
 }
 
 const DetailItem = ({
@@ -68,21 +70,26 @@ const JsonCollapsible = ({
   const [formattedData, setFormattedData] = useState<string>("")
 
   useEffect(() => {
+    // A slower highlight of the previous data must not overwrite the current one
+    let isStale = false
     const formatMessage = async () => {
-      try {
-        const html = await codeToHtml(JSON.stringify(data, null, 2), {
-          lang: "json",
-          themes: { light: "vitesse-light", dark: "vitesse-dark" },
-          defaultColor: false,
-        })
-        setFormattedData(html)
-      } catch (error) {
+      const json = JSON.stringify(data, null, 2)
+      const html = await codeToHtml(json, {
+        lang: "json",
+        themes: { light: "vitesse-light", dark: "vitesse-dark" },
+        defaultColor: false,
+      }).catch((error: unknown) => {
         console.error("Failed to format message:", error)
-        setFormattedData(JSON.stringify(data, null, 2))
-      }
+        // Rendered as HTML below: job data must not be able to inject markup
+        return json.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+      })
+      if (!isStale) setFormattedData(html)
     }
 
     void formatMessage()
+    return () => {
+      isStale = true
+    }
   }, [data])
 
   if (!data) return null
@@ -108,12 +115,166 @@ const JsonCollapsible = ({
   )
 }
 
-export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
-  const duration =
-    run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")
-      ? smartFormatDuration(run.finishedAt.getTime() - run.startedAt.getTime())
-      : null
+const ICON_CLASS_NAME = "h-4 w-4 text-muted-foreground"
 
+const RunSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div>
+    <h3 className="mb-3 text-sm font-medium">{title}</h3>
+    <div className="space-y-3">{children}</div>
+  </div>
+)
+
+const RunBasicInfo = ({ run }: { run: TRun }) => (
+  <RunSection title="Basic Information">
+    <DetailItem
+      icon={<Hash className={ICON_CLASS_NAME} />}
+      label="Job ID"
+      value={<span className="font-mono text-xs break-all">{run.jobId}</span>}
+    />
+    <DetailItem icon={<Database className={ICON_CLASS_NAME} />} label="Queue" value={run.queue} />
+    {run.name && (
+      <DetailItem icon={<Tag className={ICON_CLASS_NAME} />} label="Name" value={run.name} />
+    )}
+    {run.workerId && (
+      <DetailItem
+        icon={<User className={ICON_CLASS_NAME} />}
+        label="Worker ID"
+        value={<span className="font-mono text-xs">{run.workerId}</span>}
+      />
+    )}
+  </RunSection>
+)
+
+const getRunDuration = (run: TRun) =>
+  run.startedAt && run.finishedAt && (run.status === "completed" || run.status === "failed")
+    ? smartFormatDuration(run.finishedAt.getTime() - run.startedAt.getTime())
+    : null
+
+const RunTiming = ({ run }: { run: TRun }) => {
+  const duration = getRunDuration(run)
+
+  return (
+    <RunSection title="Timing">
+      <DetailItem
+        icon={<CalendarClock className={ICON_CLASS_NAME} />}
+        label="Created"
+        value={formatUtcDateTime(run.createdAt)}
+      />
+      {run.enqueuedAt && (
+        <DetailItem
+          icon={<PlayCircle className={ICON_CLASS_NAME} />}
+          label="Enqueued"
+          value={formatUtcDateTime(run.enqueuedAt)}
+        />
+      )}
+      {run.startedAt && (
+        <DetailItem
+          icon={<PlayCircle className={ICON_CLASS_NAME} />}
+          label="Started"
+          value={formatUtcDateTime(run.startedAt)}
+        />
+      )}
+      {run.finishedAt && (
+        <DetailItem
+          icon={<CheckCircle className={ICON_CLASS_NAME} />}
+          label="Finished"
+          value={formatUtcDateTime(run.finishedAt)}
+        />
+      )}
+      {duration && (
+        <DetailItem
+          icon={<Clock className={ICON_CLASS_NAME} />}
+          label="Duration"
+          value={duration}
+        />
+      )}
+    </RunSection>
+  )
+}
+
+const RunExecution = ({ run }: { run: TRun }) => {
+  if (run.maxAttempts === 0 && run.priority === null && run.delayMs <= 0) return null
+
+  return (
+    <>
+      <Separator />
+      <RunSection title="Execution">
+        {run.maxAttempts !== 0 && (
+          <DetailItem
+            icon={<Settings className={ICON_CLASS_NAME} />}
+            label="Attempt"
+            value={`${run.attempt} / ${run.maxAttempts}`}
+          />
+        )}
+        {run.priority !== null && (
+          <DetailItem
+            icon={<Settings className={ICON_CLASS_NAME} />}
+            label="Priority"
+            value={run.priority}
+          />
+        )}
+        {run.delayMs > 0 && (
+          <DetailItem
+            icon={<Clock className={ICON_CLASS_NAME} />}
+            label="Delay"
+            value={smartFormatDuration(run.delayMs)}
+          />
+        )}
+      </RunSection>
+    </>
+  )
+}
+
+const RunTags = ({ tags }: { tags: string[] | null }) => {
+  if (!tags || tags.length === 0) return null
+
+  return (
+    <>
+      <Separator />
+      <div>
+        <h3 className="mb-3 text-sm font-medium">Tags</h3>
+        <div className="flex flex-wrap gap-1">
+          {tags.map((tag) => (
+            <Badge key={tag} variant="outline">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+const RunError = ({ run }: { run: TRun }) => {
+  if (run.status !== "failed" || (!run.errorMessage && !run.errorStack)) return null
+
+  return (
+    <>
+      <Separator />
+      <div>
+        <h3 className="mb-3 text-sm font-medium text-destructive">Error Details</h3>
+        {run.errorMessage && (
+          <div className="mb-3">
+            <div className="mb-1 text-xs text-muted-foreground">Message</div>
+            <div className="rounded border border-destructive/20 bg-destructive/5 p-2 text-sm dark:bg-destructive/10">
+              {run.errorMessage}
+            </div>
+          </div>
+        )}
+        {run.errorStack && (
+          <div>
+            <div className="mb-1 text-xs text-muted-foreground">Stack Trace</div>
+            <ScrollArea className="rounded border border-destructive/20 bg-destructive/5 p-2 font-mono text-xs dark:bg-destructive/10 [&>[data-slot=scroll-area-viewport]]:max-h-32">
+              <pre className="wrap-break-word whitespace-pre-wrap">{run.errorStack}</pre>
+            </ScrollArea>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
   return (
     <Card className="lg:h-[calc(100vh-12rem)]">
       <CardHeader>
@@ -132,156 +293,12 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
             </div>
 
             <Separator />
-
-            {/* Basic Info */}
-            <div>
-              <h3 className="mb-3 text-sm font-medium">Basic Information</h3>
-              <div className="space-y-3">
-                <DetailItem
-                  icon={<Hash className="h-4 w-4 text-muted-foreground" />}
-                  label="Job ID"
-                  value={<span className="font-mono text-xs break-all">{run.jobId}</span>}
-                />
-                <DetailItem
-                  icon={<Database className="h-4 w-4 text-muted-foreground" />}
-                  label="Queue"
-                  value={run.queue}
-                />
-                {run.name && (
-                  <DetailItem
-                    icon={<Tag className="h-4 w-4 text-muted-foreground" />}
-                    label="Name"
-                    value={run.name}
-                  />
-                )}
-                {run.workerId && (
-                  <DetailItem
-                    icon={<User className="h-4 w-4 text-muted-foreground" />}
-                    label="Worker ID"
-                    value={<span className="font-mono text-xs">{run.workerId}</span>}
-                  />
-                )}
-              </div>
-            </div>
-
+            <RunBasicInfo run={run} />
             <Separator />
-
-            {/* Timing */}
-            <div>
-              <h3 className="mb-3 text-sm font-medium">Timing</h3>
-              <div className="space-y-3">
-                <DetailItem
-                  icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
-                  label="Created"
-                  value={formatUtcDateTime(run.createdAt)}
-                />
-                {run.enqueuedAt && (
-                  <DetailItem
-                    icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
-                    label="Enqueued"
-                    value={formatUtcDateTime(run.enqueuedAt)}
-                  />
-                )}
-                {run.startedAt && (
-                  <DetailItem
-                    icon={<PlayCircle className="h-4 w-4 text-muted-foreground" />}
-                    label="Started"
-                    value={formatUtcDateTime(run.startedAt)}
-                  />
-                )}
-                {run.finishedAt && (
-                  <DetailItem
-                    icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
-                    label="Finished"
-                    value={formatUtcDateTime(run.finishedAt)}
-                  />
-                )}
-                {duration && (
-                  <DetailItem
-                    icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-                    label="Duration"
-                    value={duration}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Execution Details */}
-            {(run.maxAttempts !== 0 || run.priority !== null || run.delayMs > 0) && (
-              <>
-                <Separator />
-                <div>
-                  <h3 className="mb-3 text-sm font-medium">Execution</h3>
-                  <div className="space-y-3">
-                    {run.maxAttempts !== 0 && (
-                      <DetailItem
-                        icon={<Settings className="h-4 w-4 text-muted-foreground" />}
-                        label="Attempt"
-                        value={`${run.attempt} / ${run.maxAttempts}`}
-                      />
-                    )}
-                    {run.priority !== null && (
-                      <DetailItem
-                        icon={<Settings className="h-4 w-4 text-muted-foreground" />}
-                        label="Priority"
-                        value={run.priority}
-                      />
-                    )}
-                    {run.delayMs > 0 && (
-                      <DetailItem
-                        icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-                        label="Delay"
-                        value={smartFormatDuration(run.delayMs)}
-                      />
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Tags */}
-            {run.tags && run.tags.length > 0 && (
-              <>
-                <Separator />
-                <div>
-                  <h3 className="mb-3 text-sm font-medium">Tags</h3>
-                  <div className="flex flex-wrap gap-1">
-                    {run.tags.map((tag) => (
-                      <Badge key={tag} variant="outline">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Error Details */}
-            {run.status === "failed" && (run.errorMessage || run.errorStack) && (
-              <>
-                <Separator />
-                <div>
-                  <h3 className="mb-3 text-sm font-medium text-destructive">Error Details</h3>
-                  {run.errorMessage && (
-                    <div className="mb-3">
-                      <div className="mb-1 text-xs text-muted-foreground">Message</div>
-                      <div className="rounded border border-destructive/20 bg-destructive/5 p-2 text-sm dark:bg-destructive/10">
-                        {run.errorMessage}
-                      </div>
-                    </div>
-                  )}
-                  {run.errorStack && (
-                    <div>
-                      <div className="mb-1 text-xs text-muted-foreground">Stack Trace</div>
-                      <ScrollArea className="rounded border border-destructive/20 bg-destructive/5 p-2 font-mono text-xs dark:bg-destructive/10 [&>[data-slot=scroll-area-viewport]]:max-h-32">
-                        <pre className="wrap-break-word whitespace-pre-wrap">{run.errorStack}</pre>
-                      </ScrollArea>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
+            <RunTiming run={run} />
+            <RunExecution run={run} />
+            <RunTags tags={run.tags} />
+            <RunError run={run} />
             <Separator />
 
             {/* Data & Result */}
@@ -290,17 +307,17 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
               <JsonCollapsible
                 title="Input Data"
                 data={run.data}
-                icon={<Database className="h-4 w-4 text-muted-foreground" />}
+                icon={<Database className={ICON_CLASS_NAME} />}
               />
               <JsonCollapsible
                 title="Result"
                 data={run.result}
-                icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />}
+                icon={<CheckCircle className={ICON_CLASS_NAME} />}
               />
               <JsonCollapsible
                 title="Backoff Config"
                 data={run.backoff}
-                icon={<Settings className="h-4 w-4 text-muted-foreground" />}
+                icon={<Settings className={ICON_CLASS_NAME} />}
               />
             </div>
           </div>

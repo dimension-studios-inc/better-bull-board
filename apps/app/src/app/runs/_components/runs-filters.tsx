@@ -17,12 +17,241 @@ import { SearchSelect, type SearchSelectOption } from "~/components/search-selec
 import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
 
+import { formatCreatedFilterLabel } from "./run-format"
 import type { TRunFilters, TRunFilterUpdate } from "./types"
 
 const MIN_TAG_SEARCH_LENGTH = 2
 
-// Filter values are UTC date times without time zone
-export const formatCreatedFilterLabel = (value: string) => `${value.replace("T", " ")} UTC`
+const STATUS_OPTIONS: SearchSelectOption[] = [
+  { value: "all", label: "All Statuses" },
+  { value: "completed", label: "Completed" },
+  { value: "failed", label: "Failed" },
+  { value: "active", label: "Active" },
+  { value: "waiting", label: "Waiting" },
+  { value: "delayed", label: "Delayed" },
+  { value: "prioritized", label: "Prioritized" },
+  { value: "waiting-children", label: "Waiting Children" },
+]
+
+const renderStatusValue = (value: string) =>
+  STATUS_OPTIONS.find((option) => option.value === value)?.label ?? "All Statuses"
+
+type TActiveFilter = {
+  key: "queue" | "status" | "tags" | "createdFrom" | "createdTo"
+  label: string
+  value: string
+}
+
+const getActiveFilters = (filters: TRunFilters): TActiveFilter[] => [
+  ...(filters.queue && filters.queue !== "all"
+    ? [{ key: "queue" as const, label: filters.queue, value: filters.queue }]
+    : []),
+  ...(filters.status && filters.status !== "all"
+    ? [{ key: "status" as const, label: renderStatusValue(filters.status), value: filters.status }]
+    : []),
+  ...filters.tags.map((tag) => ({ key: "tags" as const, label: tag, value: tag })),
+  ...(filters.createdFrom
+    ? [
+        {
+          key: "createdFrom" as const,
+          label: `Created from ${formatCreatedFilterLabel(filters.createdFrom)}`,
+          value: filters.createdFrom,
+        },
+      ]
+    : []),
+  ...(filters.createdTo
+    ? [
+        {
+          key: "createdTo" as const,
+          label: `Created to ${formatCreatedFilterLabel(filters.createdTo)}`,
+          value: filters.createdTo,
+        },
+      ]
+    : []),
+]
+
+const FILTER_RESETS: Record<Exclude<TActiveFilter["key"], "tags">, TRunFilterUpdate> = {
+  queue: { queue: "all" },
+  status: { status: "all" },
+  createdFrom: { createdFrom: "" },
+  createdTo: { createdTo: "" },
+}
+
+// The update that clears one active filter
+const getFilterRemoval = (filter: TActiveFilter, filters: TRunFilters): TRunFilterUpdate =>
+  filter.key === "tags"
+    ? { cursor: null, tags: filters.tags.filter((tag) => tag !== filter.value) }
+    : { cursor: null, ...FILTER_RESETS[filter.key] }
+
+type TFiltersFieldProps = {
+  filters: TRunFilters
+  setFilters: (filters: TRunFilterUpdate) => void
+}
+
+function TagsFilter({ filters, setFilters }: TFiltersFieldProps) {
+  const [tagsOpen, setTagsOpen] = useState(false)
+  const [tagsSearch, setTagsSearch] = useState("")
+  const tagsId = useId()
+  const debouncedTagsSearch = useDebounce(tagsSearch, 250)
+
+  const { data: tagsData, isFetching: isTagsFetching } = useQuery({
+    queryKey: ["tags", debouncedTagsSearch],
+    queryFn: apiFetch({
+      apiRoute: getTagsApiRoute,
+      body: { search: debouncedTagsSearch },
+    }),
+    enabled: tagsOpen && debouncedTagsSearch.length >= MIN_TAG_SEARCH_LENGTH,
+  })
+
+  // Tags already filtered on are not offered again
+  const tagsOptions: SearchSelectOption[] = useMemo(() => {
+    const selectedTags = new Set(filters.tags)
+    return (tagsData?.tags ?? [])
+      .filter((tag) => !selectedTags.has(tag))
+      .map((tag) => ({ value: tag, label: tag }))
+  }, [tagsData, filters.tags])
+
+  return (
+    <div>
+      <label htmlFor={tagsId} className="mb-2 block text-sm font-medium">
+        Tags
+      </label>
+      <div className="space-y-2">
+        {filters.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {filters.tags.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-1 size-3 p-0 hover:bg-transparent"
+                  aria-label={`Remove the ${tag} tag`}
+                  onClick={() => {
+                    const newTags = filters.tags.filter((t) => t !== tag)
+                    setFilters({ tags: newTags })
+                  }}
+                >
+                  <X className="size-2" />
+                </Button>
+              </Badge>
+            ))}
+          </div>
+        )}
+        <SearchSelect
+          id={tagsId}
+          value=""
+          onValueChange={(value) => {
+            if (value && !filters.tags.includes(value)) {
+              setFilters({ tags: [...filters.tags, value] })
+            }
+            setTagsSearch("")
+          }}
+          options={tagsOptions}
+          placeholder="Type to search tags..."
+          noOptionsMessage={
+            debouncedTagsSearch.length < MIN_TAG_SEARCH_LENGTH
+              ? "Type at least 2 characters"
+              : "No tags found"
+          }
+          searchPlaceholder="Search tags..."
+          search={tagsSearch}
+          setSearch={setTagsSearch}
+          open={tagsOpen}
+          setOpen={setTagsOpen}
+          renderValue={() => ""}
+          className="w-full"
+          isFetching={isTagsFetching}
+          popoverContentClassName="w-80"
+        />
+        <div className="text-xs text-muted-foreground">Start typing to search (2+ chars).</div>
+      </div>
+    </div>
+  )
+}
+
+function FilterOptions({ filters, setFilters }: TFiltersFieldProps) {
+  const [queueOpen, setQueueOpen] = useState(false)
+  const [statusOpen, setStatusOpen] = useState(false)
+  const [queueSearch, setQueueSearch] = useState("")
+  const [statusSearch, setStatusSearch] = useState("")
+  const queueId = useId()
+  const statusId = useId()
+
+  return (
+    <div className="w-80 max-w-[calc(100vw-4rem)] space-y-4">
+      <div className="text-sm font-medium">Filter Options</div>
+
+      <div className="space-y-3">
+        <div>
+          <label htmlFor={queueId} className="mb-2 block text-sm font-medium">
+            Queue
+          </label>
+          <QueueSelector
+            id={queueId}
+            value={filters.queue}
+            onValueChange={(value) => setFilters({ queue: value })}
+            search={queueSearch}
+            setSearch={setQueueSearch}
+            open={queueOpen}
+            setOpen={setQueueOpen}
+            placeholder="All Queues"
+            className="w-full"
+            popoverContentClassName="w-80"
+            includeAllOption={true}
+            allOptionLabel="All Queues"
+          />
+        </div>
+
+        <div>
+          <label htmlFor={statusId} className="mb-2 block text-sm font-medium">
+            Status
+          </label>
+          <SearchSelect
+            id={statusId}
+            value={filters.status}
+            onValueChange={(value) => setFilters({ status: value })}
+            options={STATUS_OPTIONS}
+            placeholder="All Statuses"
+            noOptionsMessage="No statuses found"
+            searchPlaceholder="Search statuses..."
+            search={statusSearch}
+            setSearch={setStatusSearch}
+            open={statusOpen}
+            setOpen={setStatusOpen}
+            renderValue={renderStatusValue}
+            className="w-full"
+            popoverContentClassName="w-80"
+          />
+        </div>
+
+        <TagsFilter filters={filters} setFilters={setFilters} />
+
+        <fieldset>
+          <legend className="mb-2 block text-sm font-medium">Created</legend>
+          <div className="grid gap-2">
+            <DateTimePicker
+              value={filters.createdFrom}
+              onChange={(createdFrom) => setFilters({ createdFrom })}
+              placeholder="From"
+              defaultTime="00:00:00"
+              className="w-full"
+              aria-label="Created from"
+            />
+            <DateTimePicker
+              value={filters.createdTo}
+              onChange={(createdTo) => setFilters({ createdTo })}
+              placeholder="To"
+              defaultTime="23:59:59"
+              className="w-full"
+              aria-label="Created to"
+            />
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  )
+}
 
 export function RunsFilters({
   filters,
@@ -46,135 +275,7 @@ export function RunsFilters({
   startEndContent?: React.ReactNode
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [queueOpen, setQueueOpen] = useState(false)
-  const [statusOpen, setStatusOpen] = useState(false)
-  const [tagsOpen, setTagsOpen] = useState(false)
-  const [queueSearch, setQueueSearch] = useState("")
-  const [statusSearch, setStatusSearch] = useState("")
-  const [tagsSearch, setTagsSearch] = useState("")
-  const queueId = useId()
-  const statusId = useId()
-  const tagsId = useId()
-
-  const debouncedTagsSearch = useDebounce(tagsSearch, 250)
-
-  const { data: tagsData, isFetching: isTagsFetching } = useQuery({
-    queryKey: ["tags", debouncedTagsSearch],
-    queryFn: apiFetch({
-      apiRoute: getTagsApiRoute,
-      body: { search: debouncedTagsSearch },
-    }),
-    enabled: tagsOpen && debouncedTagsSearch.length >= MIN_TAG_SEARCH_LENGTH,
-  })
-
-  const statusOptions: SearchSelectOption[] = [
-    { value: "all", label: "All Statuses" },
-    { value: "completed", label: "Completed" },
-    { value: "failed", label: "Failed" },
-    { value: "active", label: "Active" },
-    { value: "waiting", label: "Waiting" },
-    { value: "delayed", label: "Delayed" },
-    { value: "prioritized", label: "Prioritized" },
-    { value: "waiting-children", label: "Waiting Children" },
-  ]
-
-  const tagsOptions: SearchSelectOption[] = useMemo(() => {
-    if (!tagsData?.tags) return []
-    return tagsData.tags.map((tag) => ({ value: tag, label: tag }))
-  }, [tagsData])
-
-  const renderStatusValue = (value: string) => {
-    const option = statusOptions?.find((opt) => opt.value === value)
-    return option ? option.label : "All Statuses"
-  }
-
-  const getActiveFilters = () => {
-    const activeFilters = []
-
-    if (filters.queue && filters.queue !== "all") {
-      activeFilters.push({
-        key: "queue",
-        label: filters.queue,
-        value: filters.queue,
-      })
-    }
-
-    if (filters.status && filters.status !== "all") {
-      activeFilters.push({
-        key: "status",
-        label: renderStatusValue(filters.status),
-        value: filters.status,
-      })
-    }
-
-    if (filters.tags && filters.tags.length > 0) {
-      filters.tags.forEach((tag) => {
-        activeFilters.push({
-          key: "tags",
-          label: tag,
-          value: tag,
-        })
-      })
-    }
-
-    if (filters.createdFrom) {
-      activeFilters.push({
-        key: "createdFrom",
-        label: `Created from ${formatCreatedFilterLabel(filters.createdFrom)}`,
-        value: filters.createdFrom,
-      })
-    }
-
-    if (filters.createdTo) {
-      activeFilters.push({
-        key: "createdTo",
-        label: `Created to ${formatCreatedFilterLabel(filters.createdTo)}`,
-        value: filters.createdTo,
-      })
-    }
-
-    return activeFilters
-  }
-
-  const removeFilter = (filterKey: string, filterValue?: string) => {
-    if (filterKey === "tags" && filterValue) {
-      const newTags = filters.tags.filter((tag) => tag !== filterValue)
-      setFilters({
-        cursor: null,
-        tags: newTags,
-      })
-      return
-    }
-
-    if (filterKey === "queue") {
-      setFilters({ cursor: null, queue: "all" })
-      return
-    }
-
-    if (filterKey === "status") {
-      setFilters({ cursor: null, status: "all" })
-      return
-    }
-
-    if (filterKey === "tags") {
-      setFilters({ cursor: null, tags: [] })
-      return
-    }
-
-    if (filterKey === "createdFrom") {
-      setFilters({ cursor: null, createdFrom: "" })
-      return
-    }
-
-    if (filterKey === "createdTo") {
-      setFilters({ cursor: null, createdTo: "" })
-      return
-    }
-
-    setFilters({ cursor: null, search: "" })
-  }
-
-  const activeFilters = getActiveFilters()
+  const activeFilters = getActiveFilters(filters)
 
   return (
     <div className="space-y-2">
@@ -190,132 +291,7 @@ export function RunsFilters({
             )}
           </PopoverTrigger>
           <PopoverContent className="w-max p-4" align="start">
-            <div className="w-80 max-w-[calc(100vw-4rem)] space-y-4">
-              <div className="text-sm font-medium">Filter Options</div>
-
-              <div className="space-y-3">
-                <div>
-                  <label htmlFor={queueId} className="mb-2 block text-sm font-medium">
-                    Queue
-                  </label>
-                  <QueueSelector
-                    id={queueId}
-                    value={filters.queue}
-                    onValueChange={(value) => setFilters({ queue: value })}
-                    search={queueSearch}
-                    setSearch={setQueueSearch}
-                    open={queueOpen}
-                    setOpen={setQueueOpen}
-                    placeholder="All Queues"
-                    className="w-full"
-                    popoverContentClassName="w-80"
-                    includeAllOption={true}
-                    allOptionLabel="All Queues"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor={statusId} className="mb-2 block text-sm font-medium">
-                    Status
-                  </label>
-                  <SearchSelect
-                    id={statusId}
-                    value={filters.status}
-                    onValueChange={(value) => setFilters({ status: value })}
-                    options={statusOptions}
-                    placeholder="All Statuses"
-                    noOptionsMessage="No statuses found"
-                    searchPlaceholder="Search statuses..."
-                    search={statusSearch}
-                    setSearch={setStatusSearch}
-                    open={statusOpen}
-                    setOpen={setStatusOpen}
-                    renderValue={renderStatusValue}
-                    className="w-full"
-                    popoverContentClassName="w-80"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor={tagsId} className="mb-2 block text-sm font-medium">
-                    Tags
-                  </label>
-                  <div className="space-y-2">
-                    {filters.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {filters.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary">
-                            {tag}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="ml-1 size-3 p-0 hover:bg-transparent"
-                              onClick={() => {
-                                const newTags = filters.tags.filter((t) => t !== tag)
-                                setFilters({ tags: newTags })
-                              }}
-                            >
-                              <X className="size-2" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    <SearchSelect
-                      id={tagsId}
-                      value=""
-                      onValueChange={(value) => {
-                        if (value && !filters.tags.includes(value)) {
-                          setFilters({ tags: [...filters.tags, value] })
-                        }
-                        setTagsSearch("")
-                      }}
-                      options={tagsOptions.filter((option) => !filters.tags.includes(option.value))}
-                      placeholder="Type to search tags..."
-                      noOptionsMessage={
-                        debouncedTagsSearch.length < MIN_TAG_SEARCH_LENGTH
-                          ? "Type at least 2 characters"
-                          : "No tags found"
-                      }
-                      searchPlaceholder="Search tags..."
-                      search={tagsSearch}
-                      setSearch={setTagsSearch}
-                      open={tagsOpen}
-                      setOpen={setTagsOpen}
-                      renderValue={() => ""}
-                      className="w-full"
-                      isFetching={isTagsFetching}
-                      popoverContentClassName="w-80"
-                    />
-                    <div className="text-xs text-muted-foreground">
-                      Start typing to search (2+ chars).
-                    </div>
-                  </div>
-                </div>
-
-                <fieldset>
-                  <legend className="mb-2 block text-sm font-medium">Created</legend>
-                  <div className="grid gap-2">
-                    <DateTimePicker
-                      value={filters.createdFrom}
-                      onChange={(createdFrom) => setFilters({ createdFrom })}
-                      placeholder="From"
-                      defaultTime="00:00:00"
-                      className="w-full"
-                      aria-label="Created from"
-                    />
-                    <DateTimePicker
-                      value={filters.createdTo}
-                      onChange={(createdTo) => setFilters({ createdTo })}
-                      placeholder="To"
-                      defaultTime="23:59:59"
-                      className="w-full"
-                      aria-label="Created to"
-                    />
-                  </div>
-                </fieldset>
-              </div>
-            </div>
+            <FilterOptions filters={filters} setFilters={setFilters} />
           </PopoverContent>
         </Popover>
         <div className="relative min-w-0 flex-1 md:max-w-96">
@@ -361,7 +337,8 @@ export function RunsFilters({
                 variant="ghost"
                 size="sm"
                 className="size-4 p-0 hover:bg-transparent"
-                onClick={() => removeFilter(filter.key, filter.value)}
+                aria-label={`Remove the ${filter.label} filter`}
+                onClick={() => setFilters(getFilterRemoval(filter, filters))}
               >
                 <X className="size-3" />
               </Button>

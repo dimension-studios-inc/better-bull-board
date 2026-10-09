@@ -2,7 +2,7 @@
 
 import { Button } from "@better-bull-board/ui/components/button"
 import { Input } from "@better-bull-board/ui/components/input"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import { useId, useState } from "react"
@@ -14,12 +14,21 @@ import { PageContainer } from "~/components/page-container"
 import { QueueSelector } from "~/components/queue-selector"
 import { apiFetch } from "~/lib/utils/client"
 
+// The last run's job name, else one named after the queue
+const getDefaultJobName = (
+  queue: string,
+  lastRun: { data?: unknown; jobName?: string | null } | undefined,
+) => {
+  if (lastRun?.data && lastRun.jobName) return lastRun.jobName
+  return queue && queue !== "all" ? `${queue}-job` : ""
+}
+
 export default function CreateRunPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [selectedQueue, setSelectedQueue] = useState<string>("")
-  const [jobName, setJobName] = useState<string>("")
-  // Until the user types a job name, it follows the selected queue and its last run
-  const [isJobNameEdited, setIsJobNameEdited] = useState(false)
+  // `null` until the user types a job name: the name then follows the selected queue and its last run
+  const [typedJobName, setTypedJobName] = useState<string | null>(null)
   const [jobData, setJobData] = useState<string>("{}")
   const [queueOpen, setQueueOpen] = useState(false)
   const [queueSearch, setQueueSearch] = useState("")
@@ -43,17 +52,21 @@ export default function CreateRunPage() {
         body: data,
       })(),
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["jobs/table"] })
       toast.success("Job created successfully")
       router.push("/runs")
     },
   })
 
+  // Never overwrite a typed name
+  const jobName = typedJobName ?? getDefaultJobName(selectedQueue, lastRunData)
+
   const handleQueueChange = (value: string) => {
     setSelectedQueue(value)
 
-    // Default the job name to the queue, unless the user typed one
-    if (!isJobNameEdited && value && value !== "all") {
-      setJobName(`${value}-job`)
+    // A cleared name goes back to the defaults of the new queue
+    if (typedJobName === "") {
+      setTypedJobName(null)
     }
   }
 
@@ -64,11 +77,6 @@ export default function CreateRunPage() {
 
     if (lastRunData?.data && selectedQueue) {
       setJobData(JSON.stringify(lastRunData.data, null, 2))
-
-      // Prefer the last run's job name over the queue default, but never overwrite a typed name
-      if (lastRunData.jobName && !isJobNameEdited) {
-        setJobName(lastRunData.jobName)
-      }
     }
   }
 
@@ -137,11 +145,7 @@ export default function CreateRunPage() {
           <Input
             id={jobNameId}
             value={jobName}
-            onChange={(e) => {
-              setJobName(e.target.value)
-              // Clearing the field hands the name back to the queue and last run defaults
-              setIsJobNameEdited(e.target.value !== "")
-            }}
+            onChange={(e) => setTypedJobName(e.target.value)}
             placeholder="Enter job name..."
             required
           />

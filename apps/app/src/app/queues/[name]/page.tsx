@@ -4,31 +4,43 @@ import { Alert, AlertDescription } from "@better-bull-board/ui/components/alert"
 import { Button } from "@better-bull-board/ui/components/button"
 import { useQuery } from "@tanstack/react-query"
 import { AlertCircle, List } from "lucide-react"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 
 import { getQueueDetailsApiRoute } from "~/app/api/queues/details/schemas"
 import { getQueueSummaryApiRoute } from "~/app/api/queues/summary/schemas"
 import { QueueActions } from "~/app/queues/_components/queue-actions"
+import { ChartCardSkeleton } from "~/components/chart-card-skeleton"
 import { PageContainer } from "~/components/page-container"
-import {
-  DEFAULT_TIME_PERIOD,
-  getTimePeriodLabel,
-  TimePeriodSelector,
-  useStoredTimePeriod,
-} from "~/components/time-period-selector"
+import { TimePeriodSelector } from "~/components/time-period-selector"
+import { DEFAULT_TIME_PERIOD, getTimePeriodLabel, useStoredTimePeriod } from "~/lib/time-period"
 import { apiFetch } from "~/lib/utils/client"
+import { decodePathSegment } from "~/lib/utils/path"
 import { getRunsHref } from "~/lib/utils/runs-link"
 
-import { QueueDurationChart, QueueErrorRateChart, QueueRunsChart } from "./_components/queue-charts"
 import { QueueHeader } from "./_components/queue-header"
 import { QueueSummaryCards } from "./_components/queue-summary-cards"
+
+// recharts only renders in the browser: load the charts on demand instead of in the page bundle
+const QueueRunsChart = dynamic(
+  () => import("./_components/queue-charts").then((charts) => charts.QueueRunsChart),
+  { ssr: false, loading: ChartCardSkeleton },
+)
+const QueueErrorRateChart = dynamic(
+  () => import("./_components/queue-charts").then((charts) => charts.QueueErrorRateChart),
+  { ssr: false, loading: ChartCardSkeleton },
+)
+const QueueDurationChart = dynamic(
+  () => import("./_components/queue-charts").then((charts) => charts.QueueDurationChart),
+  { ssr: false, loading: ChartCardSkeleton },
+)
 
 export default function QueuePage() {
   const params = useParams<{ name: string }>()
   const router = useRouter()
   // Next.js hands dynamic segments over URL encoded
-  const queueName = decodeURIComponent(params.name)
+  const queueName = decodePathSegment(params.name)
 
   const [storedMinutes, setMinutes] = useStoredTimePeriod()
   const minutes = storedMinutes ?? DEFAULT_TIME_PERIOD

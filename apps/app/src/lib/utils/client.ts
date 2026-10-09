@@ -1,3 +1,4 @@
+import { HttpError } from "@better-bull-board/core/errors"
 import { formatDuration } from "date-fns"
 import type { output, ZodType } from "zod"
 
@@ -11,6 +12,11 @@ export type TApiRoute = {
   urlSchema?: ZodType | undefined
   outputSchema: ZodType
 }
+
+const getApiErrorMessage = (body: unknown) =>
+  typeof body === "object" && body !== null && "error" in body && typeof body.error === "string"
+    ? body.error
+    : undefined
 
 export function apiFetch<
   R extends TApiRoute,
@@ -32,7 +38,7 @@ export function apiFetch<
   return async () => {
     const parsedBody = inputSchema?.parse(body)
     const parsedUrlParams = urlSchema?.parse(urlParams)
-    const data = await fetch(
+    const response = await fetch(
       typeof apiRoute.route === "function"
         ? apiRoute.route(parsedUrlParams as never)
         : apiRoute.route,
@@ -43,7 +49,12 @@ export function apiFetch<
         credentials: "include", // Include cookies for authentication
       },
     )
-    const json: unknown = await data.json()
+    if (!response.ok) {
+      // API routes answer errors with `{ error }`, but a proxy may answer with an HTML page
+      const errorBody: unknown = await response.json().catch(() => null)
+      throw new HttpError(getApiErrorMessage(errorBody) ?? response.statusText, response.status)
+    }
+    const json: unknown = await response.json()
     return outputSchema.parse(json)
   }
 }

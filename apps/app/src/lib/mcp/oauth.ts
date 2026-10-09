@@ -250,6 +250,8 @@ export const validateAuthorizationRequest = async (
 ) => {
   const responseType = url.searchParams.get("response_type")
   const clientId = url.searchParams.get("client_id")
+  // Server side, and checked below against the client's registered redirect URIs (exact match)
+  // react-doctor-disable-next-line react-doctor/url-prefilled-privileged-action
   const redirectUri = url.searchParams.get("redirect_uri")
   const codeChallenge = url.searchParams.get("code_challenge")
   const codeChallengeMethod = url.searchParams.get("code_challenge_method") ?? "plain"

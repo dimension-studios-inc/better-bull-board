@@ -8,10 +8,8 @@ export const POST = createAuthenticatedApiRoute({
   async handler(input) {
     const { jobs } = input
 
-    // Don't use promise.all to avoid race conditions
-    for (const job of jobs) {
-      await replayJob(job)
-    }
+    // The bulk actions by filters already act on several jobs at once; a selection is one page of runs
+    await Promise.all(jobs.map((job) => replayJob(job)))
 
     return {
       success: true,

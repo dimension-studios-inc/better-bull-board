@@ -11,7 +11,8 @@ import { formatUtcDateTime } from "~/lib/utils/date"
 import type { StuckRun } from "~/lib/utils/stuck-runs"
 
 import { RunActions } from "./run-actions"
-import { getRunDuration, StuckRunWarning } from "./run-display"
+import { StuckRunWarning } from "./run-display"
+import { getRunDuration } from "./run-format"
 
 type Run = output<typeof getJobsTableApiRoute.outputSchema>["jobs"][number]
 

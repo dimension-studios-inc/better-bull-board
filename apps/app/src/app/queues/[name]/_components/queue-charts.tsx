@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "@better-bull-board/ui/components/card"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
+// Only loaded through next/dynamic, so recharts stays out of the initial bundle
+// react-doctor-disable-next-line react-doctor/prefer-dynamic-import
 import {
   Area,
   AreaChart,
@@ -24,8 +26,7 @@ import {
 } from "recharts"
 import type { z } from "zod"
 
-import { CHART_RESIZE_DEBOUNCE_MS } from "~/app/_components/chart-config"
-import { getTimeFormats } from "~/app/_components/run-graph-chart"
+import { CHART_RESIZE_DEBOUNCE_MS, getTimeFormats } from "~/app/_components/chart-config"
 import type { queueSummaryGraphOutput } from "~/app/api/queues/summary/schemas"
 import { formatUtc } from "~/lib/utils/date"
 import { formatDurationMs } from "~/lib/utils/duration"
