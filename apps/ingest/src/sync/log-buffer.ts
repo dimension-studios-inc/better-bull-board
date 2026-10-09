@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { and, DrizzleQueryError, eq, inArray, or, sql } from "drizzle-orm"
 import { DatabaseError } from "pg"
+import { runBackgroundTask } from "~/lib/background-tasks"
 import { acquireLock, releaseLock } from "~/lib/distributed-lock"
 import { env } from "~/lib/env"
 import { publishIngestEvent } from "~/lib/ingest-events"
@@ -292,8 +293,8 @@ export const autoResolveBufferedJobLogs = () => {
     }
   }
 
-  logBufferInterval = setInterval(run, env.JOB_LOG_BUFFER_FLUSH_INTERVAL_MS)
-  run().catch((error) => {
+  logBufferInterval = setInterval(() => runBackgroundTask(run), env.JOB_LOG_BUFFER_FLUSH_INTERVAL_MS)
+  runBackgroundTask(run).catch((error) => {
     logger.error("Error in initial buffered job log resolution", { error })
   })
 

@@ -5,6 +5,7 @@ import { Queue } from "bullmq"
 import { and, eq, notInArray } from "drizzle-orm"
 import type Redis from "ioredis"
 import type { Cluster } from "ioredis"
+import { runBackgroundTask } from "~/lib/background-tasks"
 import { mapWithConcurrency } from "~/lib/concurrency"
 import { withLock } from "~/lib/distributed-lock"
 import { instanceId } from "~/lib/instance"
@@ -123,9 +124,9 @@ export const autoIngestQueues = async () => {
     }
   }
 
-  queueIngestionInterval = setInterval(run, 60_000)
+  queueIngestionInterval = setInterval(() => runBackgroundTask(run), 60_000)
 
-  run().catch((error) => {
+  runBackgroundTask(run).catch((error) => {
     logger.error("Error in initial queue ingestion:", error)
   })
 

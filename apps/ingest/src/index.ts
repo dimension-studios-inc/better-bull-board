@@ -9,12 +9,14 @@ import { startDashboardRollups } from "./repeats/dashboard-rollups"
 import { startJobTagsRefresh } from "./repeats/job-tags"
 import { autoIngestQueues } from "./repeats/queues"
 import { autoReconcileJobs } from "./repeats/reconcile-jobs"
+import { handleShutdownSignals } from "./shutdown"
 import { startJobStreamIngestion } from "./sync/job-stream"
 import { autoResolveBufferedJobLogs } from "./sync/log-buffer"
 import { startJobLogStreamIngestion } from "./sync/log-stream"
 
 const main = async () => {
   await logger.init()
+  handleShutdownSignals()
 
   // Run database migrations first (only in production)
   await migrateDatabases()

@@ -7,6 +7,8 @@ import { safeUpsertJobRuns } from "./job-upsert"
 import { ackAndDeleteEntries, cleanupStaleConsumers, trimAcknowledgedEntries } from "./stream-consumers"
 
 const streamRedis = redis.duplicate()
+let stopping = false
+let loopDone: Promise<void> | undefined
 
 streamRedis.on("error", (error) => {
   logger.error("Job stream Redis connection error", { error })
@@ -115,7 +117,7 @@ const readPendingMessages = async () => {
     )
     return parseAutoClaimResponse(response)
   } catch (error) {
-    logger.warn("Unable to reclaim pending job sync messages", { error })
+    if (!stopping) logger.warn("Unable to reclaim pending job sync messages", { error })
     return []
   }
 }
@@ -154,7 +156,7 @@ export const startJobStreamIngestion = async () => {
   })
 
   const loop = async () => {
-    while (true) {
+    while (!stopping) {
       try {
         const pendingMessages = await readPendingMessages()
         if (pendingMessages.length > 0) {
@@ -162,7 +164,11 @@ export const startJobStreamIngestion = async () => {
           continue
         }
 
-        const messages = await readNewMessages()
+        // The shutdown disconnects the stream connection to cut this blocking read.
+        const messages = await readNewMessages().catch((error) => {
+          if (stopping) return []
+          throw error
+        })
         await processMessages(messages)
       } catch (error) {
         logger.error("Job stream ingestion loop failed", { error })
@@ -171,5 +177,15 @@ export const startJobStreamIngestion = async () => {
     }
   }
 
-  void loop()
+  loopDone = loop()
+}
+
+/**
+ * Cuts the blocking read, then lets the batch being processed finish: it is acknowledged on the main connection.
+ * Entries read but not acknowledged stay pending and are reclaimed by XAUTOCLAIM.
+ */
+export const stopJobStreamIngestion = async () => {
+  stopping = true
+  streamRedis.disconnect()
+  await loopDone
 }
