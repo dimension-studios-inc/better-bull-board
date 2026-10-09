@@ -18,6 +18,7 @@ spec:
     spec:
       containers:
         - name: bbb-ingest
+          # deploy.yml sets the image to its commit's tag; :latest is the last image built from main
           image: public.ecr.aws/n5q7l0s4/better-bull-board-ingest:latest
           imagePullPolicy: Always
           ports:

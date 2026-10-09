@@ -49,9 +49,9 @@ jobs:
         with:
           registry-type: public
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4.4.1
-
+      # Docker's default BuildKit builder, without a GitHub Actions cache: every promotion changes
+      # the sources or the lockfile, so the cache served 1-2 steps out of 20 while exporting it took
+      # twice as long as the build itself (165 s for the app).
       - name: Build and push
         uses: docker/build-push-action@v7.4.0
         with:
@@ -62,8 +62,6 @@ jobs:
           tags: |
             ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
             ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:latest
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
   deploy:
     name: Rollout
@@ -77,10 +75,15 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.KUBECONFIG_CONTENT }}" | base64 -d > ~/.kube/config
 
-      - name: Restart workloads
+      # Pin the workloads to this commit's images rather than restarting on :latest: the pods run
+      # exactly what this run built, overlapping deploys cannot swap images, and
+      # `kubectl rollout undo` goes back to the previous commit.
+      - name: Deploy this commit's images
+        env:
+          SHA: ${{ github.sha }}
         run: |
-          kubectl rollout restart deployment/bbb-app -n "$K8S_NAMESPACE"
-          kubectl rollout restart statefulset/bbb-ingest -n "$K8S_NAMESPACE"
+          kubectl set image deployment/bbb-app app="$ECR_REGISTRY/better-bull-board-app:$SHA" -n "$K8S_NAMESPACE"
+          kubectl set image statefulset/bbb-ingest bbb-ingest="$ECR_REGISTRY/better-bull-board-ingest:$SHA" -n "$K8S_NAMESPACE"
 
       - name: Wait for rollouts
         run: |
