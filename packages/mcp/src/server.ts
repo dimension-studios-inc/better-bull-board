@@ -13,14 +13,24 @@ import {
   queueMutationInputSchema,
 } from "@better-bull-board/core/mutation-schemas"
 import { getSystemOverview, systemOverviewSchema } from "@better-bull-board/core/overview"
-import { listQueuesBaseInputSchema, type listQueuesOutputSchema } from "@better-bull-board/core/queue-schemas"
+import {
+  listQueuesBaseInputSchema,
+  type listQueuesOutputSchema,
+} from "@better-bull-board/core/queue-schemas"
 import { listQueues } from "@better-bull-board/core/queues"
-import { listStuckRunsInputSchema, listStuckRunsOutputSchema } from "@better-bull-board/core/stuck-run-schemas"
+import {
+  listStuckRunsInputSchema,
+  listStuckRunsOutputSchema,
+} from "@better-bull-board/core/stuck-run-schemas"
 import { listStuckRuns } from "@better-bull-board/core/stuck-runs"
 import { listTopErrors } from "@better-bull-board/core/top-errors"
-import { listTopErrorsInputSchema, listTopErrorsOutputSchema } from "@better-bull-board/core/top-errors-schemas"
+import {
+  listTopErrorsInputSchema,
+  listTopErrorsOutputSchema,
+} from "@better-bull-board/core/top-errors-schemas"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { z } from "zod"
+
 import { cancelJob, deleteQueue, pauseQueue, replayJob, resumeQueue } from "./actions"
 import { MCP_READ_SCOPE, MCP_WRITE_SCOPE } from "./scopes"
 
@@ -112,7 +122,9 @@ const mcpListJobsOutputSchema = z.object({
 
 const toTimestamp = (value: Date | null) => value?.getTime() ?? null
 
-const serializeListJobs = (result: z.infer<typeof listJobsOutputSchema>): z.infer<typeof mcpListJobsOutputSchema> => ({
+const serializeListJobs = (
+  result: z.infer<typeof listJobsOutputSchema>,
+): z.infer<typeof mcpListJobsOutputSchema> => ({
   jobs: result.jobs.map((job) => ({
     ...job,
     createdAt: job.createdAt.getTime(),
@@ -226,14 +238,18 @@ const formatLogs = (result: z.infer<typeof listJobLogsOutputSchema>) =>
     "",
     `Total matching logs: ${result.total}`,
     "",
-    ...result.logs.map((log) => `- ${new Date(log.ts).toISOString()} [${log.level}] #${log.logSeq}: ${log.message}`),
+    ...result.logs.map(
+      (log) => `- ${new Date(log.ts).toISOString()} [${log.level}] #${log.logSeq}: ${log.message}`,
+    ),
   ].join("\n")
 
 const formatStuckRuns = (result: z.infer<typeof listStuckRunsOutputSchema>) =>
   [
     "# Better Bull Board Stuck Runs",
     "",
-    result.total === 0 ? "No active run looks stuck." : `Stuck runs: ${result.total} (showing ${result.runs.length})`,
+    result.total === 0
+      ? "No active run looks stuck."
+      : `Stuck runs: ${result.total} (showing ${result.runs.length})`,
     "",
     ...result.runs.map((run) =>
       [
@@ -279,7 +295,9 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
   const scopes = new Set(options.scopes ?? defaultScopes)
   const requireWriteAccess = () => {
     if (!scopes.has(MCP_WRITE_SCOPE)) {
-      throw new Error("This MCP access token does not include the bbb:write scope required for this tool.")
+      throw new Error(
+        "This MCP access token does not include the bbb:write scope required for this tool.",
+      )
     }
   }
 
@@ -485,7 +503,9 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       const result = await cancelJob(input)
 
       return {
-        content: [{ type: "text", text: formatMutationResult("Better Bull Board Job Cancelled", result) }],
+        content: [
+          { type: "text", text: formatMutationResult("Better Bull Board Job Cancelled", result) },
+        ],
         structuredContent: result,
       }
     },
@@ -511,7 +531,9 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       const result = await replayJob(input)
 
       return {
-        content: [{ type: "text", text: formatMutationResult("Better Bull Board Job Replayed", result) }],
+        content: [
+          { type: "text", text: formatMutationResult("Better Bull Board Job Replayed", result) },
+        ],
         structuredContent: result,
       }
     },
@@ -521,7 +543,8 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
     "bbb_pause_queue",
     {
       title: "Pause Better Bull Board Queue",
-      description: "Pause a BullMQ queue by queue name and update the tracked queue state. Requires bbb:write.",
+      description:
+        "Pause a BullMQ queue by queue name and update the tracked queue state. Requires bbb:write.",
       inputSchema: queueMutationInputSchema,
       outputSchema: mutationResultSchema,
       annotations: {
@@ -536,7 +559,9 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       const result = await pauseQueue(input)
 
       return {
-        content: [{ type: "text", text: formatMutationResult("Better Bull Board Queue Paused", result) }],
+        content: [
+          { type: "text", text: formatMutationResult("Better Bull Board Queue Paused", result) },
+        ],
         structuredContent: result,
       }
     },
@@ -546,7 +571,8 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
     "bbb_resume_queue",
     {
       title: "Resume Better Bull Board Queue",
-      description: "Resume a BullMQ queue by queue name and update the tracked queue state. Requires bbb:write.",
+      description:
+        "Resume a BullMQ queue by queue name and update the tracked queue state. Requires bbb:write.",
       inputSchema: queueMutationInputSchema,
       outputSchema: mutationResultSchema,
       annotations: {
@@ -561,7 +587,9 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       const result = await resumeQueue(input)
 
       return {
-        content: [{ type: "text", text: formatMutationResult("Better Bull Board Queue Resumed", result) }],
+        content: [
+          { type: "text", text: formatMutationResult("Better Bull Board Queue Resumed", result) },
+        ],
         structuredContent: result,
       }
     },
@@ -587,7 +615,9 @@ export const createBetterBullBoardMcpServer = (options: BetterBullBoardMcpServer
       const result = await deleteQueue(input)
 
       return {
-        content: [{ type: "text", text: formatMutationResult("Better Bull Board Queue Deleted", result) }],
+        content: [
+          { type: "text", text: formatMutationResult("Better Bull Board Queue Deleted", result) },
+        ],
         structuredContent: result,
       }
     },

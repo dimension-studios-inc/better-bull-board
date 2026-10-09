@@ -1,5 +1,6 @@
 import type { SandboxedJob } from "bullmq"
 import type Redis from "ioredis"
+
 import { cancelable } from "./lib/cancellation"
 import { emitJobLogSyncEvent } from "./lib/log-events"
 import { installConsoleRelay, withJobConsole } from "./lib/logger"
@@ -27,7 +28,7 @@ export const patch = (run: (job: SandboxedJob) => Promise<unknown>, redis: Redis
     })
 
     async function flushConsoleRelay() {
-      await Promise.all([...pendingPublishes])
+      await Promise.all(pendingPublishes)
     }
 
     const result = await withJobConsole(

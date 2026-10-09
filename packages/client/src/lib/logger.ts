@@ -1,5 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks"
+
 import type { Job, SandboxedJob } from "bullmq"
+
 import type { JobLogSyncEventInput } from "./log-events"
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: we don't want to colorize the logs
@@ -24,7 +26,8 @@ function nextLogTimestamp() {
 }
 
 export function formatForLogger(data: unknown): string {
-  if (data instanceof Error) return data.stack ? `${data.stack}${data.cause ? `\n${data.cause}` : ""}` : data.message
+  if (data instanceof Error)
+    return data.stack ? `${data.stack}${data.cause ? `\n${data.cause}` : ""}` : data.message
   if (typeof data === "object" && data !== null) {
     try {
       return JSON.stringify(data, null, 2)
@@ -91,7 +94,9 @@ export function installConsoleRelay({
     (...params: unknown[]) => {
       const ctx = jobStore.getStore()
       if (ctx?.job) {
-        const message = params.map((p) => (typeof p === "string" ? decolorize(p) : formatForLogger(p))).join(" ")
+        const message = params
+          .map((p) => (typeof p === "string" ? decolorize(p) : formatForLogger(p)))
+          .join(" ")
         // Fire-and-forget so console stays sync; swallow errors.
         if (ctx.autoEmitBBBLogs && ctx.job.id) {
           const { ts, seq } = nextLogTimestamp()

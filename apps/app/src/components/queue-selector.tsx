@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
+
 import { getQueuesNameApiRoute } from "~/app/api/queues/name/schemas"
 import { SearchSelect, type SearchSelectOption } from "~/components/search-select"
 import useDebounce from "~/hooks/use-debounce"
@@ -64,7 +65,7 @@ export function QueueSelector({
   })
 
   const { loaderRef } = useInfiniteScroll({
-    fetchNextPage: fetchNextPage,
+    fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     watchState: [open],

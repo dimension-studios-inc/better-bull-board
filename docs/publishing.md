@@ -2,12 +2,12 @@
 
 Released by [semantic-release](https://semantic-release.gitbook.io/) from [`.github/workflows/publish.yml`](../.github/workflows/publish.yml) whenever [Promote](deploying.md) moves `main`. Nobody bumps the version by hand: it comes from the conventional commits that touch `packages/client` since the last `client-v*` tag.
 
-| Commit | Release |
-| --- | --- |
-| `fix: …`, `perf: …`, `revert: …` | patch |
-| `feat: …` | minor |
-| `feat!: …` or a `BREAKING CHANGE:` footer | major |
-| `chore`, `docs`, `refactor`, `test`, `ci`, … | none |
+| Commit                                       | Release |
+| -------------------------------------------- | ------- |
+| `fix: …`, `perf: …`, `revert: …`             | patch   |
+| `feat: …`                                    | minor   |
+| `feat!: …` or a `BREAKING CHANGE:` footer    | major   |
+| `chore`, `docs`, `refactor`, `test`, `ci`, … | none    |
 
 Commits that do not touch `packages/client` are ignored ([semantic-release-monorepo](https://github.com/pmowrer/semantic-release-monorepo)), so a `feat(app): …` does not publish the client. Renovate opens separate `chore(client-deps): …` PRs for the client's devDependencies, which do not reach consumers; its `fix(deps): …` updates of runtime dependencies publish a patch.
 

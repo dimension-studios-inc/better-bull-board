@@ -7,9 +7,11 @@ import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@better-bull-board/ui/components/tooltip"
 import { cn } from "cn"
 import { AlertCircle } from "lucide-react"
+
 import { Loader } from "~/components/loader"
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll"
 import { smartFormatDuration } from "~/lib/utils/client"
+
 import { LogLevelBadge, LogLevelIcon } from "./log-level"
 
 interface LogEntry {
@@ -46,7 +48,15 @@ const getWaterfallColor = (level: string) => {
   }
 }
 
-export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore, onLoadMore }: LogsWaterfallProps) {
+export function LogsWaterfall({
+  logs,
+  isLoading,
+  error,
+  run,
+  onLogClick,
+  hasMore,
+  onLoadMore,
+}: LogsWaterfallProps) {
   const { loaderRef: logsLoaderRef } = useInfiniteScroll({
     fetchNextPage: onLoadMore,
     hasNextPage: hasMore,
@@ -57,7 +67,9 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>Failed to load logs. There was an error retrieving the log data.</AlertDescription>
+        <AlertDescription>
+          Failed to load logs. There was an error retrieving the log data.
+        </AlertDescription>
       </Alert>
     )
   }
@@ -81,7 +93,7 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
   }
 
   if (!logs || logs.length === 0) {
-    return <div className="text-center py-8 text-muted-foreground">No logs found for this run</div>
+    return <div className="py-8 text-center text-muted-foreground">No logs found for this run</div>
   }
 
   // Sort logs by timestamp ascending to show chronological order
@@ -95,7 +107,7 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
   return (
     <ScrollArea className="h-[60dvh] pr-4 lg:h-[calc(100vh-12rem)]">
       {/* Waterfall header with time markers */}
-      <div className="grid grid-cols-12 gap-4 mb-4 pb-2 border-b">
+      <div className="mb-4 grid grid-cols-12 gap-4 border-b pb-2">
         <div className="col-span-7 md:col-span-6">
           <span className="text-sm font-medium text-muted-foreground">Log Details</span>
         </div>
@@ -116,15 +128,25 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
           return (
             <div
               key={log.id}
-              className={cn("grid grid-cols-12 items-start", "hover:bg-muted/50", onLogClick && "cursor-pointer", {
-                "hover:bg-destructive/5": log.level.toLowerCase() === "error",
-                "hover:bg-warning/5": log.level.toLowerCase() === "warn",
-                "hover:bg-purple-50 hover:dark:bg-purple-950/30": log.level.toLowerCase() === "debug",
-                "hover:bg-blue-50 hover:dark:bg-blue-950/30": log.level.toLowerCase() === "info",
-              })}
+              className={cn(
+                "grid grid-cols-12 items-start",
+                "hover:bg-muted/50",
+                onLogClick && "cursor-pointer",
+                {
+                  "hover:bg-destructive/5": log.level.toLowerCase() === "error",
+                  "hover:bg-warning/5": log.level.toLowerCase() === "warn",
+                  "hover:bg-purple-50 hover:dark:bg-purple-950/30":
+                    log.level.toLowerCase() === "debug",
+                  "hover:bg-blue-50 hover:dark:bg-blue-950/30": log.level.toLowerCase() === "info",
+                },
+              )}
               onClick={() => onLogClick?.(log)}
             >
-              <div className={cn("col-span-7 md:col-span-6 flex items-center space-x-3 p-2 rounded font-mono")}>
+              <div
+                className={cn(
+                  "col-span-7 flex items-center space-x-3 rounded p-2 font-mono md:col-span-6",
+                )}
+              >
                 {/* Timeline dot */}
                 <Tooltip>
                   <TooltipTrigger>
@@ -138,16 +160,16 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
                 </Tooltip>
 
                 {/* Log content */}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <pre className="truncate text-xs">{log.message}</pre>
                 </div>
               </div>
-              <div className="col-span-5 md:col-span-6 flex items-center h-full border-l border-muted-foreground/20">
-                <div className="size-full items-center flex">
+              <div className="col-span-5 flex h-full items-center border-l border-muted-foreground/20 md:col-span-6">
+                <div className="flex size-full items-center">
                   {/* Waterfall bar */}
                   <div
                     className={cn(
-                      "w-2 h-3 shrink-0 rounded-sm flex items-center justify-center",
+                      "flex h-3 w-2 shrink-0 items-center justify-center rounded-sm",
                       getWaterfallColor(log.level),
                     )}
                     style={{
@@ -161,7 +183,10 @@ export function LogsWaterfall({ logs, isLoading, error, run, onLogClick, hasMore
         })}
       </div>
       {hasMore && (
-        <div className="flex items-center justify-center" ref={logsLoaderRef as React.Ref<HTMLDivElement>}>
+        <div
+          className="flex items-center justify-center"
+          ref={logsLoaderRef as React.Ref<HTMLDivElement>}
+        >
           <Loader />
         </div>
       )}

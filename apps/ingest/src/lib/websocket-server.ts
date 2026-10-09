@@ -1,5 +1,6 @@
 import { logger } from "@rharkor/logger"
 import { type WebSocket, WebSocketServer } from "ws"
+
 import { env } from "./env"
 import { redis } from "./redis"
 

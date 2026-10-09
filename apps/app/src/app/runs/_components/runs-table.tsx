@@ -3,7 +3,14 @@
 import { Button } from "@better-bull-board/ui/components/button"
 import { Checkbox } from "@better-bull-board/ui/components/checkbox"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@better-bull-board/ui/components/table"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { cn } from "cn"
 import { formatDistanceToNowStrict } from "date-fns"
@@ -12,6 +19,7 @@ import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { useMemo, useRef, useState } from "react"
+
 import { countJobsApiRoute } from "~/app/api/jobs/count/schemas"
 import { getStuckRunsApiRoute } from "~/app/api/jobs/stuck/schemas"
 import { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
@@ -21,6 +29,7 @@ import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
 import { STUCK_RUNS_REFETCH_INTERVAL_MS } from "~/lib/utils/stuck-runs"
+
 import { BulkActions, formatRunCount, type TMatchingFilters } from "./bulk-actions"
 import { RunActions } from "./run-actions"
 import { getRunDuration, StuckRunWarning } from "./run-display"
@@ -144,7 +153,8 @@ export function RunsTable() {
   )
 
   const debouncedFilters = useDebounce(filters, 300)
-  const queryFilters = filters.cursor || filters.cursorDirection === "prev" ? filters : debouncedFilters
+  const queryFilters =
+    filters.cursor || filters.cursorDirection === "prev" ? filters : debouncedFilters
   const liveQueryKey = useMemo(() => ["jobs/table", queryFilters] as const, [queryFilters])
 
   const { data: runs, isPending: isPageLoading } = useQuery({
@@ -163,8 +173,12 @@ export function RunsTable() {
   }
 
   const handleFiltersChange = (newFilters: TRunFilterUpdate) => {
-    const isPaginationOnly = Object.keys(newFilters).every((key) => key === "cursor" || key === "cursorDirection")
-    const urlUpdate: Record<string, unknown> = isPaginationOnly ? {} : { cursor: null, cursorDirection: "next" }
+    const isPaginationOnly = Object.keys(newFilters).every(
+      (key) => key === "cursor" || key === "cursorDirection",
+    )
+    const urlUpdate: Record<string, unknown> = isPaginationOnly
+      ? {}
+      : { cursor: null, cursorDirection: "next" }
 
     if (isPaginationOnly && newFilters.cursorDirection === "next") {
       cursorHistoryRef.current.push(filters.cursor)
@@ -211,7 +225,10 @@ export function RunsTable() {
     enabled: activeRunIds.length > 0,
     refetchInterval: STUCK_RUNS_REFETCH_INTERVAL_MS,
   })
-  const stuckRunsById = useMemo(() => new Map(stuckRuns?.runs.map((run) => [run.id, run])), [stuckRuns])
+  const stuckRunsById = useMemo(
+    () => new Map(stuckRuns?.runs.map((run) => [run.id, run])),
+    [stuckRuns],
+  )
 
   const selectedJobs = useMemo(() => {
     return jobs.filter((job) => selectedJobIds.has(job.jobId))
@@ -273,7 +290,9 @@ export function RunsTable() {
 
   const canSelectAllMatching = !!matchingCounts && matchingCounts.total > jobs.length
   const matchingSelection =
-    selectAllMatching && matchingCounts ? { filters: matchingFilters, counts: matchingCounts } : null
+    selectAllMatching && matchingCounts
+      ? { filters: matchingFilters, counts: matchingCounts }
+      : null
 
   const handleRowClick = (event: React.MouseEvent<HTMLElement>, runPath: string) => {
     if (isInteractiveRowTarget(event.target)) return
@@ -289,12 +308,14 @@ export function RunsTable() {
   const handleDurationSort = () => {
     handleFiltersChange({
       sortBy: "durationMs",
-      sortDirection: filters.sortBy === "durationMs" && filters.sortDirection === "desc" ? "asc" : "desc",
+      sortDirection:
+        filters.sortBy === "durationMs" && filters.sortDirection === "desc" ? "asc" : "desc",
     })
   }
 
   const getDurationSortIcon = () => {
-    if (filters.sortBy !== "durationMs") return <ArrowUpDown className="size-3.5 text-muted-foreground" />
+    if (filters.sortBy !== "durationMs")
+      return <ArrowUpDown className="size-3.5 text-muted-foreground" />
     if (filters.sortDirection === "asc") return <ArrowUp className="size-3.5" />
     return <ArrowDown className="size-3.5" />
   }
@@ -322,7 +343,10 @@ export function RunsTable() {
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-lg border bg-muted/50 px-3 py-2 text-center text-sm">
           {matchingSelection ? (
             <>
-              <span>All {formatRunCount(matchingSelection.counts.total)} matching these filters are selected.</span>
+              <span>
+                All {formatRunCount(matchingSelection.counts.total)} matching these filters are
+                selected.
+              </span>
               <Button variant="link" size="sm" className="h-auto p-0" onClick={clearSelection}>
                 Clear selection
               </Button>
@@ -331,11 +355,18 @@ export function RunsTable() {
             <>
               <span>All {formatRunCount(jobs.length)} on this page are selected.</span>
               {canSelectAllMatching ? (
-                <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setSelectAllMatching(true)}>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0"
+                  onClick={() => setSelectAllMatching(true)}
+                >
                   Select all {formatRunCount(matchingCounts.total)} matching these filters
                 </Button>
               ) : (
-                !matchingCounts && <span className="text-muted-foreground">Counting matching runs...</span>
+                !matchingCounts && (
+                  <span className="text-muted-foreground">Counting matching runs...</span>
+                )
               )}
             </>
           )}
@@ -385,7 +416,8 @@ export function RunsTable() {
                 onClick={(event) => handleRowClick(event, runPath)}
                 onAuxClick={(event) => handleRowAuxClick(event, runPath)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !isInteractiveRowTarget(event.target)) router.push(runPath)
+                  if (event.key === "Enter" && !isInteractiveRowTarget(event.target))
+                    router.push(runPath)
                 }}
               />
             )
@@ -402,7 +434,7 @@ export function RunsTable() {
 
       {/* Desktop: table */}
       <ScrollArea className="hidden rounded-lg border md:block">
-        <Table className="table-fixed w-full">
+        <Table className="w-full table-fixed">
           <TableHeader className="z-10">
             <TableRow>
               <TableHead style={{ width: "50px" }}>
@@ -421,7 +453,11 @@ export function RunsTable() {
               <TableHead style={{ width: "180px" }}>Tags</TableHead>
               <TableHead style={{ width: "120px" }}>Status</TableHead>
               <TableHead style={{ width: "120px" }}>
-                <button type="button" className="flex items-center gap-1 font-medium" onClick={handleDurationSort}>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 font-medium"
+                  onClick={handleDurationSort}
+                >
                   Duration
                   {getDurationSortIcon()}
                 </button>
@@ -441,7 +477,7 @@ export function RunsTable() {
                   <motion.tr
                     key={run.id}
                     className={cn(
-                      "group border-b transition-colors hover:bg-muted/50 cursor-pointer",
+                      "group cursor-pointer border-b transition-colors hover:bg-muted/50",
                       (selectAllMatching || selectedJobIds.has(run.jobId)) && "bg-muted",
                     )}
                     initial={{ opacity: 0, y: -100 }}
@@ -455,7 +491,9 @@ export function RunsTable() {
                       <div className="flex items-center">
                         <Checkbox
                           checked={selectAllMatching || selectedJobIds.has(run.jobId)}
-                          onCheckedChange={(checked) => handleSelectJob(run.jobId, checked as boolean)}
+                          onCheckedChange={(checked) =>
+                            handleSelectJob(run.jobId, checked as boolean)
+                          }
                           onClick={(e) => {
                             e.stopPropagation()
                           }}
@@ -469,11 +507,15 @@ export function RunsTable() {
                     <TableCell>
                       <TruncatedTooltip value={run.queue} />
                     </TableCell>
-                    <TableCell>{run.tags && <RunTags tags={run.tags} onTagClick={handleTagClick} />}</TableCell>
+                    <TableCell>
+                      {run.tags && <RunTags tags={run.tags} onTagClick={handleTagClick} />}
+                    </TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1">
                         <RunStatusBadge status={run.status} />
-                        {run.status === "active" && <StuckRunWarning stuckRun={stuckRunsById.get(run.id)} />}
+                        {run.status === "active" && (
+                          <StuckRunWarning stuckRun={stuckRunsById.get(run.id)} />
+                        )}
                       </span>
                     </TableCell>
                     <TableCell>{getRunDuration(run) ?? "-"}</TableCell>
@@ -497,7 +539,7 @@ export function RunsTable() {
                       )}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="transition-opacity duration-200 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-within:opacity-100">
+                      <div className="transition-opacity duration-200 focus-within:opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100">
                         <RunActions jobId={run.jobId} queueName={run.queue} status={run.status} />
                       </div>
                     </TableCell>

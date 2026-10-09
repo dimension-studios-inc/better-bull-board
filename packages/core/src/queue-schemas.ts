@@ -36,7 +36,11 @@ export const listQueuesInputSchema = listQueuesBaseInputSchema.superRefine((inpu
       })
     }
 
-    if (input.pressureDateFrom && input.pressureDateTo && input.pressureDateFrom >= input.pressureDateTo) {
+    if (
+      input.pressureDateFrom &&
+      input.pressureDateTo &&
+      input.pressureDateFrom >= input.pressureDateTo
+    ) {
       ctx.addIssue({
         code: "custom",
         message: "Pressure date from must be before pressure date to",

@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server"
 import { utcTimestamp } from "@better-bull-board/db/utils/timestamp"
 import { type SQL, sql } from "drizzle-orm"
 import type { z } from "zod"
+
 import { listTopErrorsInputSchema, listTopErrorsOutputSchema } from "./top-errors-schemas"
 
 export { listTopErrorsInputSchema, listTopErrorsOutputSchema } from "./top-errors-schemas"
@@ -41,7 +42,9 @@ const messageReplacements = [
   { pattern: String.raw`\d{4,}`, placeholder: "<n>", flags: "g" },
 ]
 
-const placeholderPattern = new RegExp(`${messageReplacements.map(({ placeholder }) => placeholder).join("|")}|\n`)
+const placeholderPattern = new RegExp(
+  `${messageReplacements.map(({ placeholder }) => placeholder).join("|")}|\n`,
+)
 
 const fragmentEdgesPattern = /^[\s\p{P}]+|[\s\p{P}]+$/gu
 
@@ -61,7 +64,9 @@ const getSearch = (normalizedMessage: string) => {
     .map((fragment) => fragment.replace(fragmentEdgesPattern, ""))
     .reduce((longest, fragment) => (fragment.length > longest.length ? fragment : longest), "")
 
-  return longestFragment.length >= MIN_SEARCH_LENGTH ? longestFragment.slice(0, MAX_SEARCH_LENGTH).trim() : null
+  return longestFragment.length >= MIN_SEARCH_LENGTH
+    ? longestFragment.slice(0, MAX_SEARCH_LENGTH).trim()
+    : null
 }
 
 /**

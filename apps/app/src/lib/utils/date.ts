@@ -21,4 +21,5 @@ export const startOfUtcHour = (value: Date | number) =>
   new Date(Math.floor(new Date(value).getTime() / HOUR_MS) * HOUR_MS)
 
 /** Start of the UTC day (date-fns startOfDay uses the local time zone) */
-export const startOfUtcDay = (value: Date | number) => new Date(Math.floor(new Date(value).getTime() / DAY_MS) * DAY_MS)
+export const startOfUtcDay = (value: Date | number) =>
+  new Date(Math.floor(new Date(value).getTime() / DAY_MS) * DAY_MS)

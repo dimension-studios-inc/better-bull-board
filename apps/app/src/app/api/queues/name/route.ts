@@ -1,7 +1,9 @@
 import { queuesTable } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
 import { and, asc, desc, gte, ilike, lt, sql } from "drizzle-orm"
+
 import { createAuthenticatedApiRoute } from "~/lib/utils/server"
+
 import { getQueuesNameApiRoute } from "./schemas"
 
 export const POST = createAuthenticatedApiRoute({
@@ -19,7 +21,11 @@ export const POST = createAuthenticatedApiRoute({
         .from(queuesTable)
         .where(
           and(
-            cursor ? (direction === "prev" ? lt(queuesTable.name, cursor) : gte(queuesTable.name, cursor)) : undefined,
+            cursor
+              ? direction === "prev"
+                ? lt(queuesTable.name, cursor)
+                : gte(queuesTable.name, cursor)
+              : undefined,
             search ? ilike(queuesTable.name, `%${search}%`) : undefined,
           ),
         )

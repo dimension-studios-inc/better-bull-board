@@ -22,10 +22,15 @@ const getPageInfo = (pathname: string): PageInfo => {
   if (pathname === "/queues") return { title: "Queues" }
   if (pathname === "/schedulers") return { title: "Schedulers" }
   if (pathname === "/runs") return { title: "Runs" }
-  if (pathname === "/runs/create") return { title: "Create Run", parent: { title: "Runs", href: "/runs" } }
-  if (pathname.startsWith("/runs/")) return { title: "Run Details", parent: { title: "Runs", href: "/runs" } }
+  if (pathname === "/runs/create")
+    return { title: "Create Run", parent: { title: "Runs", href: "/runs" } }
+  if (pathname.startsWith("/runs/"))
+    return { title: "Run Details", parent: { title: "Runs", href: "/runs" } }
   if (pathname.startsWith("/queues/")) {
-    return { title: decodePathSegment(pathname.slice("/queues/".length)), parent: { title: "Queues", href: "/queues" } }
+    return {
+      title: decodePathSegment(pathname.slice("/queues/".length)),
+      parent: { title: "Queues", href: "/queues" },
+    }
   }
   return { title: "Better Bull Board" }
 }
@@ -42,7 +47,10 @@ export function SiteHeader() {
         <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-base">
           {parent && (
             <>
-              <Link href={parent.href} className="text-muted-foreground transition-colors hover:text-foreground">
+              <Link
+                href={parent.href}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
                 {parent.title}
               </Link>
               <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />

@@ -13,6 +13,7 @@ import { cn } from "cn"
 import { Activity, AlertCircle, CheckCircle, ChevronRight, Clock } from "lucide-react"
 import Link from "next/link"
 import type { z } from "zod"
+
 import type { dashboardEnhancedStatsOutput } from "~/app/api/dashboard/summary/schemas"
 import { getRunsHref } from "~/lib/utils/runs-link"
 
@@ -24,7 +25,12 @@ interface EnhancedStatsCardsProps {
   isLoading: boolean
 }
 
-export function EnhancedStatsCards({ minutes, periodLabel, stats, isLoading }: EnhancedStatsCardsProps) {
+export function EnhancedStatsCards({
+  minutes,
+  periodLabel,
+  stats,
+  isLoading,
+}: EnhancedStatsCardsProps) {
   const cards = [
     {
       title: "Running Tasks",
@@ -67,7 +73,11 @@ export function EnhancedStatsCards({ minutes, periodLabel, stats, isLoading }: E
           <CardHeader>
             <CardDescription>{card.title}</CardDescription>
             <CardTitle>
-              {isLoading ? <Skeleton className="h-8 w-24" /> : (card.value?.toLocaleString() ?? "-")}
+              {isLoading ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                (card.value?.toLocaleString() ?? "-")
+              )}
             </CardTitle>
             <CardAction>
               <card.icon className={cn("size-4", card.color)} />

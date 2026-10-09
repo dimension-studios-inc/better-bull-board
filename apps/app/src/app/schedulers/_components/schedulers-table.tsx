@@ -4,7 +4,14 @@ import { Badge } from "@better-bull-board/ui/components/badge"
 import { Button } from "@better-bull-board/ui/components/button"
 import { Input } from "@better-bull-board/ui/components/input"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@better-bull-board/ui/components/table"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
 import { formatDistanceToNowStrict } from "date-fns"
@@ -14,6 +21,7 @@ import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { useRef, useState } from "react"
 import type { output } from "zod"
+
 import { getSchedulersTableApiRoute } from "~/app/api/schedulers/table/schemas"
 import { QueueStateBadge } from "~/app/queues/_components/queue-state-badge"
 import { QueueSelector } from "~/components/queue-selector"
@@ -51,7 +59,9 @@ function Timestamp({ value, compact = false }: { value: Date; compact?: boolean 
 
   return (
     <time dateTime={value.toISOString()} title={absolute}>
-      <span className="block truncate">{formatDistanceToNowStrict(value, { addSuffix: true })}</span>
+      <span className="block truncate">
+        {formatDistanceToNowStrict(value, { addSuffix: true })}
+      </span>
       {!compact && <span className="block truncate text-xs text-muted-foreground">{absolute}</span>}
     </time>
   )
@@ -69,7 +79,11 @@ function NextRun({ scheduler, compact = false }: { scheduler: Scheduler; compact
         <Timestamp value={scheduler.nextRunAt} compact={compact} />
       </div>
       {scheduler.isMissed && (
-        <Badge variant="destructive" className="shrink-0" title="This run should have started by now">
+        <Badge
+          variant="destructive"
+          className="shrink-0"
+          title="This run should have started by now"
+        >
           <CircleAlert data-icon="inline-start" />
           Missed
         </Badge>
@@ -168,7 +182,8 @@ export function SchedulersTable() {
     setUrlState({ ...firstPage(), sortDirection: sortDirection === "asc" ? "desc" : "asc" })
   }
 
-  const sortIcon = sortDirection === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
+  const sortIcon =
+    sortDirection === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
 
   const emptyState = !isLoading && schedulers.length === 0 && (
     <p className="py-10 text-center text-sm text-muted-foreground">No schedulers found</p>
@@ -190,8 +205,8 @@ export function SchedulersTable() {
           includeAllOption={true}
           allOptionLabel="All Queues"
         />
-        <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-[350px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative w-full sm:w-auto sm:max-w-[350px] sm:flex-1">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by scheduler or queue..."
             value={urlState.search}
@@ -277,14 +292,18 @@ export function SchedulersTable() {
 
       {/* Desktop: table */}
       <ScrollArea className="hidden rounded-lg border md:block">
-        <Table className="table-fixed w-full">
+        <Table className="w-full table-fixed">
           <TableHeader className="z-10">
             <TableRow>
               <TableHead style={{ width: "200px" }}>Queue</TableHead>
               <TableHead style={{ width: "220px" }}>Scheduler</TableHead>
               <TableHead style={{ width: "260px" }}>Schedule</TableHead>
               <TableHead style={{ width: "240px" }}>
-                <button type="button" className="flex items-center gap-1 font-medium" onClick={handleSort}>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 font-medium"
+                  onClick={handleSort}
+                >
                   Next Run
                   {sortIcon}
                 </button>
@@ -305,7 +324,9 @@ export function SchedulersTable() {
                 <TableCell>
                   <TruncatedTooltip value={scheduler.key} className="font-medium" />
                   {scheduler.name !== scheduler.key && (
-                    <span className="block truncate text-xs text-muted-foreground">{scheduler.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {scheduler.name}
+                    </span>
                   )}
                 </TableCell>
                 <TableCell>

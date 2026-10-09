@@ -1,6 +1,7 @@
 import { jobRunsInsertSchema } from "@better-bull-board/db/schemas/job/schema"
 import type { Job } from "bullmq"
 import { z } from "zod/v4"
+
 import { stripNullCharacters } from "~/lib/sanitize"
 
 export const jobSyncEventSchema = z.object({
@@ -10,7 +11,16 @@ export const jobSyncEventSchema = z.object({
   queueName: z.string(),
   phase: z.enum(["waiting", "active", "terminal", "snapshot"]).default("snapshot"),
   state: z
-    .enum(["active", "completed", "failed", "waiting", "delayed", "prioritized", "waiting-children", "unknown"])
+    .enum([
+      "active",
+      "completed",
+      "failed",
+      "waiting",
+      "delayed",
+      "prioritized",
+      "waiting-children",
+      "unknown",
+    ])
     .optional(),
   tags: z.array(z.string()).optional(),
   job: z.record(z.string(), z.unknown()),

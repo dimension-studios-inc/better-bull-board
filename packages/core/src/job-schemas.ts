@@ -14,7 +14,10 @@ const jobStatusValues = [
 const logLevelValues = ["log", "debug", "info", "warn", "error"] as const
 
 // Statuses the replay and cancel actions accept, shared by the UI and the bulk actions
-export const replayableJobStatuses = ["completed", "failed"] as const satisfies (typeof jobStatusValues)[number][]
+export const replayableJobStatuses = [
+  "completed",
+  "failed",
+] as const satisfies (typeof jobStatusValues)[number][]
 export const cancellableJobStatuses = [
   "active",
   "waiting",

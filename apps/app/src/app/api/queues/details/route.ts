@@ -2,7 +2,9 @@ import { HttpError } from "@better-bull-board/core/errors"
 import { jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
 import { and, eq, inArray, sql } from "drizzle-orm"
+
 import { createAuthenticatedApiRoute } from "~/lib/utils/server"
+
 import { getQueueDetailsApiRoute } from "./schemas"
 
 export const POST = createAuthenticatedApiRoute({
@@ -26,11 +28,17 @@ export const POST = createAuthenticatedApiRoute({
       db
         .select({ status: jobRunsTable.status, count: sql<number>`COUNT(*)::int` })
         .from(jobRunsTable)
-        .where(and(eq(jobRunsTable.queue, queue.name), inArray(jobRunsTable.status, ["waiting", "active", "delayed"])))
+        .where(
+          and(
+            eq(jobRunsTable.queue, queue.name),
+            inArray(jobRunsTable.status, ["waiting", "active", "delayed"]),
+          ),
+        )
         .groupBy(jobRunsTable.status),
     ])
 
-    const getCount = (status: string) => Number(statusCounts.find((row) => row.status === status)?.count ?? 0)
+    const getCount = (status: string) =>
+      Number(statusCounts.find((row) => row.status === status)?.count ?? 0)
 
     return {
       name: queue.name,

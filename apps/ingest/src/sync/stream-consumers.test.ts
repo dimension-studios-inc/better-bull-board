@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+
 import { getField, parseAutoClaimResponse, parseReadGroupResponse } from "./stream-consumers"
 
 // Replies captured from Redis 8 through ioredis 6, which negotiates RESP3 unless `protocol: 2` is set.
@@ -37,7 +38,10 @@ describe("parseReadGroupResponse", () => {
   })
 
   test("skips malformed entries", () => {
-    const reply = ["stream:a", [["1791574045315-0", ["payload", "a1"]], ["1791574045315-1"], "not-an-entry"]]
+    const reply = [
+      "stream:a",
+      [["1791574045315-0", ["payload", "a1"]], ["1791574045315-1"], "not-an-entry"],
+    ]
     expect(payloads(parseReadGroupResponse(reply))).toEqual(["a1"])
   })
 })

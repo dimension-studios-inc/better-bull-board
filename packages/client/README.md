@@ -14,7 +14,7 @@ pnpm add @better-bull-board/client bullmq
 
 To use Better Bull Board with your BullMQ workers, you need to:
 
-1. **Import the BBB client** 
+1. **Import the BBB client**
 2. **Use a separate processor** (sandboxed processor required for job cancellation)
 
 ### Basic Setup
@@ -24,20 +24,20 @@ To use Better Bull Board with your BullMQ workers, you need to:
 Create a separate processor file (e.g., `processor.ts` or `processor.js`):
 
 ```typescript
-import { patch } from "@better-bull-board/client";
-import type { SandboxedJob } from "bullmq";
-import { redis } from "./lib/redis"; // Your Redis connection
+import { patch } from "@better-bull-board/client"
+import type { SandboxedJob } from "bullmq"
+import { redis } from "./lib/redis" // Your Redis connection
 
 export default patch(async (job: SandboxedJob) => {
-  console.log(`Processing job ${job.id}`);
-  
+  console.log(`Processing job ${job.id}`)
+
   // Your job processing logic here
-  await processYourJob(job.data);
-  
-  console.log(`Job ${job.id} completed`);
-  
-  return { status: "done" };
-}, redis);
+  await processYourJob(job.data)
+
+  console.log(`Job ${job.id} completed`)
+
+  return { status: "done" }
+}, redis)
 ```
 
 #### 2. Create a Worker
@@ -45,11 +45,11 @@ export default patch(async (job: SandboxedJob) => {
 Use the Better Bull Board Worker class in your main worker file:
 
 ```typescript
-import path from "node:path";
-import { Worker } from "@better-bull-board/client";
-import { redis } from "./lib/redis"; // Your Redis connection
+import path from "node:path"
+import { Worker } from "@better-bull-board/client"
+import { redis } from "./lib/redis" // Your Redis connection
 
-const processorFile = path.join(__dirname, "processor.cjs"); // Note: .cjs extension for built files
+const processorFile = path.join(__dirname, "processor.cjs") // Note: .cjs extension for built files
 
 new Worker("your-queue-name", processorFile, {
   connection: redis,
@@ -58,15 +58,15 @@ new Worker("your-queue-name", processorFile, {
   concurrency: 10,
   getJobTags(job) {
     // Optional: Return tags for better organization
-    return ["your-queue", "production"];
+    return ["your-queue", "production"]
   },
-});
+})
 ```
 
 ### Key Requirements
 
 - **Separate Processor**: You must use a sandboxed processor (separate file) for job cancellation to work properly
-- **Redis Connection**: Provide both `connection` and `ioredis` options pointing to the same Redis instance  
+- **Redis Connection**: Provide both `connection` and `ioredis` options pointing to the same Redis instance
 - **Worker Threads**: Set `useWorkerThreads: true` for proper isolation
 - **File Extension**: Use `.cjs` extension for the processor file path when referencing built files
 
@@ -75,33 +75,35 @@ new Worker("your-queue-name", processorFile, {
 Here's a complete working example based on our demo:
 
 **processor.ts**
+
 ```typescript
-import { patch } from "@better-bull-board/client";
-import type { SandboxedJob } from "bullmq";
-import { redis } from "../lib/redis";
+import { patch } from "@better-bull-board/client"
+import type { SandboxedJob } from "bullmq"
+import { redis } from "../lib/redis"
 
 export default patch(async (job: SandboxedJob) => {
-  console.log(`Processing job ${job.id}`);
+  console.log(`Processing job ${job.id}`)
 
   // Simulate work
-  await new Promise((resolve) => setTimeout(resolve, 10_000));
+  await new Promise((resolve) => setTimeout(resolve, 10_000))
 
-  console.log(`Job ${job.id} processed`);
+  console.log(`Job ${job.id} processed`)
 
-  return { status: "done" };
-}, redis);
+  return { status: "done" }
+}, redis)
 ```
 
 **worker.ts**
-```typescript
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { Worker } from "@better-bull-board/client";
-import { redis } from "./lib/redis";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const processorFile = path.join(__dirname, "processor.cjs");
+```typescript
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import { Worker } from "@better-bull-board/client"
+import { redis } from "./lib/redis"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const processorFile = path.join(__dirname, "processor.cjs")
 
 new Worker("demo-queue", processorFile, {
   connection: redis,
@@ -109,9 +111,9 @@ new Worker("demo-queue", processorFile, {
   useWorkerThreads: true,
   concurrency: 10,
   getJobTags() {
-    return ["demo-queue", "test"];
+    return ["demo-queue", "test"]
   },
-});
+})
 ```
 
 ### Advanced Features
@@ -152,6 +154,7 @@ Wraps your job processor with Better Bull Board functionality.
 Extended BullMQ Worker with Better Bull Board integration.
 
 **Required Options:**
+
 - `ioredis`: Redis connection instance
 - `useWorkerThreads`: Must be `true`
 - `getJobTags`: Optional function to return job tags

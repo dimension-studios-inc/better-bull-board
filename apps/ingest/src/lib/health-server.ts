@@ -1,8 +1,10 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import { URL } from "node:url"
+
 import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { sql } from "drizzle-orm"
+
 import { redis } from "./redis"
 
 interface HealthCheckResult {
@@ -14,7 +16,11 @@ interface HealthCheckResult {
 
 const HEALTH_CHECK_TIMEOUT_MS = 2_000
 
-const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, service: string): Promise<T> => {
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  service: string,
+): Promise<T> => {
   let timeout: NodeJS.Timeout | undefined
   try {
     return await Promise.race([

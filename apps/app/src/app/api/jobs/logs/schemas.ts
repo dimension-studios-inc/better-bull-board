@@ -1,4 +1,8 @@
-import { listJobLogsInputSchema, listJobLogsOutputSchema } from "@better-bull-board/core/job-schemas"
+import {
+  listJobLogsInputSchema,
+  listJobLogsOutputSchema,
+} from "@better-bull-board/core/job-schemas"
+
 import { registerApiRoute } from "~/lib/utils/client"
 
 export const getJobLogsApiRoute = registerApiRoute({

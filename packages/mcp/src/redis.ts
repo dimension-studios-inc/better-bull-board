@@ -1,4 +1,5 @@
 import Redis, { type RedisOptions } from "ioredis"
+
 import { env } from "./env"
 
 const options: RedisOptions = {

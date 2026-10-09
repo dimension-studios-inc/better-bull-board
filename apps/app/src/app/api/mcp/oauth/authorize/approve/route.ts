@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+
 import { getAuthenticatedUser } from "~/lib/auth/server"
 import {
   createAuthorizationCode,

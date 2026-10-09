@@ -1,11 +1,21 @@
 import { Badge } from "@better-bull-board/ui/components/badge"
 import { cn } from "cn"
-import { Bug, CircleAlert, Info, type LucideIcon, type LucideProps, TriangleAlert } from "lucide-react"
+import {
+  Bug,
+  CircleAlert,
+  Info,
+  type LucideIcon,
+  type LucideProps,
+  TriangleAlert,
+} from "lucide-react"
 import type { ComponentProps } from "react"
 
 type BadgeVariant = ComponentProps<typeof Badge>["variant"]
 
-const logLevels: Record<string, { variant: BadgeVariant; icon: LucideIcon; iconClassName: string }> = {
+const logLevels: Record<
+  string,
+  { variant: BadgeVariant; icon: LucideIcon; iconClassName: string }
+> = {
   error: { variant: "destructive", icon: CircleAlert, iconClassName: "text-destructive" },
   warn: { variant: "outline", icon: TriangleAlert, iconClassName: "text-warning" },
   warning: { variant: "outline", icon: TriangleAlert, iconClassName: "text-warning" },
@@ -20,7 +30,11 @@ type LogLevelProps = {
   className?: string
 }
 
-export function LogLevelIcon({ level, className, ...props }: LogLevelProps & Omit<LucideProps, "ref">) {
+export function LogLevelIcon({
+  level,
+  className,
+  ...props
+}: LogLevelProps & Omit<LucideProps, "ref">) {
   const logLevel = getLogLevel(level)
   if (!logLevel) return <div className={cn("size-4", className)} />
 

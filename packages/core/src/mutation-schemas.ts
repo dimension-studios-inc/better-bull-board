@@ -1,4 +1,5 @@
 import { z } from "zod"
+
 import { jobFiltersSchema } from "./job-schemas"
 
 // Keeps a single request bounded: narrow the filters to go beyond it

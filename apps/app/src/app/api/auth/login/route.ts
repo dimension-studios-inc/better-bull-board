@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+
 import { createAuthCookie, createToken, verifyAdminCredentials } from "~/lib/auth/server"
 
 const loginSchema = z.object({

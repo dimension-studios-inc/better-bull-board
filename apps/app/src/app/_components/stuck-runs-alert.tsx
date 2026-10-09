@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@better-bull-board/ui/compo
 import { useQuery } from "@tanstack/react-query"
 import { AlertTriangle } from "lucide-react"
 import Link from "next/link"
+
 import { getStuckRunsApiRoute } from "~/app/api/jobs/stuck/schemas"
 import { RunActions } from "~/app/runs/_components/run-actions"
 import { apiFetch } from "~/lib/utils/client"
@@ -57,7 +58,8 @@ export function StuckRunsAlert() {
                   <span className="shrink-0 font-mono text-xs">#{run.jobId}</span>
                 </span>
                 <span className="shrink-0 text-xs sm:ml-auto">
-                  running for <span className="font-medium">{formatShortDuration(run.runningForMs)}</span>,{" "}
+                  running for{" "}
+                  <span className="font-medium">{formatShortDuration(run.runningForMs)}</span>,{" "}
                   {formatUsualDuration(run)}
                 </span>
               </Link>

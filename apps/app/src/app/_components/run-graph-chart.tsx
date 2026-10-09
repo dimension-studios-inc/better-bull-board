@@ -1,11 +1,27 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@better-bull-board/ui/components/card"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
 import type { z } from "zod"
+
 import type { dashboardRunGraphOutput } from "~/app/api/dashboard/summary/schemas"
 import { formatUtc } from "~/lib/utils/date"
+
 import { CHART_RESIZE_DEBOUNCE_MS } from "./chart-config"
 
 interface RunGraphChartProps {
@@ -37,10 +53,15 @@ const CustomTooltip =
     if (active && payload?.length) {
       const data = payload[0].payload
       return (
-        <div className="bg-background border rounded-lg px-2.5 py-1.5 text-xs shadow-xl">
-          <p className="font-medium">{data.timestamp && `${formatUtc(data.timestamp, tooltipFormat)} UTC`}</p>
+        <div className="rounded-lg border bg-background px-2.5 py-1.5 text-xs shadow-xl">
+          <p className="font-medium">
+            {data.timestamp && `${formatUtc(data.timestamp, tooltipFormat)} UTC`}
+          </p>
           <p className="text-muted-foreground">
-            Runs: <span className="font-mono font-medium text-foreground">{data.runCount.toLocaleString()}</span>
+            Runs:{" "}
+            <span className="font-mono font-medium text-foreground">
+              {data.runCount.toLocaleString()}
+            </span>
           </p>
         </div>
       )
@@ -48,7 +69,12 @@ const CustomTooltip =
     return null
   }
 
-export function RunGraphChart({ minutes, periodLabel, runGraphData, isLoading }: RunGraphChartProps) {
+export function RunGraphChart({
+  minutes,
+  periodLabel,
+  runGraphData,
+  isLoading,
+}: RunGraphChartProps) {
   const timeFormats = getTimeFormats(minutes)
   const chartData =
     runGraphData?.map((item) => ({
@@ -61,11 +87,13 @@ export function RunGraphChart({ minutes, periodLabel, runGraphData, isLoading }:
     <Card className="@container/card">
       <CardHeader>
         <CardTitle>Total Runs</CardTitle>
-        <CardDescription>Runs created in the {periodLabel.toLowerCase()} (times in UTC)</CardDescription>
+        <CardDescription>
+          Runs created in the {periodLabel.toLowerCase()} (times in UTC)
+        </CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {isLoading ? (
-          <div className="h-64 sm:h-80 flex items-center justify-center">
+          <div className="flex h-64 items-center justify-center sm:h-80">
             <Skeleton className="h-full w-full" />
           </div>
         ) : chartData.length > 0 ? (
@@ -110,7 +138,7 @@ export function RunGraphChart({ minutes, periodLabel, runGraphData, isLoading }:
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="h-64 sm:h-80 flex items-center justify-center">
+          <div className="flex h-64 items-center justify-center sm:h-80">
             <p className="text-muted-foreground">No data available</p>
           </div>
         )}

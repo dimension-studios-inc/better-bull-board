@@ -1,6 +1,7 @@
 import { SidebarInset, SidebarProvider } from "@better-bull-board/ui/components/sidebar"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+
 import { AppSidebar } from "~/components/app-sidebar"
 import { SiteHeader } from "~/components/site-header"
 import { getAuthenticatedUser } from "~/lib/auth/server"

@@ -1,4 +1,5 @@
 import { MCP_SUPPORTED_SCOPES } from "@better-bull-board/mcp/scopes"
+
 import { getOrigin } from "~/lib/mcp/oauth"
 
 export const dynamic = "force-dynamic"

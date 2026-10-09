@@ -53,7 +53,11 @@ export function DateTimePicker({
           <Button
             variant="outline"
             aria-label={ariaLabel}
-            className={cn("justify-start font-normal", !value && "text-muted-foreground", className)}
+            className={cn(
+              "justify-start font-normal",
+              !value && "text-muted-foreground",
+              className,
+            )}
           />
         }
       >

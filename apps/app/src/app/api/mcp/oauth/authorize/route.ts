@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server"
+
 import { getAuthenticatedUser } from "~/lib/auth/server"
-import { getMcpResource, getOrigin, OAuthError, validateAuthorizationRequest } from "~/lib/mcp/oauth"
+import {
+  getMcpResource,
+  getOrigin,
+  OAuthError,
+  validateAuthorizationRequest,
+} from "~/lib/mcp/oauth"
 
 export const runtime = "nodejs"
 

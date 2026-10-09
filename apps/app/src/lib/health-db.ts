@@ -6,13 +6,17 @@ if (!process.env.DATABASE_URL) {
 }
 
 const healthPoolMax = Number(process.env.HEALTH_DATABASE_POOL_MAX ?? 2)
-const healthConnectionTimeoutMs = Number(process.env.HEALTH_DATABASE_POOL_CONNECTION_TIMEOUT_MS ?? 2_000)
+const healthConnectionTimeoutMs = Number(
+  process.env.HEALTH_DATABASE_POOL_CONNECTION_TIMEOUT_MS ?? 2_000,
+)
 
 const healthPool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: Number.isFinite(healthPoolMax) && healthPoolMax > 0 ? healthPoolMax : 2,
   connectionTimeoutMillis:
-    Number.isFinite(healthConnectionTimeoutMs) && healthConnectionTimeoutMs > 0 ? healthConnectionTimeoutMs : 2_000,
+    Number.isFinite(healthConnectionTimeoutMs) && healthConnectionTimeoutMs > 0
+      ? healthConnectionTimeoutMs
+      : 2_000,
   options: "-c statement_timeout=2000",
 })
 

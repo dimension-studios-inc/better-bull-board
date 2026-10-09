@@ -1,4 +1,5 @@
 import type { Queue } from "bullmq"
+
 import { queue } from "./demo/queue"
 
 export const deleteAllSchedulers = async () => {

@@ -6,10 +6,12 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { AlertCircle } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
+
 import { getJobByIdApiRoute } from "~/app/api/jobs/[id]/schemas"
 import { getJobLogsApiRoute } from "~/app/api/jobs/logs/schemas"
 import { PageContainer } from "~/components/page-container"
 import { apiFetch } from "~/lib/utils/client"
+
 import { LogDetailsDrawer } from "./_components/log-details-drawer"
 import { LogsWaterfall } from "./_components/logs-waterfall"
 import { RunDetailsDrawer } from "./_components/run-details-drawer"
@@ -77,7 +79,7 @@ export default function RunViewPage() {
   if (isLoadingRun) {
     return (
       <PageContainer>
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           <div className="lg:col-span-3">
             <Skeleton className="h-96 w-full" />
           </div>

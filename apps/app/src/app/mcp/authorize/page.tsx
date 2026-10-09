@@ -3,6 +3,7 @@ import { Button } from "@better-bull-board/ui/components/button"
 import { Card } from "@better-bull-board/ui/components/card"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+
 import { getAuthenticatedUser } from "~/lib/auth/server"
 import { getMcpResource, getOriginFromHeaders, validateAuthorizationRequest } from "~/lib/mcp/oauth"
 
@@ -44,13 +45,13 @@ export default async function McpAuthorizePage({
 
   return (
     <div className="min-h-dvh bg-background p-4 sm:p-6">
-      <div className="mx-auto flex min-h-[calc(100dvh-2rem)] sm:min-h-[calc(100dvh-3rem)] max-w-lg items-center">
+      <div className="mx-auto flex min-h-[calc(100dvh-2rem)] max-w-lg items-center sm:min-h-[calc(100dvh-3rem)]">
         <Card className="w-full p-6">
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold">Authorize MCP access</h1>
             <p className="text-sm text-muted-foreground">
-              {authorization.client.clientName} wants {requestsWrite ? "read and write" : "read-only"} access to Better
-              Bull Board.
+              {authorization.client.clientName} wants{" "}
+              {requestsWrite ? "read and write" : "read-only"} access to Better Bull Board.
             </p>
           </div>
 

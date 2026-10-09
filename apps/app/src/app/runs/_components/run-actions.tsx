@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/c
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { RotateCcw, X } from "lucide-react"
 import { useState } from "react"
+
 import { cancelJobApiRoute } from "~/app/api/jobs/cancel/schemas"
 import { replayJobApiRoute } from "~/app/api/jobs/replay/schemas"
 import { apiFetch } from "~/lib/utils/client"
@@ -77,7 +78,7 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
           <PopoverContent className="w-80">
             <div className="space-y-4">
               <div className="space-y-2">
-                <h4 className="font-medium leading-none text-destructive">Cancel Job</h4>
+                <h4 className="leading-none font-medium text-destructive">Cancel Job</h4>
                 <p className="text-sm text-muted-foreground">
                   Are you sure you want to cancel this job? This action cannot be undone.
                 </p>
@@ -86,7 +87,12 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
                 <Button variant="outline" size="sm" onClick={() => setCancelPopoverOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="destructive" size="sm" onClick={handleCancel} disabled={cancelMutation.isPending}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleCancel}
+                  disabled={cancelMutation.isPending}
+                >
                   Cancel Job
                 </Button>
               </div>
@@ -104,10 +110,10 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
           <PopoverContent className="w-80">
             <div className="space-y-4">
               <div className="space-y-2">
-                <h4 className="font-medium leading-none">Replay Job</h4>
+                <h4 className="leading-none font-medium">Replay Job</h4>
                 <p className="text-sm text-muted-foreground">
-                  Are you sure you want to replay this job? This will create a new job with the same data and
-                  configuration.
+                  Are you sure you want to replay this job? This will create a new job with the same
+                  data and configuration.
                 </p>
               </div>
               <div className="flex justify-end gap-2">

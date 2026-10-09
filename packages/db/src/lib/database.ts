@@ -20,7 +20,9 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: Number.isFinite(poolMax) && poolMax > 0 ? poolMax : 20,
   connectionTimeoutMillis:
-    Number.isFinite(connectionTimeoutMillis) && connectionTimeoutMillis > 0 ? connectionTimeoutMillis : 5_000,
+    Number.isFinite(connectionTimeoutMillis) && connectionTimeoutMillis > 0
+      ? connectionTimeoutMillis
+      : 5_000,
   options: `-c statement_timeout=${Number.isFinite(statementTimeoutMs) && statementTimeoutMs > 0 ? statementTimeoutMs : 30_000}`,
 })
 

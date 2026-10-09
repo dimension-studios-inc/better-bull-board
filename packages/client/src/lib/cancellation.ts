@@ -1,6 +1,7 @@
 import { logger } from "@rharkor/logger"
 import { Queue, type SandboxedJob } from "bullmq"
 import type Redis from "ioredis"
+
 import { repeat } from "./utils"
 
 export const registerCancellationListener = async (redis: Redis, jobId: string) => {
@@ -36,20 +37,29 @@ export class CancellationError extends Error {
   }
 }
 
-export const cancelable = (run: (job: SandboxedJob) => Promise<unknown>, redis: Redis) => async (job: SandboxedJob) => {
-  const jobId = job.id
+export const cancelable =
+  (run: (job: SandboxedJob) => Promise<unknown>, redis: Redis) => async (job: SandboxedJob) => {
+    const jobId = job.id
 
-  const { stop } = await registerCancellationListener(redis, jobId)
+    const { stop } = await registerCancellationListener(redis, jobId)
 
-  try {
-    const result = await run(job)
-    return result
-  } finally {
-    stop()
+    try {
+      const result = await run(job)
+      return result
+    } finally {
+      stop()
+    }
   }
-}
 
-export const cancelJob = async ({ redis, jobId, queueName }: { redis: Redis; jobId: string; queueName: string }) => {
+export const cancelJob = async ({
+  redis,
+  jobId,
+  queueName,
+}: {
+  redis: Redis
+  jobId: string
+  queueName: string
+}) => {
   //* Cancel if still in queue
   const queue = new Queue(queueName, { connection: redis })
   const job = await queue.getJob(jobId)

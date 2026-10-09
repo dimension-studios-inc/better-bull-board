@@ -1,4 +1,5 @@
 import type Redis from "ioredis"
+
 import { redis } from "~/lib/redis"
 
 const RELEASE_LOCK_SCRIPT = `
@@ -22,7 +23,15 @@ export const acquireLock = async ({
   return (await client.set(key, owner, "PX", ttlMs, "NX")) === "OK"
 }
 
-export const releaseLock = async ({ key, owner, client = redis }: { key: string; owner: string; client?: Redis }) => {
+export const releaseLock = async ({
+  key,
+  owner,
+  client = redis,
+}: {
+  key: string
+  owner: string
+  client?: Redis
+}) => {
   await client.eval(RELEASE_LOCK_SCRIPT, 1, key, owner)
 }
 

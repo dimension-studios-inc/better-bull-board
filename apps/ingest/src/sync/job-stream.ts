@@ -1,7 +1,9 @@
 import { logger } from "@rharkor/logger"
+
 import { env } from "~/lib/env"
 import { instanceId } from "~/lib/instance"
 import { redis } from "~/lib/redis"
+
 import { formatJobRun, parseJobSyncEvent } from "./job-format"
 import { safeUpsertJobRuns } from "./job-upsert"
 import {
@@ -24,7 +26,14 @@ streamRedis.on("error", (error) => {
 
 const ensureGroup = async () => {
   try {
-    await redis.call("XGROUP", "CREATE", env.JOB_SYNC_STREAM_KEY, env.JOB_SYNC_CONSUMER_GROUP, "0", "MKSTREAM")
+    await redis.call(
+      "XGROUP",
+      "CREATE",
+      env.JOB_SYNC_STREAM_KEY,
+      env.JOB_SYNC_CONSUMER_GROUP,
+      "0",
+      "MKSTREAM",
+    )
   } catch (error) {
     if (error instanceof Error && error.message.includes("BUSYGROUP")) return
     throw error
@@ -32,7 +41,12 @@ const ensureGroup = async () => {
 }
 
 const ackAndDelete = (ids: string[]) =>
-  ackAndDeleteEntries({ client: redis, group: env.JOB_SYNC_CONSUMER_GROUP, ids, stream: env.JOB_SYNC_STREAM_KEY })
+  ackAndDeleteEntries({
+    client: redis,
+    group: env.JOB_SYNC_CONSUMER_GROUP,
+    ids,
+    stream: env.JOB_SYNC_STREAM_KEY,
+  })
 
 const STREAM_TRIM_INTERVAL_MS = 60 * 60 * 1000
 

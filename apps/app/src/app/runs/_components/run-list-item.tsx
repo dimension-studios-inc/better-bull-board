@@ -4,10 +4,12 @@ import { Checkbox } from "@better-bull-board/ui/components/checkbox"
 import { cn } from "cn"
 import { formatDistanceToNowStrict } from "date-fns"
 import type { output } from "zod"
+
 import type { getJobsTableApiRoute } from "~/app/api/jobs/table/schemas"
 import { RunStatusBadge } from "~/components/run-status-badge"
 import { formatUtcDateTime } from "~/lib/utils/date"
 import type { StuckRun } from "~/lib/utils/stuck-runs"
+
 import { RunActions } from "./run-actions"
 import { getRunDuration, StuckRunWarning } from "./run-display"
 
@@ -77,7 +79,7 @@ export function RunListItem({
           )}
         </div>
         {run.status === "failed" && run.errorMessage && (
-          <p className="line-clamp-2 break-all rounded bg-destructive/10 px-2 py-1 font-mono text-xs text-destructive">
+          <p className="line-clamp-2 rounded bg-destructive/10 px-2 py-1 font-mono text-xs break-all text-destructive">
             {run.errorMessage}
           </p>
         )}

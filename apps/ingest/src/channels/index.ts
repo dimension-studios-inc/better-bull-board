@@ -1,4 +1,5 @@
 import { logger } from "@rharkor/logger"
+
 import { handleJobChannel } from "./job"
 
 const CHANNELS = {

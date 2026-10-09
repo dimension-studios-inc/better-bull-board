@@ -1,7 +1,13 @@
-import { dashboardQueueHourlyStatsTable, jobRunsTable, jobSchedulersTable, queuesTable } from "@better-bull-board/db"
+import {
+  dashboardQueueHourlyStatsTable,
+  jobRunsTable,
+  jobSchedulersTable,
+  queuesTable,
+} from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
 import { and, asc, desc, eq, gt, gte, ilike, lt, or, sql } from "drizzle-orm"
 import type { z } from "zod"
+
 import { listQueuesInputSchema, listQueuesOutputSchema } from "./queue-schemas"
 
 type CursorDirection = "next" | "prev"
@@ -39,7 +45,9 @@ const queueSelectFields = {
   isPaused: queuesTable.isPaused,
   waitingJobs: waitingJobsExpression.as("waiting_jobs"),
   activeJobs: activeJobsExpression.as("active_jobs"),
-  patterns: sql<string[] | null | undefined>`array_agg(${jobSchedulersTable.pattern})`.as("patterns"),
+  patterns: sql<string[] | null | undefined>`array_agg(${jobSchedulersTable.pattern})`.as(
+    "patterns",
+  ),
   everys: sql<number[] | null | undefined>`array_agg(${jobSchedulersTable.every})`.as("everys"),
 }
 
@@ -101,9 +109,12 @@ const getCursorComparison = (
   const sortExpression = getSortExpression(sortBy, pressureStats)
   const cursorValue = getCursorValue(cursor, sortBy)
   const nameComparison =
-    cursorDirection === "next" ? gt(queuesTable.name, cursor.name) : lt(queuesTable.name, cursor.name)
+    cursorDirection === "next"
+      ? gt(queuesTable.name, cursor.name)
+      : lt(queuesTable.name, cursor.name)
   const tiedSortComparison = and(eq(sortExpression, cursorValue), nameComparison)
-  const shouldUseGreaterThan = cursorDirection === "next" ? sortDirection === "asc" : sortDirection === "desc"
+  const shouldUseGreaterThan =
+    cursorDirection === "next" ? sortDirection === "asc" : sortDirection === "desc"
 
   if (shouldUseGreaterThan) {
     return or(gt(sortExpression, cursorValue), tiedSortComparison)
@@ -237,11 +248,18 @@ async function listQueuesSortedByPressure({
     .leftJoin(jobSchedulersTable, eq(jobSchedulersTable.queueId, queuesTable.id))
     .where(
       and(
-        cursor ? getCursorComparison(cursor, cursorDirection, "pressure", sortDirection, pressureStats) : undefined,
+        cursor
+          ? getCursorComparison(cursor, cursorDirection, "pressure", sortDirection, pressureStats)
+          : undefined,
         search ? ilike(queuesTable.name, `%${search}%`) : undefined,
       ),
     )
-    .groupBy(queuesTable.id, waitingJobCounts.waitingJobs, activeJobCounts.activeJobs, pressureStats.pressure)
+    .groupBy(
+      queuesTable.id,
+      waitingJobCounts.waitingJobs,
+      activeJobCounts.activeJobs,
+      pressureStats.pressure,
+    )
     .orderBy(...getSortOrder(cursorDirection, "pressure", sortDirection, pressureStats))
     .limit(limit + 1)
 }

@@ -1,5 +1,13 @@
 {
   "name": "@better-bull-board/ingest",
+  "license": "ISC",
+  "type": "module",
+  "exports": {
+    "./*": {
+      "types": "./dist/*.d.mts",
+      "import": "./dist/*.mjs"
+    }
+  },
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
@@ -8,7 +16,6 @@
     "test": "bun test",
     "debug": "bun debug/index.ts"
   },
-  "license": "ISC",
   "dependencies": {
     "@better-bull-board/db": "workspace:*",
     "@rharkor/logger": "1.3.3",
@@ -21,17 +28,6 @@
     "ws": "8.21.3",
     "zod": "4.6.5"
   },
-  "peerDependencies": {
-    "drizzle-orm": "*",
-    "pg": "*"
-  },
-  "exports": {
-    "./*": {
-      "types": "./dist/*.d.mts",
-      "import": "./dist/*.mjs"
-    }
-  },
-  "type": "module",
   "devDependencies": {
     "@better-bull-board/typescript-config": "workspace:*",
     "@types/bun": "1.4.2",
@@ -40,5 +36,9 @@
     "@types/ws": "8.18.1",
     "tsdown": "0.23.0",
     "typescript": "7.0.2"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "*",
+    "pg": "*"
   }
 }

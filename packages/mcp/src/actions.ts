@@ -9,6 +9,7 @@ import {
   resumeQueue as resumeCoreQueue,
 } from "@better-bull-board/core/mutations"
 import { Queue } from "bullmq"
+
 import { redis } from "./redis"
 
 const createQueueAdapter = (queueName: string): QueueAdapter => {
@@ -29,7 +30,8 @@ const createQueueAdapter = (queueName: string): QueueAdapter => {
         retry: () => job.retry(),
       }
     },
-    add: (name: string, data: unknown, options: Record<string, unknown>) => queue.add(name, data, options),
+    add: (name: string, data: unknown, options: Record<string, unknown>) =>
+      queue.add(name, data, options),
     pause: () => queue.pause(),
     resume: () => queue.resume(),
     obliterate: (options: { force: true }) => queue.obliterate(options),
@@ -53,7 +55,13 @@ export const cancelJob = async ({
   )
 }
 
-export const replayJob = async ({ jobId, queueName }: { jobId: string; queueName: string }): Promise<MutationResult> =>
+export const replayJob = async ({
+  jobId,
+  queueName,
+}: {
+  jobId: string
+  queueName: string
+}): Promise<MutationResult> =>
   replayCoreJob(
     { jobId, queueName },
     {

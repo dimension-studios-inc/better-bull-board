@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server"
 import { utcTimestamp } from "@better-bull-board/db/utils/timestamp"
 import { type SQL, sql } from "drizzle-orm"
 import type { z } from "zod"
+
 import type { getDashboardSummaryOutput } from "~/app/api/dashboard/summary/schemas"
 
 export type DashboardSummary = z.output<typeof getDashboardSummaryOutput>
@@ -44,7 +45,8 @@ const MAX_ROLLUP_LAG_MS = 3 * HOUR_MS
 
 export const toNumber = (value: string | number | null | undefined) => Number(value ?? 0)
 
-const toSeconds = (milliseconds: string | number | null | undefined) => toNumber(milliseconds) / 1000
+const toSeconds = (milliseconds: string | number | null | undefined) =>
+  toNumber(milliseconds) / 1000
 
 export const floorTo = (date: Date, ms: number) => new Date(Math.floor(date.getTime() / ms) * ms)
 
@@ -65,7 +67,8 @@ const getLastRollupEnd = async () => {
       SELECT EXTRACT(EPOCH FROM MAX("bucket_start"))::bigint AS "last_bucket_epoch"
       FROM ${dashboardQueueHourlyStatsTable}
     `)
-  const lastBucketEpoch = (result.rows as { last_bucket_epoch: string | number | null }[])[0]?.last_bucket_epoch
+  const lastBucketEpoch = (result.rows as { last_bucket_epoch: string | number | null }[])[0]
+    ?.last_bucket_epoch
 
   return lastBucketEpoch == null ? null : new Date(toNumber(lastBucketEpoch) * 1000 + HOUR_MS)
 }
@@ -76,19 +79,34 @@ export const getDashboardWindow = async (minutes: number): Promise<DashboardWind
   const bucketSeconds = getBucketSeconds(minutes)
 
   if (minutes < RAW_ONLY_MAX_MINUTES) {
-    return { dateFrom, dateTo, bucketSeconds, rollupRange: null, rawRanges: [{ from: dateFrom, to: dateTo }] }
+    return {
+      dateFrom,
+      dateTo,
+      bucketSeconds,
+      rollupRange: null,
+      rawRanges: [{ from: dateFrom, to: dateTo }],
+    }
   }
 
   // Rollups only exist for completed hours, and the last one may not be computed yet
   const currentHour = floorTo(dateTo, HOUR_MS)
   const lastRollupEnd = (await getLastRollupEnd()) ?? currentHour
   const rollupTo = new Date(
-    Math.max(Math.min(currentHour.getTime(), lastRollupEnd.getTime()), currentHour.getTime() - MAX_ROLLUP_LAG_MS),
+    Math.max(
+      Math.min(currentHour.getTime(), lastRollupEnd.getTime()),
+      currentHour.getTime() - MAX_ROLLUP_LAG_MS,
+    ),
   )
   const rollupFrom = ceilTo(dateFrom, HOUR_MS)
 
   if (rollupFrom >= rollupTo) {
-    return { dateFrom, dateTo, bucketSeconds, rollupRange: null, rawRanges: [{ from: dateFrom, to: dateTo }] }
+    return {
+      dateFrom,
+      dateTo,
+      bucketSeconds,
+      rollupRange: null,
+      rawRanges: [{ from: dateFrom, to: dateTo }],
+    }
   }
 
   return {
@@ -129,7 +147,10 @@ const getStats = async () => {
  * Per queue and per graph bucket counters for the window, merging the hourly rollups (complete hours)
  * with the same aggregation computed on job_runs for the rest of the window.
  */
-export const getBucketRows = async ({ bucketSeconds, rollupRange, rawRanges }: DashboardWindow, queue?: string) => {
+export const getBucketRows = async (
+  { bucketSeconds, rollupRange, rawRanges }: DashboardWindow,
+  queue?: string,
+) => {
   const bucket = sql.raw(String(bucketSeconds))
   const queueFilter = queue ? sql` AND "queue" = ${queue}` : sql``
   const parts: SQL[] = []
@@ -156,7 +177,8 @@ export const getBucketRows = async ({ bucketSeconds, rollupRange, rawRanges }: D
   if (rawRanges.length > 0) {
     const rawRangesFilter = sql.join(
       rawRanges.map(
-        (range) => sql`("created_at" >= ${utcTimestamp(range.from)} AND "created_at" < ${utcTimestamp(range.to)})`,
+        (range) =>
+          sql`("created_at" >= ${utcTimestamp(range.from)} AND "created_at" < ${utcTimestamp(range.to)})`,
       ),
       sql` OR `,
     )
@@ -223,11 +245,13 @@ const getQueuePerformance = (rows: BucketRow[]): DashboardSummary["queuePerforma
     queue.durationCount += toNumber(row.duration_count)
     if (row.duration_min_ms != null) {
       const minDurationMs = toNumber(row.duration_min_ms)
-      queue.minDurationMs = queue.minDurationMs == null ? minDurationMs : Math.min(queue.minDurationMs, minDurationMs)
+      queue.minDurationMs =
+        queue.minDurationMs == null ? minDurationMs : Math.min(queue.minDurationMs, minDurationMs)
     }
     if (row.duration_max_ms != null) {
       const maxDurationMs = toNumber(row.duration_max_ms)
-      queue.maxDurationMs = queue.maxDurationMs == null ? maxDurationMs : Math.max(queue.maxDurationMs, maxDurationMs)
+      queue.maxDurationMs =
+        queue.maxDurationMs == null ? maxDurationMs : Math.max(queue.maxDurationMs, maxDurationMs)
     }
     queues.set(row.queue, queue)
   }
@@ -279,7 +303,11 @@ const getTopQueuesDuration = (queuePerformance: DashboardSummary["queuePerforman
     .sort((a, b) => b.avgDuration - a.avgDuration)
     .slice(0, 20)
 
-export const getDashboardSummary = async ({ minutes }: { minutes: number }): Promise<DashboardSummary> => {
+export const getDashboardSummary = async ({
+  minutes,
+}: {
+  minutes: number
+}): Promise<DashboardSummary> => {
   const dashboardWindow = await getDashboardWindow(minutes)
 
   const [stats, bucketRows] = await Promise.all([getStats(), getBucketRows(dashboardWindow)])

@@ -7,8 +7,10 @@ import { ScrollArea } from "@better-bull-board/ui/components/scroll-area"
 import { Separator } from "@better-bull-board/ui/components/separator"
 import { cn } from "cn"
 import { AlertCircle, ArrowLeft, CalendarClock, Clock } from "lucide-react"
+
 import { smartFormatDuration } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
+
 import { LogLevelBadge, LogLevelIcon } from "./log-level"
 
 interface LogEntry {
@@ -40,7 +42,7 @@ const DetailItem = ({
 }) => (
   <div className={cn("flex items-center space-x-3", className)}>
     <div className="shrink-0">{icon}</div>
-    <div className="flex-1 min-w-0">
+    <div className="min-w-0 flex-1">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-sm font-medium">{value}</div>
     </div>
@@ -54,7 +56,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
   const relativeTime = Math.max(0, log.ts - baseTime)
 
   return (
-    <Card className="lg:h-[calc(100vh-12rem)] overflow-hidden">
+    <Card className="overflow-hidden lg:h-[calc(100vh-12rem)]">
       <CardHeader>
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -66,12 +68,12 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="lg:h-full pb-6 overflow-hidden">
+      <CardContent className="overflow-hidden pb-6 lg:h-full">
         <ScrollArea className="lg:h-full [&>[data-slot=scroll-area-viewport]>div]:block!">
           <div className="space-y-6">
             {/* Log Level */}
             <div>
-              <h3 className="text-sm font-medium mb-3">Level</h3>
+              <h3 className="mb-3 text-sm font-medium">Level</h3>
               <LogLevelBadge level={log.level} />
             </div>
 
@@ -79,7 +81,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
 
             {/* Basic Info */}
             <div>
-              <h3 className="text-sm font-medium mb-3">Basic Information</h3>
+              <h3 className="mb-3 text-sm font-medium">Basic Information</h3>
               <div className="space-y-3">
                 <DetailItem
                   icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
@@ -103,9 +105,11 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
 
             {/* Message */}
             <div>
-              <h3 className="text-sm font-medium mb-3">Message</h3>
-              <div className="p-2 bg-muted/30 rounded border">
-                <pre className="text-xs font-mono whitespace-pre-wrap wrap-break-word">{log.message}</pre>
+              <h3 className="mb-3 text-sm font-medium">Message</h3>
+              <div className="rounded border bg-muted/30 p-2">
+                <pre className="font-mono text-xs wrap-break-word whitespace-pre-wrap">
+                  {log.message}
+                </pre>
               </div>
             </div>
           </div>

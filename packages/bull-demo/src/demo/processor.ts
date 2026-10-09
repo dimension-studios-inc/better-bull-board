@@ -1,5 +1,6 @@
 import { patch } from "@better-bull-board/client"
 import type { SandboxedJob } from "bullmq"
+
 import { redis } from "../lib/redis"
 
 export default patch(async (job: SandboxedJob) => {

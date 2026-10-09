@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import type React from "react"
 import { useEffect, useId, useState } from "react"
 import { toast } from "sonner"
+
 import { createJobApiRoute } from "~/app/api/jobs/create/schemas"
 import { getLastRunDataApiRoute } from "~/app/api/jobs/last-run-data/schemas"
 import { PageContainer } from "~/components/page-container"
@@ -96,9 +97,9 @@ export default function CreateRunPage() {
 
   return (
     <PageContainer>
-      <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-2xl">
+      <form onSubmit={handleSubmit} className="w-full max-w-2xl space-y-6">
         <div className="space-y-2">
-          <label htmlFor="queue" className="text-sm font-medium mb-2 block">
+          <label htmlFor="queue" className="mb-2 block text-sm font-medium">
             Queue *
           </label>
           <QueueSelector
@@ -116,12 +117,14 @@ export default function CreateRunPage() {
             <p className="text-sm text-muted-foreground">Loading last run data...</p>
           )}
           {selectedQueue && selectedQueue !== "all" && lastRunData && (
-            <p className="text-sm text-muted-foreground">Data prefilled from last run in this queue</p>
+            <p className="text-sm text-muted-foreground">
+              Data prefilled from last run in this queue
+            </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor={jobNameId} className="text-sm font-medium mb-2 block">
+          <label htmlFor={jobNameId} className="mb-2 block text-sm font-medium">
             Job Name *
           </label>
           <Input
@@ -134,7 +137,7 @@ export default function CreateRunPage() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor={jobDataId} className="text-sm font-medium mb-2 block">
+          <label htmlFor={jobDataId} className="mb-2 block text-sm font-medium">
             Job Data (JSON)
           </label>
           <textarea
@@ -142,7 +145,7 @@ export default function CreateRunPage() {
             value={jobData}
             onChange={(e) => setJobData(e.target.value)}
             placeholder="Enter job data as JSON..."
-            className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+            className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
           <p className="text-sm text-muted-foreground">
             Enter the job data as valid JSON. This data will be passed to the job when it runs.

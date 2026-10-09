@@ -13,7 +13,10 @@ import type { PgTable, PgTableWithColumns } from "drizzle-orm/pg-core"
  * omit(obj, ['a', 'b']); // { c: 3 }
  * ```
  */
-export function omit<T extends Record<string, unknown>, K extends keyof T>(obj: T, keys: K | K[]): Omit<T, K> {
+export function omit<T extends Record<string, unknown>, K extends keyof T>(
+  obj: T,
+  keys: K | K[],
+): Omit<T, K> {
   const keysToOmit = Array.isArray(keys) ? keys : [keys]
   const result = { ...obj }
 

@@ -1,6 +1,7 @@
 import { logger } from "@rharkor/logger"
 import { Worker as BullMQWorker, type Job, Queue, QueueEvents, type WorkerOptions } from "bullmq"
 import type Redis from "ioredis"
+
 import { emitJobSyncEvent } from "./lib/job-events"
 import { onlyMaster } from "./lib/master"
 
@@ -77,7 +78,9 @@ export class Worker<
         const onMessage = async (args: { jobId: string; prev?: string }) => {
           const job = await queue.getJob(args.jobId)
           if (!job) return
-          const tags = this.getJobTags?.(job as Job<DataType, ResultType, NameType>).filter(isDefinedString)
+          const tags = this.getJobTags?.(job as Job<DataType, ResultType, NameType>).filter(
+            isDefinedString,
+          )
           const isWaiting = await job.isWaiting()
           if (!isWaiting) return
           await emitJobSyncEvent({

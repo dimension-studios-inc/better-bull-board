@@ -2,6 +2,7 @@ import { HttpError } from "@better-bull-board/core/errors"
 import { logger } from "@rharkor/logger"
 import { type NextRequest, NextResponse } from "next/server"
 import type { output, ZodType } from "zod"
+
 import { getAuthenticatedUser } from "../auth/server"
 
 type AppRouteContext = {
@@ -44,7 +45,11 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
     if (parsed instanceof NextResponse) {
       return parsed
     }
-    const data = await handler(parsed as IS extends ZodType ? output<IS> : undefined, req, ctx).catch((error) => {
+    const data = await handler(
+      parsed as IS extends ZodType ? output<IS> : undefined,
+      req,
+      ctx,
+    ).catch((error) => {
       if (error instanceof HttpError) {
         return NextResponse.json({ error: error.message }, { status: error.statusCode })
       }

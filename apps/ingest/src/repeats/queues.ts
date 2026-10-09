@@ -5,6 +5,7 @@ import { Queue } from "bullmq"
 import { and, eq, notInArray } from "drizzle-orm"
 import type Redis from "ioredis"
 import type { Cluster } from "ioredis"
+
 import { runBackgroundTask } from "~/lib/background-tasks"
 import { mapWithConcurrency } from "~/lib/concurrency"
 import { withLock } from "~/lib/distributed-lock"
@@ -26,7 +27,15 @@ const scanForQueues = async (node: Redis | Cluster, startTime: number) => {
   const keys = []
   let scanCount = 0
   do {
-    const [nextCursor, scannedKeys] = await node.scan(cursor, "MATCH", "*:*:id", "COUNT", maxCount, "TYPE", "string")
+    const [nextCursor, scannedKeys] = await node.scan(
+      cursor,
+      "MATCH",
+      "*:*:id",
+      "COUNT",
+      maxCount,
+      "TYPE",
+      "string",
+    )
     cursor = nextCursor
     scanCount += 1
 
@@ -57,7 +66,9 @@ const ingestQueuesUnsafe = async () => {
     const scan = await scanForQueues(redis, Date.now())
     // <namespace>:<queueName>:id
     const allQueuesNames = Array.from(
-      new Set(scan.keys.map((key) => key.split(":")[1]).filter((queueName) => queueName !== undefined)),
+      new Set(
+        scan.keys.map((key) => key.split(":")[1]).filter((queueName) => queueName !== undefined),
+      ),
     ).sort()
 
     logger.debug("Queue discovery completed", {
@@ -153,7 +164,10 @@ const upsertQueue = async (queueName: string) => {
       isPaused,
     }
 
-    const [existingQueue] = await db.select().from(queuesTable).where(eq(queuesTable.name, queueName))
+    const [existingQueue] = await db
+      .select()
+      .from(queuesTable)
+      .where(eq(queuesTable.name, queueName))
     let updatedQueue: typeof queuesTable.$inferSelect
     if (existingQueue) {
       // Check if we need to update the queue
@@ -202,17 +216,19 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
 
   try {
     const jobSchedulers = await queue.getJobSchedulers()
-    const params: (typeof jobSchedulersTable.$inferInsert)[] = jobSchedulers.map((jobScheduler) => ({
-      queueId,
-      key: jobScheduler.key,
-      name: jobScheduler.name,
-      limit: jobScheduler.limit ?? null,
-      endDate: jobScheduler.endDate ? new Date(jobScheduler.endDate) : null,
-      tz: jobScheduler.tz ?? null,
-      pattern: jobScheduler.pattern ?? null,
-      every: jobScheduler.every ?? null,
-      template: jobScheduler.template ?? null,
-    }))
+    const params: (typeof jobSchedulersTable.$inferInsert)[] = jobSchedulers.map(
+      (jobScheduler) => ({
+        queueId,
+        key: jobScheduler.key,
+        name: jobScheduler.name,
+        limit: jobScheduler.limit ?? null,
+        endDate: jobScheduler.endDate ? new Date(jobScheduler.endDate) : null,
+        tz: jobScheduler.tz ?? null,
+        pattern: jobScheduler.pattern ?? null,
+        every: jobScheduler.every ?? null,
+        template: jobScheduler.template ?? null,
+      }),
+    )
     const newKeys = params.map((p) => p.key)
     // 🔴 First remove old schedulers that are not in the new list
     await db.delete(jobSchedulersTable).where(
@@ -231,8 +247,13 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
         if (existingJobScheduler) {
           const needUpdate = getChangedKeys(param, existingJobScheduler)
           if (needUpdate.length === 0) return
-          await db.update(jobSchedulersTable).set(param).where(eq(jobSchedulersTable.key, param.key))
-          logger.log(`Updated job scheduler ${param.key} following keys have changed: ${needUpdate.join(", ")}`)
+          await db
+            .update(jobSchedulersTable)
+            .set(param)
+            .where(eq(jobSchedulersTable.key, param.key))
+          logger.log(
+            `Updated job scheduler ${param.key} following keys have changed: ${needUpdate.join(", ")}`,
+          )
           logger.debug(param.template, existingJobScheduler.template)
         } else {
           await db.insert(jobSchedulersTable).values(param)

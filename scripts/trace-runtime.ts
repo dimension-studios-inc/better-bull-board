@@ -56,15 +56,23 @@ const trace = async (entries: string[]) => {
 }
 let fileList = await trace(entries)
 const wholeFiles = Object.entries(SHIP_WHOLE)
-  .filter(([key]) => [...fileList].some((file) => packageDirOf(file)?.endsWith(`/node_modules/${key}`)))
-  .flatMap(([, names]) => names.flatMap((name) => listTree(relative(base, realpathSync(join(base, HOISTED, name))))))
+  .filter(([key]) =>
+    [...fileList].some((file) => packageDirOf(file)?.endsWith(`/node_modules/${key}`)),
+  )
+  .flatMap(([, names]) =>
+    names.flatMap((name) => listTree(relative(base, realpathSync(join(base, HOISTED, name))))),
+  )
 // Their files become entries too, so the dependencies they load are traced; not their published tool configs.
-const wholeEntries = wholeFiles.filter((file) => /\.(c|m)?js$/.test(file) && !/\.config\.(c|m)?js$/.test(file))
+const wholeEntries = wholeFiles.filter(
+  (file) => /\.(c|m)?js$/.test(file) && !/\.config\.(c|m)?js$/.test(file),
+)
 if (wholeEntries.length > 0) fileList = await trace([...entries, ...wholeEntries])
 const files = new Set([...fileList, ...wholeFiles])
 
 // Only for packages whose code is traced: some libraries read other tools' package.json just to sniff versions.
-const tracedPackageDirs = new Set([...fileList].filter((file) => !file.endsWith("/package.json")).map(packageDirOf))
+const tracedPackageDirs = new Set(
+  [...fileList].filter((file) => !file.endsWith("/package.json")).map(packageDirOf),
+)
 
 // Platform binaries are optional dependencies picked by a computed require(), which tracing cannot follow.
 for (const file of fileList) {
@@ -85,7 +93,9 @@ for (const file of fileList) {
 // Links a computed require() resolves through: a package's siblings in the store, and the hoisted folder.
 const linkDirs = new Set([
   HOISTED,
-  ...[...tracedPackageDirs].filter((dir) => dir?.includes(".bun/")).map((dir) => dirname(dir as string)),
+  ...[...tracedPackageDirs]
+    .filter((dir) => dir?.includes(".bun/"))
+    .map((dir) => dirname(dir as string)),
 ])
 for (const dir of linkDirs) {
   if (!existsSync(join(base, dir))) continue

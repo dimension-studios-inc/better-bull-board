@@ -1,18 +1,7 @@
 {
   "name": "@better-bull-board/core",
-  "scripts": {
-    "build": "tsdown",
-    "clean": "rm -rf dist",
-    "dev": "tsdown --watch",
-    "type-check": "tsc --noEmit"
-  },
   "license": "ISC",
-  "dependencies": {
-    "@better-bull-board/db": "workspace:*",
-    "cron-parser": "5.10.1",
-    "drizzle-orm": "0.45.3",
-    "zod": "4.6.5"
-  },
+  "type": "module",
   "exports": {
     "./errors": {
       "types": "./dist/errors.d.mts",
@@ -71,7 +60,18 @@
       "import": "./dist/top-errors.mjs"
     }
   },
-  "type": "module",
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rm -rf dist",
+    "dev": "tsdown --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-bull-board/db": "workspace:*",
+    "cron-parser": "5.10.1",
+    "drizzle-orm": "0.45.3",
+    "zod": "4.6.5"
+  },
   "devDependencies": {
     "@better-bull-board/typescript-config": "workspace:*",
     "@types/node": "26.6.2",

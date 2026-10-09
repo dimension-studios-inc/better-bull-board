@@ -1,7 +1,10 @@
 "use client"
 
 import { cancellableJobStatuses, replayableJobStatuses } from "@better-bull-board/core/job-schemas"
-import { BULK_JOB_ACTION_LIMIT, type bulkMutationResultSchema } from "@better-bull-board/core/mutation-schemas"
+import {
+  BULK_JOB_ACTION_LIMIT,
+  type bulkMutationResultSchema,
+} from "@better-bull-board/core/mutation-schemas"
 import { Alert, AlertDescription } from "@better-bull-board/ui/components/alert"
 import { Badge } from "@better-bull-board/ui/components/badge"
 import { Button } from "@better-bull-board/ui/components/button"
@@ -19,16 +22,21 @@ import { AlertTriangle, RotateCcw, Trash2, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import type { z } from "zod"
-import { bulkCancelJobsApiRoute } from "~/app/api/jobs/bulk-cancel/schemas"
+
 import { bulkCancelJobsByFiltersApiRoute } from "~/app/api/jobs/bulk-cancel-by-filters/schemas"
-import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas"
+import { bulkCancelJobsApiRoute } from "~/app/api/jobs/bulk-cancel/schemas"
 import { bulkReplayJobsByFiltersApiRoute } from "~/app/api/jobs/bulk-replay-by-filters/schemas"
+import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas"
 import { RunStatusBadge } from "~/components/run-status-badge"
 import { apiFetch } from "~/lib/utils/client"
+
 import { formatCreatedFilterLabel } from "./runs-filters"
 import type { TRunFilters } from "./types"
 
-export type TMatchingFilters = Pick<TRunFilters, "queue" | "status" | "search" | "tags" | "createdFrom" | "createdTo">
+export type TMatchingFilters = Pick<
+  TRunFilters,
+  "queue" | "status" | "search" | "tags" | "createdFrom" | "createdTo"
+>
 
 type TMatchingSelection = {
   filters: TMatchingFilters
@@ -48,9 +56,11 @@ interface BulkActionsProps {
   onClearSelection: () => void
 }
 
-export const formatRunCount = (count: number) => `${count.toLocaleString()} run${count === 1 ? "" : "s"}`
+export const formatRunCount = (count: number) =>
+  `${count.toLocaleString()} run${count === 1 ? "" : "s"}`
 
-const isOneOf = <T extends string>(values: readonly T[], value: string): value is T => values.includes(value as T)
+const isOneOf = <T extends string>(values: readonly T[], value: string): value is T =>
+  values.includes(value as T)
 
 const showBulkResultToast = (action: "Replayed" | "Cancelled", result: TBulkMutationResult) => {
   const details = [
@@ -73,8 +83,14 @@ function MatchingFiltersSummary({ filters }: { filters: TMatchingFilters }) {
     filters.status !== "all" && { label: "Status", value: filters.status },
     filters.search && { label: "Search", value: `"${filters.search}"` },
     filters.tags.length > 0 && { label: "Tags", value: filters.tags.join(", ") },
-    filters.createdFrom && { label: "Created from", value: formatCreatedFilterLabel(filters.createdFrom) },
-    filters.createdTo && { label: "Created to", value: formatCreatedFilterLabel(filters.createdTo) },
+    filters.createdFrom && {
+      label: "Created from",
+      value: formatCreatedFilterLabel(filters.createdFrom),
+    },
+    filters.createdTo && {
+      label: "Created to",
+      value: formatCreatedFilterLabel(filters.createdTo),
+    },
   ].filter((item): item is { label: string; value: string } => !!item)
 
   if (items.length === 0) {
@@ -116,8 +132,8 @@ function MatchingSelectionDetails({
         <Alert>
           <AlertTriangle />
           <AlertDescription>
-            Only the {formatRunCount(BULK_JOB_ACTION_LIMIT)} created most recently will be {verb}. Narrow the filters
-            (for example the created range) to handle the rest.
+            Only the {formatRunCount(BULK_JOB_ACTION_LIMIT)} created most recently will be {verb}.
+            Narrow the filters (for example the created range) to handle the rest.
           </AlertDescription>
         </Alert>
       )}
@@ -125,7 +141,11 @@ function MatchingSelectionDetails({
   )
 }
 
-export function BulkActions({ selectedJobs, matchingSelection, onClearSelection }: BulkActionsProps) {
+export function BulkActions({
+  selectedJobs,
+  matchingSelection,
+  onClearSelection,
+}: BulkActionsProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [replayDialogOpen, setReplayDialogOpen] = useState(false)
   const queryClient = useQueryClient()
@@ -210,8 +230,12 @@ export function BulkActions({ selectedJobs, matchingSelection, onClearSelection 
 
   const cancellableJobs = selectedJobs.filter((job) => isOneOf(cancellableJobStatuses, job.status))
   const replayableJobs = selectedJobs.filter((job) => isOneOf(replayableJobStatuses, job.status))
-  const cancellableCount = matchingSelection ? matchingSelection.counts.cancellable : cancellableJobs.length
-  const replayableCount = matchingSelection ? matchingSelection.counts.replayable : replayableJobs.length
+  const cancellableCount = matchingSelection
+    ? matchingSelection.counts.cancellable
+    : cancellableJobs.length
+  const replayableCount = matchingSelection
+    ? matchingSelection.counts.replayable
+    : replayableJobs.length
   const isCancelPending = bulkCancelMutation.isPending || matchingCancelMutation.isPending
   const isReplayPending = bulkReplayMutation.isPending || matchingReplayMutation.isPending
 
@@ -223,14 +247,22 @@ export function BulkActions({ selectedJobs, matchingSelection, onClearSelection 
     <>
       <div className="flex flex-wrap gap-2">
         {cancellableCount > 0 && (
-          <Button variant="destructive" onClick={() => setCancelDialogOpen(true)} className="flex items-center gap-2">
+          <Button
+            variant="destructive"
+            onClick={() => setCancelDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
             <X className="size-4" />
             Cancel ({cancellableCount.toLocaleString()})
           </Button>
         )}
 
         {replayableCount > 0 && (
-          <Button variant="default" onClick={() => setReplayDialogOpen(true)} className="flex items-center gap-2">
+          <Button
+            variant="default"
+            onClick={() => setReplayDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
             <RotateCcw className="size-4" />
             Replay ({replayableCount.toLocaleString()})
           </Button>
@@ -252,8 +284,8 @@ export function BulkActions({ selectedJobs, matchingSelection, onClearSelection 
               {matchingSelection ? (
                 <>
                   Are you sure you want to cancel {formatRunCount(cancellableCount)} out of the{" "}
-                  {formatRunCount(matchingSelection.counts.total)} matching these filters? Only active, waiting and
-                  delayed runs can be cancelled. This action cannot be undone.
+                  {formatRunCount(matchingSelection.counts.total)} matching these filters? Only
+                  active, waiting and delayed runs can be cancelled. This action cannot be undone.
                 </>
               ) : (
                 <>
@@ -273,7 +305,7 @@ export function BulkActions({ selectedJobs, matchingSelection, onClearSelection 
             <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-60">
               <div className="space-y-2">
                 {cancellableJobs.map((job) => (
-                  <div key={job.jobId} className="flex items-center gap-2 p-2 bg-muted rounded">
+                  <div key={job.jobId} className="flex items-center gap-2 rounded bg-muted p-2">
                     <Badge variant="outline">{job.queue}</Badge>
                     <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
                     <RunStatusBadge status={job.status} className="ml-auto" />
@@ -302,14 +334,14 @@ export function BulkActions({ selectedJobs, matchingSelection, onClearSelection 
               {matchingSelection ? (
                 <>
                   Are you sure you want to replay {formatRunCount(replayableCount)} out of the{" "}
-                  {formatRunCount(matchingSelection.counts.total)} matching these filters? Only completed and failed
-                  runs can be replayed, with the same data and configuration.
+                  {formatRunCount(matchingSelection.counts.total)} matching these filters? Only
+                  completed and failed runs can be replayed, with the same data and configuration.
                 </>
               ) : (
                 <>
                   Are you sure you want to replay {replayableCount} job
-                  {replayableCount === 1 ? "" : "s"}? This will create new job instances with the same data and
-                  configuration.
+                  {replayableCount === 1 ? "" : "s"}? This will create new job instances with the
+                  same data and configuration.
                 </>
               )}
             </DialogDescription>
@@ -324,7 +356,7 @@ export function BulkActions({ selectedJobs, matchingSelection, onClearSelection 
             <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-60">
               <div className="space-y-2">
                 {replayableJobs.map((job) => (
-                  <div key={job.jobId} className="flex items-center gap-2 p-2 bg-muted rounded">
+                  <div key={job.jobId} className="flex items-center gap-2 rounded bg-muted p-2">
                     <Badge variant="outline">{job.queue}</Badge>
                     <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
                     <RunStatusBadge status={job.status} className="ml-auto" />

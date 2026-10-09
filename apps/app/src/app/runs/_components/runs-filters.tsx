@@ -9,12 +9,14 @@ import { cn } from "cn"
 import { ChevronLeft, ChevronRight, Filter, Pause, Plus, Search, X } from "lucide-react"
 import Link from "next/link"
 import { useMemo, useState } from "react"
+
 import { getTagsApiRoute } from "~/app/api/tags/schemas"
 import { DateTimePicker } from "~/components/date-time-picker"
 import { QueueSelector } from "~/components/queue-selector"
 import { SearchSelect, type SearchSelectOption } from "~/components/search-select"
 import useDebounce from "~/hooks/use-debounce"
 import { apiFetch } from "~/lib/utils/client"
+
 import type { TRunFilters, TRunFilterUpdate } from "./types"
 
 const MIN_TAG_SEARCH_LENGTH = 2
@@ -184,13 +186,13 @@ export function RunsFilters({
               </Badge>
             )}
           </PopoverTrigger>
-          <PopoverContent className="p-4 w-max" align="start">
-            <div className="space-y-4 w-80 max-w-[calc(100vw-4rem)]">
-              <div className="font-medium text-sm">Filter Options</div>
+          <PopoverContent className="w-max p-4" align="start">
+            <div className="w-80 max-w-[calc(100vw-4rem)] space-y-4">
+              <div className="text-sm font-medium">Filter Options</div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Queue</label>
+                  <label className="mb-2 block text-sm font-medium">Queue</label>
                   <QueueSelector
                     value={filters.queue}
                     onValueChange={(value) => setFilters({ queue: value })}
@@ -207,7 +209,7 @@ export function RunsFilters({
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Status</label>
+                  <label className="mb-2 block text-sm font-medium">Status</label>
                   <SearchSelect
                     value={filters.status}
                     onValueChange={(value) => setFilters({ status: value })}
@@ -226,7 +228,7 @@ export function RunsFilters({
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Tags</label>
+                  <label className="mb-2 block text-sm font-medium">Tags</label>
                   <div className="space-y-2">
                     {filters.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
@@ -236,7 +238,7 @@ export function RunsFilters({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="size-3 p-0 ml-1 hover:bg-transparent"
+                              className="ml-1 size-3 p-0 hover:bg-transparent"
                               onClick={() => {
                                 const newTags = filters.tags.filter((t) => t !== tag)
                                 setFilters({ tags: newTags })
@@ -273,12 +275,14 @@ export function RunsFilters({
                       isFetching={isTagsFetching}
                       popoverContentClassName="w-80"
                     />
-                    <div className="text-xs text-muted-foreground">Start typing to search (2+ chars).</div>
+                    <div className="text-xs text-muted-foreground">
+                      Start typing to search (2+ chars).
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Created</label>
+                  <label className="mb-2 block text-sm font-medium">Created</label>
                   <div className="grid gap-2">
                     <DateTimePicker
                       value={filters.createdFrom}
@@ -303,7 +307,7 @@ export function RunsFilters({
           </PopoverContent>
         </Popover>
         <div className="relative min-w-0 flex-1 md:max-w-96">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
           <Input
             placeholder="Search ID, name, error…"
             value={filters.search}
@@ -370,7 +374,13 @@ type RunsPaginationProps = {
   className?: string
 }
 
-export function RunsPagination({ runs, filters, setFilters, isPageLoading, className }: RunsPaginationProps) {
+export function RunsPagination({
+  runs,
+  filters,
+  setFilters,
+  isPageLoading,
+  className,
+}: RunsPaginationProps) {
   const handleNextPage = () => {
     if (runs?.nextCursor) {
       setFilters({

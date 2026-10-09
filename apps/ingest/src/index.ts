@@ -1,5 +1,7 @@
 import { monitorEventLoopDelay } from "node:perf_hooks"
+
 import { logger } from "@rharkor/logger"
+
 import { env } from "./lib/env"
 import { startHealthServer } from "./lib/health-server"
 import { startWebSocketServer } from "./lib/websocket-server"

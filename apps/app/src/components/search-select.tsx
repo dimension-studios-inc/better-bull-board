@@ -12,6 +12,7 @@ import {
 } from "@better-bull-board/ui/components/combobox"
 import { cn } from "cn"
 import type * as React from "react"
+
 import { Loader } from "~/components/loader"
 
 export type SearchSelectOption = {
@@ -61,7 +62,8 @@ export function SearchSelect({
   popoverContentClassName,
 }: SearchSelectProps) {
   // The selected value may be missing from the loaded (paginated / searched) options
-  const selectedOption = options.find((option) => option.value === value) ?? (value ? { value, label: value } : null)
+  const selectedOption =
+    options.find((option) => option.value === value) ?? (value ? { value, label: value } : null)
 
   return (
     <Combobox
@@ -75,10 +77,17 @@ export function SearchSelect({
       filter={null}
       itemToStringLabel={(option: SearchSelectOption) => option.label}
       itemToStringValue={(option: SearchSelectOption) => option.value}
-      isItemEqualToValue={(option: SearchSelectOption, selected: SearchSelectOption) => option.value === selected.value}
+      isItemEqualToValue={(option: SearchSelectOption, selected: SearchSelectOption) =>
+        option.value === selected.value
+      }
     >
       <ComboboxTrigger
-        render={<Button variant="outline" className={cn("w-[200px] justify-between font-normal", className)} />}
+        render={
+          <Button
+            variant="outline"
+            className={cn("w-[200px] justify-between font-normal", className)}
+          />
+        }
       >
         <span className={cn("truncate", !value && "text-muted-foreground")}>
           {value ? renderValue(value) : placeholder}
@@ -94,7 +103,10 @@ export function SearchSelect({
             </ComboboxItem>
           ))}
           {infiniteLoadingProps?.hasNextPage && (
-            <div ref={infiniteLoadingProps.loaderRef} className="flex items-center justify-center py-2">
+            <div
+              ref={infiniteLoadingProps.loaderRef}
+              className="flex items-center justify-center py-2"
+            >
               <Loader />
             </div>
           )}

@@ -17,7 +17,8 @@ const parseEntries = (entries: unknown): StreamMessage[] => {
   if (!Array.isArray(entries)) return []
   return entries
     .map((entry): StreamMessage | undefined => {
-      if (!Array.isArray(entry) || typeof entry[0] !== "string" || !Array.isArray(entry[1])) return undefined
+      if (!Array.isArray(entry) || typeof entry[0] !== "string" || !Array.isArray(entry[1]))
+        return undefined
       return { id: entry[0], fields: entry[1].map(String) }
     })
     .filter((message): message is StreamMessage => Boolean(message))
@@ -145,7 +146,13 @@ const compareStreamIds = (a: string, b: string) => {
  * Entries older than both the oldest pending entry and the last delivered entry of every group were delivered and
  * acknowledged: trimming them never drops an entry that still has to be processed.
  */
-export const trimAcknowledgedEntries = async ({ client, stream }: { client: Redis; stream: string }) => {
+export const trimAcknowledgedEntries = async ({
+  client,
+  stream,
+}: {
+  client: Redis
+  stream: string
+}) => {
   try {
     const groups = parseInfoRows(await client.call("XINFO", "GROUPS", stream))
     if (groups.length === 0) return
@@ -153,7 +160,11 @@ export const trimAcknowledgedEntries = async ({ client, stream }: { client: Redi
     let minId: string | undefined
     for (const group of groups) {
       const groupName = String(group.get("name"))
-      const pending = (await client.call("XPENDING", stream, groupName)) as [number, string | null, ...unknown[]]
+      const pending = (await client.call("XPENDING", stream, groupName)) as [
+        number,
+        string | null,
+        ...unknown[],
+      ]
       const candidates = [String(group.get("last-delivered-id") ?? "0-0"), pending[1]].filter(
         (id): id is string => typeof id === "string",
       )

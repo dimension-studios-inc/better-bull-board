@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server"
 import { logger } from "@rharkor/logger"
 import { Queue } from "bullmq"
 import { eq, sql } from "drizzle-orm"
+
 import { redis } from "../src/lib/redis"
 
 type StressOptions = {
@@ -243,7 +244,8 @@ const verifyPostgresReplication = async ({
       }
     }
 
-    const terminalSatisfied = !(options.verifyTerminal || options.verifyLogs) || terminal === expectedJobs.length
+    const terminalSatisfied =
+      !(options.verifyTerminal || options.verifyLogs) || terminal === expectedJobs.length
     const logsSatisfied = !options.verifyLogs || logCount === expectedLogCount
     if (missing.length === 0 && mismatches.length === 0 && terminalSatisfied && logsSatisfied) {
       logger.success("Postgres replication verified", {

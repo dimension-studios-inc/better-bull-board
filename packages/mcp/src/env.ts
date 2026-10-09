@@ -27,7 +27,11 @@ export const env = createEnv({
       .string()
       .nullish()
       .transform((value) =>
-        value !== null && value !== undefined ? (value === "null" ? null : Number.parseInt(value, 10)) : value,
+        value !== null && value !== undefined
+          ? value === "null"
+            ? null
+            : Number.parseInt(value, 10)
+          : value,
       ),
   },
   runtimeEnv: process.env,

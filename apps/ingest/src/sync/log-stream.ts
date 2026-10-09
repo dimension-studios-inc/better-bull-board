@@ -1,5 +1,6 @@
 import { logger } from "@rharkor/logger"
 import { z } from "zod/v4"
+
 import { env } from "~/lib/env"
 import { instanceId } from "~/lib/instance"
 import { redis } from "~/lib/redis"
@@ -36,11 +37,19 @@ const logSyncEventSchema = z.object({
 
 type LogSyncEvent = z.infer<typeof logSyncEventSchema>
 
-const parseLogSyncEvent = (payload: string): LogSyncEvent => logSyncEventSchema.parse(JSON.parse(payload))
+const parseLogSyncEvent = (payload: string): LogSyncEvent =>
+  logSyncEventSchema.parse(JSON.parse(payload))
 
 const ensureGroup = async () => {
   try {
-    await redis.call("XGROUP", "CREATE", env.JOB_LOG_SYNC_STREAM_KEY, env.JOB_LOG_SYNC_CONSUMER_GROUP, "0", "MKSTREAM")
+    await redis.call(
+      "XGROUP",
+      "CREATE",
+      env.JOB_LOG_SYNC_STREAM_KEY,
+      env.JOB_LOG_SYNC_CONSUMER_GROUP,
+      "0",
+      "MKSTREAM",
+    )
   } catch (error) {
     if (error instanceof Error && error.message.includes("BUSYGROUP")) return
     throw error

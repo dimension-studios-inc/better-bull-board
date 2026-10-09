@@ -1,5 +1,6 @@
 import { createBetterBullBoardMcpServer } from "@better-bull-board/mcp/server"
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js"
+
 import { getMcpResource, getOrigin, verifyAccessToken } from "~/lib/mcp/oauth"
 
 export const dynamic = "force-dynamic"

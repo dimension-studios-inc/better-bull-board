@@ -1,4 +1,8 @@
-export const mapWithConcurrency = async <T>(items: T[], concurrency: number, run: (item: T) => Promise<void>) => {
+export const mapWithConcurrency = async <T>(
+  items: T[],
+  concurrency: number,
+  run: (item: T) => Promise<void>,
+) => {
   let nextIndex = 0
   const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
     while (nextIndex < items.length) {

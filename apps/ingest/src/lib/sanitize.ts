@@ -16,7 +16,10 @@ export const stripNullCharacters = <T>(value: T): T => {
   if (Array.isArray(value)) return value.map(stripNullCharacters) as T
   if (isPlainObject(value)) {
     return Object.fromEntries(
-      Object.entries(value).map(([key, entry]) => [stripNullCharacters(key), stripNullCharacters(entry)]),
+      Object.entries(value).map(([key, entry]) => [
+        stripNullCharacters(key),
+        stripNullCharacters(entry),
+      ]),
     ) as T
   }
   return value

@@ -1,4 +1,8 @@
-import { exchangeAuthorizationCode, exchangeRefreshToken, toOAuthErrorResponse } from "~/lib/mcp/oauth"
+import {
+  exchangeAuthorizationCode,
+  exchangeRefreshToken,
+  toOAuthErrorResponse,
+} from "~/lib/mcp/oauth"
 
 export const runtime = "nodejs"
 

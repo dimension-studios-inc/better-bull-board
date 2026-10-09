@@ -3,6 +3,7 @@ import { db } from "@better-bull-board/db/server"
 import { CronExpressionParser } from "cron-parser"
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm"
 import type { z } from "zod"
+
 import { listSchedulersInputSchema, listSchedulersOutputSchema } from "./scheduler-schemas"
 
 const STARTED_STATUSES = ["active", "completed", "failed"] as const
@@ -73,7 +74,11 @@ const getNextCronOccurrence = (pattern: string, tz: string | null, after: number
 }
 
 /** Same arithmetic as BullMQ: an `every` scheduler runs `every` ms after its previous iteration */
-const getNextOccurrence = ({ pattern, every, tz }: Schedule, after: number, afterIsIteration: boolean) => {
+const getNextOccurrence = (
+  { pattern, every, tz }: Schedule,
+  after: number,
+  afterIsIteration: boolean,
+) => {
   if (every) return afterIsIteration ? after + every : Math.floor(after / every) * every + every
   if (pattern) return getNextCronOccurrence(pattern, tz, after)
   return null
@@ -88,7 +93,11 @@ const getIntervalMs = ({ pattern, every, tz }: Schedule, at: number) => {
 
 type SchedulerPosition = NonNullable<z.output<typeof listSchedulersOutputSchema>["nextCursor"]>
 
-const compareSchedulers = (a: SchedulerPosition, b: SchedulerPosition, sortDirection: "asc" | "desc") => {
+const compareSchedulers = (
+  a: SchedulerPosition,
+  b: SchedulerPosition,
+  sortDirection: "asc" | "desc",
+) => {
   // Schedulers without a next run go last in both directions
   if (a.nextRunAt === null || b.nextRunAt === null) {
     if (a.nextRunAt !== b.nextRunAt) return a.nextRunAt === null ? 1 : -1
@@ -98,7 +107,11 @@ const compareSchedulers = (a: SchedulerPosition, b: SchedulerPosition, sortDirec
   return a.queue.localeCompare(b.queue) || a.key.localeCompare(b.key)
 }
 
-const getPosition = (scheduler: { nextRunAt: Date | null; queue: string; key: string }): SchedulerPosition => ({
+const getPosition = (scheduler: {
+  nextRunAt: Date | null
+  queue: string
+  key: string
+}): SchedulerPosition => ({
   nextRunAt: scheduler.nextRunAt?.getTime() ?? null,
   queue: scheduler.queue,
   key: scheduler.key,
@@ -159,7 +172,11 @@ export const listSchedulers = async (input: z.input<typeof listSchedulersInputSc
   const schedulers = rows.map((row) => {
     const lastRunDueAt =
       row.lastRunCreatedAt && row.lastRunDelayMs !== null
-        ? getDueAt({ createdAt: row.lastRunCreatedAt, enqueuedAt: row.lastRunEnqueuedAt, delayMs: row.lastRunDelayMs })
+        ? getDueAt({
+            createdAt: row.lastRunCreatedAt,
+            enqueuedAt: row.lastRunEnqueuedAt,
+            delayMs: row.lastRunDelayMs,
+          })
         : null
     // A pending row older than the last started run is a leftover the ingest has not retired yet
     const pendingRunDueAt =
@@ -176,13 +193,21 @@ export const listSchedulers = async (input: z.input<typeof listSchedulersInputSc
     // The pending job is the next run; until the ingest sees it, derive it from the last run like BullMQ does
     let nextRunAt =
       pendingRunDueAt ??
-      (lastRunDueAt !== null ? getNextOccurrence(row, lastRunDueAt, true) : getNextOccurrence(row, now, false))
-    if (pendingRunDueAt === null && nextRunAt !== null && row.endDate && nextRunAt > row.endDate.getTime()) {
+      (lastRunDueAt !== null
+        ? getNextOccurrence(row, lastRunDueAt, true)
+        : getNextOccurrence(row, now, false))
+    if (
+      pendingRunDueAt === null &&
+      nextRunAt !== null &&
+      row.endDate &&
+      nextRunAt > row.endDate.getTime()
+    ) {
       nextRunAt = null
     }
 
     const intervalMs = nextRunAt === null ? null : getIntervalMs(row, nextRunAt)
-    const missedGraceMs = Math.max(MIN_MISSED_GRACE_MS, (intervalMs ?? 0) * MISSED_GRACE_INTERVAL_RATIO) + INGEST_LAG_MS
+    const missedGraceMs =
+      Math.max(MIN_MISSED_GRACE_MS, (intervalMs ?? 0) * MISSED_GRACE_INTERVAL_RATIO) + INGEST_LAG_MS
 
     return {
       id: row.id,

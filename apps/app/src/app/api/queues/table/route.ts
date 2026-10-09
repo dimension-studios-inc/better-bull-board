@@ -2,8 +2,10 @@ import { listQueues } from "@better-bull-board/core/queues"
 import { dashboardQueueHourlyStatsTable, jobRunsTable } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
 import { and, gte, inArray, lt, sql } from "drizzle-orm"
+
 import { startOfUtcDay, startOfUtcHour } from "~/lib/utils/date"
 import { createAuthenticatedApiRoute } from "~/lib/utils/server"
+
 import { getQueuesTableApiRoute } from "./schemas"
 
 type ChartDataPoint = { timestamp: string; completed: number; failed: number }
@@ -14,7 +16,12 @@ type ChartDataRow = { queueName: string; timestamp: string; completed: number; f
 
 const STEP_MS: Record<ChartStep, number> = { hour: 60 * 60 * 1000, day: 24 * 60 * 60 * 1000 }
 
-function fillChartData(dateFrom: Date, dateTo: Date, stepKind: ChartStep, chartData: ChartDataPoint[]) {
+function fillChartData(
+  dateFrom: Date,
+  dateTo: Date,
+  stepKind: ChartStep,
+  chartData: ChartDataPoint[],
+) {
   const filled: ChartDataPoint[] = []
   const map = new Map(chartData.map((d) => [d.timestamp, d]))
   const start = stepKind === "hour" ? startOfUtcHour(dateFrom) : startOfUtcDay(dateFrom)
@@ -163,7 +170,9 @@ export const POST = createAuthenticatedApiRoute({
     const processStart = Date.now()
 
     // Create maps for efficient lookup
-    const pressureMap = new Map(allPressureData.map((pressure) => [pressure.queueName, Number(pressure.pressure ?? 0)]))
+    const pressureMap = new Map(
+      allPressureData.map((pressure) => [pressure.queueName, Number(pressure.pressure ?? 0)]),
+    )
 
     const chartDataMap = new Map<string, Map<string, ChartDataPoint>>()
     for (const chart of [...historicalChartData, ...currentHourChartData]) {
