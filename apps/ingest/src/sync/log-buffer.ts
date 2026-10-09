@@ -112,7 +112,7 @@ const resolveJobRunIds = async (events: LogEventForPersistence[]) => {
 const insertResolvedLogs = async (events: ResolvedLogEvent[]) => {
   if (events.length === 0) return
 
-  const sorted = [...events].sort((a, b) => {
+  const sorted = events.toSorted((a, b) => {
     const queueCompare = a.queue.localeCompare(b.queue)
     if (queueCompare !== 0) return queueCompare
 
@@ -229,7 +229,7 @@ export const resolveBufferedJobLogs = async () => {
     .orderBy(jobLogBufferTable.createdAt)
     .limit(env.JOB_LOG_BUFFER_BATCH_SIZE)
 
-  const [{ count = 0, oldestCreatedAt = null } = { count: 0, oldestCreatedAt: null }] = await db
+  const [{ count, oldestCreatedAt } = { count: 0, oldestCreatedAt: null }] = await db
     .select({
       count: sql<number>`count(*)::int`,
       oldestCreatedAt: sql<Date | null>`min(${jobLogBufferTable.createdAt})`.mapWith(
@@ -311,11 +311,12 @@ export const autoResolveBufferedJobLogs = () => {
     }
   }
 
-  logBufferInterval = setInterval(
-    () => runBackgroundTask(run),
-    env.JOB_LOG_BUFFER_FLUSH_INTERVAL_MS,
-  )
-  runBackgroundTask(run).catch((error) => {
+  logBufferInterval = setInterval(() => {
+    runBackgroundTask(run).catch((error: unknown) => {
+      logger.error("Error resolving buffered job logs", { error })
+    })
+  }, env.JOB_LOG_BUFFER_FLUSH_INTERVAL_MS)
+  runBackgroundTask(run).catch((error: unknown) => {
     logger.error("Error in initial buffered job log resolution", { error })
   })
 

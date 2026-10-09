@@ -34,7 +34,7 @@ export const parseReadGroupResponse = (response: unknown): StreamMessage[] => {
   const entryLists =
     typeof response[0] === "string"
       ? response.filter((_, index) => index % 2 === 1)
-      : response.map((stream) => (Array.isArray(stream) ? stream[1] : undefined))
+      : response.map((stream): unknown => (Array.isArray(stream) ? stream[1] : undefined))
   return entryLists.flatMap(parseEntries)
 }
 
@@ -165,9 +165,11 @@ export const trimAcknowledgedEntries = async ({
         string | null,
         ...unknown[],
       ]
-      const candidates = [String(group.get("last-delivered-id") ?? "0-0"), pending[1]].filter(
-        (id): id is string => typeof id === "string",
-      )
+      const lastDeliveredId = group.get("last-delivered-id")
+      const candidates = [
+        typeof lastDeliveredId === "string" ? lastDeliveredId : "0-0",
+        pending[1],
+      ].filter((id): id is string => typeof id === "string")
       for (const id of candidates) {
         if (!minId || compareStreamIds(id, minId) < 0) minId = id
       }

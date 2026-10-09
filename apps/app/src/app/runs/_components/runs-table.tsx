@@ -42,7 +42,9 @@ import type { TRunFilters, TRunFilterUpdate } from "./types"
 const parseAsCursor = createParser<NonNullable<TRunFilters["cursor"]>>({
   parse: (value) => {
     try {
-      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"))
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8")) as NonNullable<
+        TRunFilters["cursor"]
+      >
     } catch {
       return null
     }
@@ -172,7 +174,8 @@ export function RunsTable() {
     setSelectAllMatching(false)
   }
 
-  const handleFiltersChange = (newFilters: TRunFilterUpdate) => {
+  const handleFiltersChange = (requestedFilters: TRunFilterUpdate) => {
+    let newFilters = requestedFilters
     const isPaginationOnly = Object.keys(newFilters).every(
       (key) => key === "cursor" || key === "cursorDirection",
     )
@@ -205,10 +208,10 @@ export function RunsTable() {
     }
 
     clearSelection()
-    setUrlFilters(urlUpdate)
+    void setUrlFilters(urlUpdate)
   }
 
-  const jobs = runs?.jobs || []
+  const jobs = useMemo(() => runs?.jobs ?? [], [runs])
 
   const handleTagClick = (tag: string) => {
     if (filters.tags.includes(tag)) return

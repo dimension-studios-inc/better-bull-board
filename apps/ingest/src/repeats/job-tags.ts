@@ -61,12 +61,12 @@ export const refreshRecentJobTags = async () => {
 
 export const startJobTagsRefresh = () => {
   schedule("*/30 * * * *", () => {
-    runBackgroundTask(refreshRecentJobTags).catch((error) => {
+    runBackgroundTask(refreshRecentJobTags).catch((error: unknown) => {
       logger.error("Failed to refresh job tags", { error })
     })
   })
 
-  runBackgroundTask(refreshRecentJobTags).catch((error) => {
+  runBackgroundTask(refreshRecentJobTags).catch((error: unknown) => {
     logger.error("Failed to refresh job tags on startup", { error })
   })
 

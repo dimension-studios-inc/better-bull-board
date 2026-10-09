@@ -4,17 +4,17 @@ import { z } from "zod"
 import { createAuthCookie, createToken, verifyAdminCredentials } from "~/lib/auth/server"
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(1),
 })
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body: unknown = await request.json()
     const { email, password } = loginSchema.parse(body)
 
     // Verify credentials
-    const isValid = await verifyAdminCredentials(email, password)
+    const isValid = verifyAdminCredentials(email, password)
     if (!isValid) {
       return NextResponse.json({ success: false, error: "Invalid credentials" }, { status: 401 })
     }

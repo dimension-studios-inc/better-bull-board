@@ -48,9 +48,9 @@ const ignore = ["**/tsdown.config.*", "**/.turbo/**", "**/debug/**"]
 // Bun resolves the `bun` export condition first; under node, the trace also covers node's own set.
 // nft adds `import` or `require` per call itself.
 const conditionSets = [["bun", "node"], ...(process.versions.bun ? [] : [["node"]])]
-const trace = async (entries: string[]) => {
+const trace = async (entryFiles: string[]) => {
   const lists = await Promise.all(
-    conditionSets.map((conditions) => nodeFileTrace(entries, { base, conditions, ignore })),
+    conditionSets.map((conditions) => nodeFileTrace(entryFiles, { base, conditions, ignore })),
   )
   return new Set(lists.flatMap(({ fileList }) => [...fileList]))
 }

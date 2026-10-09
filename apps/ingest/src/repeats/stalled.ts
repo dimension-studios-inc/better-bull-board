@@ -6,7 +6,7 @@ import { and, eq, lte, or } from "drizzle-orm"
 
 import { redis } from "~/lib/redis"
 
-export const stopStalledRuns = async () => {
+export const stopStalledRuns = () => {
   const refreshStalledRuns = async () => {
     const now = new Date()
     const canBeStalledBefore = new Date(now.getTime() - 1000 * 60 * 60 * 24) // 24 hours
@@ -23,7 +23,8 @@ export const stopStalledRuns = async () => {
       )
 
     //* Verify their status in redis directly
-    stalledRuns.length && logger.debug(`Found ${stalledRuns.length} potential stalled runs (> 24h)`)
+    if (stalledRuns.length > 0)
+      logger.debug(`Found ${stalledRuns.length} potential stalled runs (> 24h)`)
     for (const _run of stalledRuns) {
       const queue = new Queue(_run.queue, { connection: redis })
       const job = await queue.getJob(_run.jobId)
@@ -53,11 +54,15 @@ export const stopStalledRuns = async () => {
 
   setInterval(
     () => {
-      refreshStalledRuns()
+      refreshStalledRuns().catch((error: unknown) => {
+        logger.error("Failed to stop stalled runs", { error })
+      })
     },
     1000 * 60 * 60, // every hour
   )
-  refreshStalledRuns()
+  refreshStalledRuns().catch((error: unknown) => {
+    logger.error("Failed to stop stalled runs on startup", { error })
+  })
 
   logger.log(`🛑 Stopping stalled runs`)
 }

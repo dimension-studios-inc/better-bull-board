@@ -38,7 +38,7 @@ class BullBoardWebSocketServer {
       perMessageDeflate: false,
     })
     this.setupWebSocketServer()
-    this.setupRedisSubscriber()
+    void this.setupRedisSubscriber()
   }
 
   private setupWebSocketServer() {
@@ -201,7 +201,7 @@ class BullBoardWebSocketServer {
   }
 }
 
-export let websocketServer: BullBoardWebSocketServer | null = null
+let websocketServer: BullBoardWebSocketServer | null = null
 
 export const startWebSocketServer = () => {
   if (!websocketServer) {

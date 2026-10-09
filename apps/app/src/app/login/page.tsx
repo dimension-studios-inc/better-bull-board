@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError("")
@@ -25,7 +25,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await response.json()
+      const data = (await response.json()) as { success: boolean; error?: string }
 
       if (data.success) {
         const searchParams = new URLSearchParams(window.location.search)
@@ -53,7 +53,7 @@ export default function LoginPage() {
           <p className="mt-2 text-muted-foreground">Admin Login</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
           <div>
             <label htmlFor={emailId} className="mb-2 block text-sm font-medium">
               Email

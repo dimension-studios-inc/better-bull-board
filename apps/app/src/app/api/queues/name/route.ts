@@ -39,7 +39,8 @@ export const POST = createAuthenticatedApiRoute({
     const previousRows = cursor ? await getRows("prev") : []
 
     const [total] = await db
-      .select({ count: sql<number>`COUNT(*)` })
+      // COUNT(*) is a bigint, which node-postgres returns as a string
+      .select({ count: sql<string>`COUNT(*)` })
       .from(queuesTable)
       .where(search ? ilike(queuesTable.name, `%${search}%`) : undefined)
 

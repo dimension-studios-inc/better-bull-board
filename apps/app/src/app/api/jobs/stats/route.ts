@@ -33,9 +33,9 @@ export const POST = createAuthenticatedApiRoute({
     ])
 
     return {
-      active: Number(activeResult[0]?.count ?? 0),
-      failed: Number(failedResult[0]?.count ?? 0),
-      completed: Number(completedResult[0]?.count ?? 0),
+      active: activeResult[0]?.count ?? 0,
+      failed: failedResult[0]?.count ?? 0,
+      completed: completedResult[0]?.count ?? 0,
     }
   },
 })

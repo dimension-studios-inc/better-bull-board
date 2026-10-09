@@ -1,6 +1,7 @@
 import { Toaster } from "@better-bull-board/ui/components/sonner"
 import { cn } from "cn"
 
+// oxlint-disable-next-line import/no-unassigned-import -- the global stylesheet is a side-effect import
 import "@better-bull-board/ui/globals.css"
 import type { Metadata } from "next"
 import { ThemeProvider } from "next-themes"

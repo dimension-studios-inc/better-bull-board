@@ -46,7 +46,7 @@ const isInteractiveRowTarget = (target: EventTarget | null) =>
 const parseAsCursor = createParser<SchedulerCursor>({
   parse: (value) => {
     try {
-      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"))
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8")) as SchedulerCursor
     } catch {
       return null
     }
@@ -67,9 +67,18 @@ function Timestamp({ value, compact = false }: { value: Date; compact?: boolean 
   )
 }
 
-function NextRun({ scheduler, compact = false }: { scheduler: Scheduler; compact?: boolean }) {
+function NextRun({
+  scheduler,
+  fetchedAt,
+  compact = false,
+}: {
+  scheduler: Scheduler
+  /** When the schedulers were fetched, so an end date is compared with the data it came with */
+  fetchedAt: number
+  compact?: boolean
+}) {
   if (!scheduler.nextRunAt) {
-    const hasEnded = scheduler.endDate !== null && scheduler.endDate.getTime() < Date.now()
+    const hasEnded = scheduler.endDate !== null && scheduler.endDate.getTime() < fetchedAt
     return <span className="text-muted-foreground">{hasEnded ? "Ended" : "-"}</span>
   }
 
@@ -131,7 +140,7 @@ export function SchedulersTable() {
     cursorDirection,
   } as const
 
-  const { data, isLoading } = useQuery({
+  const { data, dataUpdatedAt, isLoading } = useQuery({
     queryKey: ["schedulers/table", options],
     queryFn: apiFetch({
       apiRoute: getSchedulersTableApiRoute,
@@ -155,7 +164,7 @@ export function SchedulersTable() {
   const handleNextPage = () => {
     if (data?.nextCursor) {
       cursorHistoryRef.current.push(urlState.cursor)
-      setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
+      void setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
     }
   }
 
@@ -164,11 +173,11 @@ export function SchedulersTable() {
   const handlePrevPage = () => {
     const previousCursor = cursorHistoryRef.current.pop()
     if (previousCursor !== undefined) {
-      setUrlState({ cursor: previousCursor, cursorDirection: "next" })
+      void setUrlState({ cursor: previousCursor, cursorDirection: "next" })
     } else if (data?.prevCursor) {
-      setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
+      void setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
     } else {
-      setUrlState({ cursor: null, cursorDirection: "next" })
+      void setUrlState({ cursor: null, cursorDirection: "next" })
     }
   }
 
@@ -179,7 +188,7 @@ export function SchedulersTable() {
   }
 
   const handleSort = () => {
-    setUrlState({ ...firstPage(), sortDirection: sortDirection === "asc" ? "desc" : "asc" })
+    void setUrlState({ ...firstPage(), sortDirection: sortDirection === "asc" ? "desc" : "asc" })
   }
 
   const sortIcon =
@@ -194,7 +203,7 @@ export function SchedulersTable() {
       <div className="flex flex-wrap items-center gap-2">
         <QueueSelector
           value={urlState.queue}
-          onValueChange={(queue) => setUrlState({ ...firstPage(), queue })}
+          onValueChange={(queue) => void setUrlState({ ...firstPage(), queue })}
           search={queueSearch}
           setSearch={setQueueSearch}
           open={queueOpen}
@@ -210,7 +219,7 @@ export function SchedulersTable() {
           <Input
             placeholder="Search by scheduler or queue..."
             value={urlState.search}
-            onChange={(e) => setUrlState({ ...firstPage(), search: e.target.value })}
+            onChange={(e) => void setUrlState({ ...firstPage(), search: e.target.value })}
             className="pl-10"
           />
         </div>
@@ -254,9 +263,9 @@ export function SchedulersTable() {
           </button>
         </div>
         {schedulers.map((scheduler) => (
-          // biome-ignore lint/a11y/useSemanticElements: card contains a nested link to the last run
           <div
             key={scheduler.id}
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the card contains a nested link to the last run, which an <a> cannot wrap
             role="link"
             tabIndex={0}
             className={cn(
@@ -278,7 +287,7 @@ export function SchedulersTable() {
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="min-w-0 space-y-1">
                 <div className="text-muted-foreground">Next run</div>
-                <NextRun scheduler={scheduler} compact />
+                <NextRun scheduler={scheduler} fetchedAt={dataUpdatedAt} compact />
               </div>
               <div className="min-w-0 space-y-1">
                 <div className="text-muted-foreground">Last run</div>
@@ -336,7 +345,7 @@ export function SchedulersTable() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <NextRun scheduler={scheduler} />
+                  <NextRun scheduler={scheduler} fetchedAt={dataUpdatedAt} />
                 </TableCell>
                 <TableCell>
                   <LastRun scheduler={scheduler} />

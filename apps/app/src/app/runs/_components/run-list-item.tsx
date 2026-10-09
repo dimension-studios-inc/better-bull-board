@@ -39,8 +39,8 @@ export function RunListItem({
   const [firstTag, ...otherTags] = run.tags ?? []
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: row contains nested interactive controls
     <div
+      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the row contains nested interactive controls, which an <a> cannot wrap
       role="link"
       tabIndex={0}
       className={cn(
@@ -90,7 +90,12 @@ export function RunListItem({
             </time>
             {duration && <> · {duration}</>}
           </div>
-          <div className="-my-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div
+            // Only keeps clicks on the actions (and their portaled menus) from opening the run
+            role="presentation"
+            className="-my-1.5 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
             <RunActions jobId={run.jobId} queueName={run.queue} status={run.status} />
           </div>
         </div>

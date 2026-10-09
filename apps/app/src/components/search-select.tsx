@@ -21,6 +21,8 @@ export type SearchSelectOption = {
 }
 
 interface SearchSelectProps {
+  /** Id of the trigger button, for a label */
+  id?: string
   value: string
   onValueChange: (value: string) => void
   options: SearchSelectOption[]
@@ -33,10 +35,9 @@ interface SearchSelectProps {
   setOpen: (open: boolean) => void
   renderValue: (value: string) => React.ReactNode
   isFetching?: boolean
-  infiniteLoadingProps?: {
-    hasNextPage: boolean
-    loaderRef: React.RefObject<HTMLDivElement | null>
-  }
+  /** Shows a loader at the end of the list, attached to `loaderRef`, to load the next page when it scrolls into view */
+  hasNextPage?: boolean
+  loaderRef?: React.Ref<HTMLDivElement>
   className?: string
   popoverContentClassName?: string
 }
@@ -45,6 +46,7 @@ interface SearchSelectProps {
  * Select with a search input in its popup. Options are filtered by the caller (often server side), from `search`.
  */
 export function SearchSelect({
+  id,
   value,
   onValueChange,
   options,
@@ -57,7 +59,8 @@ export function SearchSelect({
   setOpen,
   renderValue,
   isFetching,
-  infiniteLoadingProps,
+  hasNextPage,
+  loaderRef,
   className,
   popoverContentClassName,
 }: SearchSelectProps) {
@@ -84,6 +87,7 @@ export function SearchSelect({
       <ComboboxTrigger
         render={
           <Button
+            id={id}
             variant="outline"
             className={cn("w-[200px] justify-between font-normal", className)}
           />
@@ -102,11 +106,8 @@ export function SearchSelect({
               {option.label}
             </ComboboxItem>
           ))}
-          {infiniteLoadingProps?.hasNextPage && (
-            <div
-              ref={infiniteLoadingProps.loaderRef}
-              className="flex items-center justify-center py-2"
-            >
+          {hasNextPage && (
+            <div ref={loaderRef} className="flex items-center justify-center py-2">
               <Loader />
             </div>
           )}

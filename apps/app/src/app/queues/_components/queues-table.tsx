@@ -73,7 +73,7 @@ const sortableQueueColumns: { key: SortBy; label: string }[] = [
 const parseAsCursor = createParser<QueueCursor>({
   parse: (value) => {
     try {
-      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"))
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8")) as QueueCursor
     } catch {
       return null
     }
@@ -140,7 +140,7 @@ export function QueuesTable() {
   const handleNextPage = () => {
     if (data?.nextCursor) {
       cursorHistoryRef.current.push(urlState.cursor)
-      setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
+      void setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
     }
   }
 
@@ -149,11 +149,11 @@ export function QueuesTable() {
   const handlePrevPage = () => {
     const previousCursor = cursorHistoryRef.current.pop()
     if (previousCursor !== undefined) {
-      setUrlState({ cursor: previousCursor, cursorDirection: "next" })
+      void setUrlState({ cursor: previousCursor, cursorDirection: "next" })
     } else if (data?.prevCursor) {
-      setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
+      void setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
     } else {
-      setUrlState({ cursor: null, cursorDirection: "next" })
+      void setUrlState({ cursor: null, cursorDirection: "next" })
     }
   }
 
@@ -164,15 +164,15 @@ export function QueuesTable() {
   }
 
   const handleSearchChange = (search: string) => {
-    setUrlState({ ...firstPage(), search })
+    void setUrlState({ ...firstPage(), search })
   }
 
   const handleTimePeriodChange = (timePeriod: TimePeriod) => {
-    setUrlState({ ...firstPage(), timePeriod })
+    void setUrlState({ ...firstPage(), timePeriod })
   }
 
   const handleSort = (nextSortBy: SortBy) => {
-    setUrlState({
+    void setUrlState({
       ...firstPage(),
       sortBy: nextSortBy,
       sortDirection: sortBy === nextSortBy && sortDirection === "desc" ? "asc" : "desc",
@@ -326,7 +326,7 @@ export function QueuesTable() {
                           ? queue.everys.map(
                               (every) =>
                                 `Every ${formatDuration({
-                                  seconds: Number(every) / 1000,
+                                  seconds: every / 1000,
                                 })}`,
                             )
                           : undefined}

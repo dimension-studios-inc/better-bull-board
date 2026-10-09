@@ -48,102 +48,119 @@ const useWebSocket = (options: UseWebSocketOptions) => {
   const [connectionAttempts, setConnectionAttempts] = useState(0)
 
   const websocketRef = useRef<WebSocket | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const mountedRef = useRef(true)
-  const connectionAttemptsRef = useRef(0)
 
   const invalidateQueries = useCallback(
     (message: WebSocketMessage) => {
       switch (message.type) {
         case "job-refresh":
-          queryClient.invalidateQueries({ queryKey: ["jobs/table"] })
-          queryClient.invalidateQueries({ queryKey: ["jobs/stats"] })
-          queryClient.invalidateQueries({ queryKey: ["schedulers/table"] })
+          void queryClient.invalidateQueries({ queryKey: ["jobs/table"] })
+          void queryClient.invalidateQueries({ queryKey: ["jobs/stats"] })
+          void queryClient.invalidateQueries({ queryKey: ["schedulers/table"] })
           break
         case "single-job-refresh":
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: ["jobs/single", message.data.jobId],
           })
           break
         case "queue-refresh":
-          queryClient.invalidateQueries({ queryKey: ["queues/table"] })
-          queryClient.invalidateQueries({ queryKey: ["queues/stats"] })
+          void queryClient.invalidateQueries({ queryKey: ["queues/table"] })
+          void queryClient.invalidateQueries({ queryKey: ["queues/stats"] })
           break
         case "job-scheduler-refresh":
-          queryClient.invalidateQueries({ queryKey: ["queues/table"] })
-          queryClient.invalidateQueries({ queryKey: ["queues/stats"] })
-          queryClient.invalidateQueries({ queryKey: ["schedulers/table"] })
+          void queryClient.invalidateQueries({ queryKey: ["queues/table"] })
+          void queryClient.invalidateQueries({ queryKey: ["queues/stats"] })
+          void queryClient.invalidateQueries({ queryKey: ["schedulers/table"] })
           break
         case "job-log-refresh":
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: ["jobs/logs", message.data.jobId],
           })
+          break
+        case "single-queue-refresh":
+        case "single-job-scheduler-refresh":
+          // No query is cached per queue or per scheduler yet
           break
       }
     },
     [queryClient],
   )
 
-  const connect = useCallback(() => {
-    if (websocketRef.current?.readyState === WebSocket.OPEN) {
-      return
-    }
+  useEffect(() => {
+    let mounted = true
+    let attempts = 0
+    let reconnectTimeout: ReturnType<typeof setTimeout> | undefined
 
-    try {
-      const ws = new WebSocket(WEBSOCKET_URL)
-      websocketRef.current = ws
-
-      ws.onopen = () => {
-        if (!mountedRef.current) return
-        setIsConnected(true)
-        connectionAttemptsRef.current = 0
-        setConnectionAttempts(0)
-        onConnect?.()
-        console.log("🔗 WebSocket connected")
+    const connect = () => {
+      if (websocketRef.current?.readyState === WebSocket.OPEN) {
+        return
       }
 
-      ws.onmessage = (event) => {
-        if (!mountedRef.current) return
+      try {
+        const ws = new WebSocket(WEBSOCKET_URL)
+        websocketRef.current = ws
 
-        try {
-          const message: WebSocketMessage = JSON.parse(event.data)
-          if (message.data.id === "connected") return
-
-          invalidateQueries(message)
-          onMessage?.(message)
-        } catch (error) {
-          console.error("Failed to parse WebSocket message:", error)
-        }
-      }
-
-      ws.onclose = () => {
-        if (!mountedRef.current) return
-        setIsConnected(false)
-        onDisconnect?.()
-        console.log("🔌 WebSocket disconnected", {
-          attempts: connectionAttemptsRef.current,
-          maxReconnectAttempts,
-          autoReconnect,
+        ws.addEventListener("open", () => {
+          if (!mounted) return
+          setIsConnected(true)
+          attempts = 0
+          setConnectionAttempts(0)
+          onConnect?.()
+          console.log("🔗 WebSocket connected")
         })
 
-        if (autoReconnect && connectionAttemptsRef.current < maxReconnectAttempts) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (mountedRef.current) {
-              connectionAttemptsRef.current += 1
-              setConnectionAttempts(connectionAttemptsRef.current)
-              connect()
-            }
-          }, reconnectDelay)
-        }
-      }
+        ws.addEventListener("message", (event: MessageEvent<string>) => {
+          if (!mounted) return
 
-      ws.onerror = (error) => {
-        if (!mountedRef.current) return
-        console.error("WebSocket error:", error)
-        onError?.(error)
+          try {
+            const message = JSON.parse(event.data) as WebSocketMessage
+            if (message.data.id === "connected") return
+
+            invalidateQueries(message)
+            onMessage?.(message)
+          } catch (error) {
+            console.error("Failed to parse WebSocket message:", error)
+          }
+        })
+
+        ws.addEventListener("close", () => {
+          if (!mounted) return
+          setIsConnected(false)
+          onDisconnect?.()
+          console.log("🔌 WebSocket disconnected", {
+            attempts,
+            maxReconnectAttempts,
+            autoReconnect,
+          })
+
+          if (autoReconnect && attempts < maxReconnectAttempts) {
+            reconnectTimeout = setTimeout(() => {
+              if (mounted) {
+                attempts += 1
+                setConnectionAttempts(attempts)
+                connect()
+              }
+            }, reconnectDelay)
+          }
+        })
+
+        ws.addEventListener("error", (error) => {
+          if (!mounted) return
+          console.error("WebSocket error:", error)
+          onError?.(error)
+        })
+      } catch (error) {
+        console.error("Failed to create WebSocket connection:", error)
       }
-    } catch (error) {
-      console.error("Failed to create WebSocket connection:", error)
+    }
+
+    connect()
+
+    return () => {
+      mounted = false
+      clearTimeout(reconnectTimeout)
+      websocketRef.current?.close()
+      websocketRef.current = null
+      setIsConnected(false)
     }
   }, [
     onConnect,
@@ -157,20 +174,6 @@ const useWebSocket = (options: UseWebSocketOptions) => {
     WEBSOCKET_URL,
   ])
 
-  const disconnect = useCallback(() => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-
-    if (websocketRef.current) {
-      websocketRef.current.close()
-      websocketRef.current = null
-    }
-
-    setIsConnected(false)
-  }, [])
-
   const sendMessage = useCallback((message: object) => {
     if (websocketRef.current?.readyState === WebSocket.OPEN) {
       websocketRef.current.send(JSON.stringify(message))
@@ -179,20 +182,9 @@ const useWebSocket = (options: UseWebSocketOptions) => {
     }
   }, [])
 
-  useEffect(() => {
-    mountedRef.current = true
-    connect()
-    return () => {
-      mountedRef.current = false
-      disconnect()
-    }
-  }, [connect, disconnect])
-
   return {
     isConnected,
     connectionAttempts,
-    connect,
-    disconnect,
     sendMessage,
   }
 }

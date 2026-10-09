@@ -12,6 +12,14 @@
     },
     "incremental": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", "next.config.js", ".next/types/**/*.ts"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    // `**` skips dot-directories, so list the OAuth discovery routes explicitly.
+    "src/app/.well-known/**/*.ts",
+    "next-env.d.ts",
+    "next.config.js",
+    ".next/types/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

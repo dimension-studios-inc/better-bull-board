@@ -17,6 +17,8 @@ import {
 
 const streamRedis = redis.duplicate()
 let stopping = false
+// Read through a function: the loop condition is flipped by stopJobLogStreamIngestion, outside the loop.
+const isStopping = () => stopping
 let loopDone: Promise<void> | undefined
 
 streamRedis.on("error", (error) => {
@@ -160,7 +162,7 @@ export const startJobLogStreamIngestion = async () => {
   })
   const trim = () => trimAcknowledgedEntries({ client: redis, stream: env.JOB_LOG_SYNC_STREAM_KEY })
   void trim()
-  setInterval(trim, STREAM_TRIM_INTERVAL_MS).unref()
+  setInterval(() => void trim(), STREAM_TRIM_INTERVAL_MS).unref()
   logger.log("📥 Job log stream ingestion started", {
     stream: env.JOB_LOG_SYNC_STREAM_KEY,
     group: env.JOB_LOG_SYNC_CONSUMER_GROUP,
@@ -168,7 +170,7 @@ export const startJobLogStreamIngestion = async () => {
   })
 
   const loop = async () => {
-    while (!stopping) {
+    while (!isStopping()) {
       try {
         const pendingMessages = await readPendingMessages()
         if (pendingMessages.length > 0) {
@@ -177,7 +179,7 @@ export const startJobLogStreamIngestion = async () => {
         }
 
         // The shutdown disconnects the stream connection to cut this blocking read.
-        const messages = await readNewMessages().catch((error) => {
+        const messages = await readNewMessages().catch((error: unknown) => {
           if (stopping) return []
           throw error
         })

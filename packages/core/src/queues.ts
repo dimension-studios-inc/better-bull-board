@@ -55,7 +55,8 @@ const buildPressureStats = (dateFrom?: Date, dateTo?: Date) =>
   db
     .select({
       queue: dashboardQueueHourlyStatsTable.queue,
-      pressure: sql<number | null>`ROUND(
+      // ROUND(numeric) is a numeric, which node-postgres returns as a string.
+      pressure: sql<string | null>`ROUND(
         SUM(${dashboardQueueHourlyStatsTable.pressureTotalMs})::numeric
         / NULLIF(SUM(${dashboardQueueHourlyStatsTable.pressureCount}), 0)
       )`.as("pressure"),
@@ -142,8 +143,8 @@ export const listQueues = async (input: z.input<typeof listQueuesInputSchema> = 
     search,
     cursor,
     cursorDirection = "next",
-    sortBy = "waitingJobs",
-    sortDirection = "desc",
+    sortBy,
+    sortDirection,
     pressureDateFrom,
     pressureDateTo,
   } = listQueuesInputSchema.parse(input)
@@ -174,9 +175,10 @@ export const listQueues = async (input: z.input<typeof listQueuesInputSchema> = 
     rows.pop()
   }
 
-  const queueRows = cursorDirection === "prev" ? rows.reverse() : rows
+  const queueRows = cursorDirection === "prev" ? rows.toReversed() : rows
   const [total] = await db
-    .select({ count: sql<number>`COUNT(*)` })
+    // COUNT(*) is a bigint, which node-postgres returns as a string.
+    .select({ count: sql<string>`COUNT(*)` })
     .from(queuesTable)
     .where(search ? ilike(queuesTable.name, `%${search}%`) : undefined)
 
@@ -191,16 +193,16 @@ export const listQueues = async (input: z.input<typeof listQueuesInputSchema> = 
       isPaused: row.isPaused,
       patterns: row.patterns?.filter(Boolean) ?? [],
       everys: row.everys?.filter(Boolean) ?? [],
-      waitingJobs: Number(row.waitingJobs ?? 0),
-      activeJobs: Number(row.activeJobs ?? 0),
+      waitingJobs: row.waitingJobs,
+      activeJobs: row.activeJobs,
       pressure: Number(row.pressure ?? 0),
     })),
     nextCursor:
       hasOlderPage && lastRow
         ? {
             name: lastRow.name,
-            waitingJobs: Number(lastRow.waitingJobs ?? 0),
-            activeJobs: Number(lastRow.activeJobs ?? 0),
+            waitingJobs: lastRow.waitingJobs,
+            activeJobs: lastRow.activeJobs,
             pressure: Number(lastRow.pressure ?? 0),
           }
         : null,
@@ -208,8 +210,8 @@ export const listQueues = async (input: z.input<typeof listQueuesInputSchema> = 
       hasNewerPage && firstRow
         ? {
             name: firstRow.name,
-            waitingJobs: Number(firstRow.waitingJobs ?? 0),
-            activeJobs: Number(firstRow.activeJobs ?? 0),
+            waitingJobs: firstRow.waitingJobs,
+            activeJobs: firstRow.activeJobs,
             pressure: Number(firstRow.pressure ?? 0),
           }
         : null,

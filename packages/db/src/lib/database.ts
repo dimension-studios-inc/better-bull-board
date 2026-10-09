@@ -1,6 +1,6 @@
 import { logger } from "@rharkor/logger"
 import { drizzle } from "drizzle-orm/node-postgres"
-import { Pool } from "pg"
+import { Pool, type QueryResult } from "pg"
 
 const unknownRelationErrorRegex = /relation ".*" does not exist/
 
@@ -31,13 +31,14 @@ pool.on("error", (err) => {
   })
 })
 
-const origQuery = pool.query.bind(pool)
-// biome-ignore lint/suspicious/noExplicitAny: _
-pool.query = async (...args: any[]) => {
+type PgConnectionParameters = { host: string; port: number; database: string; user: string }
+
+// pool.query is overloaded: the wrapper forwards whatever arguments it gets and is cast back to its type.
+const origQuery = pool.query.bind(pool) as (...args: unknown[]) => Promise<QueryResult>
+pool.query = (async (...args: unknown[]) => {
   const start = Date.now()
   try {
-    // biome-ignore lint/suspicious/noExplicitAny: _
-    const result = await (origQuery as any)(...args)
+    const result = await origQuery(...args)
     const elapsed = Date.now() - start
 
     let size = 0
@@ -63,8 +64,10 @@ pool.query = async (...args: any[]) => {
     // Only log if the error is specifically about SampleRequest relation not existing
     if (formattedError.match(unknownRelationErrorRegex)) {
       const client = await pool.connect()
-      // biome-ignore lint/suspicious/noExplicitAny: _
-      const { host, port, database, user } = (client as any).connectionParameters
+      // Set by pg's Client but missing from its types.
+      const { host, port, database, user } = (
+        client as unknown as { connectionParameters: PgConnectionParameters }
+      ).connectionParameters
       client.release()
 
       logger.error(`[DB Middleware] Error in query: ${formattedError}`, {
@@ -74,6 +77,6 @@ pool.query = async (...args: any[]) => {
 
     throw err
   }
-}
+}) as typeof pool.query
 
 export const db = drizzle({ client: pool })

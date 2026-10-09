@@ -29,4 +29,4 @@ const main = async () => {
   logger.info("Worker started")
 }
 
-main()
+void main()

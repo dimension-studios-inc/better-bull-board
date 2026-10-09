@@ -27,7 +27,9 @@ interface LogsWaterfallProps {
   isLoading: boolean
   error: Error | null
   run: typeof jobRunsTable.$inferSelect
-  onLogClick?: (log: LogEntry) => void
+  /** When the data was last fetched, which ends the timeline of a run still in progress */
+  now: number
+  onLogClick: (log: LogEntry) => void
   hasMore: boolean
   onLoadMore: () => void
 }
@@ -53,6 +55,7 @@ export function LogsWaterfall({
   isLoading,
   error,
   run,
+  now,
   onLogClick,
   hasMore,
   onLoadMore,
@@ -78,7 +81,7 @@ export function LogsWaterfall({
     return (
       <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: this is a loading state
+          // oxlint-disable-next-line react/no-array-index-key -- static skeleton placeholders never reorder
           <div key={i} className="flex items-start space-x-3">
             <Skeleton className="h-4 w-4 rounded-full" />
             <div className="flex-1 space-y-2">
@@ -97,11 +100,12 @@ export function LogsWaterfall({
   }
 
   // Sort logs by timestamp ascending to show chronological order
+  // oxlint-disable-next-line unicorn/no-array-sort -- sorts a fresh copy; the app tsconfig lib (ES2022) has no toSorted
   const sortedLogs = [...logs].sort((a, b) => a.ts - b.ts)
 
   const scheduledTime = (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs
   const startTime = Math.max(run.createdAt.getTime(), scheduledTime)
-  const endTime = run.finishedAt ? run.finishedAt.getTime() : Date.now()
+  const endTime = run.finishedAt ? run.finishedAt.getTime() : now
   const totalDuration = endTime - startTime
 
   return (
@@ -131,7 +135,7 @@ export function LogsWaterfall({
               className={cn(
                 "grid grid-cols-12 items-start",
                 "hover:bg-muted/50",
-                onLogClick && "cursor-pointer",
+                "cursor-pointer",
                 {
                   "hover:bg-destructive/5": log.level.toLowerCase() === "error",
                   "hover:bg-warning/5": log.level.toLowerCase() === "warn",
@@ -140,7 +144,17 @@ export function LogsWaterfall({
                   "hover:bg-blue-50 hover:dark:bg-blue-950/30": log.level.toLowerCase() === "info",
                 },
               )}
-              onClick={() => onLogClick?.(log)}
+              // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the row holds block content and a tooltip trigger button, which a <button> cannot contain
+              role="button"
+              tabIndex={0}
+              onClick={() => onLogClick(log)}
+              onKeyDown={(event) => {
+                if (event.target !== event.currentTarget) return
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  onLogClick(log)
+                }
+              }}
             >
               <div
                 className={cn(
@@ -183,10 +197,7 @@ export function LogsWaterfall({
         })}
       </div>
       {hasMore && (
-        <div
-          className="flex items-center justify-center"
-          ref={logsLoaderRef as React.Ref<HTMLDivElement>}
-        >
+        <div className="flex items-center justify-center" ref={logsLoaderRef}>
           <Loader />
         </div>
       )}

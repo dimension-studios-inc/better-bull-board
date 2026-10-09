@@ -39,6 +39,7 @@ export default function RunViewPage() {
 
   const {
     data: run,
+    dataUpdatedAt: runUpdatedAt,
     isLoading: isLoadingRun,
     error: runError,
   } = useQuery({
@@ -53,6 +54,7 @@ export default function RunViewPage() {
 
   const {
     data: logsDataPages,
+    dataUpdatedAt: logsUpdatedAt,
     isLoading: isLoadingLogs,
     hasNextPage,
     fetchNextPage,
@@ -120,9 +122,10 @@ export default function RunViewPage() {
             isLoading={isLoadingLogs}
             error={logsError}
             run={job}
+            now={Math.max(runUpdatedAt, logsUpdatedAt)}
             onLogClick={setSelectedLog}
             hasMore={hasNextPage}
-            onLoadMore={() => fetchNextPage()}
+            onLoadMore={() => void fetchNextPage()}
           />
         </div>
         <div ref={detailsRef} className="w-full scroll-mt-4 lg:w-96 lg:shrink-0">

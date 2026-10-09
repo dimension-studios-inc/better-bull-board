@@ -82,7 +82,7 @@ const JsonCollapsible = ({
       }
     }
 
-    formatMessage()
+    void formatMessage()
   }, [data])
 
   if (!data) return null
@@ -98,7 +98,7 @@ const JsonCollapsible = ({
         <ScrollArea className="rounded border">
           <div
             className="p-3 text-xs"
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki generates safe HTML
+            // Shiki generates safe HTML
             dangerouslySetInnerHTML={{ __html: formattedData }}
           />
           <ScrollBar orientation="horizontal" />

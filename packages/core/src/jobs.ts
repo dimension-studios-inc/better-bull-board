@@ -304,7 +304,7 @@ export const listJobs = async (input: z.input<typeof listJobsInputSchema> = {}) 
       rows.pop()
     }
 
-    const jobs = cursorDirection === "prev" ? rows.reverse() : rows
+    const jobs = cursorDirection === "prev" ? rows.toReversed() : rows
     const firstJob = jobs[0]
     const lastJob = jobs.at(-1)
     const hasNewerPage = cursorDirection === "next" ? Boolean(cursor) : hasExtra
@@ -439,7 +439,8 @@ export const listJobLogs = async (input: z.input<typeof listJobLogsInputSchema>)
       .limit(limit)
       .offset(offset),
     db
-      .select({ count: sql<number>`count(*)` })
+      // count(*) is a bigint, which node-postgres returns as a string.
+      .select({ count: sql<string>`count(*)` })
       .from(jobLogsTable)
       .where(whereClause),
   ])

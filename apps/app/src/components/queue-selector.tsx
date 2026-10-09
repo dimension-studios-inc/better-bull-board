@@ -12,6 +12,8 @@ import { apiFetch } from "~/lib/utils/client"
 const getCustomQueueOptionLabel = (queueName: string) => `Use custom queue "${queueName}"`
 
 interface QueueSelectorProps {
+  /** Id of the trigger button, for a label */
+  id?: string
   value: string
   onValueChange: (value: string) => void
   search: string
@@ -28,6 +30,7 @@ interface QueueSelectorProps {
 }
 
 export function QueueSelector({
+  id,
   value,
   onValueChange,
   search,
@@ -65,10 +68,9 @@ export function QueueSelector({
   })
 
   const { loaderRef } = useInfiniteScroll({
-    fetchNextPage,
+    fetchNextPage: () => void fetchNextPage(),
     hasNextPage,
     isFetchingNextPage,
-    watchState: [open],
     enabled: open,
   })
 
@@ -102,17 +104,18 @@ export function QueueSelector({
     return options
   }, [queues, includeAllOption, allOptionLabel, allowCustomValue, search])
 
-  const defaultRenderValue = (value: string) => {
-    const option = queueOptions?.find((opt) => opt.value === value)
+  const defaultRenderValue = (queueName: string) => {
+    const option = queueOptions?.find((opt) => opt.value === queueName)
     // The list is paginated and filtered by the search, so the selected queue may not be loaded:
     // its name is its label anyway
-    if (!option) return value
+    if (!option) return queueName
 
     return option.label === getCustomQueueOptionLabel(option.value) ? option.value : option.label
   }
 
   return (
     <SearchSelect
+      id={id}
       value={value}
       onValueChange={onValueChange}
       options={queueOptions}
@@ -126,10 +129,8 @@ export function QueueSelector({
       renderValue={renderValue || defaultRenderValue}
       className={className}
       isFetching={isLoading}
-      infiniteLoadingProps={{
-        hasNextPage,
-        loaderRef: loaderRef as React.RefObject<HTMLDivElement>,
-      }}
+      hasNextPage={hasNextPage}
+      loaderRef={loaderRef}
       popoverContentClassName={popoverContentClassName}
     />
   )

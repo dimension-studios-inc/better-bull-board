@@ -4,4 +4,4 @@ const main = async () => {
   await logger.init()
 }
 
-main().then(() => process.exit(0))
+void main().then(() => process.exit(0))

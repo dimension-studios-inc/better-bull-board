@@ -12,7 +12,8 @@ type ChartDataPoint = { timestamp: string; completed: number; failed: number }
 type ChartStep = "hour" | "day"
 // Bucket start as epoch milliseconds: timestamp columns hold UTC without time zone, which `new Date()` would read in
 // the server's local time zone
-type ChartDataRow = { queueName: string; timestamp: string; completed: number; failed: number }
+// Postgres returns SUM/COUNT aggregates (numeric/bigint) as strings
+type ChartDataRow = { queueName: string; timestamp: string; completed: string; failed: string }
 
 const STEP_MS: Record<ChartStep, number> = { hour: 60 * 60 * 1000, day: 24 * 60 * 60 * 1000 }
 
@@ -31,11 +32,7 @@ function fillChartData(
 
     const data = map.get(ts)
     if (data) {
-      filled.push({
-        ...data,
-        completed: Number(data.completed),
-        failed: Number(data.failed),
-      })
+      filled.push(data)
     } else {
       filled.push({ timestamp: ts, completed: 0, failed: 0 })
     }
@@ -77,12 +74,12 @@ export const POST = createAuthenticatedApiRoute({
     const performanceStart = Date.now()
 
     const pressureStart = Date.now()
-    const allPressureDataPromise: Promise<{ queueName: string; pressure: number | null }[]> =
+    const allPressureDataPromise: Promise<{ queueName: string; pressure: string | null }[]> =
       queueNames.length > 0
         ? db
             .select({
               queueName: dashboardQueueHourlyStatsTable.queue,
-              pressure: sql<number | null>`ROUND(
+              pressure: sql<string | null>`ROUND(
                 SUM(${dashboardQueueHourlyStatsTable.pressureTotalMs})::numeric
                 / NULLIF(SUM(${dashboardQueueHourlyStatsTable.pressureCount}), 0)
               )`.as("pressure"),
@@ -113,8 +110,8 @@ export const POST = createAuthenticatedApiRoute({
                   : sql<string>`(EXTRACT(EPOCH FROM date_trunc('day', ${dashboardQueueHourlyStatsTable.bucketStart})) * 1000)::bigint`.as(
                       "timestamp",
                     ),
-              completed: sql<number>`SUM(${dashboardQueueHourlyStatsTable.completedRuns})`,
-              failed: sql<number>`SUM(${dashboardQueueHourlyStatsTable.failedRuns})`,
+              completed: sql<string>`SUM(${dashboardQueueHourlyStatsTable.completedRuns})`,
+              failed: sql<string>`SUM(${dashboardQueueHourlyStatsTable.failedRuns})`,
             })
             .from(dashboardQueueHourlyStatsTable)
             .where(
@@ -141,8 +138,8 @@ export const POST = createAuthenticatedApiRoute({
                   : sql<string>`(EXTRACT(EPOCH FROM date_trunc('day', ${jobRunsTable.createdAt})) * 1000)::bigint`.as(
                       "timestamp",
                     ),
-              completed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
-              failed: sql<number>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
+              completed: sql<string>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'completed')`,
+              failed: sql<string>`COUNT(*) FILTER (WHERE ${jobRunsTable.status} = 'failed')`,
             })
             .from(jobRunsTable)
             .where(
@@ -182,8 +179,8 @@ export const POST = createAuthenticatedApiRoute({
 
       chartData.set(timestamp, {
         timestamp,
-        completed: Number(previous?.completed ?? 0) + Number(chart.completed),
-        failed: Number(previous?.failed ?? 0) + Number(chart.failed),
+        completed: (previous?.completed ?? 0) + Number(chart.completed),
+        failed: (previous?.failed ?? 0) + Number(chart.failed),
       })
       chartDataMap.set(chart.queueName, chartData)
     }

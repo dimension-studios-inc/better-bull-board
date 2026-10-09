@@ -29,7 +29,7 @@ function CopyErrorButton({ errorMessage }: { errorMessage: string }) {
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (!copied) return
+    if (!copied) return undefined
     const timeout = setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS)
     return () => clearTimeout(timeout)
   }, [copied])
@@ -49,7 +49,7 @@ function CopyErrorButton({ errorMessage }: { errorMessage: string }) {
       size="icon-xs"
       aria-label={copied ? "Error message copied" : "Copy error message"}
       className="text-muted-foreground hover:text-foreground"
-      onClick={handleCopy}
+      onClick={() => void handleCopy()}
     >
       {copied ? <Check className="text-success" /> : <Copy />}
     </Button>

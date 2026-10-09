@@ -5,7 +5,7 @@ import { Input } from "@better-bull-board/ui/components/input"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import type React from "react"
-import { useEffect, useId, useState } from "react"
+import { useId, useState } from "react"
 import { toast } from "sonner"
 
 import { createJobApiRoute } from "~/app/api/jobs/create/schemas"
@@ -55,8 +55,11 @@ export default function CreateRunPage() {
     }
   }
 
-  // Update job data when last run data is loaded
-  useEffect(() => {
+  // Prefill the job data once each time last run data is loaded, so later edits are kept
+  const [prefilledFrom, setPrefilledFrom] = useState<typeof lastRunData>(undefined)
+  if (lastRunData !== prefilledFrom) {
+    setPrefilledFrom(lastRunData)
+
     if (lastRunData?.data && selectedQueue) {
       setJobData(JSON.stringify(lastRunData.data, null, 2))
 
@@ -65,9 +68,9 @@ export default function CreateRunPage() {
         setJobName(lastRunData.jobName)
       }
     }
-  }, [lastRunData, selectedQueue, jobName])
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     if (!selectedQueue || selectedQueue === "all") {
@@ -81,7 +84,7 @@ export default function CreateRunPage() {
     }
 
     try {
-      const parsedData = JSON.parse(jobData)
+      const parsedData = JSON.parse(jobData) as Record<string, unknown>
       createJobMutation.mutate({
         queueName: selectedQueue,
         jobName: jobName.trim(),
@@ -92,6 +95,7 @@ export default function CreateRunPage() {
     }
   }
 
+  const queueId = useId()
   const jobNameId = useId()
   const jobDataId = useId()
 
@@ -99,10 +103,11 @@ export default function CreateRunPage() {
     <PageContainer>
       <form onSubmit={handleSubmit} className="w-full max-w-2xl space-y-6">
         <div className="space-y-2">
-          <label htmlFor="queue" className="mb-2 block text-sm font-medium">
+          <label htmlFor={queueId} className="mb-2 block text-sm font-medium">
             Queue *
           </label>
           <QueueSelector
+            id={queueId}
             value={selectedQueue}
             onValueChange={handleQueueChange}
             search={queueSearch}

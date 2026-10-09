@@ -18,6 +18,7 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
+  type TooltipContentProps,
   XAxis,
   YAxis,
 } from "recharts"
@@ -50,18 +51,11 @@ const formatPercent = (value: number) => `${value.toFixed(1)}%`
 
 const axisTick = { fontSize: 12, fill: "var(--muted-foreground)" }
 
-const ChartTooltip =
+const createTooltipContent =
   ({ tooltipFormat, series }: { tooltipFormat: string; series: Series[] }) =>
-  ({
-    active,
-    payload,
-  }: {
-    active: boolean
-    // biome-ignore lint/suspicious/noExplicitAny: _
-    payload: any
-  }) => {
+  ({ active, payload }: TooltipContentProps) => {
     if (active && payload?.length) {
-      const data = payload[0].payload as GraphPoint
+      const data = payload[0]?.payload as GraphPoint
       return (
         <div className="rounded-lg border bg-background px-2.5 py-1.5 text-xs shadow-xl">
           <p className="font-medium">{`${formatUtc(data.timestamp, tooltipFormat)} UTC`}</p>
@@ -185,7 +179,7 @@ export function QueueRunsChart({ minutes, periodLabel, graph, isLoading }: Queue
           tickFormatter={formatCount}
         />
         <Tooltip
-          content={ChartTooltip({
+          content={createTooltipContent({
             tooltipFormat: getTimeFormats(minutes).tooltip,
             series: runSeries,
           })}
@@ -248,7 +242,7 @@ export function QueueErrorRateChart({ minutes, periodLabel, graph, isLoading }: 
           tickFormatter={(value) => `${value}%`}
         />
         <Tooltip
-          content={ChartTooltip({
+          content={createTooltipContent({
             tooltipFormat: getTimeFormats(minutes).tooltip,
             series: errorRateSeries,
           })}
@@ -304,7 +298,7 @@ export function QueueDurationChart({ minutes, periodLabel, graph, isLoading }: Q
           tickFormatter={formatDurationMs}
         />
         <Tooltip
-          content={ChartTooltip({
+          content={createTooltipContent({
             tooltipFormat: getTimeFormats(minutes).tooltip,
             series: durationSeries,
           })}

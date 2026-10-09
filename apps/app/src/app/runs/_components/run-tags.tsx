@@ -53,7 +53,13 @@ export function RunTags({ tags, onTagClick }: RunTagsProps) {
               key={tag}
               variant="outline"
               className="max-w-full cursor-pointer hover:bg-muted"
-              render={<button type="button" onClick={() => onTagClick(tag)} />}
+              render={
+                <button
+                  type="button"
+                  aria-label={`Filter by tag ${tag}`}
+                  onClick={() => onTagClick(tag)}
+                />
+              }
             >
               <span className="truncate">{tag}</span>
             </Badge>

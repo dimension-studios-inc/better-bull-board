@@ -37,7 +37,7 @@ const isBullMqJob = (job: Job | undefined): job is Job =>
 
 const getQueueNames = async () => {
   const queues = await db.select({ name: queuesTable.name }).from(queuesTable)
-  return queues.map((queue) => queue.name).sort()
+  return queues.map((queue) => queue.name).toSorted()
 }
 
 const selectQueueBatch = (queueNames: string[]) => {
@@ -279,9 +279,13 @@ export const autoReconcileJobs = () => {
     }
   }
 
-  reconcileInterval = setInterval(() => runBackgroundTask(run), env.JOB_RECONCILE_INTERVAL_MS)
+  reconcileInterval = setInterval(() => {
+    runBackgroundTask(run).catch((error: unknown) => {
+      logger.error("Error in job reconciliation", { error })
+    })
+  }, env.JOB_RECONCILE_INTERVAL_MS)
 
-  runBackgroundTask(run).catch((error) => {
+  runBackgroundTask(run).catch((error: unknown) => {
     logger.error("Error in initial job reconciliation", { error })
   })
 

@@ -111,6 +111,12 @@ const requireString = (formData: FormData, key: string) => {
   return value
 }
 
+// Missing or non-string (file upload) values are treated as absent
+const optionalString = (formData: FormData, key: string) => {
+  const value = formData.get(key)
+  return typeof value === "string" ? value : undefined
+}
+
 export const createOAuthErrorRedirect = ({
   redirectUri,
   error,
@@ -233,7 +239,7 @@ const getAuthenticatedClient = async (formData: FormData) => {
     throw new OAuthError("invalid_client", "Unknown OAuth client", 401)
   }
 
-  validateClientSecret(client, formData.get("client_secret")?.toString())
+  validateClientSecret(client, optionalString(formData, "client_secret"))
 
   return { clientId }
 }
@@ -375,7 +381,7 @@ export const exchangeAuthorizationCode = async (formData: FormData) => {
   const code = requireString(formData, "code")
   const redirectUri = requireString(formData, "redirect_uri")
   const codeVerifier = requireString(formData, "code_verifier")
-  const resource = formData.get("resource")?.toString()
+  const resource = optionalString(formData, "resource")
 
   return db.transaction(async (tx) => {
     const [authorizationCode] = await tx

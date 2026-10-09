@@ -14,7 +14,7 @@ export interface User {
 /**
  * Verify admin credentials
  */
-export async function verifyAdminCredentials(email: string, password: string): Promise<boolean> {
+export function verifyAdminCredentials(email: string, password: string): boolean {
   if (email !== env.ADMIN_EMAIL) {
     return false
   }

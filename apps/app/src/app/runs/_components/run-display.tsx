@@ -23,12 +23,9 @@ export function StuckRunWarning({ stuckRun }: StuckRunWarningProps) {
   const description = describeStuckRun(stuckRun)
 
   return (
-    <span
-      role="img"
-      aria-label={`Looks stuck. ${description}`}
-      title={`Looks stuck. ${description}`}
-    >
-      <AlertTriangle className="size-4 text-warning" />
+    <span title={`Looks stuck. ${description}`}>
+      <AlertTriangle aria-hidden className="size-4 text-warning" />
+      <span className="sr-only">{`Looks stuck. ${description}`}</span>
     </span>
   )
 }

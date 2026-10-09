@@ -66,6 +66,6 @@ async function migratePostgreSQL(): Promise<void> {
     })
   } catch (error) {
     logger.error("❌ PostgreSQL migration failed", error)
-    throw new Error(`PostgreSQL migration failed: ${error}`, { cause: error })
+    throw new Error(`PostgreSQL migration failed: ${String(error)}`, { cause: error })
   }
 }

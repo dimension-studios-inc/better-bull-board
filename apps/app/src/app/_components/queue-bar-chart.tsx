@@ -10,6 +10,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  type TooltipContentProps,
   XAxis,
   YAxis,
   type YAxisTickContentProps,
@@ -67,18 +68,11 @@ const truncateLabel = (text: string, maxWidth: number) => {
 const isModifiedClick = (event: React.MouseEvent) =>
   event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
 
-const CustomTooltip =
+const createTooltipContent =
   ({ valueLabel, formatValue }: Pick<QueueBarChartProps, "valueLabel" | "formatValue">) =>
-  ({
-    active,
-    payload,
-  }: {
-    active: boolean
-    // biome-ignore lint/suspicious/noExplicitAny: _
-    payload: any
-  }) => {
+  ({ active, payload }: TooltipContentProps) => {
     if (active && payload?.length) {
-      const data: QueueBarChartItem = payload[0].payload
+      const data = payload[0]?.payload as QueueBarChartItem
       return (
         <div className="max-w-72 rounded border bg-background p-3 text-sm shadow-lg">
           <p className="font-medium break-all">{data.queue}</p>
@@ -196,7 +190,7 @@ export function QueueBarChart({
                   tick={renderQueueTick}
                 />
                 <Tooltip
-                  content={CustomTooltip({ valueLabel, formatValue })}
+                  content={createTooltipContent({ valueLabel, formatValue })}
                   cursor={{ fill: "var(--muted)" }}
                 />
                 <Bar

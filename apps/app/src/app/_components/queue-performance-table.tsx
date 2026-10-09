@@ -102,6 +102,7 @@ export function QueuePerformanceTable({
   }
 
   const sortedQueuePerformance = useMemo(() => {
+    // oxlint-disable-next-line unicorn/no-array-sort -- sorts a fresh copy; the app tsconfig lib (ES2022) has no toSorted
     return [...(queuePerformance ?? [])].sort((a, b) => {
       const direction = sort.direction === "asc" ? 1 : -1
       const aValue = a[sort.key]
@@ -149,7 +150,7 @@ export function QueuePerformanceTable({
         {isLoading ? (
           <div className="h-96 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
+              // oxlint-disable-next-line react/no-array-index-key -- static skeleton placeholders never reorder
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>

@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
 import { ChevronLeft, ChevronRight, Filter, Pause, Plus, Search, X } from "lucide-react"
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useId, useMemo, useState } from "react"
 
 import { getTagsApiRoute } from "~/app/api/tags/schemas"
 import { DateTimePicker } from "~/components/date-time-picker"
@@ -52,6 +52,9 @@ export function RunsFilters({
   const [queueSearch, setQueueSearch] = useState("")
   const [statusSearch, setStatusSearch] = useState("")
   const [tagsSearch, setTagsSearch] = useState("")
+  const queueId = useId()
+  const statusId = useId()
+  const tagsId = useId()
 
   const debouncedTagsSearch = useDebounce(tagsSearch, 250)
 
@@ -192,8 +195,11 @@ export function RunsFilters({
 
               <div className="space-y-3">
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Queue</label>
+                  <label htmlFor={queueId} className="mb-2 block text-sm font-medium">
+                    Queue
+                  </label>
                   <QueueSelector
+                    id={queueId}
                     value={filters.queue}
                     onValueChange={(value) => setFilters({ queue: value })}
                     search={queueSearch}
@@ -209,8 +215,11 @@ export function RunsFilters({
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Status</label>
+                  <label htmlFor={statusId} className="mb-2 block text-sm font-medium">
+                    Status
+                  </label>
                   <SearchSelect
+                    id={statusId}
                     value={filters.status}
                     onValueChange={(value) => setFilters({ status: value })}
                     options={statusOptions}
@@ -228,7 +237,9 @@ export function RunsFilters({
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Tags</label>
+                  <label htmlFor={tagsId} className="mb-2 block text-sm font-medium">
+                    Tags
+                  </label>
                   <div className="space-y-2">
                     {filters.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
@@ -251,6 +262,7 @@ export function RunsFilters({
                       </div>
                     )}
                     <SearchSelect
+                      id={tagsId}
                       value=""
                       onValueChange={(value) => {
                         if (value && !filters.tags.includes(value)) {
@@ -281,8 +293,8 @@ export function RunsFilters({
                   </div>
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium">Created</label>
+                <fieldset>
+                  <legend className="mb-2 block text-sm font-medium">Created</legend>
                   <div className="grid gap-2">
                     <DateTimePicker
                       value={filters.createdFrom}
@@ -301,7 +313,7 @@ export function RunsFilters({
                       aria-label="Created to"
                     />
                   </div>
-                </div>
+                </fieldset>
               </div>
             </div>
           </PopoverContent>

@@ -69,7 +69,7 @@ const ingestQueuesUnsafe = async () => {
       new Set(
         scan.keys.map((key) => key.split(":")[1]).filter((queueName) => queueName !== undefined),
       ),
-    ).sort()
+    ).toSorted()
 
     logger.debug("Queue discovery completed", {
       complete: scan.complete,
@@ -113,7 +113,7 @@ const ingestQueuesUnsafe = async () => {
   }
 }
 
-export const autoIngestQueues = async () => {
+export const autoIngestQueues = () => {
   // Clear any existing interval
   if (queueIngestionInterval) {
     clearInterval(queueIngestionInterval)
@@ -135,9 +135,13 @@ export const autoIngestQueues = async () => {
     }
   }
 
-  queueIngestionInterval = setInterval(() => runBackgroundTask(run), 60_000)
+  queueIngestionInterval = setInterval(() => {
+    runBackgroundTask(run).catch((error: unknown) => {
+      logger.error("Error in queue ingestion:", error)
+    })
+  }, 60_000)
 
-  runBackgroundTask(run).catch((error) => {
+  runBackgroundTask(run).catch((error: unknown) => {
     logger.error("Error in initial queue ingestion:", error)
   })
 
@@ -182,7 +186,7 @@ const upsertQueue = async (queueName: string) => {
         .set(params)
         .where(eq(queuesTable.name, queueName))
         .returning()
-        .then(([updatedQueue]) => updatedQueue)
+        .then(([row]) => row)
       logger.log(`Updated queue ${queueName}`)
       if (!_updatedQueue) {
         throw new Error("Failed to update queue")
@@ -195,7 +199,7 @@ const upsertQueue = async (queueName: string) => {
         .insert(queuesTable)
         .values(params)
         .returning()
-        .then(([updatedQueue]) => updatedQueue)
+        .then(([row]) => row)
       logger.log(`Created queue ${queueName}`)
       if (!_createdQueue) {
         throw new Error("Failed to create queue")
@@ -273,7 +277,7 @@ const upsertJobSchedulers = async (queueName: string, queueId: string) => {
 }
 
 // Graceful shutdown function
-export const cleanupQueues = async () => {
+export const cleanupQueues = () => {
   stopAutoIngestQueues()
   logger.log("🧹 Queue ingestion cleanup completed")
 }

@@ -114,7 +114,7 @@ export const refreshLastCompletedDashboardRollupHour = async () => {
 
 export const startDashboardRollups = () => {
   schedule("0 * * * *", () => {
-    runBackgroundTask(refreshLastCompletedDashboardRollupHour).catch((error) => {
+    runBackgroundTask(refreshLastCompletedDashboardRollupHour).catch((error: unknown) => {
       logger.error("Failed to refresh dashboard rollups", { error })
     })
   })

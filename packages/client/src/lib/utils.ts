@@ -1,4 +1,4 @@
-export const repeat = <T>(fn: (resolve: () => void, reject: () => void) => T) => {
+export const repeat = (fn: (resolve: () => void, reject: () => void) => unknown) => {
   return {
     every: (ms: number) => {
       let interval: NodeJS.Timeout

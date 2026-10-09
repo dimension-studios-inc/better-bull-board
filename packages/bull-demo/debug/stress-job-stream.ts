@@ -409,7 +409,7 @@ main()
   .then(() => {
     process.exit(0)
   })
-  .catch(async (error) => {
+  .catch(async (error: unknown) => {
     logger.error("Stress job stream script failed", { error })
     await redis.quit()
     process.exit(1)

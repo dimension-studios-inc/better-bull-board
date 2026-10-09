@@ -14,6 +14,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  type TooltipContentProps,
   XAxis,
   YAxis,
 } from "recharts"
@@ -24,10 +25,12 @@ import { formatUtc } from "~/lib/utils/date"
 
 import { CHART_RESIZE_DEBOUNCE_MS } from "./chart-config"
 
+type RunGraphPoint = z.output<typeof dashboardRunGraphOutput>
+
 interface RunGraphChartProps {
   minutes: number
   periodLabel: string
-  runGraphData: z.output<typeof dashboardRunGraphOutput>[] | undefined
+  runGraphData: RunGraphPoint[] | undefined
   isLoading: boolean
 }
 
@@ -39,19 +42,11 @@ export const getTimeFormats = (minutes: number) => {
   return { axis: "MMM dd", tooltip: "MMM dd, yyyy" }
 }
 
-const CustomTooltip =
+const createTooltipContent =
   ({ tooltipFormat }: { tooltipFormat: string }) =>
-  ({
-    active,
-    payload,
-  }: {
-    active: boolean
-    // biome-ignore lint/suspicious/noExplicitAny: _
-    payload: any
-    label?: string | number
-  }) => {
+  ({ active, payload }: TooltipContentProps) => {
     if (active && payload?.length) {
-      const data = payload[0].payload
+      const data = payload[0]?.payload as RunGraphPoint
       return (
         <div className="rounded-lg border bg-background px-2.5 py-1.5 text-xs shadow-xl">
           <p className="font-medium">
@@ -120,10 +115,10 @@ export function RunGraphChart({
                   axisLine={false}
                   width={48}
                   tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-                  tickFormatter={(value) => value.toLocaleString()}
+                  tickFormatter={(value: number) => value.toLocaleString()}
                 />
                 <Tooltip
-                  content={CustomTooltip({ tooltipFormat: timeFormats.tooltip })}
+                  content={createTooltipContent({ tooltipFormat: timeFormats.tooltip })}
                   cursor={{ stroke: "var(--border)" }}
                 />
                 <Area

@@ -10,8 +10,7 @@ import { createQueryClient } from "~/lib/query-client"
 
 let clientQueryClientSingleton: QueryClient | undefined
 const getQueryClient = ({ onRedirect }: { onRedirect: (path: string) => void }) => {
-  // biome-ignore lint/suspicious/noExplicitAny: globalThis is not typed
-  if (typeof (globalThis as any).window === "undefined") {
+  if (typeof window === "undefined") {
     // Server: always make a new query client
     return createQueryClient()
   }

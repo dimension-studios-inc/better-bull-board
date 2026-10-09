@@ -100,7 +100,7 @@ export function NavUser() {
               </DropdownMenuSubContent>
             </DropdownMenuSub>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
+            <DropdownMenuItem onClick={() => void logout()}>
               <LogOut />
               Log out
             </DropdownMenuItem>

@@ -5,6 +5,8 @@ import type { output, ZodType } from "zod"
 
 import { getAuthenticatedUser } from "../auth/server"
 
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : undefined)
+
 type AppRouteContext = {
   params: Promise<Record<string, string | string[]>>
 }
@@ -32,15 +34,15 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    const json =
+    const json: unknown =
       req.method === "GET" || !apiRoute.inputSchema
         ? undefined
-        : await req.json().catch((e) => {
-            logger.error(`Error parsing JSON in ${req.url}: ${e}`)
+        : await req.json().catch((e: unknown) => {
+            logger.error(`Error parsing JSON in ${req.url}: ${String(e)}`)
             throw e
           })
-    const parsed = await inputSchema?.parseAsync(json).catch((error) => {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    const parsed = await inputSchema?.parseAsync(json).catch((error: unknown) => {
+      return NextResponse.json({ error: getErrorMessage(error) }, { status: 400 })
     })
     if (parsed instanceof NextResponse) {
       return parsed
@@ -49,7 +51,7 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
       parsed as IS extends ZodType ? output<IS> : undefined,
       req,
       ctx,
-    ).catch((error) => {
+    ).catch((error: unknown) => {
       if (error instanceof HttpError) {
         return NextResponse.json({ error: error.message }, { status: error.statusCode })
       }
@@ -58,9 +60,9 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
     if (data instanceof NextResponse) {
       return data
     }
-    const validated = await outputSchema.parseAsync(data).catch((error) => {
+    const validated = await outputSchema.parseAsync(data).catch((error: unknown) => {
       logger.error(error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 })
     })
     if (validated instanceof NextResponse) {
       return validated

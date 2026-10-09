@@ -10,7 +10,7 @@ import { env } from "~/lib/env"
 import { instanceId } from "~/lib/instance"
 
 // we want do delete old data such as job runs and job logs after AUTO_DELETE_POSTGRES_DATA
-export const clearData = async () => {
+export const clearData = () => {
   const autoDeletePostgresData = env.AUTO_DELETE_POSTGRES_DATA
   if (!autoDeletePostgresData) return
 
@@ -32,11 +32,15 @@ export const clearData = async () => {
 
   setInterval(
     () => {
-      runBackgroundTask(deleteData)
+      runBackgroundTask(deleteData).catch((error: unknown) => {
+        logger.error("Failed to clear old data", { error })
+      })
     },
     1000 * 60 * 60,
   )
-  runBackgroundTask(deleteData)
+  runBackgroundTask(deleteData).catch((error: unknown) => {
+    logger.error("Failed to clear old data on startup", { error })
+  })
 
   logger.log(`🧹 Clearing data every ${formatDistance(autoDeletePostgresData, 0)}`)
 }

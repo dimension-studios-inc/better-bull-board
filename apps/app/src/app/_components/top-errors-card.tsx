@@ -143,7 +143,7 @@ export function TopErrorsCard({ minutes, periodLabel, enabled }: TopErrorsCardPr
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
+              // oxlint-disable-next-line react/no-array-index-key -- static skeleton placeholders never reorder
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>

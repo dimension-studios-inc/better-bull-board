@@ -256,18 +256,19 @@ const getQueuePerformance = (rows: BucketRow[]): DashboardSummary["queuePerforma
     queues.set(row.queue, queue)
   }
 
-  return [...queues.entries()]
-    .map(([queue, stats]) => ({
-      queue,
-      totalRuns: stats.totalRuns,
-      successes: stats.successes,
-      failures: stats.failures,
-      errorRate: stats.totalRuns > 0 ? (stats.failures / stats.totalRuns) * 100 : 0,
-      avgDuration: stats.durationCount > 0 ? stats.durationTotalMs / stats.durationCount / 1000 : 0,
-      minDuration: toSeconds(stats.minDurationMs),
-      maxDuration: toSeconds(stats.maxDurationMs),
-    }))
-    .sort((a, b) => b.totalRuns - a.totalRuns)
+  const queuePerformance = [...queues.entries()].map(([queue, stats]) => ({
+    queue,
+    totalRuns: stats.totalRuns,
+    successes: stats.successes,
+    failures: stats.failures,
+    errorRate: stats.totalRuns > 0 ? (stats.failures / stats.totalRuns) * 100 : 0,
+    avgDuration: stats.durationCount > 0 ? stats.durationTotalMs / stats.durationCount / 1000 : 0,
+    minDuration: toSeconds(stats.minDurationMs),
+    maxDuration: toSeconds(stats.maxDurationMs),
+  }))
+  // Sorting in place is safe: the array was just created above
+  queuePerformance.sort((a, b) => b.totalRuns - a.totalRuns)
+  return queuePerformance
 }
 
 const getRunGraph = (rows: BucketRow[], { dateFrom, dateTo, bucketSeconds }: DashboardWindow) => {
@@ -293,15 +294,17 @@ const getTopQueuesCount = (queuePerformance: DashboardSummary["queuePerformance"
     runCount: row.totalRuns,
   }))
 
-const getTopQueuesDuration = (queuePerformance: DashboardSummary["queuePerformance"]) =>
-  [...queuePerformance]
+const getTopQueuesDuration = (queuePerformance: DashboardSummary["queuePerformance"]) => {
+  const rows = queuePerformance
     .map((row) => ({
       queue: row.queue,
       avgDuration: row.avgDuration,
     }))
     .filter((row) => row.avgDuration > 0)
-    .sort((a, b) => b.avgDuration - a.avgDuration)
-    .slice(0, 20)
+  // Sorting in place is safe: `map`/`filter` return a new array
+  rows.sort((a, b) => b.avgDuration - a.avgDuration)
+  return rows.slice(0, 20)
+}
 
 export const getDashboardSummary = async ({
   minutes,

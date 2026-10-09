@@ -38,7 +38,7 @@ export const POST = createAuthenticatedApiRoute({
     ])
 
     const getCount = (status: string) =>
-      Number(statusCounts.find((row) => row.status === status)?.count ?? 0)
+      statusCounts.find((row) => row.status === status)?.count ?? 0
 
     return {
       name: queue.name,

@@ -61,11 +61,11 @@ export const upsertJobRuns = async (runs: JobRunInsert[]) => {
   for (const run of runs) {
     if (!isWithinRetention(run, retentionCutoff)) continue
 
-    const key = `${run.queue}-${run.jobId}-${run.enqueuedAt?.getTime?.() ?? run.enqueuedAt}`
+    const key = `${run.queue}-${run.jobId}-${run.enqueuedAt?.getTime?.() ?? String(run.enqueuedAt)}`
     deduped.set(key, run)
   }
 
-  const values = Array.from(deduped.values()).sort((a, b) => {
+  const values = Array.from(deduped.values()).toSorted((a, b) => {
     const queueCompare = a.queue.localeCompare(b.queue)
     if (queueCompare !== 0) return queueCompare
     const jobCompare = a.jobId.localeCompare(b.jobId)
