@@ -33,7 +33,9 @@ kubectl apply -f k8s/
 
 Point `k8s/04-app.yaml` and `k8s/05-ingest.yaml` at your registry if you are not using the public ECR images. Postgres uses `public.ecr.aws/n5q7l0s4/better-bull-board-postgres:latest`; rebuild that image only when `.docker/db` changes — see [Docker images](docker-build.md).
 
-`deploy.yml` only restarts the workloads: apply the manifests again whenever `k8s/` changes.
+`deploy.yml` does not apply the manifests: it points `bbb-app` and `bbb-ingest` at the images tagged with the deployed commit (`kubectl set image`) and waits for the rollout. Apply the manifests again whenever `k8s/` changes; they reference `:latest`, the last image built from `main`, until the next deploy pins the commit again.
+
+To roll back, `kubectl rollout undo deployment/bbb-app -n better-bull-board` (and `statefulset/bbb-ingest`) returns to the previous commit's image.
 
 ## Database migrations
 
