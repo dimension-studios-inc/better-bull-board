@@ -1,8 +1,5 @@
 {
   "name": "@better-bull-board/ingest",
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.mts",
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist",
@@ -31,8 +28,7 @@
   "exports": {
     "./*": {
       "types": "./dist/*.d.mts",
-      "import": "./dist/*.mjs",
-      "require": "./dist/*.cjs"
+      "import": "./dist/*.mjs"
     }
   },
   "type": "module",
