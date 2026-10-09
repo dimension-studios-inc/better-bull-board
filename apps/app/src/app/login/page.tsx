@@ -5,6 +5,8 @@ import { Card } from "@better-bull-board/ui/components/card"
 import { Input } from "@better-bull-board/ui/components/input"
 import { useId, useState } from "react"
 
+import { getSameOriginRedirectPath } from "~/lib/utils/redirect"
+
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -25,16 +27,17 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
 
-      const data = (await response.json()) as { success: boolean; error?: string }
-
-      if (data.success) {
-        const searchParams = new URLSearchParams(window.location.search)
-        const nextPath = searchParams.get("next")
-        window.location.href =
-          nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/"
-      } else {
-        setError(data.error || "Login failed")
+      if (!response.ok) {
+        // Failed logins answer `{ success: false, error }` with a 4xx status
+        const data = (await response.json().catch(() => null)) as { error?: string } | null
+        setError(data?.error || "Login failed")
+        return
       }
+
+      // `next` only ever leads back to a page of this app, after the user signed in themselves
+      // react-doctor-disable-next-line react-doctor/url-prefilled-privileged-action
+      const nextPath = new URLSearchParams(window.location.search).get("next")
+      window.location.href = getSameOriginRedirectPath(nextPath, window.location.origin)
     } catch {
       setError("Network error. Please try again.")
     } finally {

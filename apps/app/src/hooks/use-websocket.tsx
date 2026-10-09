@@ -46,6 +46,10 @@ const useWebSocket = (options: UseWebSocketOptions) => {
   const queryClient = useQueryClient()
   const [isConnected, setIsConnected] = useState(false)
   const [connectionAttempts, setConnectionAttempts] = useState(0)
+  // Bumped to open a new connection: each effect run owns exactly one socket
+  const [connectionKey, setConnectionKey] = useState(0)
+  const [isReconnectPending, setIsReconnectPending] = useState(false)
+  const attemptsRef = useRef(0)
 
   const websocketRef = useRef<WebSocket | null>(null)
 
@@ -86,93 +90,87 @@ const useWebSocket = (options: UseWebSocketOptions) => {
   )
 
   useEffect(() => {
-    let mounted = true
-    let attempts = 0
-    let reconnectTimeout: ReturnType<typeof setTimeout> | undefined
+    let disposed = false
+    // WEBSOCKET_URL is validated as a URL by env.ts, so the constructor doesn't throw
+    const ws = new WebSocket(WEBSOCKET_URL)
+    websocketRef.current = ws
 
-    const connect = () => {
-      if (websocketRef.current?.readyState === WebSocket.OPEN) {
-        return
-      }
+    ws.addEventListener("open", () => {
+      if (disposed) return
+      setIsConnected(true)
+      attemptsRef.current = 0
+      setConnectionAttempts(0)
+      onConnect?.()
+      console.log("🔗 WebSocket connected")
+    })
+
+    ws.addEventListener("message", (event: MessageEvent<string>) => {
+      if (disposed) return
 
       try {
-        const ws = new WebSocket(WEBSOCKET_URL)
-        websocketRef.current = ws
+        const message = JSON.parse(event.data) as WebSocketMessage
+        if (message.data.id === "connected") return
 
-        ws.addEventListener("open", () => {
-          if (!mounted) return
-          setIsConnected(true)
-          attempts = 0
-          setConnectionAttempts(0)
-          onConnect?.()
-          console.log("🔗 WebSocket connected")
-        })
-
-        ws.addEventListener("message", (event: MessageEvent<string>) => {
-          if (!mounted) return
-
-          try {
-            const message = JSON.parse(event.data) as WebSocketMessage
-            if (message.data.id === "connected") return
-
-            invalidateQueries(message)
-            onMessage?.(message)
-          } catch (error) {
-            console.error("Failed to parse WebSocket message:", error)
-          }
-        })
-
-        ws.addEventListener("close", () => {
-          if (!mounted) return
-          setIsConnected(false)
-          onDisconnect?.()
-          console.log("🔌 WebSocket disconnected", {
-            attempts,
-            maxReconnectAttempts,
-            autoReconnect,
-          })
-
-          if (autoReconnect && attempts < maxReconnectAttempts) {
-            reconnectTimeout = setTimeout(() => {
-              if (mounted) {
-                attempts += 1
-                setConnectionAttempts(attempts)
-                connect()
-              }
-            }, reconnectDelay)
-          }
-        })
-
-        ws.addEventListener("error", (error) => {
-          if (!mounted) return
-          console.error("WebSocket error:", error)
-          onError?.(error)
-        })
+        invalidateQueries(message)
+        onMessage?.(message)
       } catch (error) {
-        console.error("Failed to create WebSocket connection:", error)
+        console.error("Failed to parse WebSocket message:", error)
       }
-    }
+    })
 
-    connect()
+    ws.addEventListener("close", () => {
+      if (disposed) return
+      setIsConnected(false)
+      onDisconnect?.()
+      console.log("🔌 WebSocket disconnected", {
+        attempts: attemptsRef.current,
+        maxReconnectAttempts,
+        autoReconnect,
+      })
+
+      if (autoReconnect && attemptsRef.current < maxReconnectAttempts) {
+        setIsReconnectPending(true)
+      }
+    })
+
+    ws.addEventListener("error", (error) => {
+      if (disposed) return
+      console.error("WebSocket error:", error)
+      onError?.(error)
+    })
 
     return () => {
-      mounted = false
-      clearTimeout(reconnectTimeout)
-      websocketRef.current?.close()
+      disposed = true
+      ws.close()
       websocketRef.current = null
       setIsConnected(false)
     }
   }, [
+    // Not read: bumping it re-runs the effect, which opens a new socket
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies
+    connectionKey,
     onConnect,
     onDisconnect,
     onError,
     onMessage,
     autoReconnect,
     maxReconnectAttempts,
-    reconnectDelay,
     invalidateQueries,
     WEBSOCKET_URL,
   ])
+
+  useEffect(() => {
+    if (!isReconnectPending) return undefined
+
+    const reconnectTimeout = setTimeout(() => {
+      attemptsRef.current += 1
+      setConnectionAttempts(attemptsRef.current)
+      setIsReconnectPending(false)
+      setConnectionKey((key) => key + 1)
+    }, reconnectDelay)
+
+    return () => clearTimeout(reconnectTimeout)
+  }, [isReconnectPending, reconnectDelay])
 
   const sendMessage = useCallback((message: object) => {
     if (websocketRef.current?.readyState === WebSocket.OPEN) {

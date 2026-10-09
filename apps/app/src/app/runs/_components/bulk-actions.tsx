@@ -30,7 +30,7 @@ import { bulkReplayJobsApiRoute } from "~/app/api/jobs/bulk-replay/schemas"
 import { RunStatusBadge } from "~/components/run-status-badge"
 import { apiFetch } from "~/lib/utils/client"
 
-import { formatCreatedFilterLabel } from "./runs-filters"
+import { formatCreatedFilterLabel, formatRunCount } from "./run-format"
 import type { TRunFilters } from "./types"
 
 export type TMatchingFilters = Pick<
@@ -55,9 +55,6 @@ interface BulkActionsProps {
   matchingSelection: TMatchingSelection | null
   onClearSelection: () => void
 }
-
-export const formatRunCount = (count: number) =>
-  `${count.toLocaleString()} run${count === 1 ? "" : "s"}`
 
 const isOneOf = <T extends string>(values: readonly T[], value: string): value is T =>
   values.includes(value as T)
@@ -138,6 +135,96 @@ function MatchingSelectionDetails({
         </Alert>
       )}
     </div>
+  )
+}
+
+type TSelectedJob = BulkActionsProps["selectedJobs"][number]
+
+// What a confirmation dialog acts on: the filters summary, or the list of selected runs
+function SelectionPreview({
+  matchingSelection,
+  eligibleCount,
+  eligibleJobs,
+  verb,
+}: {
+  matchingSelection: TMatchingSelection | null
+  eligibleCount: number
+  eligibleJobs: TSelectedJob[]
+  verb: "replayed" | "cancelled"
+}) {
+  if (matchingSelection) {
+    return (
+      <MatchingSelectionDetails
+        matchingSelection={matchingSelection}
+        eligibleCount={eligibleCount}
+        verb={verb}
+      />
+    )
+  }
+
+  return (
+    <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-60">
+      <div className="space-y-2">
+        {eligibleJobs.map((job) => (
+          <div key={job.jobId} className="flex items-center gap-2 rounded bg-muted p-2">
+            <Badge variant="outline">{job.queue}</Badge>
+            <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
+            <RunStatusBadge status={job.status} className="ml-auto" />
+          </div>
+        ))}
+      </div>
+    </ScrollArea>
+  )
+}
+
+function CancelDescription({
+  matchingTotal,
+  cancellableCount,
+}: {
+  matchingTotal: number | null
+  cancellableCount: number
+}) {
+  if (matchingTotal !== null) {
+    return (
+      <>
+        Are you sure you want to cancel {formatRunCount(cancellableCount)} out of the{" "}
+        {formatRunCount(matchingTotal)} matching these filters? Only active, waiting and delayed
+        runs can be cancelled. This action cannot be undone.
+      </>
+    )
+  }
+
+  return (
+    <>
+      Are you sure you want to cancel {cancellableCount} job
+      {cancellableCount === 1 ? "" : "s"}? This action cannot be undone.
+    </>
+  )
+}
+
+function ReplayDescription({
+  matchingTotal,
+  replayableCount,
+}: {
+  matchingTotal: number | null
+  replayableCount: number
+}) {
+  if (matchingTotal !== null) {
+    return (
+      <>
+        Are you sure you want to replay {formatRunCount(replayableCount)} out of the{" "}
+        {formatRunCount(matchingTotal)} matching these filters? Only completed and failed runs can
+        be replayed, with the same data and configuration.
+      </>
+    )
+  }
+
+  return (
+    <>
+      Are you sure you want to replay {replayableCount} job
+      {replayableCount === 1 ? "" : "s"}? This will create new job instances with the same data and
+      configuration.
+    </>
   )
 }
 
@@ -236,6 +323,7 @@ export function BulkActions({
   const replayableCount = matchingSelection
     ? matchingSelection.counts.replayable
     : replayableJobs.length
+  const matchingTotal = matchingSelection?.counts.total ?? null
   const isCancelPending = bulkCancelMutation.isPending || matchingCancelMutation.isPending
   const isReplayPending = bulkReplayMutation.isPending || matchingReplayMutation.isPending
 
@@ -281,39 +369,18 @@ export function BulkActions({
           <DialogHeader>
             <DialogTitle className="text-destructive">Cancel Jobs</DialogTitle>
             <DialogDescription>
-              {matchingSelection ? (
-                <>
-                  Are you sure you want to cancel {formatRunCount(cancellableCount)} out of the{" "}
-                  {formatRunCount(matchingSelection.counts.total)} matching these filters? Only
-                  active, waiting and delayed runs can be cancelled. This action cannot be undone.
-                </>
-              ) : (
-                <>
-                  Are you sure you want to cancel {cancellableCount} job
-                  {cancellableCount === 1 ? "" : "s"}? This action cannot be undone.
-                </>
-              )}
+              <CancelDescription
+                matchingTotal={matchingTotal}
+                cancellableCount={cancellableCount}
+              />
             </DialogDescription>
           </DialogHeader>
-          {matchingSelection ? (
-            <MatchingSelectionDetails
-              matchingSelection={matchingSelection}
-              eligibleCount={cancellableCount}
-              verb="cancelled"
-            />
-          ) : (
-            <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-60">
-              <div className="space-y-2">
-                {cancellableJobs.map((job) => (
-                  <div key={job.jobId} className="flex items-center gap-2 rounded bg-muted p-2">
-                    <Badge variant="outline">{job.queue}</Badge>
-                    <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
-                    <RunStatusBadge status={job.status} className="ml-auto" />
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          )}
+          <SelectionPreview
+            matchingSelection={matchingSelection}
+            eligibleCount={cancellableCount}
+            eligibleJobs={cancellableJobs}
+            verb="cancelled"
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
               Cancel
@@ -331,40 +398,15 @@ export function BulkActions({
           <DialogHeader>
             <DialogTitle>Replay Jobs</DialogTitle>
             <DialogDescription>
-              {matchingSelection ? (
-                <>
-                  Are you sure you want to replay {formatRunCount(replayableCount)} out of the{" "}
-                  {formatRunCount(matchingSelection.counts.total)} matching these filters? Only
-                  completed and failed runs can be replayed, with the same data and configuration.
-                </>
-              ) : (
-                <>
-                  Are you sure you want to replay {replayableCount} job
-                  {replayableCount === 1 ? "" : "s"}? This will create new job instances with the
-                  same data and configuration.
-                </>
-              )}
+              <ReplayDescription matchingTotal={matchingTotal} replayableCount={replayableCount} />
             </DialogDescription>
           </DialogHeader>
-          {matchingSelection ? (
-            <MatchingSelectionDetails
-              matchingSelection={matchingSelection}
-              eligibleCount={replayableCount}
-              verb="replayed"
-            />
-          ) : (
-            <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-60">
-              <div className="space-y-2">
-                {replayableJobs.map((job) => (
-                  <div key={job.jobId} className="flex items-center gap-2 rounded bg-muted p-2">
-                    <Badge variant="outline">{job.queue}</Badge>
-                    <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
-                    <RunStatusBadge status={job.status} className="ml-auto" />
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          )}
+          <SelectionPreview
+            matchingSelection={matchingSelection}
+            eligibleCount={replayableCount}
+            eligibleJobs={replayableJobs}
+            verb="replayed"
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setReplayDialogOpen(false)}>
               Cancel

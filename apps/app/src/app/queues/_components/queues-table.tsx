@@ -24,7 +24,8 @@ import {
   Info,
   Search,
 } from "lucide-react"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence, m } from "motion/react"
+import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createParser, parseAsString, useQueryStates } from "nuqs"
@@ -36,9 +37,14 @@ import { getQueueHref } from "~/lib/utils/queue-link"
 import { getRunsHref } from "~/lib/utils/runs-link"
 
 import { QueueActions } from "./queue-actions"
-import { QueueMiniChart } from "./queue-mini-chart"
 import { QueueStateBadge } from "./queue-state-badge"
 import { type TimePeriod, TimePeriodSelector } from "./time-period-selector"
+
+// recharts only renders in the browser: load the sparkline on demand instead of in the page bundle
+const QueueMiniChart = dynamic(
+  () => import("./queue-mini-chart").then((chart) => chart.QueueMiniChart),
+  { ssr: false, loading: () => <div className="h-8 w-16" /> },
+)
 
 type QueueCursor = { waitingJobs: number; activeJobs?: number; pressure?: number; name: string }
 type SortBy = "waitingJobs" | "activeJobs" | "pressure"
@@ -297,7 +303,7 @@ export function QueuesTable() {
           <TableBody>
             {data?.queues.map((queue) => (
               <AnimatePresence key={queue.name}>
-                <motion.tr
+                <m.tr
                   key={queue.name}
                   className="group cursor-pointer border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
                   onClick={(event) => handleRowClick(event, getQueueHref(queue.name))}
@@ -359,7 +365,7 @@ export function QueuesTable() {
                       <QueueActions queueName={queue.name} isPaused={queue.isPaused} />
                     </div>
                   </TableCell>
-                </motion.tr>
+                </m.tr>
               </AnimatePresence>
             ))}
           </TableBody>

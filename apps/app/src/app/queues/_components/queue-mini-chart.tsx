@@ -1,5 +1,7 @@
 "use client"
 
+// Only loaded through next/dynamic, so recharts stays out of the initial bundle
+// react-doctor-disable-next-line react-doctor/prefer-dynamic-import
 import { Line, LineChart, ResponsiveContainer } from "recharts"
 
 interface QueueChartData {

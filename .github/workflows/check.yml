@@ -47,6 +47,9 @@ jobs:
       - run: bun run lint
       - run: bun run test
 
+      # Any error or warning fails (`blocking: "warning"` in doctor.config.jsonc).
+      - run: bun run doctor
+
       - name: Verify client pack includes types
         working-directory: packages/client
         run: bun run pack:check

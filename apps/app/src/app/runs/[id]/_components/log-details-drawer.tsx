@@ -59,7 +59,7 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
     <Card className="overflow-hidden lg:h-[calc(100vh-12rem)]">
       <CardHeader>
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+          <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to the run">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <CardTitle className="flex items-center space-x-2">

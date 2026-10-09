@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
+// Only loaded through next/dynamic, so recharts stays out of the initial bundle
+// react-doctor-disable-next-line react-doctor/prefer-dynamic-import
 import {
   Bar,
   BarChart,

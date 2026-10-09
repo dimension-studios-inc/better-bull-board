@@ -42,7 +42,7 @@ const getDurationRows = async (
   queue: string,
   { dateFrom, dateTo, bucketSeconds }: DashboardWindow,
 ) => {
-  const bucket = sql.raw(String(bucketSeconds))
+  const bucket = sql`${bucketSeconds}`
   const result = await db.execute(sql`
     SELECT
       "bucket_epoch",
@@ -61,7 +61,7 @@ const getDurationRows = async (
         AND "created_at" >= ${utcTimestamp(dateFrom)}
         AND "created_at" < ${utcTimestamp(dateTo)}
       ORDER BY "created_at" DESC
-      LIMIT ${sql.raw(String(MAX_DURATION_SAMPLES))}
+      LIMIT ${MAX_DURATION_SAMPLES}
     ) AS "completed_runs"
     GROUP BY GROUPING SETS (("bucket_epoch"), ())
   `)

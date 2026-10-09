@@ -1,0 +1,12 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "ignore": {
+    "overrides": [
+      {
+        // shadcn/ui components: owned code, but keep upstream's structure so `shadcn add --overwrite` diffs stay readable.
+        "files": ["src/components/**"],
+        "rules": ["react-doctor/only-export-components", "react-doctor/no-locale-format-in-render"],
+      },
+    ],
+  },
+}

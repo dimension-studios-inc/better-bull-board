@@ -2,6 +2,7 @@
 
 import { TooltipProvider } from "@better-bull-board/ui/components/tooltip"
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { LazyMotion, MotionConfig } from "motion/react"
 import { useRouter } from "next/navigation"
 
 import { WebSocketProvider } from "~/hooks/use-websocket"
@@ -22,6 +23,9 @@ const getQueryClient = ({ onRedirect }: { onRedirect: (path: string) => void }) 
   return clientQueryClientSingleton
 }
 
+const loadMotionFeatures = () =>
+  import("~/lib/motion-features").then((features) => features.default)
+
 export const Providers = ({
   children,
   WEBSOCKET_URL,
@@ -37,16 +41,21 @@ export const Providers = ({
   })
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
         <WebSocketProvider
           options={{
             WEBSOCKET_URL,
           }}
         >
-          <TooltipProvider>{children}</TooltipProvider>
+          <LazyMotion features={loadMotionFeatures} strict>
+            {/* Skip transform and layout animations for users who ask the OS to reduce motion */}
+            <MotionConfig reducedMotion="user">
+              <TooltipProvider>{children}</TooltipProvider>
+            </MotionConfig>
+          </LazyMotion>
         </WebSocketProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   )
 }

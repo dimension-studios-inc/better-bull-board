@@ -1,26 +1,39 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import dynamic from "next/dynamic"
 import { useQueryState } from "nuqs"
 
 import { getDashboardSummaryApiRoute } from "~/app/api/dashboard/summary/schemas"
+import { ChartCardSkeleton } from "~/components/chart-card-skeleton"
+import { TimePeriodSelector } from "~/components/time-period-selector"
 import {
   DEFAULT_TIME_PERIOD,
   getTimePeriodLabel,
   parseAsTimePeriod,
   type TimePeriod,
-  TimePeriodSelector,
   useStoredTimePeriod,
-} from "~/components/time-period-selector"
+} from "~/lib/time-period"
 import { apiFetch } from "~/lib/utils/client"
 
 import { EnhancedStatsCards } from "./enhanced-stats-cards"
-import { QueueCountChart } from "./queue-count-chart"
-import { QueueDurationChart } from "./queue-duration-chart"
 import { QueuePerformanceTable } from "./queue-performance-table"
-import { RunGraphChart } from "./run-graph-chart"
 import { StuckRunsAlert } from "./stuck-runs-alert"
 import { TopErrorsCard } from "./top-errors-card"
+
+// recharts only renders in the browser: load the charts on demand instead of in the page bundle
+const QueueCountChart = dynamic(
+  () => import("./queue-count-chart").then((chart) => chart.QueueCountChart),
+  { ssr: false, loading: ChartCardSkeleton },
+)
+const QueueDurationChart = dynamic(
+  () => import("./queue-duration-chart").then((chart) => chart.QueueDurationChart),
+  { ssr: false, loading: ChartCardSkeleton },
+)
+const RunGraphChart = dynamic(
+  () => import("./run-graph-chart").then((chart) => chart.RunGraphChart),
+  { ssr: false, loading: ChartCardSkeleton },
+)
 
 export function EnhancedDashboard() {
   const [linkedMinutes, setLinkedMinutes] = useQueryState(

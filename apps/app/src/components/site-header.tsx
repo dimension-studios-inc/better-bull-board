@@ -6,16 +6,9 @@ import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-type PageInfo = { title: string; parent?: { title: string; href: string } }
+import { decodePathSegment } from "~/lib/utils/path"
 
-// usePathname keeps the URL encoding, and a hand-typed URL can hold a stray "%"
-const decodePathSegment = (segment: string) => {
-  try {
-    return decodeURIComponent(segment)
-  } catch {
-    return segment
-  }
-}
+type PageInfo = { title: string; parent?: { title: string; href: string } }
 
 const getPageInfo = (pathname: string): PageInfo => {
   if (pathname === "/") return { title: "Dashboard" }

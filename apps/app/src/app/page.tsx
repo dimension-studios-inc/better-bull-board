@@ -1,13 +1,14 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
-import { useEffect } from "react"
+import { Suspense, useEffect } from "react"
 import { toast } from "sonner"
 
 import { EnhancedDashboard } from "~/app/_components/enhanced-dashboard"
 import { PageContainer } from "~/components/page-container"
 
-export default function Home() {
+// The bq-runs redirect lands here with `?error=`
+function RedirectErrorToast() {
   const searchParams = useSearchParams()
   const error = searchParams.get("error")
 
@@ -23,8 +24,15 @@ export default function Home() {
     }
   }, [error])
 
+  return null
+}
+
+export default function Home() {
   return (
     <PageContainer>
+      <Suspense fallback={null}>
+        <RedirectErrorToast />
+      </Suspense>
       <EnhancedDashboard />
     </PageContainer>
   )

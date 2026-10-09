@@ -7,7 +7,8 @@ import { z } from "zod"
 import { registerApiRoute } from "~/lib/utils/client"
 
 const bulkReplayJobsInput = z.object({
-  jobs: z.array(jobMutationInputSchema),
+  // A selection is one page of the runs table, which holds up to 100 runs
+  jobs: z.array(jobMutationInputSchema).max(100),
 })
 
 export const bulkReplayJobsApiRoute = registerApiRoute({
