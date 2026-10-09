@@ -5,6 +5,5 @@
   "sortTailwindcss": {
     "stylesheet": "./packages/ui/src/styles/globals.css",
     "functions": ["cn", "cva", "clsx"]
-  },
-  "ignorePatterns": ["packages/ui/src/components", "packages/ui/src/hooks", "**/drizzle/meta"]
+  }
 }

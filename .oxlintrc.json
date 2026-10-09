@@ -19,8 +19,6 @@
       "rootDir": "apps/app"
     }
   },
-  // shadcn/ui components and hooks are generated and kept as upstream ships them.
-  "ignorePatterns": ["packages/ui/src/components", "packages/ui/src/hooks"],
   "rules": {
     // Type-aware rules (typescript-eslint `recommended-type-checked` and `strict-type-checked` picks).
     "typescript/no-misused-promises": "error",
@@ -110,6 +108,19 @@
       "rules": {
         // The automatic JSX runtime doesn't need React in scope.
         "react/react-in-jsx-scope": "off"
+      }
+    },
+    {
+      // shadcn/ui components: owned code, but keep upstream's structure so `shadcn add --overwrite` diffs stay readable.
+      "files": ["packages/ui/src/components/**"],
+      "plugins": ["react", "jsx-a11y"],
+      "rules": {
+        "eslint/no-shadow": "off",
+        "eslint/no-param-reassign": "off",
+        "react/no-unstable-nested-components": "off",
+        "jsx-a11y/prefer-tag-over-role": "off",
+        "jsx-a11y/click-events-have-key-events": "off",
+        "jsx-a11y/no-noninteractive-element-interactions": "off"
       }
     }
   ]
