@@ -2,7 +2,7 @@ import {
   listQueuesBaseInputSchema,
   listQueuesOutputSchema,
 } from "@better-bull-board/core/queue-schemas"
-import z from "zod"
+import { z } from "zod"
 
 import { registerApiRoute } from "~/lib/utils/client"
 

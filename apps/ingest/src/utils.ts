@@ -116,7 +116,7 @@ export function getChangedKeys<T extends Record<string, unknown>>(
       return !deepEqual(newVal, oldVal)
     }
     return newVal !== oldVal
-  }) as (keyof T)[]
+  })
 }
 
 export function chunk<T>(arr: T[], size: number): T[][] {

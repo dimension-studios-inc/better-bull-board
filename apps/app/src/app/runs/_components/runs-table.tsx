@@ -491,9 +491,7 @@ export function RunsTable() {
                       <div className="flex items-center">
                         <Checkbox
                           checked={selectAllMatching || selectedJobIds.has(run.jobId)}
-                          onCheckedChange={(checked) =>
-                            handleSelectJob(run.jobId, checked as boolean)
-                          }
+                          onCheckedChange={(checked) => handleSelectJob(run.jobId, checked)}
                           onClick={(e) => {
                             e.stopPropagation()
                           }}

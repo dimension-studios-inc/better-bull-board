@@ -33,13 +33,11 @@ export function apiFetch<
     const parsedBody = inputSchema?.parse(body)
     const parsedUrlParams = urlSchema?.parse(urlParams)
     const data = await fetch(
-      `${typeof apiRoute.route === "function" ? apiRoute.route(parsedUrlParams as US) : apiRoute.route}`,
+      typeof apiRoute.route === "function" ? apiRoute.route(parsedUrlParams as US) : apiRoute.route,
       {
         method: apiRoute.method,
         body: apiRoute.method === "GET" ? undefined : JSON.stringify(parsedBody),
-        headers: {
-          ...(apiRoute.method === "GET" ? {} : { "Content-Type": "application/json" }),
-        },
+        headers: apiRoute.method === "GET" ? {} : { "Content-Type": "application/json" },
         credentials: "include", // Include cookies for authentication
       },
     )

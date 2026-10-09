@@ -114,7 +114,7 @@ for (const dir of linkDirs) {
 // bun installs both libc builds of a native package: ship the runner's (musl). Filtered last, since some
 // packages require both by literal name.
 for (const file of files) {
-  if (/-gnu/.test(packageDirOf(file)?.split("node_modules/").pop() ?? "")) continue
+  if ((packageDirOf(file)?.split("node_modules/").pop() ?? "").includes("-gnu")) continue
   const src = join(base, file)
   const dest = join(outDir, file)
   mkdirSync(dirname(dest), { recursive: true })

@@ -51,7 +51,7 @@
     "typescript/no-import-type-side-effects": "error",
 
     // Core JavaScript rules.
-    "eslint/eqeqeq": "error",
+    "eslint/eqeqeq": ["error", "always", { "null": "ignore" }],
     "eslint/no-param-reassign": "error",
     "eslint/no-var": "error",
     "eslint/object-shorthand": "error",

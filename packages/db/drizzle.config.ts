@@ -1,4 +1,3 @@
-/* eslint-disable no-process-env */
 import { config as dotenvConfig } from "dotenv"
 import { defineConfig } from "drizzle-kit"
 

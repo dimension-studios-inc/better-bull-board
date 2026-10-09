@@ -24,7 +24,7 @@ export const createAuthenticatedApiRoute = <IS extends ZodType, OS extends ZodTy
   ) => Promise<output<OS>>
 }) => {
   const inputSchema = apiRoute.inputSchema as IS
-  const outputSchema = apiRoute.outputSchema as OS
+  const outputSchema = apiRoute.outputSchema
   return async (req: NextRequest, ctx: AppRouteContext) => {
     // Check authentication first
     const user = await getAuthenticatedUser()

@@ -19,5 +19,5 @@ export const runBackgroundTask = <T>(task: () => Promise<T>): Promise<T | undefi
 /** Starts no new tick and waits for the running ones to settle. */
 export const stopBackgroundTasks = async () => {
   stopped = true
-  await Promise.allSettled([...running])
+  await Promise.allSettled(running)
 }

@@ -2,7 +2,7 @@ import { db } from "@better-bull-board/db/server"
 import { utcTimestamp } from "@better-bull-board/db/utils/timestamp"
 import { logger } from "@rharkor/logger"
 import { sql } from "drizzle-orm"
-import cron from "node-cron"
+import { schedule } from "node-cron"
 
 import { runBackgroundTask } from "~/lib/background-tasks"
 import { withLock } from "~/lib/distributed-lock"
@@ -60,7 +60,7 @@ export const refreshRecentJobTags = async () => {
 }
 
 export const startJobTagsRefresh = () => {
-  cron.schedule("*/30 * * * *", () => {
+  schedule("*/30 * * * *", () => {
     runBackgroundTask(refreshRecentJobTags).catch((error) => {
       logger.error("Failed to refresh job tags", { error })
     })
