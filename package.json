@@ -17,7 +17,8 @@
     "build:app": "turbo run build --filter=@better-bull-board/app --env-mode=loose",
     "build:ingest": "turbo run build --filter=@better-bull-board/ingest --env-mode=loose",
     "release:client": "cd packages/client && semantic-release",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "doctor": "react-doctor --yes"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
@@ -33,6 +34,7 @@
     "oxfmt": "0.70.0",
     "oxlint": "1.85.0",
     "oxlint-tsgolint": "7.0.2003",
+    "react-doctor": "0.9.14",
     "semantic-release": "25.0.9",
     "semantic-release-monorepo": "8.0.2",
     "turbo": "2.11.4",
