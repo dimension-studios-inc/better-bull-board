@@ -1,9 +1,19 @@
 import { z } from "zod"
 
+const schedulerCursorSchema = z.object({
+  // Epoch ms; null for schedulers without a next run
+  nextRunAt: z.number().nullable(),
+  queue: z.string(),
+  key: z.string(),
+})
+
 export const listSchedulersInputSchema = z.object({
   queue: z.string().optional(),
   search: z.string().optional(),
   sortDirection: z.enum(["asc", "desc"]).optional(),
+  cursor: schedulerCursorSchema.nullish(),
+  cursorDirection: z.enum(["next", "prev"]).optional(),
+  limit: z.number().min(1).max(100).optional(),
 })
 
 export const listSchedulersOutputSchema = z.object({
@@ -30,4 +40,7 @@ export const listSchedulersOutputSchema = z.object({
         .nullable(),
     }),
   ),
+  nextCursor: schedulerCursorSchema.nullable(),
+  prevCursor: schedulerCursorSchema.nullable(),
+  total: z.number(),
 })

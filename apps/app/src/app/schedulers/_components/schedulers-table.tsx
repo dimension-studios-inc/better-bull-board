@@ -1,16 +1,17 @@
 "use client"
 
 import { Badge } from "@better-bull-board/ui/components/badge"
+import { Button } from "@better-bull-board/ui/components/button"
 import { Input } from "@better-bull-board/ui/components/input"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@better-bull-board/ui/components/table"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
 import { formatDistanceToNowStrict } from "date-fns"
-import { ArrowDown, ArrowUp, CircleAlert, Search } from "lucide-react"
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, CircleAlert, Search } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { parseAsString, useQueryStates } from "nuqs"
+import { createParser, parseAsString, useQueryStates } from "nuqs"
 import { useState } from "react"
 import type { output } from "zod"
 import { getSchedulersTableApiRoute } from "~/app/api/schedulers/table/schemas"
@@ -24,13 +25,26 @@ import { formatUtcDateTime } from "~/lib/utils/date"
 import { getRunsHref } from "~/lib/utils/runs-link"
 import { describeSchedule } from "~/lib/utils/schedule"
 
-type Scheduler = output<typeof getSchedulersTableApiRoute.outputSchema>["schedulers"][number]
+type SchedulersPage = output<typeof getSchedulersTableApiRoute.outputSchema>
+type Scheduler = SchedulersPage["schedulers"][number]
+type SchedulerCursor = NonNullable<SchedulersPage["nextCursor"]>
 
 // Missed runs only show up when time passes, not when data changes
 const REFETCH_INTERVAL_MS = 30_000
 
 const isInteractiveRowTarget = (target: EventTarget | null) =>
   target instanceof Element && !!target.closest("a,button,input,select,textarea")
+
+const parseAsCursor = createParser<SchedulerCursor>({
+  parse: (value) => {
+    try {
+      return JSON.parse(Buffer.from(value, "base64").toString("utf-8"))
+    } catch {
+      return null
+    }
+  },
+  serialize: (value) => Buffer.from(JSON.stringify(value)).toString("base64"),
+})
 
 function Timestamp({ value, compact = false }: { value: Date; compact?: boolean }) {
   const absolute = formatUtcDateTime(value)
@@ -87,11 +101,20 @@ export function SchedulersTable() {
     queue: parseAsString.withDefault("all"),
     search: parseAsString.withDefault(""),
     sortDirection: parseAsString.withDefault("asc"),
+    cursor: parseAsCursor,
+    cursorDirection: parseAsString.withDefault("next"),
   })
 
   const sortDirection = urlState.sortDirection === "desc" ? "desc" : "asc"
+  const cursorDirection = urlState.cursorDirection === "prev" ? "prev" : "next"
   const debouncedSearch = useDebounce(urlState.search, 300)
-  const options = { queue: urlState.queue, search: debouncedSearch, sortDirection } as const
+  const options = {
+    queue: urlState.queue,
+    search: debouncedSearch,
+    sortDirection,
+    cursor: urlState.cursor,
+    cursorDirection,
+  } as const
 
   const { data, isLoading } = useQuery({
     queryKey: ["schedulers/table", options],
@@ -114,8 +137,23 @@ export function SchedulersTable() {
     router.push(getSchedulerRunsHref(scheduler))
   }
 
+  const handleNextPage = () => {
+    if (data?.nextCursor) {
+      setUrlState({ cursor: data.nextCursor, cursorDirection: "next" })
+    }
+  }
+
+  const handlePrevPage = () => {
+    if (data?.prevCursor) {
+      setUrlState({ cursor: data.prevCursor, cursorDirection: "prev" })
+    } else {
+      setUrlState({ cursor: null, cursorDirection: "next" })
+    }
+  }
+
+  // Filters and sort reset the pagination
   const handleSort = () => {
-    setUrlState({ sortDirection: sortDirection === "asc" ? "desc" : "asc" })
+    setUrlState({ cursor: null, cursorDirection: "next", sortDirection: sortDirection === "asc" ? "desc" : "asc" })
   }
 
   const sortIcon = sortDirection === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />
@@ -129,7 +167,7 @@ export function SchedulersTable() {
       <div className="flex flex-wrap items-center gap-2">
         <QueueSelector
           value={urlState.queue}
-          onValueChange={(queue) => setUrlState({ queue })}
+          onValueChange={(queue) => setUrlState({ cursor: null, cursorDirection: "next", queue })}
           search={queueSearch}
           setSearch={setQueueSearch}
           open={queueOpen}
@@ -145,15 +183,35 @@ export function SchedulersTable() {
           <Input
             placeholder="Search by scheduler or queue..."
             value={urlState.search}
-            onChange={(e) => setUrlState({ search: e.target.value })}
+            onChange={(e) => setUrlState({ cursor: null, cursorDirection: "next", search: e.target.value })}
             className="pl-10"
           />
         </div>
-        {data && (
-          <span className="text-sm text-muted-foreground sm:ml-auto">
-            {schedulers.length} {schedulers.length === 1 ? "scheduler" : "schedulers"}
-          </span>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {data && (
+            <span className="text-sm text-muted-foreground">
+              {data.total} {data.total === 1 ? "scheduler" : "schedulers"}
+            </span>
+          )}
+          <Button
+            variant="outline"
+            onClick={handlePrevPage}
+            disabled={isLoading || !data?.prevCursor}
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Previous</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleNextPage}
+            disabled={isLoading || !data?.nextCursor}
+            aria-label="Next page"
+          >
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Mobile: card list */}
