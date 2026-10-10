@@ -113,15 +113,7 @@ export function QueueActions({ queueName, isPaused, onDeleted }: QueueActionsPro
 
       {/* Delete Button */}
       <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
-        <PopoverTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            />
-          }
-        >
+        <PopoverTrigger render={<Button variant="destructive" size="icon-sm" />}>
           <Trash2 className="size-4" />
         </PopoverTrigger>
         <PopoverContent className="w-80">

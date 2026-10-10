@@ -48,7 +48,6 @@ function CopyErrorButton({ errorMessage }: { errorMessage: string }) {
       variant="ghost"
       size="icon-xs"
       aria-label={copied ? "Error message copied" : "Copy error message"}
-      className="text-muted-foreground hover:text-foreground"
       onClick={() => void handleCopy()}
     >
       {copied ? <Check className="text-success" /> : <Copy />}
@@ -88,9 +87,9 @@ export function RunErrorPreview({
         side="bottom"
         align="end"
         sideOffset={6}
-        className="w-[min(36rem,calc(100vw-2rem))] gap-0 p-0"
+        className="w-xl max-w-(--available-width)"
       >
-        <div className="flex items-center gap-2 border-b px-3 py-2">
+        <div className="flex items-center gap-2 pb-2">
           <CircleAlert className="size-4 shrink-0 text-destructive" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Error</p>
@@ -109,11 +108,11 @@ export function RunErrorPreview({
           <CopyErrorButton errorMessage={errorMessage} />
         </div>
         <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-72">
-          <pre className="bg-destructive/5 px-3 py-2.5 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-destructive dark:bg-destructive/10">
+          <pre className="rounded-md bg-destructive/5 px-3 py-2.5 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-destructive dark:bg-destructive/10">
             {errorMessage}
           </pre>
         </ScrollArea>
-        <div className="flex justify-end border-t px-2 py-1.5">
+        <div className="flex justify-end pt-2">
           <Button variant="ghost" size="xs" nativeButton={false} render={<Link href={runPath} />}>
             View run
             <ArrowRight data-icon="inline-end" />

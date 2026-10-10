@@ -2,6 +2,7 @@
 
 import type { jobRunsTable } from "@better-bull-board/db"
 import { Badge } from "@better-bull-board/ui/components/badge"
+import { Button } from "@better-bull-board/ui/components/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
 import {
   Collapsible,
@@ -96,20 +97,22 @@ const JsonCollapsible = ({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex w-full items-center space-x-2 rounded p-2 text-left hover:bg-muted/50">
+      <CollapsibleTrigger render={<Button variant="ghost" className="w-full justify-start" />}>
         {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         {icon}
-        <span className="text-sm font-medium">{title}</span>
+        <span>{title}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2">
-        <ScrollArea className="rounded border">
-          <div
-            className="p-3 text-xs"
-            // Shiki generates safe HTML
-            dangerouslySetInnerHTML={{ __html: formattedData }}
-          />
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        <div className="overflow-hidden rounded border">
+          <ScrollArea>
+            <div
+              className="p-3 text-xs"
+              // Shiki generates safe HTML
+              dangerouslySetInnerHTML={{ __html: formattedData }}
+            />
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
       </CollapsibleContent>
     </Collapsible>
   )
@@ -264,9 +267,11 @@ const RunError = ({ run }: { run: TRun }) => {
         {run.errorStack && (
           <div>
             <div className="mb-1 text-xs text-muted-foreground">Stack Trace</div>
-            <ScrollArea className="rounded border border-destructive/20 bg-destructive/5 p-2 font-mono text-xs dark:bg-destructive/10 [&>[data-slot=scroll-area-viewport]]:max-h-32">
-              <pre className="wrap-break-word whitespace-pre-wrap">{run.errorStack}</pre>
-            </ScrollArea>
+            <div className="rounded border border-destructive/20 bg-destructive/5 p-2 font-mono text-xs dark:bg-destructive/10">
+              <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-32">
+                <pre className="wrap-break-word whitespace-pre-wrap">{run.errorStack}</pre>
+              </ScrollArea>
+            </div>
           </div>
         )}
       </div>
@@ -276,14 +281,16 @@ const RunError = ({ run }: { run: TRun }) => {
 
 export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
   return (
-    <Card className="lg:h-[calc(100vh-12rem)]">
+    <Card className="lg:h-(--run-panel-height-lg)">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <RunStatusIcon status={run.status} className="size-4" />
-          <span>Run Details</span>
+        <CardTitle>
+          <span className="flex items-center gap-2">
+            <RunStatusIcon status={run.status} className="size-4" />
+            Run Details
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="overflow-hidden pb-6 lg:h-full">
+      <CardContent className="overflow-hidden lg:h-full">
         <ScrollArea className="lg:h-full [&>[data-slot=scroll-area-viewport]>div]:block!">
           <div className="space-y-6">
             {/* Status */}

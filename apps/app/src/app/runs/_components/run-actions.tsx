@@ -64,15 +64,7 @@ export function RunActions({ jobId, queueName, status }: RunActionsProps) {
       {/* Cancel Button - only show for active, waiting, or delayed jobs */}
       {canCancel && (
         <Popover open={cancelPopoverOpen} onOpenChange={setCancelPopoverOpen}>
-          <PopoverTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              />
-            }
-          >
+          <PopoverTrigger render={<Button variant="destructive" size="icon-sm" />}>
             <X className="size-4" />
           </PopoverTrigger>
           <PopoverContent className="w-80">

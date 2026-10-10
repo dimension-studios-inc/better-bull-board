@@ -56,19 +56,21 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
   const relativeTime = Math.max(0, log.ts - baseTime)
 
   return (
-    <Card className="overflow-hidden lg:h-[calc(100vh-12rem)]">
+    <Card className="overflow-hidden lg:h-(--run-panel-height-lg)">
       <CardHeader>
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to the run">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <CardTitle className="flex items-center space-x-2">
-            <LogLevelIcon level={log.level} />
-            <span>Log Details</span>
+          <CardTitle>
+            <span className="flex items-center gap-2">
+              <LogLevelIcon level={log.level} />
+              Log Details
+            </span>
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="overflow-hidden pb-6 lg:h-full">
+      <CardContent className="overflow-hidden lg:h-full">
         <ScrollArea className="lg:h-full [&>[data-slot=scroll-area-viewport]>div]:block!">
           <div className="space-y-6">
             {/* Log Level */}

@@ -1,6 +1,6 @@
 import { MCP_WRITE_SCOPE } from "@better-bull-board/mcp/scopes"
 import { Button } from "@better-bull-board/ui/components/button"
-import { Card } from "@better-bull-board/ui/components/card"
+import { Card, CardContent } from "@better-bull-board/ui/components/card"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
@@ -44,9 +44,9 @@ export default async function McpAuthorizePage({
   const requestsWrite = requestedScopes.includes(MCP_WRITE_SCOPE)
 
   return (
-    <div className="min-h-dvh bg-background p-4 sm:p-6">
-      <div className="mx-auto flex min-h-[calc(100dvh-2rem)] max-w-lg items-center sm:min-h-[calc(100dvh-3rem)]">
-        <Card className="w-full p-6">
+    <div className="flex min-h-dvh items-center justify-center bg-background p-4 sm:p-6">
+      <Card className="w-full max-w-lg">
+        <CardContent>
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold">Authorize MCP access</h1>
             <p className="text-sm text-muted-foreground">
@@ -79,8 +79,8 @@ export default async function McpAuthorizePage({
               Deny
             </Button>
           </form>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

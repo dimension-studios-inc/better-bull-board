@@ -62,9 +62,9 @@ function StatCards({
   return (
     <div className={cn("grid gap-3 sm:grid-cols-1 sm:gap-4", className)}>
       {cards.map((card) => (
-        <Card key={card.title} className="relative max-sm:gap-1 max-sm:py-3">
-          <CardHeader className="max-sm:px-3">
-            <CardDescription className="max-sm:text-xs">
+        <Card key={card.title} className="relative">
+          <CardHeader>
+            <CardDescription>
               <span className="sm:hidden">{card.shortTitle ?? card.title}</span>
               <span className="max-sm:hidden">{card.title}</span>
             </CardDescription>

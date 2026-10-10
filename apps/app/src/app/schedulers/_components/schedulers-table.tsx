@@ -2,7 +2,11 @@
 
 import { Badge } from "@better-bull-board/ui/components/badge"
 import { Button } from "@better-bull-board/ui/components/button"
-import { Input } from "@better-bull-board/ui/components/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@better-bull-board/ui/components/input-group"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import {
   Table,
@@ -210,19 +214,19 @@ export function SchedulersTable() {
           setOpen={setQueueOpen}
           placeholder="All Queues"
           className="w-full sm:w-56"
-          popoverContentClassName="w-80"
           includeAllOption={true}
           allOptionLabel="All Queues"
         />
-        <div className="relative w-full sm:w-auto sm:max-w-[350px] sm:flex-1">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <InputGroup className="sm:w-auto sm:max-w-87.5 sm:flex-1">
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+          <InputGroupInput
             placeholder="Search by scheduler or queue..."
             value={urlState.search}
             onChange={(e) => void setUrlState({ ...firstPage(), search: e.target.value })}
-            className="pl-10"
           />
-        </div>
+        </InputGroup>
         <div className="ml-auto flex items-center gap-2">
           {data && (
             <span className="text-sm text-muted-foreground">
@@ -300,63 +304,66 @@ export function SchedulersTable() {
       </div>
 
       {/* Desktop: table */}
-      <ScrollArea className="hidden rounded-lg border md:block">
-        <Table className="w-full table-fixed">
-          <TableHeader className="z-10">
-            <TableRow>
-              <TableHead style={{ width: "200px" }}>Queue</TableHead>
-              <TableHead style={{ width: "220px" }}>Scheduler</TableHead>
-              <TableHead style={{ width: "260px" }}>Schedule</TableHead>
-              <TableHead style={{ width: "240px" }}>
-                <button
-                  type="button"
-                  className="flex items-center gap-1 font-medium"
-                  onClick={handleSort}
-                >
-                  Next Run
-                  {sortIcon}
-                </button>
-              </TableHead>
-              <TableHead style={{ width: "220px" }}>Last Run</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {schedulers.map((scheduler) => (
-              <TableRow
-                key={scheduler.id}
-                className={cn("cursor-pointer", scheduler.isMissed && "bg-destructive/5")}
-                onClick={(event) => handleRowClick(event, scheduler)}
-              >
-                <TableCell>
-                  <TruncatedTooltip value={scheduler.queue} />
-                </TableCell>
-                <TableCell>
-                  <TruncatedTooltip value={scheduler.key} className="font-medium" />
-                  {scheduler.name !== scheduler.key && (
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {scheduler.name}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <span className="block truncate">{describeSchedule(scheduler)}</span>
-                  <span className="block truncate font-mono text-xs text-muted-foreground">
-                    {scheduler.pattern ?? (scheduler.every !== null ? `${scheduler.every} ms` : "")}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <NextRun scheduler={scheduler} fetchedAt={dataUpdatedAt} />
-                </TableCell>
-                <TableCell>
-                  <LastRun scheduler={scheduler} />
-                </TableCell>
+      <div className="hidden overflow-hidden rounded-lg border md:block">
+        <ScrollArea>
+          <Table className="w-full table-fixed">
+            <TableHeader className="z-10">
+              <TableRow>
+                <TableHead className="w-50">Queue</TableHead>
+                <TableHead className="w-55">Scheduler</TableHead>
+                <TableHead className="w-65">Schedule</TableHead>
+                <TableHead className="w-60">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 font-medium"
+                    onClick={handleSort}
+                  >
+                    Next Run
+                    {sortIcon}
+                  </button>
+                </TableHead>
+                <TableHead className="w-55">Last Run</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {emptyState}
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+            </TableHeader>
+            <TableBody>
+              {schedulers.map((scheduler) => (
+                <TableRow
+                  key={scheduler.id}
+                  className="cursor-pointer"
+                  onClick={(event) => handleRowClick(event, scheduler)}
+                >
+                  <TableCell>
+                    <TruncatedTooltip value={scheduler.queue} />
+                  </TableCell>
+                  <TableCell>
+                    <TruncatedTooltip value={scheduler.key} className="font-medium" />
+                    {scheduler.name !== scheduler.key && (
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {scheduler.name}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="block truncate">{describeSchedule(scheduler)}</span>
+                    <span className="block truncate font-mono text-xs text-muted-foreground">
+                      {scheduler.pattern ??
+                        (scheduler.every !== null ? `${scheduler.every} ms` : "")}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <NextRun scheduler={scheduler} fetchedAt={dataUpdatedAt} />
+                  </TableCell>
+                  <TableCell>
+                    <LastRun scheduler={scheduler} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {emptyState}
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
     </div>
   )
 }

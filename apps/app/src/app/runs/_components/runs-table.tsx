@@ -63,10 +63,6 @@ function RunTimestamp({ value }: RunTimestampProps) {
   )
 }
 
-// The shadcn Checkbox shows a check for the indeterminate state too: show a dash on a filled box instead
-const INDETERMINATE_CHECKBOX_CLASS_NAME =
-  "data-indeterminate:border-primary data-indeterminate:bg-primary data-indeterminate:text-primary-foreground data-indeterminate:[&_svg]:hidden data-indeterminate:before:h-0.5 data-indeterminate:before:w-2 data-indeterminate:before:rounded-full data-indeterminate:before:bg-current"
-
 const isInteractiveRowTarget = (target: EventTarget | null) =>
   target instanceof Element && !!target.closest("a,button,input,select,textarea,[role='checkbox']")
 
@@ -112,7 +108,7 @@ function SelectionBanner({
             All {formatRunCount(matchingSelection.counts.total)} matching these filters are
             selected.
           </span>
-          <Button variant="link" size="sm" className="h-auto p-0" onClick={onClearSelection}>
+          <Button variant="link" size="sm" className="h-auto" onClick={onClearSelection}>
             Clear selection
           </Button>
         </>
@@ -123,7 +119,7 @@ function SelectionBanner({
             <span className="text-muted-foreground">Counting matching runs...</span>
           ) : (
             matchingTotal > pageCount && (
-              <Button variant="link" size="sm" className="h-auto p-0" onClick={onSelectAllMatching}>
+              <Button variant="link" size="sm" className="h-auto" onClick={onSelectAllMatching}>
                 Select all {formatRunCount(matchingTotal)} matching these filters
               </Button>
             )
@@ -180,10 +176,10 @@ function RunTableRow({
             />
           </div>
         </TableCell>
-        <TableCell className="font-mono text-xs">
+        <TableCell>
           <Link
             href={runPath}
-            className="block rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+            className="block rounded-sm font-mono text-xs underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
           >
             <TruncatedTooltip value={run.jobId} />
           </Link>
@@ -199,12 +195,10 @@ function RunTableRow({
           </span>
         </TableCell>
         <TableCell>{getRunDuration(run) ?? "-"}</TableCell>
-        <TableCell className="truncate">
+        <TableCell>
           <RunTimestamp value={run.createdAt} />
         </TableCell>
-        <TableCell className="truncate">
-          {run.finishedAt ? <RunTimestamp value={run.finishedAt} /> : "-"}
-        </TableCell>
+        <TableCell>{run.finishedAt ? <RunTimestamp value={run.finishedAt} /> : "-"}</TableCell>
         <TableCell>
           {run.status === "failed" && run.errorMessage ? (
             <RunErrorPreview
@@ -463,7 +457,6 @@ export function RunsTable() {
               checked={isAllSelected}
               indeterminate={isPartiallySelected}
               onCheckedChange={handleSelectAll}
-              className={INDETERMINATE_CHECKBOX_CLASS_NAME}
               aria-label="Select all jobs"
             />
             {getSelectedCountLabel(matchingSelection?.counts.total, selectedJobIds.size)}
@@ -508,57 +501,58 @@ export function RunsTable() {
       </div>
 
       {/* Desktop: table */}
-      <ScrollArea className="hidden rounded-lg border md:block">
-        <Table className="w-full table-fixed">
-          <TableHeader className="z-10">
-            <TableRow>
-              <TableHead style={{ width: "50px" }}>
-                <div className="flex items-center">
-                  <Checkbox
-                    checked={isAllSelected}
-                    indeterminate={isPartiallySelected}
-                    onCheckedChange={handleSelectAll}
-                    className={INDETERMINATE_CHECKBOX_CLASS_NAME}
-                    aria-label="Select all jobs"
-                  />
-                </div>
-              </TableHead>
-              <TableHead style={{ width: "120px" }}>Job ID</TableHead>
-              <TableHead style={{ width: "260px" }}>Queue</TableHead>
-              <TableHead style={{ width: "180px" }}>Tags</TableHead>
-              <TableHead style={{ width: "120px" }}>Status</TableHead>
-              <TableHead style={{ width: "120px" }}>
-                <button
-                  type="button"
-                  className="flex items-center gap-1 font-medium"
-                  onClick={handleDurationSort}
-                >
-                  Duration
-                  <DurationSortIcon filters={filters} />
-                </button>
-              </TableHead>
-              <TableHead style={{ width: "170px" }}>Created</TableHead>
-              <TableHead style={{ width: "170px" }}>Finished</TableHead>
-              <TableHead style={{ width: "240px" }}>Error</TableHead>
-              <TableHead style={{ width: "90px" }}>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {jobs.map((run) => (
-              <RunTableRow
-                key={`${run.id}-${run.createdAt.getTime()}`}
-                run={run}
-                isSelected={isRunSelected(run.jobId)}
-                stuckRun={stuckRunsById.get(run.id)}
-                onSelectedChange={(checked) => handleSelectJob(run.jobId, checked)}
-                onRowClick={handleRowClick}
-                onTagClick={handleTagClick}
-              />
-            ))}
-          </TableBody>
-        </Table>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      <div className="hidden overflow-hidden rounded-lg border md:block">
+        <ScrollArea>
+          <Table className="w-full table-fixed">
+            <TableHeader className="z-10">
+              <TableRow>
+                <TableHead className="w-12.5">
+                  <div className="flex items-center">
+                    <Checkbox
+                      checked={isAllSelected}
+                      indeterminate={isPartiallySelected}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all jobs"
+                    />
+                  </div>
+                </TableHead>
+                <TableHead className="w-30">Job ID</TableHead>
+                <TableHead className="w-65">Queue</TableHead>
+                <TableHead className="w-45">Tags</TableHead>
+                <TableHead className="w-30">Status</TableHead>
+                <TableHead className="w-30">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 font-medium"
+                    onClick={handleDurationSort}
+                  >
+                    Duration
+                    <DurationSortIcon filters={filters} />
+                  </button>
+                </TableHead>
+                <TableHead className="w-42.5">Created</TableHead>
+                <TableHead className="w-42.5">Finished</TableHead>
+                <TableHead className="w-60">Error</TableHead>
+                <TableHead className="w-22.5">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {jobs.map((run) => (
+                <RunTableRow
+                  key={`${run.id}-${run.createdAt.getTime()}`}
+                  run={run}
+                  isSelected={isRunSelected(run.jobId)}
+                  stuckRun={stuckRunsById.get(run.id)}
+                  onSelectedChange={(checked) => handleSelectJob(run.jobId, checked)}
+                  onRowClick={handleRowClick}
+                  onTagClick={handleTagClick}
+                />
+              ))}
+            </TableBody>
+          </Table>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
     </div>
   )
 }

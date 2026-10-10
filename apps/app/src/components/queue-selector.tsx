@@ -22,7 +22,6 @@ interface QueueSelectorProps {
   setOpen: (open: boolean) => void
   placeholder?: string
   className?: string
-  popoverContentClassName?: string
   renderValue?: (value: string) => string
   includeAllOption?: boolean
   allOptionLabel?: string
@@ -39,7 +38,6 @@ export function QueueSelector({
   setOpen,
   placeholder = "Select a queue...",
   className,
-  popoverContentClassName,
   renderValue,
   includeAllOption = false,
   allOptionLabel = "All Queues",
@@ -131,7 +129,6 @@ export function QueueSelector({
       isFetching={isLoading}
       hasNextPage={hasNextPage}
       loaderRef={loaderRef}
-      popoverContentClassName={popoverContentClassName}
     />
   )
 }

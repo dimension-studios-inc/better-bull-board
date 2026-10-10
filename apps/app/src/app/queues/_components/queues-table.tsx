@@ -1,7 +1,11 @@
 "use client"
 
 import { Button } from "@better-bull-board/ui/components/button"
-import { Input } from "@better-bull-board/ui/components/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@better-bull-board/ui/components/input-group"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import {
@@ -197,15 +201,16 @@ export function QueuesTable() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <TimePeriodSelector value={options.timePeriod} onChange={handleTimePeriodChange} />
-        <div className="relative order-1 w-full sm:order-none sm:w-auto sm:max-w-[350px] sm:flex-1">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-          <Input
+        <InputGroup className="order-1 sm:order-none sm:w-auto sm:max-w-87.5 sm:flex-1">
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+          <InputGroupInput
             placeholder="Search by queue name..."
             value={options.search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10"
           />
-        </div>
+        </InputGroup>
         {options.search && (isLoading || selectedQueueStats) && (
           <div className="order-1 flex h-8 items-center gap-3 rounded-lg border px-2.5 text-xs text-muted-foreground sm:order-none">
             {isLoading ? (
@@ -249,129 +254,131 @@ export function QueuesTable() {
           </Button>
         </div>
       </div>
-      <ScrollArea className="rounded-lg border">
-        <Table className="w-full table-fixed">
-          <TableHeader className="z-10">
-            <TableRow>
-              <TableHead style={{ width: "200px" }}>Queue Name</TableHead>
-              <TableHead style={{ width: "120px" }}>Status</TableHead>
-              <TableHead style={{ width: "120px" }}>Scheduler</TableHead>
-              {sortableQueueColumns.map((column) => (
-                <TableHead key={column.key} style={{ width: "120px" }}>
-                  <button
-                    type="button"
-                    className="flex items-center gap-1 font-medium"
-                    onClick={() => handleSort(column.key)}
-                  >
-                    {column.label}
-                    {getSortIcon(column.key)}
-                  </button>
+      <div className="overflow-hidden rounded-lg border">
+        <ScrollArea>
+          <Table className="w-full table-fixed">
+            <TableHeader className="z-10">
+              <TableRow>
+                <TableHead className="w-50">Queue Name</TableHead>
+                <TableHead className="w-30">Status</TableHead>
+                <TableHead className="w-30">Scheduler</TableHead>
+                {sortableQueueColumns.map((column) => (
+                  <TableHead key={column.key} className="w-30">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 font-medium"
+                      onClick={() => handleSort(column.key)}
+                    >
+                      {column.label}
+                      {getSortIcon(column.key)}
+                    </button>
+                  </TableHead>
+                ))}
+                <TableHead className="w-60">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 font-medium"
+                      onClick={() => handleSort("pressure")}
+                    >
+                      Pressure
+                      {getSortIcon("pressure")}
+                    </button>
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <button
+                            type="button"
+                            className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                            aria-label="What pressure means"
+                          />
+                        }
+                      >
+                        <Info className="size-3.5" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-64 text-left">
+                        {PRESSURE_DESCRIPTION}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </TableHead>
-              ))}
-              <TableHead style={{ width: "240px" }}>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    className="flex items-center gap-1 font-medium"
-                    onClick={() => handleSort("pressure")}
+                <TableHead className="w-17.5">Trend</TableHead>
+                <TableHead className="w-22.5"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data?.queues.map((queue) => (
+                <AnimatePresence key={queue.name}>
+                  <m.tr
+                    key={queue.name}
+                    className="group cursor-pointer border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                    onClick={(event) => handleRowClick(event, getQueueHref(queue.name))}
+                    onAuxClick={(event) => handleRowAuxClick(event, getQueueHref(queue.name))}
+                    initial={{ opacity: 0, y: -100 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    layoutId={queue.name}
                   >
-                    Pressure
-                    {getSortIcon("pressure")}
-                  </button>
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <button
-                          type="button"
-                          className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                          aria-label="What pressure means"
-                        />
-                      }
-                    >
-                      <Info className="size-3.5" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-64 text-left">
-                      {PRESSURE_DESCRIPTION}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </TableHead>
-              <TableHead style={{ width: "70px" }}>Trend</TableHead>
-              <TableHead style={{ width: "90px" }}></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.queues.map((queue) => (
-              <AnimatePresence key={queue.name}>
-                <m.tr
-                  key={queue.name}
-                  className="group cursor-pointer border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                  onClick={(event) => handleRowClick(event, getQueueHref(queue.name))}
-                  onAuxClick={(event) => handleRowAuxClick(event, getQueueHref(queue.name))}
-                  initial={{ opacity: 0, y: -100 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                  layoutId={queue.name}
-                >
-                  <TableCell className="truncate font-medium">
-                    <Link
-                      href={getQueueHref(queue.name)}
-                      className="rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
-                    >
-                      {queue.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <QueueStateBadge isPaused={queue.isPaused} />
-                  </TableCell>
-                  <TableCell>
-                    <span className="block truncate font-mono">
-                      {queue.patterns.length
-                        ? queue.patterns.join(", ")
-                        : queue.everys.length
-                          ? queue.everys.map(
-                              (every) =>
-                                `Every ${formatDuration({
-                                  seconds: every / 1000,
-                                })}`,
-                            )
-                          : undefined}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <RunCountLink
-                      count={queue.waitingJobs}
-                      href={getRunsHref({ queue: queue.name, status: "waiting" })}
-                      label={`View waiting runs of ${queue.name}`}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <RunCountLink
-                      count={queue.activeJobs}
-                      href={getRunsHref({ queue: queue.name, status: "active" })}
-                      label={`View active runs of ${queue.name}`}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <span className="truncate font-mono">
-                      {smartFormatDuration(queue.pressure)}
-                    </span>
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <QueueMiniChart data={queue.chartData} />
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="transition-opacity duration-200 focus-within:opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100">
-                      <QueueActions queueName={queue.name} isPaused={queue.isPaused} />
-                    </div>
-                  </TableCell>
-                </m.tr>
-              </AnimatePresence>
-            ))}
-          </TableBody>
-        </Table>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+                    <TableCell>
+                      <Link
+                        href={getQueueHref(queue.name)}
+                        className="block truncate rounded-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+                      >
+                        {queue.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <QueueStateBadge isPaused={queue.isPaused} />
+                    </TableCell>
+                    <TableCell>
+                      <span className="block truncate font-mono">
+                        {queue.patterns.length
+                          ? queue.patterns.join(", ")
+                          : queue.everys.length
+                            ? queue.everys.map(
+                                (every) =>
+                                  `Every ${formatDuration({
+                                    seconds: every / 1000,
+                                  })}`,
+                              )
+                            : undefined}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <RunCountLink
+                        count={queue.waitingJobs}
+                        href={getRunsHref({ queue: queue.name, status: "waiting" })}
+                        label={`View waiting runs of ${queue.name}`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <RunCountLink
+                        count={queue.activeJobs}
+                        href={getRunsHref({ queue: queue.name, status: "active" })}
+                        label={`View active runs of ${queue.name}`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <span className="truncate font-mono">
+                        {smartFormatDuration(queue.pressure)}
+                      </span>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <QueueMiniChart data={queue.chartData} />
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <div className="transition-opacity duration-200 focus-within:opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100">
+                        <QueueActions queueName={queue.name} isPaused={queue.isPaused} />
+                      </div>
+                    </TableCell>
+                  </m.tr>
+                </AnimatePresence>
+              ))}
+            </TableBody>
+          </Table>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
     </div>
   )
 }

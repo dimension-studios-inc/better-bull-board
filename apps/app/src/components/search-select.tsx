@@ -39,7 +39,6 @@ interface SearchSelectProps {
   hasNextPage?: boolean
   loaderRef?: React.Ref<HTMLDivElement>
   className?: string
-  popoverContentClassName?: string
 }
 
 /**
@@ -62,7 +61,6 @@ export function SearchSelect({
   hasNextPage,
   loaderRef,
   className,
-  popoverContentClassName,
 }: SearchSelectProps) {
   // The selected value may be missing from the loaded (paginated / searched) options
   const selectedOption =
@@ -86,18 +84,14 @@ export function SearchSelect({
     >
       <ComboboxTrigger
         render={
-          <Button
-            id={id}
-            variant="outline"
-            className={cn("w-[200px] justify-between font-normal", className)}
-          />
+          <Button id={id} variant="outline" className={cn("w-50 justify-between", className)} />
         }
       >
-        <span className={cn("truncate", !value && "text-muted-foreground")}>
+        <span className={cn("truncate font-normal", !value && "text-muted-foreground")}>
           {value ? renderValue(value) : placeholder}
         </span>
       </ComboboxTrigger>
-      <ComboboxContent className={popoverContentClassName}>
+      <ComboboxContent>
         <ComboboxInput placeholder={searchPlaceholder} showTrigger={false} />
         <ComboboxEmpty>{isFetching ? "Loading..." : noOptionsMessage}</ComboboxEmpty>
         <ComboboxList>

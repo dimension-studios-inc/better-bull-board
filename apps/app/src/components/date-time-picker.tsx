@@ -53,31 +53,27 @@ export function DateTimePicker({
           <Button
             variant="outline"
             aria-label={ariaLabel}
-            className={cn(
-              "justify-start font-normal",
-              !value && "text-muted-foreground",
-              className,
-            )}
+            className={cn("justify-start", className)}
           />
         }
       >
         <CalendarDays />
         {date ? (
-          <span className="truncate">
+          <span className="truncate font-normal">
             {datePart} {time} <span className="text-muted-foreground">UTC</span>
           </span>
         ) : (
-          placeholder
+          <span className="font-normal text-muted-foreground">{placeholder}</span>
         )}
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto" align="start">
         <Calendar
           mode="single"
           selected={date}
           defaultMonth={date}
           onSelect={(day) => onChange(day ? `${format(day, DATE_FORMAT)}T${time}` : "")}
         />
-        <div className="flex items-center gap-2 border-t p-3">
+        <div className="flex items-center gap-2 border-t pt-2.5">
           <Input
             type="time"
             step={1}
@@ -85,7 +81,7 @@ export function DateTimePicker({
             disabled={!date}
             onChange={(event) => onChange(`${datePart}T${event.target.value || defaultTime}`)}
             aria-label={ariaLabel ? `${ariaLabel} time (UTC)` : "Time (UTC)"}
-            className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+            className="appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
           />
           <span className="text-xs text-muted-foreground">UTC</span>
           {value && (

@@ -22,7 +22,7 @@ export function TimePeriodSelector({ value, onChange }: TimePeriodSelectorProps)
         <CalendarDays className="h-4 w-4" />
         {getTimePeriodLabel(value)}
       </PopoverTrigger>
-      <PopoverContent className="w-48 p-2" align="start">
+      <PopoverContent className="w-48" align="start">
         <div className="space-y-1">
           {timePeriodGroups.map((group, index) => (
             <Fragment key={group[0]?.value}>
