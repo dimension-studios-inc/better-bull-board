@@ -19,8 +19,8 @@ const logLevels: Record<
   error: { variant: "destructive", icon: CircleAlert, iconClassName: "text-destructive" },
   warn: { variant: "outline", icon: TriangleAlert, iconClassName: "text-warning" },
   warning: { variant: "outline", icon: TriangleAlert, iconClassName: "text-warning" },
-  info: { variant: "secondary", icon: Info, iconClassName: "text-blue-500" },
-  debug: { variant: "outline", icon: Bug, iconClassName: "text-purple-500" },
+  info: { variant: "secondary", icon: Info, iconClassName: "text-info" },
+  debug: { variant: "outline", icon: Bug, iconClassName: "text-highlight" },
 }
 
 const getLogLevel = (level: string) => logLevels[level.toLowerCase()]

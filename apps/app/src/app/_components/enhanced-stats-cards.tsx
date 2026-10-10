@@ -37,7 +37,7 @@ export function EnhancedStatsCards({
       value: stats?.runningTasks,
       icon: Activity,
       description: "Currently executing",
-      color: "text-blue-600 dark:text-blue-400",
+      color: "text-info",
       href: getRunsHref({ status: "active" }),
     },
     {
@@ -45,7 +45,7 @@ export function EnhancedStatsCards({
       value: stats?.waitingInQueue,
       icon: Clock,
       description: "Queued for execution",
-      color: "text-yellow-600 dark:text-yellow-400",
+      color: "text-warning",
       href: getRunsHref({ status: "waiting" }),
     },
     {

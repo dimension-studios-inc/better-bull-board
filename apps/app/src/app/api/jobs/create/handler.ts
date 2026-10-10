@@ -20,7 +20,7 @@ export const createJobHandler = async (input: {
     const job = await queue.add(jobName, data, {
       delay: options.delay,
       priority: options.priority,
-      attempts: options.attempts || 1,
+      attempts: options.attempts ?? 1,
     })
 
     if (!job.id) {
