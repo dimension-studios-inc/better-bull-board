@@ -100,7 +100,7 @@ function MatchingFiltersSummary({ filters }: { filters: TMatchingFilters }) {
   }
 
   return (
-    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-lg bg-muted/50 p-3 text-sm">
+    <dl className="grid grid-cols-label-value gap-x-3 gap-y-1 rounded-lg bg-muted/50 p-3 text-sm">
       {items.map((item) => (
         <div key={item.label} className="contents">
           <dt className="text-muted-foreground">{item.label}</dt>
@@ -335,22 +335,14 @@ export function BulkActions({
     <>
       <div className="flex flex-wrap gap-2">
         {cancellableCount > 0 && (
-          <Button
-            variant="destructive"
-            onClick={() => setCancelDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
+          <Button variant="destructive" onClick={() => setCancelDialogOpen(true)}>
             <X className="size-4" />
             Cancel ({cancellableCount.toLocaleString()})
           </Button>
         )}
 
         {replayableCount > 0 && (
-          <Button
-            variant="default"
-            onClick={() => setReplayDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
+          <Button variant="default" onClick={() => setReplayDialogOpen(true)}>
             <RotateCcw className="size-4" />
             Replay ({replayableCount.toLocaleString()})
           </Button>
@@ -367,7 +359,7 @@ export function BulkActions({
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-destructive">Cancel Jobs</DialogTitle>
+            <DialogTitle>Cancel Jobs</DialogTitle>
             <DialogDescription>
               <CancelDescription
                 matchingTotal={matchingTotal}

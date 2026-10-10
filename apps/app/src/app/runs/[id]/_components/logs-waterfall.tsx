@@ -12,7 +12,7 @@ import { Loader } from "~/components/loader"
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll"
 import { smartFormatDuration } from "~/lib/utils/client"
 
-import { LogLevelBadge, LogLevelIcon } from "./log-level"
+import { LogLevelIcon } from "./log-level"
 
 interface LogEntry {
   id: string
@@ -83,7 +83,7 @@ export function LogsWaterfall({
         {Array.from({ length: 5 }).map((_, i) => (
           // oxlint-disable-next-line react/no-array-index-key -- static skeleton placeholders never reorder
           <div key={i} className="flex items-start space-x-3">
-            <Skeleton className="h-4 w-4 rounded-full" />
+            <Skeleton className="h-4 w-4" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-full" />
@@ -108,98 +108,93 @@ export function LogsWaterfall({
   const totalDuration = endTime - startTime
 
   return (
-    <ScrollArea className="h-[60dvh] pr-4 lg:h-[calc(100vh-12rem)]">
-      {/* Waterfall header with time markers */}
-      <div className="mb-4 grid grid-cols-12 gap-4 border-b pb-2">
-        <div className="col-span-7 md:col-span-6">
-          <span className="text-sm font-medium text-muted-foreground">Log Details</span>
-        </div>
-        <div className="col-span-5 md:col-span-6">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>0ms</span>
-            <span className="hidden sm:inline">Timeline</span>
-            <span>{smartFormatDuration(totalDuration)}</span>
+    <ScrollArea className="h-(--run-panel-height) lg:h-(--run-panel-height-lg)">
+      <div className="pr-4">
+        {/* Waterfall header with time markers */}
+        <div className="mb-4 grid grid-cols-12 gap-4 border-b pb-2">
+          <div className="col-span-7 md:col-span-6">
+            <span className="text-sm font-medium text-muted-foreground">Log Details</span>
+          </div>
+          <div className="col-span-5 md:col-span-6">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>0ms</span>
+              <span className="hidden sm:inline">Timeline</span>
+              <span>{smartFormatDuration(totalDuration)}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="">
-        {sortedLogs.map((log) => {
-          const relativeTime = log.ts - startTime
-          const position = totalDuration > 0 ? (relativeTime / totalDuration) * 100 : 0
+        <div className="">
+          {sortedLogs.map((log) => {
+            const relativeTime = log.ts - startTime
+            const position = totalDuration > 0 ? (relativeTime / totalDuration) * 100 : 0
 
-          return (
-            <div
-              key={log.id}
-              className={cn(
-                "grid grid-cols-12 items-start",
-                "hover:bg-muted/50",
-                "cursor-pointer",
-                {
-                  "hover:bg-destructive/5": log.level.toLowerCase() === "error",
-                  "hover:bg-warning/5": log.level.toLowerCase() === "warn",
-                  "hover:bg-purple-50 hover:dark:bg-purple-950/30":
-                    log.level.toLowerCase() === "debug",
-                  "hover:bg-blue-50 hover:dark:bg-blue-950/30": log.level.toLowerCase() === "info",
-                },
-              )}
-              // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the row holds block content and a tooltip trigger button, which a <button> cannot contain
-              role="button"
-              tabIndex={0}
-              onClick={() => onLogClick(log)}
-              onKeyDown={(event) => {
-                if (event.target !== event.currentTarget) return
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault()
-                  onLogClick(log)
-                }
-              }}
-            >
+            return (
               <div
+                key={log.id}
                 className={cn(
-                  "col-span-7 flex items-center space-x-3 rounded p-2 font-mono md:col-span-6",
+                  "grid grid-cols-12 items-start",
+                  "hover:bg-muted/50",
+                  "cursor-pointer",
+                  {
+                    "hover:bg-destructive/5": log.level.toLowerCase() === "error",
+                    "hover:bg-warning/5": log.level.toLowerCase() === "warn",
+                  },
                 )}
+                // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the row holds block content and a tooltip trigger button, which a <button> cannot contain
+                role="button"
+                tabIndex={0}
+                onClick={() => onLogClick(log)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault()
+                    onLogClick(log)
+                  }
+                }}
               >
-                {/* Timeline dot */}
-                <Tooltip>
-                  <TooltipTrigger>
-                    <div className="shrink-0">
-                      <LogLevelIcon level={log.level} />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-transparent p-0 [&>[data-side]]:hidden">
-                    <LogLevelBadge level={log.level} />
-                  </TooltipContent>
-                </Tooltip>
+                <div
+                  className={cn(
+                    "col-span-7 flex items-center space-x-3 rounded p-2 font-mono md:col-span-6",
+                  )}
+                >
+                  {/* Timeline dot */}
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <div className="shrink-0">
+                        <LogLevelIcon level={log.level} />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>{log.level.toUpperCase()}</TooltipContent>
+                  </Tooltip>
 
-                {/* Log content */}
-                <div className="min-w-0 flex-1">
-                  <pre className="truncate text-xs">{log.message}</pre>
+                  {/* Log content */}
+                  <div className="min-w-0 flex-1">
+                    <pre className="truncate text-xs">{log.message}</pre>
+                  </div>
+                </div>
+                <div className="col-span-5 flex h-full items-center border-l border-muted-foreground/20 md:col-span-6">
+                  <div className="flex size-full items-center">
+                    {/* Waterfall bar */}
+                    <div
+                      className={cn(
+                        "ml-(--bar-offset) flex h-3 w-2 shrink-0 items-center justify-center rounded-sm",
+                        getWaterfallColor(log.level),
+                      )}
+                      style={{ "--bar-offset": `${position}%` } as React.CSSProperties}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="col-span-5 flex h-full items-center border-l border-muted-foreground/20 md:col-span-6">
-                <div className="flex size-full items-center">
-                  {/* Waterfall bar */}
-                  <div
-                    className={cn(
-                      "flex h-3 w-2 shrink-0 items-center justify-center rounded-sm",
-                      getWaterfallColor(log.level),
-                    )}
-                    style={{
-                      marginLeft: `${position}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      {hasMore && (
-        <div className="flex items-center justify-center" ref={logsLoaderRef}>
-          <Loader />
+            )
+          })}
         </div>
-      )}
+        {hasMore && (
+          <div className="flex items-center justify-center" ref={logsLoaderRef}>
+            <Loader />
+          </div>
+        )}
+      </div>
     </ScrollArea>
   )
 }

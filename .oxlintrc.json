@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "node", "promise"],
+  "jsPlugins": ["@shadcn/lint"],
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -110,7 +111,15 @@
       },
       "rules": {
         // The automatic JSX runtime doesn't need React in scope.
-        "react/react-in-jsx-scope": "off"
+        "react/react-in-jsx-scope": "off",
+
+        // @shadcn/lint: design-system rules, discovered from each package's components.json.
+        "shadcn/no-restyle": ["error", { "allow": ["layout"] }],
+        "shadcn/no-raw-colors": "error",
+        "shadcn/no-arbitrary-values": "error",
+        "shadcn/no-inline-styles": "error",
+        "shadcn/no-unknown-classes": "error",
+        "shadcn/require-static-classes": "error"
       }
     },
     {
@@ -123,7 +132,11 @@
         "react/no-unstable-nested-components": "off",
         "jsx-a11y/prefer-tag-over-role": "off",
         "jsx-a11y/click-events-have-key-events": "off",
-        "jsx-a11y/no-noninteractive-element-interactions": "off"
+        "jsx-a11y/no-noninteractive-element-interactions": "off",
+        // Components own their appearance and the structural values it needs (upstream @shadcn/lint guidance).
+        "shadcn/no-restyle": "off",
+        "shadcn/no-arbitrary-values": "off",
+        "shadcn/require-static-classes": "off"
       }
     }
   ]

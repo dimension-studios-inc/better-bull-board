@@ -46,9 +46,9 @@ export function LogLevelBadge({ level, className }: LogLevelProps) {
   const logLevel = getLogLevel(level)
 
   return (
-    <Badge variant={logLevel?.variant ?? "outline"} className={cn("uppercase", className)}>
+    <Badge variant={logLevel?.variant ?? "outline"} className={className}>
       {logLevel && <LogLevelIcon level={level} data-icon="inline-start" />}
-      {level}
+      {level.toUpperCase()}
     </Badge>
   )
 }

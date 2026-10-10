@@ -80,7 +80,7 @@ export function RunGraphChart({
           Runs created in the {periodLabel.toLowerCase()} (times in UTC)
         </CardDescription>
       </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+      <CardContent>
         {isLoading ? (
           <div className="flex h-64 items-center justify-center sm:h-80">
             <Skeleton className="h-full w-full" />

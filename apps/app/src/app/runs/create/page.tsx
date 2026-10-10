@@ -160,7 +160,7 @@ export default function CreateRunPage() {
             value={jobData}
             onChange={(e) => setJobData(e.target.value)}
             placeholder="Enter job data as JSON..."
-            className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex min-h-50 w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
           <p className="text-sm text-muted-foreground">
             Enter the job data as valid JSON. This data will be passed to the job when it runs.

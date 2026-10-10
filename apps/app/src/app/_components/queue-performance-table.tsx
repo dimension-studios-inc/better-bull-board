@@ -155,7 +155,7 @@ export function QueuePerformanceTable({
           </div>
         ) : (
           <ScrollArea className="h-96">
-            <Table className="min-w-[720px]">
+            <Table className="min-w-180">
               <TableHeader className="z-10">
                 <TableRow>
                   {sortableColumns.map((column) => (
@@ -189,62 +189,70 @@ export function QueuePerformanceTable({
                       className="group cursor-pointer"
                       onClick={(event) => handleRowClick(event, queueHref)}
                     >
-                      <TableCell className="max-w-48 font-medium">
+                      <TableCell className="max-w-48">
                         <Link
                           href={queueHref}
-                          className="block rounded-sm underline-offset-4 outline-none group-hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
+                          className="block rounded-sm font-medium underline-offset-4 outline-none group-hover:underline focus-visible:ring-2 focus-visible:ring-ring/50"
                         >
                           <TruncatedTooltip value={queue.queue} />
                         </Link>
                       </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {queue.totalRuns.toLocaleString()}
+                      <TableCell className="text-right">
+                        <span className="font-mono">{queue.totalRuns.toLocaleString()}</span>
                       </TableCell>
-                      <TableCell className="text-right font-mono">
-                        <RunCountLink
-                          count={queue.successes}
-                          href={getRunsHref({ queue: queue.queue, status: "completed", minutes })}
-                          label={`View completed runs of ${queue.queue}`}
-                          className="text-success hover:bg-success/10"
-                        />
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        <RunCountLink
-                          count={queue.failures}
-                          href={getRunsHref({ queue: queue.queue, status: "failed", minutes })}
-                          label={`View failed runs of ${queue.queue}`}
-                          className="text-destructive hover:bg-destructive/10"
-                        />
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        <span
-                          className={
-                            queue.errorRate > 10
-                              ? "text-destructive"
-                              : queue.errorRate > 5
-                                ? "text-warning"
-                                : "text-success"
-                          }
-                        >
-                          {queue.errorRate.toFixed(1)}%
+                      <TableCell className="text-right">
+                        <span className="font-mono">
+                          <RunCountLink
+                            count={queue.successes}
+                            href={getRunsHref({ queue: queue.queue, status: "completed", minutes })}
+                            label={`View completed runs of ${queue.queue}`}
+                            className="text-success hover:bg-success/10"
+                          />
                         </span>
                       </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {formatDuration(queue.avgDuration)}
+                      <TableCell className="text-right">
+                        <span className="font-mono">
+                          <RunCountLink
+                            count={queue.failures}
+                            href={getRunsHref({ queue: queue.queue, status: "failed", minutes })}
+                            label={`View failed runs of ${queue.queue}`}
+                            className="text-destructive hover:bg-destructive/10"
+                          />
+                        </span>
                       </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {formatDuration(queue.minDuration)}
+                      <TableCell className="text-right">
+                        <span className="font-mono">
+                          <span
+                            className={
+                              queue.errorRate > 10
+                                ? "text-destructive"
+                                : queue.errorRate > 5
+                                  ? "text-warning"
+                                  : "text-success"
+                            }
+                          >
+                            {queue.errorRate.toFixed(1)}%
+                          </span>
+                        </span>
                       </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {formatDuration(queue.maxDuration)}
+                      <TableCell className="text-right">
+                        <span className="font-mono">{formatDuration(queue.avgDuration)}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="font-mono">{formatDuration(queue.minDuration)}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="font-mono">{formatDuration(queue.maxDuration)}</span>
                       </TableCell>
                     </TableRow>
                   )
                 })}
                 {!sortedQueuePerformance.length && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground">
-                      No data available for the selected period
+                    <TableCell colSpan={8} className="text-center">
+                      <span className="text-muted-foreground">
+                        No data available for the selected period
+                      </span>
                     </TableCell>
                   </TableRow>
                 )}

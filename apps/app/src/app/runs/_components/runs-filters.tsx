@@ -2,7 +2,11 @@
 
 import { Badge } from "@better-bull-board/ui/components/badge"
 import { Button } from "@better-bull-board/ui/components/button"
-import { Input } from "@better-bull-board/ui/components/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@better-bull-board/ui/components/input-group"
 import { Popover, PopoverContent, PopoverTrigger } from "@better-bull-board/ui/components/popover"
 import { useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
@@ -124,8 +128,8 @@ function TagsFilter({ filters, setFilters }: TFiltersFieldProps) {
                 {tag}
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="ml-1 size-3 p-0 hover:bg-transparent"
+                  size="icon-xs"
+                  className="ml-1 size-3"
                   aria-label={`Remove the ${tag} tag`}
                   onClick={() => {
                     const newTags = filters.tags.filter((t) => t !== tag)
@@ -162,7 +166,6 @@ function TagsFilter({ filters, setFilters }: TFiltersFieldProps) {
           renderValue={() => ""}
           className="w-full"
           isFetching={isTagsFetching}
-          popoverContentClassName="w-80"
         />
         <div className="text-xs text-muted-foreground">Start typing to search (2+ chars).</div>
       </div>
@@ -179,7 +182,7 @@ function FilterOptions({ filters, setFilters }: TFiltersFieldProps) {
   const statusId = useId()
 
   return (
-    <div className="w-80 max-w-[calc(100vw-4rem)] space-y-4">
+    <div className="space-y-4">
       <div className="text-sm font-medium">Filter Options</div>
 
       <div className="space-y-3">
@@ -197,7 +200,6 @@ function FilterOptions({ filters, setFilters }: TFiltersFieldProps) {
             setOpen={setQueueOpen}
             placeholder="All Queues"
             className="w-full"
-            popoverContentClassName="w-80"
             includeAllOption={true}
             allOptionLabel="All Queues"
           />
@@ -221,7 +223,6 @@ function FilterOptions({ filters, setFilters }: TFiltersFieldProps) {
             setOpen={setStatusOpen}
             renderValue={renderStatusValue}
             className="w-full"
-            popoverContentClassName="w-80"
           />
         </div>
 
@@ -290,19 +291,20 @@ export function RunsFilters({
               </Badge>
             )}
           </PopoverTrigger>
-          <PopoverContent className="w-max p-4" align="start">
+          <PopoverContent className="w-80 max-w-(--available-width)" align="start">
             <FilterOptions filters={filters} setFilters={setFilters} />
           </PopoverContent>
         </Popover>
-        <div className="relative min-w-0 flex-1 md:max-w-96">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-          <Input
+        <InputGroup className="flex-1 md:max-w-96">
+          <InputGroupAddon>
+            <Search />
+          </InputGroupAddon>
+          <InputGroupInput
             placeholder="Search ID, name, error…"
             value={filters.search}
             onChange={(e) => setFilters({ search: e.target.value })}
-            className="pl-10"
           />
-        </div>
+        </InputGroup>
         <div className="ml-auto flex items-center gap-2">
           {/* On phones the live toggle sits above the list and the pagination below it */}
           <LiveUpdatesToggle
@@ -335,8 +337,8 @@ export function RunsFilters({
               <span className="truncate">{filter.label}</span>
               <Button
                 variant="ghost"
-                size="sm"
-                className="size-4 p-0 hover:bg-transparent"
+                size="icon-xs"
+                className="size-4"
                 aria-label={`Remove the ${filter.label} filter`}
                 onClick={() => setFilters(getFilterRemoval(filter, filters))}
               >
@@ -431,7 +433,7 @@ export function LiveUpdatesToggle({ paused, onPausedChange, className }: LiveUpd
       onClick={() => onPausedChange(!paused)}
       aria-pressed={paused}
       title={paused ? "Live updates paused: click to resume" : "Following new runs: click to pause"}
-      className={cn(paused && "text-muted-foreground", className)}
+      className={className}
     >
       {paused ? (
         <Pause className="size-3.5" />

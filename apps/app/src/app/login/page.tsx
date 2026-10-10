@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@better-bull-board/ui/components/button"
-import { Card } from "@better-bull-board/ui/components/card"
+import { Card, CardContent } from "@better-bull-board/ui/components/card"
 import { Input } from "@better-bull-board/ui/components/input"
 import { useId, useState } from "react"
 
@@ -50,47 +50,49 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-muted p-4">
-      <Card className="w-full max-w-md p-6">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold">Better Bull Board</h1>
-          <p className="mt-2 text-muted-foreground">Admin Login</p>
-        </div>
-
-        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
-          <div>
-            <label htmlFor={emailId} className="mb-2 block text-sm font-medium">
-              Email
-            </label>
-            <Input
-              id={emailId}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="admin@example.com"
-            />
+      <Card className="w-full max-w-md">
+        <CardContent>
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-bold">Better Bull Board</h1>
+            <p className="mt-2 text-muted-foreground">Admin Login</p>
           </div>
 
-          <div>
-            <label htmlFor={passwordId} className="mb-2 block text-sm font-medium">
-              Password
-            </label>
-            <Input
-              id={passwordId}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Enter your password"
-            />
-          </div>
+          <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+            <div>
+              <label htmlFor={emailId} className="mb-2 block text-sm font-medium">
+                Email
+              </label>
+              <Input
+                id={emailId}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="admin@example.com"
+              />
+            </div>
 
-          {error && <div className="text-center text-sm text-destructive">{error}</div>}
+            <div>
+              <label htmlFor={passwordId} className="mb-2 block text-sm font-medium">
+                Password
+              </label>
+              <Input
+                id={passwordId}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Enter your password"
+              />
+            </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
-          </Button>
-        </form>
+            {error && <div className="text-center text-sm text-destructive">{error}</div>}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
+        </CardContent>
       </Card>
     </div>
   )

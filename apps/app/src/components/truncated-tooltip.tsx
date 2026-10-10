@@ -17,7 +17,7 @@ export function TruncatedTooltip({ value, className }: TruncatedTooltipProps) {
       <TooltipContent
         side="top"
         sideOffset={6}
-        className="max-w-[min(32rem,calc(100vw-2rem))] text-left break-all whitespace-normal"
+        className="max-w-(--available-width) text-left break-all whitespace-normal sm:max-w-lg"
       >
         {value}
       </TooltipContent>

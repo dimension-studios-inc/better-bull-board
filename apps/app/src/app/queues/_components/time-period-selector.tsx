@@ -30,7 +30,7 @@ export function TimePeriodSelector({ value, onChange }: TimePeriodSelectorProps)
         <CalendarDays className="h-4 w-4" />
         {selectedOption?.label || "1 day"}
       </PopoverTrigger>
-      <PopoverContent className="w-48 p-2" align="start">
+      <PopoverContent className="w-48" align="start">
         <div className="space-y-1">
           {timePeriodOptions.map((option) => (
             <Button

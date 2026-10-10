@@ -69,11 +69,11 @@ function TopErrorRow({ error, minutes }: { error: TopError; minutes: number }) {
               side="bottom"
               align="start"
               sideOffset={6}
-              className="w-[min(36rem,calc(100vw-2rem))] gap-0 p-0"
+              className="w-xl max-w-(--available-width)"
               // Portaled out of the row link in the page, not in React: clicks in the card must not open the runs
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex items-center gap-2 border-b px-3 py-2">
+              <div className="flex items-center gap-2 pb-2">
                 <CircleAlert className="size-4 shrink-0 text-destructive" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{error.queue}</p>
@@ -87,12 +87,12 @@ function TopErrorRow({ error, minutes }: { error: TopError; minutes: number }) {
                 </div>
               </div>
               <ScrollArea className="[&>[data-slot=scroll-area-viewport]]:max-h-72">
-                <pre className="bg-destructive/5 px-3 py-2.5 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-destructive dark:bg-destructive/10">
+                <pre className="rounded-md bg-destructive/5 px-3 py-2.5 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap text-destructive dark:bg-destructive/10">
                   {error.sampleMessage || "No error message"}
                 </pre>
               </ScrollArea>
               {error.sampleMessage !== error.normalizedMessage && (
-                <div className="border-t px-3 py-2">
+                <div className="pt-2">
                   <p className="text-xs text-muted-foreground">Grouped as</p>
                   <p className="line-clamp-3 font-mono text-xs break-words">
                     {error.normalizedMessage}

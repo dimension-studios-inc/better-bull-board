@@ -64,7 +64,10 @@ const createTooltipContent =
             const value = data[item.key]
             return (
               <p key={item.key} className="flex items-center gap-1.5 text-muted-foreground">
-                <span className="size-2 rounded-xs" style={{ backgroundColor: item.color }} />
+                <span
+                  className="size-2 rounded-xs bg-(--series-color)"
+                  style={{ "--series-color": item.color } as React.CSSProperties}
+                />
                 {item.label}:{" "}
                 <span className="font-mono font-medium text-foreground">
                   {typeof value === "number" ? item.format(value) : "-"}
@@ -83,7 +86,10 @@ function ChartLegend({ series }: { series: Series[] }) {
     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
       {series.map((item) => (
         <span key={item.key} className="flex items-center gap-1.5">
-          <span className="size-2 rounded-xs" style={{ backgroundColor: item.color }} />
+          <span
+            className="size-2 rounded-xs bg-(--series-color)"
+            style={{ "--series-color": item.color } as React.CSSProperties}
+          />
           {item.label}
         </span>
       ))}
@@ -111,12 +117,14 @@ function ChartCard({
     <Card className="@container/card">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription className="space-y-2">
-          <p>{description}</p>
-          <ChartLegend series={series} />
+        <CardDescription>
+          <div className="space-y-2">
+            <p>{description}</p>
+            <ChartLegend series={series} />
+          </div>
         </CardDescription>
       </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+      <CardContent>
         {isLoading ? (
           <div className="flex h-64 items-center justify-center sm:h-80">
             <Skeleton className="h-full w-full" />

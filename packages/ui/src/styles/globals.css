@@ -126,6 +126,17 @@
   --font-heading: var(--font-sans);
 }
 
+/* App layout values, named so classes stay off arbitrary values */
+@theme {
+  --grid-template-columns-label-value: auto minmax(0, 1fr);
+}
+
+:root {
+  /* The run page's log waterfall and details panels */
+  --run-panel-height: 60dvh;
+  --run-panel-height-lg: calc(100vh - 12rem);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
