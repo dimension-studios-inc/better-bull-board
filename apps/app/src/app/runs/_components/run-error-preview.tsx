@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@better-bull-board/ui/components/button"
+import { Button, buttonVariants } from "@better-bull-board/ui/components/button"
 import {
   HoverCard,
   HoverCardContent,
@@ -113,10 +113,10 @@ export function RunErrorPreview({
           </pre>
         </ScrollArea>
         <div className="flex justify-end pt-2">
-          <Button variant="ghost" size="xs" nativeButton={false} render={<Link href={runPath} />}>
+          <Link href={runPath} className={buttonVariants({ variant: "ghost", size: "xs" })}>
             View run
             <ArrowRight data-icon="inline-end" />
-          </Button>
+          </Link>
         </div>
       </HoverCardContent>
     </HoverCard>

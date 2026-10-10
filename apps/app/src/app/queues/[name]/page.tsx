@@ -1,7 +1,7 @@
 "use client"
 
 import { Alert, AlertDescription } from "@better-bull-board/ui/components/alert"
-import { Button } from "@better-bull-board/ui/components/button"
+import { buttonVariants } from "@better-bull-board/ui/components/button"
 import { useQuery } from "@tanstack/react-query"
 import { AlertCircle, List } from "lucide-react"
 import dynamic from "next/dynamic"
@@ -87,15 +87,14 @@ export default function QueuePage() {
 
       <div className="flex items-center gap-2">
         <TimePeriodSelector value={minutes} onChange={setMinutes} />
-        <Button
-          variant="outline"
-          nativeButton={false}
+        <Link
           // The link holds the time it is rendered at: none while hydrating, or it would not match the server
-          render={<Link href={getRunsHref({ queue: queueName, minutes: storedMinutes })} />}
+          href={getRunsHref({ queue: queueName, minutes: storedMinutes })}
+          className={buttonVariants({ variant: "outline" })}
         >
           <List className="size-4" />
           View runs
-        </Button>
+        </Link>
         {details && (
           <div className="ml-auto">
             <QueueActions

@@ -1,7 +1,7 @@
 "use client"
 
 import { Badge } from "@better-bull-board/ui/components/badge"
-import { Button } from "@better-bull-board/ui/components/button"
+import { Button, buttonVariants } from "@better-bull-board/ui/components/button"
 import {
   InputGroup,
   InputGroupAddon,
@@ -312,15 +312,14 @@ export function RunsFilters({
             onPausedChange={onLiveUpdatesPausedChange}
             className="max-md:hidden"
           />
-          <Button
-            nativeButton={false}
-            render={<Link href="/runs/create" />}
+          <Link
+            href="/runs/create"
             aria-label="Create run"
-            className="max-md:w-8 max-md:px-0"
+            className={cn(buttonVariants(), "max-md:w-8")}
           >
             <Plus className="h-4 w-4" />
             <span className="max-md:hidden">Create Run</span>
-          </Button>
+          </Link>
           <RunsPagination
             runs={runs}
             filters={filters}
