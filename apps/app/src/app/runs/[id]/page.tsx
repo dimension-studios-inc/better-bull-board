@@ -76,7 +76,7 @@ export default function RunViewPage() {
     },
   })
 
-  const logsData = logsDataPages?.pages.flatMap((page) => page.logs) || []
+  const logsData = logsDataPages?.pages.flatMap((page) => page.logs) ?? []
 
   if (isLoadingRun) {
     return (

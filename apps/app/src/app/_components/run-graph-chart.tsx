@@ -70,7 +70,7 @@ export function RunGraphChart({
       timestamp: item.timestamp,
       runCount: item.runCount,
       formattedTime: formatUtc(item.timestamp, timeFormats.axis),
-    })) || []
+    })) ?? []
 
   return (
     <Card className="@container/card">

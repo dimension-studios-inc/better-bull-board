@@ -31,7 +31,7 @@ export function verifyAdminCredentials(email: string, password: string): boolean
  * Create a JWT token for the user
  */
 export async function createToken(user: User): Promise<string> {
-  return await new SignJWT({ email: user.email })
+  return new SignJWT({ email: user.email })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("1y")
@@ -96,5 +96,5 @@ export async function getAuthenticatedUser(): Promise<User | null> {
     return null
   }
 
-  return await verifyToken(token)
+  return verifyToken(token)
 }

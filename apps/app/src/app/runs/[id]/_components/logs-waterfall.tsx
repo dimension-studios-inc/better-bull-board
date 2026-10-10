@@ -42,9 +42,9 @@ const getWaterfallColor = (level: string) => {
     case "warning":
       return "bg-warning"
     case "debug":
-      return "bg-purple-500"
+      return "bg-highlight"
     case "info":
-      return "bg-blue-500"
+      return "bg-info"
     default:
       return "bg-muted-foreground"
   }

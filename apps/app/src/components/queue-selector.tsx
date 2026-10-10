@@ -124,7 +124,7 @@ export function QueueSelector({
       setSearch={setSearch}
       open={open}
       setOpen={setOpen}
-      renderValue={renderValue || defaultRenderValue}
+      renderValue={renderValue ?? defaultRenderValue}
       className={className}
       isFetching={isLoading}
       hasNextPage={hasNextPage}

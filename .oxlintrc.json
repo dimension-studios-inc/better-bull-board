@@ -42,6 +42,14 @@
     "typescript/prefer-includes": "error",
     "typescript/prefer-string-starts-ends-with": "error",
     "typescript/prefer-find": "error",
+    // `||` stays allowed on strings and booleans, where an empty string or `false` should fall through too.
+    "typescript/prefer-nullish-coalescing": [
+      "error",
+      { "ignorePrimitives": { "string": true, "boolean": true }, "ignoreBooleanCoercion": true }
+    ],
+    "typescript/prefer-optional-chain": "error",
+    "typescript/return-await": "error",
+    "typescript/no-mixed-enums": "error",
     // Raw SQL rows and DOM/ref narrowing are cast on purpose; typescript-eslint keeps this rule out of its presets.
     "typescript/no-unsafe-type-assertion": "off",
 
@@ -115,7 +123,8 @@
 
         // @shadcn/lint: design-system rules, discovered from each package's components.json.
         "shadcn/no-restyle": ["error", { "allow": ["layout"] }],
-        "shadcn/no-raw-colors": "error",
+        // Also scans class strings kept in objects and helpers, outside className props.
+        "shadcn/no-raw-colors": ["error", { "scanAllStrings": true }],
         "shadcn/no-arbitrary-values": "error",
         "shadcn/no-inline-styles": "error",
         "shadcn/no-unknown-classes": "error",

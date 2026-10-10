@@ -204,9 +204,7 @@ class BullBoardWebSocketServer {
 let websocketServer: BullBoardWebSocketServer | null = null
 
 export const startWebSocketServer = () => {
-  if (!websocketServer) {
-    websocketServer = new BullBoardWebSocketServer()
-  }
+  websocketServer ??= new BullBoardWebSocketServer()
   return websocketServer
 }
 

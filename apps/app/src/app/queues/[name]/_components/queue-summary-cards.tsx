@@ -113,7 +113,7 @@ export function QueueSummaryCards({
       value: stats?.totalRuns.toLocaleString(),
       icon: Activity,
       description: `Created (${period})`,
-      color: "text-blue-600 dark:text-blue-400",
+      color: "text-info",
       href: getRunsHref({ queue: queueName, minutes }),
     },
     {
@@ -166,7 +166,7 @@ export function QueueSummaryCards({
     description: stats?.durationSampleLimit
       ? `${card.description} of the latest ${stats.durationSampleLimit.toLocaleString()} completed runs`
       : `${card.description} of completed runs`,
-    color: "text-purple-600 dark:text-purple-400",
+    color: "text-highlight",
   }))
 
   return (

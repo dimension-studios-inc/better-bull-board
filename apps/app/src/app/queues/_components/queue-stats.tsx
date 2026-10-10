@@ -32,7 +32,7 @@ export function QueueStats() {
       value: totalQueues,
       icon: Server,
       description: "Configured queues",
-      color: "text-blue-600 dark:text-blue-400",
+      color: "text-info",
     },
     {
       title: "Active Queues",
@@ -46,7 +46,7 @@ export function QueueStats() {
       value: schedulerQueues,
       icon: Clock,
       description: "Have scheduled jobs",
-      color: "text-purple-600 dark:text-purple-400",
+      color: "text-highlight",
     },
   ]
 
