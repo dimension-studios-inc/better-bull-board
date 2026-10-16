@@ -63,7 +63,7 @@
       },
       "devDependencies": {
         "@better-bull-board/typescript-config": "workspace:*",
-        "@types/node": "26.6.3",
+        "@types/node": "26.6.4",
         "@types/pg": "8.23.1",
         "@types/react": "19.3.0",
         "@types/react-dom": "19.3.0",
@@ -90,7 +90,7 @@
       "devDependencies": {
         "@better-bull-board/typescript-config": "workspace:*",
         "@types/bun": "1.4.2",
-        "@types/node": "26.6.3",
+        "@types/node": "26.6.4",
         "@types/pg": "8.23.1",
         "@types/ws": "8.18.2",
         "tsdown": "0.23.0",
@@ -111,7 +111,7 @@
       },
       "devDependencies": {
         "@better-bull-board/typescript-config": "workspace:*",
-        "@types/node": "26.6.3",
+        "@types/node": "26.6.4",
         "tsdown": "0.23.0",
         "typescript": "7.0.2",
       },
@@ -130,7 +130,7 @@
       },
       "devDependencies": {
         "@better-bull-board/typescript-config": "workspace:*",
-        "@types/node": "26.6.3",
+        "@types/node": "26.6.4",
         "tsdown": "0.23.0",
         "typescript": "7.0.2",
       },
@@ -165,7 +165,7 @@
       },
       "devDependencies": {
         "@better-bull-board/typescript-config": "workspace:*",
-        "@types/node": "26.6.3",
+        "@types/node": "26.6.4",
         "tsdown": "0.23.0",
         "typescript": "7.0.2",
       },
@@ -183,7 +183,7 @@
       },
       "devDependencies": {
         "@better-bull-board/typescript-config": "workspace:*",
-        "@types/node": "26.6.3",
+        "@types/node": "26.6.4",
         "@types/pg": "8.23.1",
         "tsdown": "0.23.0",
         "typescript": "7.0.2",
@@ -205,7 +205,7 @@
       },
       "devDependencies": {
         "@better-bull-board/typescript-config": "workspace:*",
-        "@types/node": "26.6.3",
+        "@types/node": "26.6.4",
         "tsdown": "0.23.0",
         "typescript": "7.0.2",
       },
@@ -1006,7 +1006,7 @@
 
     "@types/mdast": ["@types/mdast@4.0.4", "", { "dependencies": { "@types/unist": "*" } }, "sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA=="],
 
-    "@types/node": ["@types/node@26.6.3", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-dsqMQQoeTLqu9wynDD00q573mNzso3IdQOAfHRJqLCcmCFPoGo9A1bDpUcv/9tnKpErQWv9uKeGfl37EIS02Yg=="],
+    "@types/node": ["@types/node@26.6.4", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg=="],
 
     "@types/normalize-package-data": ["@types/normalize-package-data@2.4.4", "", {}, "sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA=="],
 
@@ -2432,8 +2432,6 @@
 
     "@babel/helper-create-class-features-plugin/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 
-    "@better-bull-board/client/@types/node": ["@types/node@26.6.4", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg=="],
-
     "@commitlint/config-conventional/conventional-changelog-conventionalcommits": ["conventional-changelog-conventionalcommits@10.4.1", "", { "dependencies": { "@conventional-changelog/template": "^1.4.0" } }, "sha512-jS1LRFSbRoAr6JbhhRy1JYfNNUj5LM3+v49hRE03CgccsiYqgdVj/RTmrw4J1rylrqijHwdOlJWiJa61JHOgHg=="],
 
     "@commitlint/parse/conventional-changelog-angular": ["conventional-changelog-angular@9.4.0", "", { "dependencies": { "@conventional-changelog/template": "^1.4.0" } }, "sha512-HdxRxuS8bBXVIuo4V82gvSwAXT0vYQUizrjs/izmPg5JdDstr8v8I5hduGL3iQbG+o310dUDxC4+LetuS5hu9w=="],
@@ -2518,13 +2516,7 @@
 
     "@tailwindcss/oxide-wasm32-wasi/tslib": ["tslib@2.8.1", "", { "bundled": true }, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
-    "@types/pg/@types/node": ["@types/node@26.6.4", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg=="],
-
-    "@types/ws/@types/node": ["@types/node@26.6.4", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg=="],
-
     "body-parser/content-type": ["content-type@2.1.0", "", {}, "sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag=="],
-
-    "bun-types/@types/node": ["@types/node@26.6.4", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg=="],
 
     "cli-highlight/chalk": ["chalk@4.1.2", "", { "dependencies": { "ansi-styles": "^4.1.0", "supports-color": "^7.1.0" } }, "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="],
 
