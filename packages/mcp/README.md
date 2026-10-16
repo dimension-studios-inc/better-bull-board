@@ -44,6 +44,18 @@ https://<your-better-bull-board-host>/mcp
 
 Your MCP client should discover the OAuth metadata, open Better Bull Board in the browser, ask you to authorize access, and store the token automatically. You should not need to copy a bearer token manually for the app-hosted flow.
 
+### Server-side agents (API keys)
+
+Bots without a browser (a Discord or Slack bot, a cron job) can't run the OAuth flow. Sign in as an admin, open **API Keys** in the sidebar, and create a key with a name and a scope (read-only by default, or read + write). The full key (`bbb_…`) is shown once, so copy it then.
+
+The agent sends it on every request to `/mcp`:
+
+```txt
+Authorization: Bearer bbb_...
+```
+
+Keys don't expire. Revoke one from the same page and it stops working immediately.
+
 ### Cursor
 
 For local development, click:

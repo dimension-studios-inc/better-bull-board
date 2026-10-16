@@ -155,6 +155,13 @@
       "when": 1777047300000,
       "tag": "0021_job_runs_repeat_key_created_at",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1777047400000,
+      "tag": "0022_mcp_api_keys",
+      "breakpoints": true
     }
   ]
 }
