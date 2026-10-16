@@ -15,6 +15,7 @@ const getPageInfo = (pathname: string): PageInfo => {
   if (pathname === "/queues") return { title: "Queues" }
   if (pathname === "/schedulers") return { title: "Schedulers" }
   if (pathname === "/runs") return { title: "Runs" }
+  if (pathname === "/api-keys") return { title: "API Keys" }
   if (pathname === "/runs/create")
     return { title: "Create Run", parent: { title: "Runs", href: "/runs" } }
   if (pathname.startsWith("/runs/"))

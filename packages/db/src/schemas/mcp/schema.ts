@@ -91,6 +91,26 @@ export const mcpOAuthTokensTable = pgTable(
   ],
 )
 
+export const mcpApiKeysTable = pgTable(
+  "mcp_api_keys",
+  {
+    id: uuid()
+      .primaryKey()
+      .notNull()
+      .default(sql`uuid_generate_v7()`),
+    name: text("name").notNull(),
+    keyHash: text("key_hash").notNull(),
+    keyPrefix: text("key_prefix").notNull(),
+    scope: text("scope").notNull().default("bbb:read"),
+    createdAt: timestamp("created_at", { precision: 3, mode: "date" })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    lastUsedAt: timestamp("last_used_at", { precision: 3, mode: "date" }),
+    revokedAt: timestamp("revoked_at", { precision: 3, mode: "date" }),
+  },
+  (t) => [uniqueIndex("ux_mcp_api_keys_key_hash").on(t.keyHash)],
+)
+
 export const mcpOAuthClientsInsertSchema = createInsertSchema(mcpOAuthClientsTable)
 export const mcpOAuthClientsSelectSchema = createSelectSchema(mcpOAuthClientsTable)
 export const mcpOAuthAuthorizationCodesInsertSchema = createInsertSchema(

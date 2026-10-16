@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto"
 
 import {
+  mcpApiKeysTable,
   mcpOAuthAuthorizationCodesTable,
   mcpOAuthClientsTable,
   mcpOAuthTokensTable,
@@ -55,6 +56,13 @@ export const getMcpResource = (origin: string) => `${origin}/mcp`
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex")
 
 const randomToken = (bytes = 32) => randomBytes(bytes).toString("base64url")
+
+const API_KEY_PREFIX_LENGTH = 12
+
+export const generateApiKey = () => {
+  const key = `bbb_${randomToken(32)}`
+  return { key, keyHash: hashToken(key), keyPrefix: key.slice(0, API_KEY_PREFIX_LENGTH) }
+}
 
 const validateRedirectUri = (redirectUri: string) => {
   let url: URL
@@ -469,6 +477,26 @@ export const exchangeRefreshToken = async (formData: FormData) => {
   })
 }
 
+const verifyApiKey = async (key: string, resource: string) => {
+  const [apiKey] = await db
+    .update(mcpApiKeysTable)
+    .set({ lastUsedAt: new Date() })
+    .where(and(eq(mcpApiKeysTable.keyHash, hashToken(key)), isNull(mcpApiKeysTable.revokedAt)))
+    .returning()
+
+  if (!apiKey?.scope.split(/\s+/).includes(MCP_READ_SCOPE)) {
+    return null
+  }
+
+  return {
+    token: key,
+    clientId: `api-key:${apiKey.id}`,
+    scopes: apiKey.scope.split(/\s+/),
+    resource: new URL(resource),
+    extra: { subject: `api-key:${apiKey.name}` },
+  }
+}
+
 export const verifyAccessToken = async (accessToken: string, resource: string) => {
   const [token] = await db
     .select()
@@ -480,7 +508,11 @@ export const verifyAccessToken = async (accessToken: string, resource: string) =
       ),
     )
 
-  if (!token || token.accessTokenExpiresAt <= new Date() || token.resource !== resource) {
+  if (!token) {
+    return verifyApiKey(accessToken, resource)
+  }
+
+  if (token.accessTokenExpiresAt <= new Date() || token.resource !== resource) {
     return null
   }
 
