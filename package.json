@@ -35,7 +35,7 @@
     "oxfmt": "0.70.0",
     "oxlint": "1.85.0",
     "oxlint-tsgolint": "7.0.2003",
-    "react-doctor": "0.9.16",
+    "react-doctor": "0.9.17",
     "semantic-release": "25.0.9",
     "semantic-release-monorepo": "8.0.2",
     "turbo": "2.11.7",
