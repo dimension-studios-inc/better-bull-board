@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "@better-bull-board/db": "workspace:*",
-    "cron-parser": "5.10.1",
+    "cron-parser": "5.10.2",
     "drizzle-orm": "0.45.4",
     "zod": "4.6.5"
   },
