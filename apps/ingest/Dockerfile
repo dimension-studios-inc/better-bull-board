@@ -16,7 +16,7 @@ ENV API_HOSTNAME=0.0.0.0
 ENV PORT=8080
 
 # Pin matches package.json packageManager. Node runs the build tools; the runner stage is bun only.
-COPY --from=oven/bun:1.4.2-alpine /usr/local/bin/bun /usr/local/bin/
+COPY --from=oven/bun:1.4.3-alpine /usr/local/bin/bun /usr/local/bin/
 RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
 
 #* ---- Prepare stage ----
@@ -61,7 +61,7 @@ RUN bun scripts/trace-runtime.ts \
   && cp -r packages/db/drizzle /app/runtime/packages/db/
 
 #* ---- Runtime stage ----
-FROM oven/bun:1.4.2-alpine AS runner
+FROM oven/bun:1.4.3-alpine AS runner
 # msgpackr-extract (bullmq) ships a glibc build.
 RUN apk add --no-cache libc6-compat \
   && addgroup --system --gid 1001 nodejs \

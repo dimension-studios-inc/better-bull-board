@@ -13,7 +13,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME="0.0.0.0"
 
 # Pin matches package.json packageManager. Node runs the build tools; the runner stage is bun only.
-COPY --from=oven/bun:1.4.2-alpine /usr/local/bin/bun /usr/local/bin/
+COPY --from=oven/bun:1.4.3-alpine /usr/local/bin/bun /usr/local/bin/
 RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
 
 #* ---- Prepare stage ----
@@ -75,7 +75,7 @@ RUN find apps/app/.next/standalone/node_modules/.bun -maxdepth 1 \
 
 #* ---- Runner stage ----
 # Bun serves the standalone server.js; `next dev` and `next build` stay on Node.
-FROM oven/bun:1.4.2-alpine AS runner
+FROM oven/bun:1.4.3-alpine AS runner
 RUN apk add --no-cache libc6-compat \
   && addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
