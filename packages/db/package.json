@@ -28,7 +28,7 @@
     "build": "tsdown",
     "clean": "rm -rf dist",
     "dev": "tsdown --watch",
-    "type-check": "tsc --noEmit",
+    "type-check": "bun check",
     "debug": "bun debug/index.ts",
     "db:check": "drizzle-kit check",
     "db:generate": "drizzle-kit generate",
