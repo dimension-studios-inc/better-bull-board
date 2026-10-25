@@ -33,7 +33,7 @@
     "build": "tsdown",
     "clean": "rm -rf dist",
     "dev": "tsdown --watch",
-    "type-check": "tsc --noEmit",
+    "type-check": "bun check",
     "debug": "bun debug/index.ts",
     "prepublishOnly": "bun run build",
     "pack:check": "bun run build && bun pm pack --dry-run | grep -qE '^packed .+ dist/index\\.d\\.mts$'"

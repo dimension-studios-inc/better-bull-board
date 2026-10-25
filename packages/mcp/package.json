@@ -27,7 +27,7 @@
     "clean": "rm -rf dist",
     "dev": "bun --watch src/index.ts",
     "start": "bun dist/index.mjs",
-    "type-check": "tsc --noEmit"
+    "type-check": "bun check"
   },
   "dependencies": {
     "@better-bull-board/client": "workspace:*",

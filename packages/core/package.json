@@ -64,7 +64,7 @@
     "build": "tsdown",
     "clean": "rm -rf dist",
     "dev": "tsdown --watch",
-    "type-check": "tsc --noEmit"
+    "type-check": "bun check"
   },
   "dependencies": {
     "@better-bull-board/db": "workspace:*",
