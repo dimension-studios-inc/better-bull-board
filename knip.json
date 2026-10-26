@@ -4,21 +4,10 @@
   "ignoreBinaries": ["check"],
   "workspaces": {
     ".": {
-      "entry": ["scripts/**"],
-      "ignoreDependencies": [
-        "@semantic-release/commit-analyzer",
-        "@semantic-release/exec",
-        "@semantic-release/github",
-        "@semantic-release/release-notes-generator",
-        "conventional-changelog-conventionalcommits",
-        "semantic-release-monorepo"
-      ]
+      "entry": ["scripts/**"]
     },
     "packages/bull-demo": {
       "entry": ["debug/*.ts"]
-    },
-    "packages/client": {
-      "entry": ["release.config.mjs"]
     },
     "packages/typescript-config": {
       "ignoreUnresolved": ["next"]

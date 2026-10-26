@@ -1,16 +1,40 @@
 # Deploying
 
-`develop` is the integration branch: pull requests target it and are squash merged. `main` is what runs in production. A push to `main` runs [Deploy](../.github/workflows/deploy.yml) (app and ingest images, Kubernetes rollout) and [Publish](../.github/workflows/publish.yml) (a semantic-release of `@better-bull-board/client` when its commits call for one, see [Publishing](publishing.md)).
+`main` is the only long-lived branch: pull requests target it and are squash merged, with conventional commit titles. Merging deploys nothing: production moves when a release is published.
 
-To deploy, run **Actions** → **Promote** → **Run workflow**. [`promote.yml`](../.github/workflows/promote.yml):
+## Releases
 
-1. Requires a green **Check** on the `develop` tip ([`check.yml`](../.github/workflows/check.yml) runs on every push to `develop`).
-2. Fast-forwards `main` to `develop` and pushes it with the release bot's GitHub App token: a push made with `GITHUB_TOKEN` would not start Deploy and Publish.
+[Release](../.github/workflows/release.yml) runs [release-please](https://github.com/googleapis/release-please) once [CI](../.github/workflows/check.yml) has passed on `main`, so a red `main` neither proposes nor publishes a release. It keeps a release pull request open per package, with the next version worked out from the squashed PR titles since the last release, and its `CHANGELOG.md` entry:
 
-`main` therefore only ever holds commits from `develop`, with no merge commits, and the commit deployed is the one Check validated. Pull requests targeting `main` are rejected by [`guard-main.yml`](../.github/workflows/guard-main.yml) and by Check.
+| Package                     | Commits                               | Tag                 | Merging the release PR runs    |
+| --------------------------- | ------------------------------------- | ------------------- | ------------------------------ |
+| app and ingest (`.`)        | all                                   | `v<version>`        | [Deploy](#deploy)              |
+| `@better-bull-board/client` | those touching `packages/client` only | `client-v<version>` | [Publish](publishing.md) (npm) |
+
+| Commit type                                        | Release                          |
+| -------------------------------------------------- | -------------------------------- |
+| `fix`, `perf`, `refactor`, `build`, `revert`       | patch                            |
+| `feat`                                             | minor                            |
+| `!` after the type, or a `BREAKING CHANGE:` footer | major                            |
+| `docs`, `test`, `ci`, `chore`                      | none: they wait for the next one |
+
+The release PR stays open while more merges land, and updates itself; merge it when the release should go out. The config is [`release-please-config.json`](../release-please-config.json), and [`.release-please-manifest.json`](../.release-please-manifest.json) holds the current versions.
+
+## Deploy
+
+[Deploy](../.github/workflows/deploy.yml) runs on a published `v*` release. A first job refuses a commit that is not on `main` or whose **Check** did not pass, then one job per image (app, ingest) builds it, pushes it to ECR tagged with the commit, and rolls it out. An image whose sources did not change since the commit running in the cluster is neither built nor rolled out.
+
+Run it by hand to deploy again, or to roll back (or forward) to another release or any commit of `main`. A manual run builds both images:
+
+```bash
+gh workflow run deploy.yml
+```
+
+```bash
+gh workflow run deploy.yml -f ref=v1.2.0
+```
 
 ## Setup
 
-- The `promote` environment holds the approval: add required reviewers in **Settings** → **Environments** → **promote**. GitHub creates the environment, without protection, on the first run.
-- The workflow reads the release bot from `vars.RELEASE_BOT_CLIENT_ID` and `secrets.RELEASE_BOT_PRIVATE_KEY` (organization level), and the app needs contents write access to this repository.
-- Promote fails if `main` has a commit that `develop` lacks: never commit or merge to `main` directly.
+- Release acts as the release bot's GitHub App (`vars.RELEASE_BOT_CLIENT_ID` and `secrets.RELEASE_BOT_PRIVATE_KEY`, at the organization level), not with `GITHUB_TOKEN`: what that token creates runs no workflow, so Check would never run on the release PR and the release would never start Deploy or Publish. The app needs contents, issues and pull requests write access to this repository.
+- Deploy reads `secrets.KUBECONFIG_CONTENT` (organization) and `secrets.AWS_ACCESS_KEY_ID` / `secrets.AWS_SECRET_ACCESS_KEY` (repository).

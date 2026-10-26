@@ -1,7 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":pinAllExceptPeerDependencies"],
-  "baseBranchPatterns": ["develop"],
   "automerge": true,
   "platformAutomerge": true,
   "minimumReleaseAge": "14 days",
@@ -17,17 +16,12 @@
       "matchPackageNames": ["bun", "oven/bun"]
     },
     {
-      "description": "Client devDependencies get their own PRs: grouped with the other packages' fix(deps) updates, they would publish a client release",
+      "description": "Client devDependencies get their own PRs: grouped with the other packages' fix(deps) updates, they would release the client",
       "matchFileNames": ["packages/client/package.json"],
       "matchDepTypes": ["devDependencies"],
       "additionalBranchPrefix": "client-",
       "semanticCommitType": "chore",
       "semanticCommitScope": "client-deps"
-    },
-    {
-      "description": "semantic-release 25 still uses conventional-changelog-writer@8; preset v10 requires writer@9",
-      "matchPackageNames": ["conventional-changelog-conventionalcommits"],
-      "allowedVersions": "<10"
     }
   ]
 }

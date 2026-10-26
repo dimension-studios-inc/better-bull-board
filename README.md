@@ -48,5 +48,5 @@ bun run dev
 
 - [Kubernetes](docs/kubernetes.md) — cluster layout, `k8s/` manifests, self-hosting
 - [Docker images](docs/docker-build.md) — ECR repos, Postgres image, self-hosted app/ingest builds
-- [Deploying](docs/deploying.md) — promote `develop` to `main`, which deploys and publishes
-- [Publishing `@better-bull-board/client`](docs/publishing.md) — automatic releases with semantic-release
+- [Deploying](docs/deploying.md) — release-please releases from `main`, and a release deploys
+- [Publishing `@better-bull-board/client`](docs/publishing.md) — its own release-please releases, published to npm

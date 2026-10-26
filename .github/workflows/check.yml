@@ -3,16 +3,17 @@ name: CI
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-  # Promote requires a green Check on the develop tip, which squash merges create.
+  # Release runs once Check passes on main, and Deploy refuses a commit whose Check did not pass.
   push:
     branches:
-      - develop
+      - main
   workflow_dispatch:
 
-# A new push to a PR makes the in-flight run obsolete; don't pay for it twice.
+# A new push to a PR makes the in-flight run obsolete; don't pay for it twice. Runs on main are
+# never cancelled: a release commit whose Check was cancelled could not be deployed.
 concurrency:
   group: check-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -26,12 +27,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Reject pull requests targeting main
-        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
-        run: |
-          echo "::error::PRs targeting main are not allowed. Open the PR against develop, then run the Promote workflow."
-          exit 1
-
       - name: Checkout code
         uses: actions/checkout@v7.0.1
 
