@@ -4,7 +4,7 @@
 
 ## Releases
 
-[Release](../.github/workflows/release.yml) runs [release-please](https://github.com/googleapis/release-please) once [CI](../.github/workflows/check.yml) has passed on `main`, so a red `main` neither proposes nor publishes a release. It keeps a release pull request open per package, with the next version worked out from the squashed PR titles since the last release, and its `CHANGELOG.md` entry:
+[Release](../.github/workflows/release.yml) runs [release-please](https://github.com/googleapis/release-please) once [CI](../.github/workflows/check.yml) has passed on `main`'s latest commit, so a red `main` neither proposes nor publishes a release, and a release commit has passed Check before Deploy starts. It keeps a release pull request open per package, with the next version worked out from the squashed PR titles since the last release, and its `CHANGELOG.md` entry:
 
 | Package                     | Commits                               | Tag                 | Merging the release PR runs    |
 | --------------------------- | ------------------------------------- | ------------------- | ------------------------------ |
