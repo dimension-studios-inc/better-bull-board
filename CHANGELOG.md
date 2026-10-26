@@ -5,6 +5,7 @@
 
 ### Bug fixes
 
+* **app:** start the run timeline when the run starts, not when it was queued ([#399](https://github.com/dimension-studios-inc/better-bull-board/issues/399)) ([71b52ff](https://github.com/dimension-studios-inc/better-bull-board/commit/71b52ffa870a47cf1155dd8e48ee9f3c83a54abd))
 * **deps:** update dependency @base-ui/react to v1.9.0 ([#372](https://github.com/dimension-studios-inc/better-bull-board/issues/372)) ([e03c5c8](https://github.com/dimension-studios-inc/better-bull-board/commit/e03c5c8c518ed5544c49840fc8fc7a8d79961cfb))
 * **deps:** update dependency @modelcontextprotocol/sdk to v1.32.0 ([#345](https://github.com/dimension-studios-inc/better-bull-board/issues/345)) ([73a49d3](https://github.com/dimension-studios-inc/better-bull-board/commit/73a49d3212b49f10cfb7395f6120f1316fca884c))
 * **deps:** update dependency @modelcontextprotocol/sdk to v1.32.1 ([#351](https://github.com/dimension-studios-inc/better-bull-board/issues/351)) ([d4b68a8](https://github.com/dimension-studios-inc/better-bull-board/commit/d4b68a80c57bc8abdb3b8182a0d49b8d755d5b69))
