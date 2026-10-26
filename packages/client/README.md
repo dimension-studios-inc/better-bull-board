@@ -26,6 +26,7 @@ Create a separate processor file (e.g., `processor.ts` or `processor.js`):
 ```typescript
 import { patch } from "@better-bull-board/client"
 import type { SandboxedJob } from "bullmq"
+
 import { redis } from "./lib/redis" // Your Redis connection
 
 export default patch(async (job: SandboxedJob) => {
@@ -46,7 +47,9 @@ Use the Better Bull Board Worker class in your main worker file:
 
 ```typescript
 import path from "node:path"
+
 import { Worker } from "@better-bull-board/client"
+
 import { redis } from "./lib/redis" // Your Redis connection
 
 const processorFile = path.join(__dirname, "processor.cjs") // Note: .cjs extension for built files
@@ -79,6 +82,7 @@ Here's a complete working example based on our demo:
 ```typescript
 import { patch } from "@better-bull-board/client"
 import type { SandboxedJob } from "bullmq"
+
 import { redis } from "../lib/redis"
 
 export default patch(async (job: SandboxedJob) => {
@@ -98,7 +102,9 @@ export default patch(async (job: SandboxedJob) => {
 ```typescript
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+
 import { Worker } from "@better-bull-board/client"
+
 import { redis } from "./lib/redis"
 
 const __filename = fileURLToPath(import.meta.url)
