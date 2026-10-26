@@ -1,6 +1,6 @@
 {
   "name": "@better-bull-board/client",
-  "version": "0.0.0-semantic-release",
+  "version": "0.0.0-development",
   "license": "ISC",
   "repository": {
     "type": "git",

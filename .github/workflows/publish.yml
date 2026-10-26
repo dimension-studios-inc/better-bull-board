@@ -1,15 +1,14 @@
 name: Publish
 
-# Releases @better-bull-board/client with semantic-release when Promote moves main: the next
-# version comes from the conventional commits touching packages/client (docs/publishing.md).
+# Publishes @better-bull-board/client to npm. Release keeps the client's release pull request open,
+# and merging it publishes a client-v<version> GitHub release, which runs this workflow
+# (docs/publishing.md). To retry a failed publish, re-run its run.
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  release:
+    types: [published]
 
 concurrency:
-  group: publish-${{ github.ref }}
+  group: publish
   cancel-in-progress: false
 
 permissions:
@@ -18,19 +17,17 @@ permissions:
 jobs:
   publish:
     name: Publish client
+    # The app's releases (v<version>) go to the cluster through Deploy, not to npm.
+    if: startsWith(github.event.release.tag_name, 'client-v')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write # client-v* tags and GitHub releases
-      issues: write # "released in" comments
-      pull-requests: write
+      contents: read
       id-token: write # npmjs trusted publishing (OIDC). Do not add NODE_AUTH_TOKEN / NPM_TOKEN.
     steps:
+      # The release's tag
       - name: Checkout code
         uses: actions/checkout@v7.0.1
-        with:
-          # semantic-release reads the client-v* tags and the commits since the last one.
-          fetch-depth: 0
 
       - name: Setup bun
         uses: oven-sh/setup-bun@v2.2.0
@@ -41,12 +38,21 @@ jobs:
       # Official Node+npm on PATH for the OIDC publish (npm >= 11.5.1).
       # Do not set registry-url: it writes an empty _authToken and breaks trusted publishing.
       - name: Setup Node.js
-        uses: actions/setup-node@v7.1.0
+        uses: actions/setup-node@v7.0.0
         with:
           node-version: "24.21.0"
 
       - run: bun ci
 
-      - run: bun run release:client
+      # The version lives in the client-v* tags and the release-please manifest, not in
+      # packages/client/package.json (docs/publishing.md).
+      - name: Set the version
+        working-directory: packages/client
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: npm pkg set version="${TAG#client-v}"
+
+      # bun pm pack rewrites workspace: ranges; npm publishes the tarball through trusted publishing.
+      - name: Publish
+        working-directory: packages/client
+        run: bun run pack:check && npm publish "$(bun pm pack --quiet)" --access public

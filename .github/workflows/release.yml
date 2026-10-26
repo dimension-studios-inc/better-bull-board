@@ -1,0 +1,57 @@
+name: Release
+
+# Keeps the release pull requests up to date and publishes the releases once they are merged
+# (docs/deploying.md). It runs once CI has passed on main, so a red main neither proposes nor
+# publishes a release.
+#
+# release-please (release-please-config.json) reads the conventional commits since the last release
+# and proposes the next version from them (a `fix` bumps the patch, a `feat` the minor, a `!` the
+# major) with its CHANGELOG.md entry, then leaves the pull request open while more merges land. Two
+# packages are released:
+#
+# - the app and ingest, tagged v<version>: Deploy puts the release in production;
+# - @better-bull-board/client, tagged client-v<version>, from the commits touching packages/client:
+#   Publish puts it on npm.
+#
+# Only the commit types listed without `hidden` in its config open a release: a pull request of
+# `docs`, `test`, `ci` or `chore` alone waits for the next one.
+#
+# It acts as the release bot's GitHub App, not with this run's GITHUB_TOKEN: what that token creates
+# runs no workflow, so Check would never run on the release pull request and the release would
+# never start Deploy or Publish. The app needs contents, issues and pull requests write access; the
+# organization gives vars.RELEASE_BOT_CLIENT_ID and secrets.RELEASE_BOT_PRIVATE_KEY.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+# One run at a time, none cancelled halfway through publishing.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  release:
+    name: Release
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: actions/create-github-app-token@v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+
+      - uses: googleapis/release-please-action@v5.0.0
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

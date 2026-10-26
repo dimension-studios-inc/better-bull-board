@@ -1,13 +1,24 @@
 name: Deploy
 
+# Puts a release of the app and ingest in production. Merging to main deploys nothing: Release keeps
+# a release pull request open, and merging it publishes a v<version> GitHub release, which runs this
+# workflow (docs/deploying.md). Run it by hand to deploy again, or to roll back (or forward) to
+# another release or any commit of main:
+#
+#   gh workflow run deploy.yml                  # the latest release
+#   gh workflow run deploy.yml -f ref=v1.2.0    # a release, or a full commit SHA
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: Release tag or full commit SHA to deploy (defaults to the latest release)
+        required: false
 
+# Deploys run one after the other, and none is cancelled halfway.
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: deploy-production
   cancel-in-progress: false
 
 permissions:
@@ -19,10 +30,56 @@ env:
   K8S_NAMESPACE: better-bull-board
 
 jobs:
+  commit:
+    name: Check the commit
+    # The client's releases (client-v<version>) go to npm through Publish, not to the cluster.
+    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      sha: ${{ steps.check.outputs.sha }}
+    env:
+      REF: ${{ inputs.ref || github.event.release.tag_name }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      # Only what main holds goes to production, and only once Check has passed on that very commit.
+      - name: Check the commit
+        id: check
+        run: |
+          set -euo pipefail
+          if [ -z "$REF" ]; then
+            REF="$(gh api "repos/$GH_REPO/releases" --jq '[.[] | select(.draft | not) | select(.tag_name | startswith("v"))][0].tag_name // empty')"
+            if [ -z "$REF" ]; then
+              echo "::error::There is no release to deploy"
+              exit 1
+            fi
+          fi
+          if ! sha="$(gh api "repos/$GH_REPO/commits/$REF" --jq .sha)"; then
+            echo "::error::'$REF' is neither a tag nor a commit of this repository"
+            exit 1
+          fi
+          status="$(gh api "repos/$GH_REPO/compare/$sha...main" --jq .status)"
+          if [ "$status" != ahead ] && [ "$status" != identical ]; then
+            echo "::error::$REF ($sha) is not on main"
+            exit 1
+          fi
+          check="$(gh api "repos/$GH_REPO/commits/$sha/check-runs?check_name=Check&filter=latest" --jq '.check_runs[0].conclusion // "missing"')"
+          if [ "$check" != success ]; then
+            echo "::error::Check on $REF ($sha) is $check, not success"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Deploying \`$REF\` ($sha)" >> "$GITHUB_STEP_SUMMARY"
+
   # One job per image: it builds and rolls out as soon as its own image is ready, and skips both
   # when nothing it is built from changed since the last deploy.
   deploy:
     name: ${{ matrix.image }}
+    needs: commit
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -45,7 +102,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
         with:
-          # Compared with the previously deployed commit (github.event.before)
+          ref: ${{ needs.commit.outputs.sha }}
+          # Compared with the deployed commit
           fetch-depth: 0
 
       - name: Setup bun
@@ -90,7 +148,7 @@ jobs:
         with:
           registry-type: public
 
-      # Docker's default BuildKit builder, without a GitHub Actions cache: every promotion changes
+      # Docker's default BuildKit builder, without a GitHub Actions cache: every release changes
       # the sources or the lockfile, so the cache served 1-2 steps out of 20 while exporting it took
       # twice as long as the build itself (165 s for the app).
       - name: Build and push
@@ -102,7 +160,7 @@ jobs:
           push: true
           provenance: false
           tags: |
-            ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:${{ needs.commit.outputs.sha }}
             ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:latest
 
       # Pin the workload to this commit's image rather than restarting on :latest: the pods run
@@ -111,7 +169,7 @@ jobs:
       - name: Roll out
         if: steps.changes.outputs.changed == 'true'
         env:
-          IMAGE: ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
+          IMAGE: ${{ env.ECR_REGISTRY }}/${{ matrix.image }}:${{ needs.commit.outputs.sha }}
         run: |
           kubectl set image "${{ matrix.workload }}" "${{ matrix.container }}=$IMAGE" -n "$K8S_NAMESPACE"
           kubectl rollout status "${{ matrix.workload }}" -n "$K8S_NAMESPACE" --timeout=5m

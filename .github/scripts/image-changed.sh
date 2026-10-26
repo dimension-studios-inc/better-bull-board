@@ -15,10 +15,10 @@ result() {
   exit 0
 }
 
-# Compared with what runs rather than with the previous main commit, so an image whose last build or
+# Compared with what runs rather than with the previous release, so an image whose last build or
 # rollout failed is built again. Manual runs, and running images that are not tagged with a commit of
 # this history (:latest after a manual apply, rewritten history), build.
-if [ "${EVENT:-}" != "push" ]; then
+if [ "${EVENT:-}" != "release" ]; then
   result true "Manual run: building $package."
 fi
 if ! [[ "${DEPLOYED:-}" =~ ^[0-9a-f]{40}$ ]] || ! git cat-file -e "${DEPLOYED}^{commit}" 2>/dev/null; then
