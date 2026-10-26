@@ -35,7 +35,7 @@ jobs:
     # The client's releases (client-v<version>) go to npm through Publish, not to the cluster.
     if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     permissions:
       contents: read
       checks: read
@@ -67,7 +67,12 @@ jobs:
             echo "::error::$REF ($sha) is not on main"
             exit 1
           fi
-          check="$(gh api "repos/$GH_REPO/commits/$sha/check-runs?check_name=Check&filter=latest" --jq '.check_runs[0].conclusion // "missing"')"
+          # The release commit's Check can still be running when a later commit's CI started Release.
+          for _ in $(seq 1 40); do
+            check="$(gh api "repos/$GH_REPO/commits/$sha/check-runs?check_name=Check&filter=latest" --jq '.check_runs[0] | if . == null then "missing" elif .status != "completed" then "running" else .conclusion end')"
+            [ "$check" = running ] || break
+            sleep 15
+          done
           if [ "$check" != success ]; then
             echo "::error::Check on $REF ($sha) is $check, not success"
             exit 1
