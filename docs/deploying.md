@@ -18,7 +18,7 @@
 | `!` after the type, or a `BREAKING CHANGE:` footer | major                            |
 | `docs`, `test`, `ci`, `chore`                      | none: they wait for the next one |
 
-The release PR stays open while more merges land, and updates itself; merge it when the release should go out. The config is [`release-please-config.json`](../release-please-config.json), and [`.release-please-manifest.json`](../.release-please-manifest.json) holds the current versions.
+The release PR stays open while more merges land, and updates itself; merge it when the release should go out. Each Release run rebuilds both release PRs from `main` (`always-update`): both change `.release-please-manifest.json`, so merging one would otherwise leave the other in conflict. The config is [`release-please-config.json`](../release-please-config.json), and [`.release-please-manifest.json`](../.release-please-manifest.json) holds the current versions.
 
 ## Deploy
 
