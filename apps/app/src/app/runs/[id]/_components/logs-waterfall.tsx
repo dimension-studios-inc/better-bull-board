@@ -102,8 +102,11 @@ export function LogsWaterfall({
   // Sort logs by timestamp ascending to show chronological order
   const sortedLogs = logs.toSorted((a, b) => a.ts - b.ts)
 
+  // The timeline starts when the run starts, not when it was queued (the run details show the wait).
+  // BullMQ moves startedAt to the latest attempt, so an earlier attempt's first log can predate it.
   const scheduledTime = (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs
-  const startTime = Math.max(run.createdAt.getTime(), scheduledTime)
+  const runStartTime = run.startedAt?.getTime() ?? Math.max(run.createdAt.getTime(), scheduledTime)
+  const startTime = Math.min(runStartTime, sortedLogs[0]?.ts ?? runStartTime)
   const endTime = run.finishedAt ? run.finishedAt.getTime() : now
   const totalDuration = endTime - startTime
 
