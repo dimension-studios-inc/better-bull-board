@@ -122,7 +122,20 @@
         "react/react-in-jsx-scope": "off",
 
         // @shadcn/lint: design-system rules, discovered from each package's components.json.
-        "shadcn/no-restyle": ["error", { "allow": ["layout"] }],
+        // Base UI triggers are headless in packages/ui (no classes of their own): the element they
+        // render owns its look, and @shadcn/lint reads that element's classes as the trigger's.
+        "shadcn/no-restyle": [
+          "error",
+          {
+            "allow": ["layout"],
+            "contracts": [
+              {
+                "pattern": "^(TooltipTrigger|HoverCardTrigger)$",
+                "allow": ["layout", "color", "typography", "spacing", "shape", "effects", "motion"]
+              }
+            ]
+          }
+        ],
         // Also scans class strings kept in objects and helpers, outside className props.
         "shadcn/no-raw-colors": ["error", { "scanAllStrings": true }],
         "shadcn/no-arbitrary-values": "error",

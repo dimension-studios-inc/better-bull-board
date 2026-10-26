@@ -52,7 +52,7 @@ export function RunTags({ tags, onTagClick }: RunTagsProps) {
             <Badge
               key={tag}
               variant="outline"
-              className="max-w-full cursor-pointer hover:bg-muted"
+              className="max-w-full cursor-pointer"
               render={
                 <button
                   type="button"

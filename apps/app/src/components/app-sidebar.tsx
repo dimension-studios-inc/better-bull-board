@@ -45,10 +45,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-              render={<Link href="/" onClick={handleNavigate} />}
-            >
+            <SidebarMenuButton render={<Link href="/" onClick={handleNavigate} />}>
               <Image src="/icon.png" alt="" width={20} height={20} className="size-5!" />
               <span className="text-base font-semibold">Better Bull Board</span>
             </SidebarMenuButton>
@@ -62,7 +59,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   tooltip="Create Run"
-                  className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+                  variant="primary"
+                  className="min-w-8"
                   render={<Link href="/runs/create" onClick={handleNavigate} />}
                 >
                   <CirclePlus />

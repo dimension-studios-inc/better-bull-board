@@ -1,27 +1,84 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":pinAllExceptPeerDependencies"],
+  "timezone": "Europe/Paris",
+  "schedule": ["* * * * 1"],
+  "prHourlyLimit": 0,
+  "minimumReleaseAge": "14 days",
   "automerge": true,
   "platformAutomerge": true,
-  "minimumReleaseAge": "14 days",
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "osvVulnerabilityAlerts": true,
+  "dependencyDashboardOSVVulnerabilitySummary": "unresolved",
+  "vulnerabilityAlerts": {
+    "schedule": ["at any time"],
+    "minimumReleaseAge": null,
+    "labels": ["security"]
+  },
   "packageRules": [
     {
-      "description": "oxlint and oxlint-tsgolint must stay compatible, so update the oxc toolchain in one PR",
-      "groupName": "oxc",
-      "matchPackageNames": ["oxlint", "oxlint-tsgolint", "oxfmt"]
+      "description": "Runtime dependencies: one weekly PR. Its fix(deps) commit makes a release (of the client too when it touches packages/client)",
+      "matchDepTypes": ["dependencies", "optionalDependencies", "peerDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dependencies"
     },
     {
-      "description": "Keep the Dockerfile oven/bun images in step with packageManager",
-      "groupName": "bun",
-      "matchPackageNames": ["bun", "oven/bun"]
-    },
-    {
-      "description": "Client devDependencies get their own PRs: grouped with the other packages' fix(deps) updates, they would release the client",
-      "matchFileNames": ["packages/client/package.json"],
+      "description": "Dev dependencies: one weekly PR, chore(deps), so no release",
       "matchDepTypes": ["devDependencies"],
-      "additionalBranchPrefix": "client-",
-      "semanticCommitType": "chore",
-      "semanticCommitScope": "client-deps"
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies"
+    },
+    {
+      "description": "Runtime dependencies of one package that are dev dependencies of another (the UI package's react, the client's bullmq) stay in the runtime PR, so every package.json keeps the same version",
+      "matchPackageNames": ["react", "react-dom", "bullmq"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dependencies"
+    },
+    {
+      "description": "GitHub Actions, and the Node version they set up: one weekly PR",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "github actions"
+    },
+    {
+      "description": "Base images of the app, ingest and Postgres images: one weekly PR, fix(deps) since it changes what runs in production",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "docker images",
+      "semanticCommitType": "fix"
+    },
+    {
+      "description": "TypeScript and the linters move together (oxlint-tsgolint is built against a TypeScript release), apart from the other dev dependencies: their new rules often need code changes, which would hold the whole group back",
+      "matchPackageNames": [
+        "typescript",
+        "oxlint",
+        "oxlint-tsgolint",
+        "oxfmt",
+        "@shadcn/lint",
+        "react-doctor"
+      ],
+      "groupName": "typescript and linters"
+    },
+    {
+      "description": "Bun moves at once in packageManager, the Dockerfiles' oven/bun images and @types/bun; fix(deps) since the images run on it",
+      "matchPackageNames": ["bun", "oven/bun", "@types/bun"],
+      "groupName": "bun",
+      "semanticCommitType": "fix"
+    },
+    {
+      "description": "drizzle-kit and drizzle-zod must match the drizzle-orm version, across dependencies and devDependencies",
+      "matchPackageNames": ["drizzle-orm", "drizzle-kit", "drizzle-zod"],
+      "groupName": "drizzle",
+      "semanticCommitType": "fix"
+    },
+    {
+      "description": "Majors can break things: listed in the Dependency Dashboard, and opened (one PR per monorepo) only once ticked there, for a human review",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "automerge": false,
+      "labels": ["major"]
     }
   ]
 }
