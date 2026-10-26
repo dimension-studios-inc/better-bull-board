@@ -36,5 +36,5 @@ gh workflow run deploy.yml -f ref=v1.2.0
 
 ## Setup
 
-- Release acts as the release bot's GitHub App (`vars.RELEASE_BOT_CLIENT_ID` and `secrets.RELEASE_BOT_PRIVATE_KEY`, at the organization level), not with `GITHUB_TOKEN`: what that token creates runs no workflow, so Check would never run on the release PR and the release would never start Deploy or Publish. The app needs contents, issues and pull requests write access to this repository.
+- Release acts as the `dimension-release` GitHub App (`vars.RELEASE_APP_CLIENT_ID` and `secrets.RELEASE_APP_PRIVATE_KEY`, at the repository level), not with `GITHUB_TOKEN`: what that token creates runs no workflow, so Check would never run on the release PR and the release would never start Deploy or Publish. The app needs contents, issues and pull requests write access to this repository.
 - Deploy reads `secrets.KUBECONFIG_CONTENT` (organization) and `secrets.AWS_ACCESS_KEY_ID` / `secrets.AWS_SECRET_ACCESS_KEY` (repository).
