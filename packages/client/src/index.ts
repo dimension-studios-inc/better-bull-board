@@ -9,6 +9,7 @@ export * from "./lib/cancellation"
 export * from "./lib/job-events"
 export * from "./lib/log-events"
 export * from "./lib/logger"
+export * from "./lib/pino"
 export * from "./worker"
 
 /**
@@ -16,36 +17,28 @@ export * from "./worker"
  */
 export const patch = (run: (job: SandboxedJob) => Promise<unknown>, redis: Redis) => {
   return async (job: SandboxedJob) => {
-    const pendingPublishes = new Set<Promise<number | void>>()
-    installConsoleRelay({
-      addPendingPublish: (publish) => {
-        pendingPublishes.add(publish)
-      },
-      removePendingPublish: (publish) => {
-        pendingPublishes.delete(publish)
-      },
-    })
-
-    async function flushConsoleRelay() {
+    installConsoleRelay()
+    const pendingPublishes = new Set<Promise<void>>()
+    try {
+      return await withJobConsole(
+        {
+          id: job.id,
+          emitBBBLog: (event) =>
+            emitJobLogSyncEvent({
+              redis,
+              workerId: job.id,
+              ...event,
+            }),
+          autoEmitJobLogs: true,
+          autoEmitBBBLogs: true,
+          job,
+          pendingPublishes,
+        },
+        () => cancelable(run, redis)(job),
+      )
+    } finally {
+      // A failed run flushes too: its last lines are usually the ones worth reading.
       await Promise.all(pendingPublishes)
     }
-
-    const result = await withJobConsole(
-      {
-        id: job.id,
-        emitBBBLog: (event) =>
-          emitJobLogSyncEvent({
-            redis,
-            workerId: job.id,
-            ...event,
-          }),
-        autoEmitJobLogs: true,
-        autoEmitBBBLogs: true,
-        job,
-      },
-      () => cancelable(run, redis)(job),
-    )
-    await flushConsoleRelay()
-    return result
   }
 }

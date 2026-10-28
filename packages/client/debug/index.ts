@@ -1,8 +1,3 @@
-import { logger } from "@rharkor/logger"
+import { log } from "../src/lib/log"
 
-const main = async () => {
-  await logger.init()
-  logger.debug("Hello, world!")
-}
-
-void main().then(() => process.exit(0))
+log.info("Hello, world!")

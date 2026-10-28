@@ -1,12 +1,10 @@
-import { logger } from "@rharkor/logger"
 import { Queue, type SandboxedJob } from "bullmq"
 import type Redis from "ioredis"
 
+import { log } from "./log"
 import { repeat } from "./utils"
 
 export const registerCancellationListener = async (redis: Redis, jobId: string) => {
-  await logger.init()
-
   const listener = redis.duplicate()
   await listener.connect().catch(() => {})
 
@@ -17,7 +15,7 @@ export const registerCancellationListener = async (redis: Redis, jobId: string) 
     if (channel === `bbb:cancellation:${jobId}`) {
       const { id: cancelledJobId } = JSON.parse(message) as { id?: unknown }
       if (cancelledJobId === jobId) {
-        logger.warn(`Job ${jobId} was cancelled`)
+        log.warn(`Job ${jobId} was cancelled`)
         await redis.publish(`bbb:cancellation:${jobId}:pong`, JSON.stringify({ id: jobId }))
         throw new CancellationError(`Job ${jobId} was cancelled`)
       }

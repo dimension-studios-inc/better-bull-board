@@ -128,9 +128,28 @@ new Worker("demo-queue", processorFile, {
 
 The `patch` function provides built-in job cancellation support. Jobs can be cancelled through the Better Bull Board UI.
 
-#### Console Logging
+#### Job logs
 
 All console output from your processors is automatically captured and sent to Better Bull Board for monitoring.
+
+Loggers that write to stdout directly, like [pino](https://getpino.io), bypass `console`. Give pino the job log destination so each line also reaches the current job:
+
+```typescript
+import { createPinoJobLogDestination } from "@better-bull-board/client"
+import { pino } from "pino"
+
+export const logger = pino(
+  { level: "info" },
+  pino.multistream([
+    { stream: process.stdout, level: "trace" },
+    { stream: createPinoJobLogDestination({ ignore: ["trace_id"] }), level: "trace" },
+  ]),
+)
+```
+
+The destination keeps `msg`, appends the other fields as JSON and prints `err` like a thrown error; `ignore` drops keys you do not want in the job logs (`pid` and `hostname` already are). Outside a job it is a no-op, so one logger instance serves both the worker and its processors.
+
+Any other logger can call `relayJobLog({ level, message })` from its transport: it forwards the line to the job bound to the current async context and does nothing otherwise.
 
 #### Job Tags
 
@@ -154,6 +173,16 @@ Wraps your job processor with Better Bull Board functionality.
 
 - `processor`: Your async job processing function
 - `redis`: Redis connection instance
+
+### `createPinoJobLogDestination(options?)`
+
+A pino destination that relays each log line to the current job's logs.
+
+- `options.ignore`: extra keys to drop from the relayed message
+
+### `relayJobLog({ level, message })`
+
+Forwards one log line to the job bound to the current async context, if any. `level` is one of `log`, `debug`, `info`, `warn`, `error`.
 
 ### `Worker`
 
