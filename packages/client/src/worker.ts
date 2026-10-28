@@ -1,8 +1,8 @@
-import { logger } from "@rharkor/logger"
 import { Worker as BullMQWorker, type Job, Queue, QueueEvents, type WorkerOptions } from "bullmq"
 import type Redis from "ioredis"
 
 import { emitJobSyncEvent } from "./lib/job-events"
+import { log } from "./lib/log"
 import { onlyMaster } from "./lib/master"
 
 const isDefinedString = (value: string | undefined): value is string => value !== undefined
@@ -97,7 +97,7 @@ export class Worker<
         messageHandler = (args) => void emitWaitingJob(args)
         await listener.waitUntilReady()
         listener.on("waiting", messageHandler)
-        logger.log(`[${this.id}] subscribed to ${channel}`)
+        log.info(`[${this.id}] subscribed to ${channel}`)
       } else if (!isMaster() && subscribed && listener) {
         // ❌ we lost master → unsubscribe
         if (messageHandler) listener.off("waiting", messageHandler)
@@ -105,7 +105,7 @@ export class Worker<
         listener = null
         messageHandler = null
         subscribed = false
-        logger.log(`[${this.id}] unsubscribed from ${channel}`)
+        log.info(`[${this.id}] unsubscribed from ${channel}`)
       }
       this.hasWaitingJobsEventsInitialized = true
     }

@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks"
 
 import type { Job, SandboxedJob } from "bullmq"
 
-import type { JobLogSyncEventInput } from "./log-events"
+import type { JobLogSyncEventInput, JobLogSyncLevel } from "./log-events"
 
 // oxlint-disable-next-line eslint/no-control-regex -- matches ANSI escape sequences (ESC) to strip colors from the logs
 const ansiRegex = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g
@@ -67,8 +67,56 @@ type Ctx = {
   autoEmitJobLogs?: boolean
   autoEmitBBBLogs?: boolean
   id: string
+  /** Publishes still in flight; `patch` awaits them before the job returns. */
+  pendingPublishes?: Set<Promise<void>>
 }
 const jobStore = new AsyncLocalStorage<Ctx>()
+
+// Bound before the relay patches console, so relay failures never loop back into the relay.
+const nativeConsole = {
+  debug: console.debug.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console),
+  log: console.log.bind(console),
+} as const
+
+/** Whether a job is bound to the current async context. */
+export function hasJobContext(): boolean {
+  return jobStore.getStore()?.job !== undefined
+}
+
+/**
+ * Forward one log line to the job bound to the current async context, if any.
+ * Loggers that bypass `console` (pino, winston…) call this from their destination.
+ */
+export function relayJobLog({ level, message }: { level: JobLogSyncLevel; message: string }) {
+  const ctx = jobStore.getStore()
+  if (!ctx?.job) return
+  if (ctx.autoEmitBBBLogs && ctx.job.id) {
+    const { ts, seq } = nextLogTimestamp()
+    const publish = ctx
+      .emitBBBLog({
+        jobId: ctx.job.id,
+        queueName: ctx.job.queueName,
+        logTimestamp: ts,
+        logSeq: seq,
+        jobTimestamp: ctx.job.timestamp,
+        message,
+        level,
+      })
+      .catch((err: unknown) => nativeConsole.error("🔍 Error writing log to Redis stream", err))
+    ctx.pendingPublishes?.add(publish)
+    void publish.finally(() => ctx.pendingPublishes?.delete(publish))
+  }
+  if (ctx.autoEmitJobLogs) {
+    try {
+      void ctx.job.log(message)
+    } catch (e) {
+      nativeConsole.error("🔍 Error forwarding log to job", e)
+    }
+  }
+}
 
 let patched = false
 
@@ -76,58 +124,20 @@ let patched = false
  * Patch console once. It will forward logs to the *current* job
  * if one is set in AsyncLocalStorage, otherwise just logs normally.
  */
-export function installConsoleRelay({
-  addPendingPublish,
-  removePendingPublish,
-}: {
-  addPendingPublish: (publish: Promise<number | void>) => void
-  removePendingPublish: (publish: Promise<number | void>) => void
-}) {
+export function installConsoleRelay() {
   if (patched) return
   patched = true
 
-  const original = {
-    debug: console.debug.bind(console),
-    info: console.info.bind(console),
-    warn: console.warn.bind(console),
-    error: console.error.bind(console),
-    log: console.log.bind(console),
-  } as const
-
   const forward =
-    (level: keyof typeof original) =>
+    (level: keyof typeof nativeConsole) =>
     (...params: unknown[]) => {
-      const ctx = jobStore.getStore()
-      if (ctx?.job) {
+      if (hasJobContext()) {
         const message = params
           .map((p) => (typeof p === "string" ? decolorize(p) : formatForLogger(p)))
           .join(" ")
-        // Fire-and-forget so console stays sync; swallow errors.
-        if (ctx.autoEmitBBBLogs && ctx.job.id) {
-          const { ts, seq } = nextLogTimestamp()
-          const p = ctx
-            .emitBBBLog({
-              jobId: ctx.job.id,
-              queueName: ctx.job.queueName,
-              logTimestamp: ts,
-              logSeq: seq,
-              jobTimestamp: ctx.job.timestamp,
-              message,
-              level,
-            })
-            .catch((err: unknown) => original.error("🔍 Error writing log to Redis stream", err))
-          addPendingPublish(p)
-          void p.finally(() => removePendingPublish(p))
-        }
-        if (ctx.autoEmitJobLogs) {
-          try {
-            void ctx.job.log(message)
-          } catch (e) {
-            original.error("🔍 Error forwarding log to job", e)
-          }
-        }
+        relayJobLog({ level, message })
       }
-      original[level](...(params as []))
+      nativeConsole[level](...(params as []))
     }
 
   console.debug = forward("debug")
