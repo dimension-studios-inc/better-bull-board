@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.0.1...v1.1.0) (2026-10-28)
+
+
+### Features
+
+* **client:** relay pino logs to the job ([#403](https://github.com/dimension-studios-inc/better-bull-board/issues/403)) ([b6015b0](https://github.com/dimension-studios-inc/better-bull-board/commit/b6015b03f2e6a61dc260eff7e8e707ebbf6f7a23))
+
 ## [1.0.1](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.0.0...v1.0.1) (2026-10-26)
 
 
