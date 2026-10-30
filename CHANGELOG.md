@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.1.0...v1.2.0) (2026-10-30)
+
+
+### Features
+
+* **app:** copy a run as an agent prompt from its details ([#407](https://github.com/dimension-studios-inc/better-bull-board/issues/407)) ([e6a4eca](https://github.com/dimension-studios-inc/better-bull-board/commit/e6a4eca0d7e04c76a57dcdba9519ebb185e85243))
+
+
+### Bug fixes
+
+* **mcp:** keep concurrent MCP clients signed in across refresh rotation ([#406](https://github.com/dimension-studios-inc/better-bull-board/issues/406)) ([0a201e4](https://github.com/dimension-studios-inc/better-bull-board/commit/0a201e403b699cb3ade82dc6ecb13b2b74aed4c6))
+
 ## [1.1.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.0.1...v1.1.0) (2026-10-28)
 
 
