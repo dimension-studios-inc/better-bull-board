@@ -145,3 +145,12 @@ export const listJobLogsOutputSchema = z.object({
   ),
   total: z.number(),
 })
+
+export const getJobLogInputSchema = z.object({
+  runId: z.string(),
+  logId: z.string(),
+})
+
+export const getJobLogOutputSchema = z.object({
+  log: listJobLogsOutputSchema.shape.logs.element.nullable(),
+})
