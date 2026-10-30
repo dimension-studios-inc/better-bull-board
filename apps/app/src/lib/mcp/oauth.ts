@@ -8,10 +8,12 @@ import {
 } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
 import { MCP_READ_SCOPE, MCP_SUPPORTED_SCOPES } from "@better-bull-board/mcp/scopes"
-import { and, eq, gt, isNull } from "drizzle-orm"
+import { and, eq, gt, isNull, or } from "drizzle-orm"
 
 const MCP_ACCESS_TOKEN_TTL_SECONDS = 60 * 60
 const MCP_REFRESH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30
+// A rotated refresh token stays usable this long, so concurrent refreshes don't fail with invalid_grant
+const MCP_REFRESH_TOKEN_REUSE_SECONDS = 60
 const MCP_AUTHORIZATION_CODE_TTL_SECONDS = 60 * 10
 
 type TokenIssuerDatabase = Pick<typeof db, "insert">
@@ -442,18 +444,20 @@ export const exchangeRefreshToken = async (formData: FormData) => {
   const refreshToken = requireString(formData, "refresh_token")
   return db.transaction(async (tx) => {
     const now = new Date()
+    const reuseCutoff = new Date(now.getTime() - MCP_REFRESH_TOKEN_REUSE_SECONDS * 1000)
     const [token] = await tx
-      .update(mcpOAuthTokensTable)
-      .set({ revokedAt: now, rotatedAt: now })
+      .select()
+      .from(mcpOAuthTokensTable)
       .where(
         and(
           eq(mcpOAuthTokensTable.refreshTokenHash, hashToken(refreshToken)),
           eq(mcpOAuthTokensTable.clientId, clientId),
           isNull(mcpOAuthTokensTable.revokedAt),
           gt(mcpOAuthTokensTable.refreshTokenExpiresAt, now),
+          or(isNull(mcpOAuthTokensTable.rotatedAt), gt(mcpOAuthTokensTable.rotatedAt, reuseCutoff)),
         ),
       )
-      .returning()
+      .for("update")
 
     if (!token) {
       throw new OAuthError("invalid_grant", "Refresh token is invalid or expired")
@@ -467,10 +471,14 @@ export const exchangeRefreshToken = async (formData: FormData) => {
       resource: token.resource,
     })
 
-    await tx
-      .update(mcpOAuthTokensTable)
-      .set({ replacedByTokenId: issued.rowId })
-      .where(eq(mcpOAuthTokensTable.id, token.id))
+    // Not revoked: the old access token stays valid until it expires, or every other process
+    // sharing the credential gets a 401 and refreshes in turn
+    if (!token.rotatedAt) {
+      await tx
+        .update(mcpOAuthTokensTable)
+        .set({ rotatedAt: now, replacedByTokenId: issued.rowId })
+        .where(eq(mcpOAuthTokensTable.id, token.id))
+    }
 
     const { rowId: _rowId, ...response } = issued
     return response
