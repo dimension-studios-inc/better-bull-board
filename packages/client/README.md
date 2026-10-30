@@ -147,7 +147,7 @@ export const logger = pino(
 )
 ```
 
-The destination keeps `msg`, appends the other fields as JSON and prints `err` like a thrown error; `ignore` drops keys you do not want in the job logs (`pid` and `hostname` already are). Outside a job it is a no-op, so one logger instance serves both the worker and its processors.
+The destination keeps `msg`, appends the other fields as JSON and prints `err` like a thrown error, followed by its own fields (`code`, `data`, …); `ignore` drops keys you do not want in the job logs (`pid` and `hostname` already are). Outside a job it is a no-op, so one logger instance serves both the worker and its processors.
 
 Any other logger can call `relayJobLog({ level, message })` from its transport: it forwards the line to the job bound to the current async context and does nothing otherwise.
 
