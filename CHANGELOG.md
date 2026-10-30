@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.2.0...v1.3.0) (2026-10-30)
+
+
+### Features
+
+* **mcp:** confirm the decision on the authorize page ([#409](https://github.com/dimension-studios-inc/better-bull-board/issues/409)) ([ae58ca9](https://github.com/dimension-studios-inc/better-bull-board/commit/ae58ca944f6039d37a2763a2f6c60345b752f9c3))
+
 ## [1.2.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.1.0...v1.2.0) (2026-10-30)
 
 
