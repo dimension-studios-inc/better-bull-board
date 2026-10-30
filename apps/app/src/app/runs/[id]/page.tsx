@@ -20,18 +20,8 @@ import { RunDetailsDrawer } from "./_components/run-details-drawer"
 export default function RunViewPage() {
   const params = useParams()
   const runId = params.id as string
-  const [selectedLogId, setSelectedLogId] = useQueryState(
-    "log",
-    parseAsString.withOptions({ history: "push" }),
-  )
+  const [selectedLogId, setSelectedLogId] = useQueryState("log", parseAsString)
   const detailsRef = useRef<HTMLDivElement>(null)
-
-  // On stacked (mobile) layouts the details panel sits below the logs, so bring it into view
-  useEffect(() => {
-    if (selectedLogId && window.matchMedia("(max-width: 1023px)").matches) {
-      detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-    }
-  }, [selectedLogId])
 
   const {
     data: run,
@@ -47,6 +37,13 @@ export default function RunViewPage() {
     }),
     enabled: !!runId,
   })
+
+  // On stacked (mobile) layouts the details panel sits below the logs, so bring it into view
+  useEffect(() => {
+    if (!isLoadingRun && selectedLogId && window.matchMedia("(max-width: 1023px)").matches) {
+      detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [isLoadingRun, selectedLogId])
 
   const {
     data: logsDataPages,
@@ -130,9 +127,10 @@ export default function RunViewPage() {
             <LogDetailsSelection
               logId={selectedLogId}
               loadedLog={loadedLog}
+              isLoadingLogs={isLoadingLogs}
               runId={runId}
               run={job}
-              onBack={() => void setSelectedLogId(null, { history: "replace" })}
+              onBack={() => void setSelectedLogId(null)}
             />
           ) : (
             <RunDetailsDrawer run={job} />

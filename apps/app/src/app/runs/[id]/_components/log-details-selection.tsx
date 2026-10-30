@@ -1,5 +1,6 @@
 "use client"
 
+import { getJobLogInputSchema, type JobLogEntry } from "@better-bull-board/core/job-schemas"
 import type { jobRunsTable } from "@better-bull-board/db"
 import { Alert, AlertDescription } from "@better-bull-board/ui/components/alert"
 import { Button } from "@better-bull-board/ui/components/button"
@@ -12,17 +13,10 @@ import { apiFetch } from "~/lib/utils/client"
 
 import { LogDetailsDrawer } from "./log-details-drawer"
 
-interface LogEntry {
-  id: string
-  jobRunId: string
-  level: string
-  message: string
-  ts: number
-}
-
 interface LogDetailsSelectionProps {
   logId: string
-  loadedLog?: LogEntry
+  loadedLog?: JobLogEntry
+  isLoadingLogs: boolean
   runId: string
   run: typeof jobRunsTable.$inferSelect
   onBack: () => void
@@ -31,22 +25,24 @@ interface LogDetailsSelectionProps {
 export function LogDetailsSelection({
   logId,
   loadedLog,
+  isLoadingLogs,
   runId,
   run,
   onBack,
 }: LogDetailsSelectionProps) {
+  const validLogId = getJobLogInputSchema.safeParse({ runId, logId }).success
   const { data, isLoading, error } = useQuery({
     queryKey: ["jobs/log", runId, logId],
     queryFn: apiFetch({
       apiRoute: getJobLogApiRoute,
       body: { runId, logId },
     }),
-    enabled: !loadedLog,
+    enabled: validLogId && !loadedLog && !isLoadingLogs,
   })
   const log = loadedLog ?? data?.log
 
   if (log) return <LogDetailsDrawer log={log} run={run} onBack={onBack} />
-  if (isLoading) return <Skeleton className="h-96 w-full" />
+  if (validLogId && (isLoading || isLoadingLogs)) return <Skeleton className="h-96 w-full" />
 
   return (
     <Alert variant="destructive">
