@@ -26,10 +26,18 @@ const toJobLogLevel = (level: unknown): JobLogSyncLevel => {
   return "log"
 }
 
-// pino's err serializer emits `{ type, message, stack }`, the stack already carrying any cause.
+// pino's err serializer emits `{ type, message, stack, ...ownFields }`, the stack already carrying any cause.
+// A plain `{ message, code }` object serializes with `stack: ""`, so fall back to the message and keep its fields.
 const formatSerializedError = (err: unknown): string => {
   if (!isRecord(err)) return formatForLogger(err)
-  return typeof err.stack === "string" ? err.stack : `${String(err.type)}: ${String(err.message)}`
+  const { type, message, stack, ...fields } = err
+  const head =
+    typeof stack === "string" && stack !== ""
+      ? stack
+      : [type, message].filter((part) => typeof part === "string" && part !== "").join(": ")
+  const parts = [head]
+  if (Object.keys(fields).length > 0) parts.push(JSON.stringify(fields, null, 2))
+  return parts.filter(Boolean).join("\n")
 }
 
 const formatLine = (line: PinoLine, ignore: Set<string>): string => {
