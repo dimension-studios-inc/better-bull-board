@@ -3,7 +3,13 @@
 import type { jobRunsTable } from "@better-bull-board/db"
 import { Badge } from "@better-bull-board/ui/components/badge"
 import { Button } from "@better-bull-board/ui/components/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@better-bull-board/ui/components/card"
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,6 +37,8 @@ import { codeToHtml } from "shiki"
 import { RunStatusBadge, RunStatusIcon } from "~/components/run-status-badge"
 import { smartFormatDuration } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
+
+import { CopyRunPromptButton } from "./copy-run-prompt-button"
 
 type TRun = typeof jobRunsTable.$inferSelect
 
@@ -289,6 +297,9 @@ export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
             Run Details
           </span>
         </CardTitle>
+        <CardAction>
+          <CopyRunPromptButton run={run} />
+        </CardAction>
       </CardHeader>
       <CardContent className="overflow-hidden lg:h-full">
         <ScrollArea className="lg:h-full [&>[data-slot=scroll-area-viewport]>div]:block!">
