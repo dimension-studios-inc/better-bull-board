@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.3.0...v1.4.0) (2026-10-30)
+
+
+### Features
+
+* **app:** link directly to run logs ([#411](https://github.com/dimension-studios-inc/better-bull-board/issues/411)) ([a5b96a3](https://github.com/dimension-studios-inc/better-bull-board/commit/a5b96a3d6992a2a2f4b1c30d87867410bcee8006))
+
+
+### Bug fixes
+
+* **client:** show plain-object errors and their fields in pino job logs ([#412](https://github.com/dimension-studios-inc/better-bull-board/issues/412)) ([171458f](https://github.com/dimension-studios-inc/better-bull-board/commit/171458fd67ce7deb7c6229dfb6e288bc766c08ba))
+
 ## [1.3.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.2.0...v1.3.0) (2026-10-30)
 
 
