@@ -25,6 +25,8 @@ import { z } from "zod"
 import { withListJobsConcurrencyLimit } from "./list-jobs-limit"
 
 export {
+  getJobLogInputSchema,
+  getJobLogOutputSchema,
   getJobByIdInputSchema,
   getJobByIdOutputSchema,
   listJobLogsInputSchema,
@@ -34,6 +36,8 @@ export {
 } from "./job-schemas"
 
 import {
+  getJobLogInputSchema,
+  getJobLogOutputSchema,
   cancellableJobStatuses,
   countJobsOutputSchema,
   getJobByIdInputSchema,
@@ -408,6 +412,17 @@ export const getJobById = async (input: z.input<typeof getJobByIdInputSchema>) =
       finishedAt: jobRun.finishedAt?.getTime() ?? null,
     },
   })
+}
+
+export const getJobLog = async (input: z.input<typeof getJobLogInputSchema>) => {
+  const { runId, logId } = getJobLogInputSchema.parse(input)
+  const [log] = await db
+    .select()
+    .from(jobLogsTable)
+    .where(and(eq(jobLogsTable.id, logId), eq(jobLogsTable.jobRunId, runId)))
+    .limit(1)
+
+  return getJobLogOutputSchema.parse({ log: log ? { ...log, ts: log.ts.getTime() } : null })
 }
 
 export const listJobLogs = async (input: z.input<typeof listJobLogsInputSchema>) => {
