@@ -1,11 +1,12 @@
 import { MCP_WRITE_SCOPE } from "@better-bull-board/mcp/scopes"
-import { Button } from "@better-bull-board/ui/components/button"
 import { Card, CardContent } from "@better-bull-board/ui/components/card"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 import { getAuthenticatedUser } from "~/lib/auth/server"
 import { getMcpResource, getOriginFromHeaders, validateAuthorizationRequest } from "~/lib/mcp/oauth"
+
+import { AuthorizeForm } from "./_components/authorize-form"
 
 export const runtime = "nodejs"
 
@@ -70,15 +71,7 @@ export default async function McpAuthorizePage({
             </div>
           </div>
 
-          <form action="/api/mcp/oauth/authorize/approve" method="post" className="mt-6 flex gap-3">
-            <input type="hidden" name="authorize_url" value={authorizeUrl} />
-            <Button type="submit" name="decision" value="approve" className="flex-1">
-              Authorize
-            </Button>
-            <Button type="submit" name="decision" value="deny" variant="outline" className="flex-1">
-              Deny
-            </Button>
-          </form>
+          <AuthorizeForm authorizeUrl={authorizeUrl} clientName={authorization.client.clientName} />
         </CardContent>
       </Card>
     </div>
