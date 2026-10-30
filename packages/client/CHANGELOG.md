@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/dimension-studios-inc/better-bull-board/compare/client-v0.2.0...client-v0.2.1) (2026-10-30)
+
+
+### Bug fixes
+
+* **client:** show plain-object errors and their fields in pino job logs ([#412](https://github.com/dimension-studios-inc/better-bull-board/issues/412)) ([171458f](https://github.com/dimension-studios-inc/better-bull-board/commit/171458fd67ce7deb7c6229dfb6e288bc766c08ba))
+
 ## [0.2.0](https://github.com/dimension-studios-inc/better-bull-board/compare/client-v0.1.9...client-v0.2.0) (2026-10-28)
 
 
