@@ -24,7 +24,7 @@
     "@commitlint/config-conventional": "21.2.4",
     "@shadcn/lint": "0.2.3",
     "@vercel/nft": "1.11.0",
-    "knip": "6.42.0",
+    "knip": "6.42.1",
     "lefthook": "2.2.2",
     "oxfmt": "0.73.0",
     "oxlint": "1.88.0",
