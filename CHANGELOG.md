@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.5.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.4.0...v1.5.0) (2026-11-03)
+
+
+### Features
+
+* **app:** restore direct links to run logs ([#431](https://github.com/dimension-studios-inc/better-bull-board/issues/431)) ([6e4500f](https://github.com/dimension-studios-inc/better-bull-board/commit/6e4500f8eaa278452c211f8abcc1fc7d57b7c38a))
+
+
+### Bug fixes
+
+* **app:** keep the query string through the login redirect ([#429](https://github.com/dimension-studios-inc/better-bull-board/issues/429)) ([f494af8](https://github.com/dimension-studios-inc/better-bull-board/commit/f494af84d75842e456d65619c6e5c1bad3a95059))
+* **deps:** update dependencies ([#416](https://github.com/dimension-studios-inc/better-bull-board/issues/416)) ([e8df7a5](https://github.com/dimension-studios-inc/better-bull-board/commit/e8df7a58b6e265ea2cd35e3652acc151628ce5da))
+* **deps:** update dependencies ([#427](https://github.com/dimension-studios-inc/better-bull-board/issues/427)) ([e509d91](https://github.com/dimension-studios-inc/better-bull-board/commit/e509d91f429d42afbf4e610c6b8d919e3cbe062c))
+* **deps:** update dependency cronstrue to v3.33.0 ([#423](https://github.com/dimension-studios-inc/better-bull-board/issues/423)) ([5dd7a96](https://github.com/dimension-studios-inc/better-bull-board/commit/5dd7a96a62d764287da0d4b9bd5a40ebf387d7db))
+* **deps:** update dependency motion to v14.4.0 ([#425](https://github.com/dimension-studios-inc/better-bull-board/issues/425)) ([9b6a7b5](https://github.com/dimension-studios-inc/better-bull-board/commit/9b6a7b57f34ccb8a6cea007030dd0764c8fc1f9d))
+* **deps:** update node.js to v24.22.0 ([#419](https://github.com/dimension-studios-inc/better-bull-board/issues/419)) ([91a0f30](https://github.com/dimension-studios-inc/better-bull-board/commit/91a0f305c40a65b911f88543a031a6b1735fd691))
+
+
+### Reverts
+
+* **app:** drop direct links to run logs ([#430](https://github.com/dimension-studios-inc/better-bull-board/issues/430)) ([841c8ed](https://github.com/dimension-studios-inc/better-bull-board/commit/841c8ed715f5f4482d6c768db69c6f47b3841d75))
+
 ## [1.4.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.3.0...v1.4.0) (2026-10-30)
 
 
