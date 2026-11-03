@@ -1,5 +1,6 @@
 "use client"
 
+import type { JobLogEntry } from "@better-bull-board/core/job-schemas"
 import type { jobRunsTable } from "@better-bull-board/db"
 import { Alert, AlertDescription } from "@better-bull-board/ui/components/alert"
 import { ScrollArea } from "@better-bull-board/ui/components/scroll-area"
@@ -14,22 +15,14 @@ import { smartFormatDuration } from "~/lib/utils/client"
 
 import { LogLevelIcon } from "./log-level"
 
-interface LogEntry {
-  id: string
-  jobRunId: string
-  level: string
-  message: string
-  ts: number
-}
-
 interface LogsWaterfallProps {
-  logs: LogEntry[]
+  logs: JobLogEntry[]
   isLoading: boolean
   error: Error | null
   run: typeof jobRunsTable.$inferSelect
   /** When the data was last fetched, which ends the timeline of a run still in progress */
   now: number
-  onLogClick: (log: LogEntry) => void
+  onLogClick: (log: JobLogEntry) => void
   hasMore: boolean
   onLoadMore: () => void
 }
