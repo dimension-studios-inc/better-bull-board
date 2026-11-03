@@ -61,7 +61,7 @@ const normalizeMessage = (message: SQL) =>
 const getSearch = (normalizedMessage: string) => {
   const longestFragment = normalizedMessage
     .split(placeholderPattern)
-    .map((fragment) => fragment.replace(fragmentEdgesPattern, ""))
+    .map((fragment) => fragment.replaceAll(fragmentEdgesPattern, ""))
     .reduce((longest, fragment) => (fragment.length > longest.length ? fragment : longest), "")
 
   return longestFragment.length >= MIN_SEARCH_LENGTH
