@@ -14,7 +14,7 @@ interface BqRunPageProps {
 
 export default async function BqRunPage({ params }: BqRunPageProps) {
   const { queueName, runId } = await params
-  // Forward the query (`?log=<id>`) to the run page
+  // Forward the query to the run page
   const search = (await headers()).get("x-search") ?? ""
 
   try {

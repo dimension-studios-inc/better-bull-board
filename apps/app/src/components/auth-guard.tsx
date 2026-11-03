@@ -16,7 +16,7 @@ export async function AuthGuard({ children, pathname, search }: AuthGuardProps) 
   const user = await getAuthenticatedUser()
 
   if (!user && pathname !== "/login") {
-    // Keep the query so deep links (`/runs/<id>?log=<id>`) survive the login
+    // Keep the query so filtered links survive the login
     redirect(`/login?next=${encodeURIComponent(`${pathname}${search}`)}`)
   }
 
