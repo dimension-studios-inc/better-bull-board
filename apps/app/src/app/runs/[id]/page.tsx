@@ -5,37 +5,23 @@ import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { AlertCircle } from "lucide-react"
 import { useParams } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { parseAsString, useQueryState } from "nuqs"
+import { useEffect, useRef } from "react"
 
 import { getJobByIdApiRoute } from "~/app/api/jobs/[id]/schemas"
 import { getJobLogsApiRoute } from "~/app/api/jobs/logs/schemas"
 import { PageContainer } from "~/components/page-container"
 import { apiFetch } from "~/lib/utils/client"
 
-import { LogDetailsDrawer } from "./_components/log-details-drawer"
+import { LogDetailsSelection } from "./_components/log-details-selection"
 import { LogsWaterfall } from "./_components/logs-waterfall"
 import { RunDetailsDrawer } from "./_components/run-details-drawer"
-
-interface LogEntry {
-  id: string
-  jobRunId: string
-  level: string
-  message: string
-  ts: number
-}
 
 export default function RunViewPage() {
   const params = useParams()
   const runId = params.id as string
-  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null)
+  const [selectedLogId, setSelectedLogId] = useQueryState("log", parseAsString)
   const detailsRef = useRef<HTMLDivElement>(null)
-
-  // On stacked (mobile) layouts the details panel sits below the logs, so bring it into view
-  useEffect(() => {
-    if (selectedLog && window.matchMedia("(max-width: 1023px)").matches) {
-      detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-    }
-  }, [selectedLog])
 
   const {
     data: run,
@@ -51,6 +37,13 @@ export default function RunViewPage() {
     }),
     enabled: !!runId,
   })
+
+  // On stacked (mobile) layouts the details panel sits below the logs, so bring it into view
+  useEffect(() => {
+    if (!isLoadingRun && selectedLogId && window.matchMedia("(max-width: 1023px)").matches) {
+      detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [isLoadingRun, selectedLogId])
 
   const {
     data: logsDataPages,
@@ -77,6 +70,7 @@ export default function RunViewPage() {
   })
 
   const logsData = logsDataPages?.pages.flatMap((page) => page.logs) ?? []
+  const loadedLog = logsData.find((log) => log.id === selectedLogId)
 
   if (isLoadingRun) {
     return (
@@ -123,14 +117,21 @@ export default function RunViewPage() {
             error={logsError}
             run={job}
             now={Math.max(runUpdatedAt, logsUpdatedAt)}
-            onLogClick={setSelectedLog}
+            onLogClick={(log) => void setSelectedLogId(log.id)}
             hasMore={hasNextPage}
             onLoadMore={() => void fetchNextPage()}
           />
         </div>
         <div ref={detailsRef} className="w-full scroll-mt-4 lg:w-96 lg:shrink-0">
-          {selectedLog ? (
-            <LogDetailsDrawer log={selectedLog} run={job} onBack={() => setSelectedLog(null)} />
+          {selectedLogId ? (
+            <LogDetailsSelection
+              logId={selectedLogId}
+              loadedLog={loadedLog}
+              isLoadingLogs={isLoadingLogs}
+              runId={runId}
+              run={job}
+              onBack={() => void setSelectedLogId(null)}
+            />
           ) : (
             <RunDetailsDrawer run={job} />
           )}

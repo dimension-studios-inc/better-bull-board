@@ -145,3 +145,14 @@ export const listJobLogsOutputSchema = z.object({
   ),
   total: z.number(),
 })
+
+export type JobLogEntry = z.infer<typeof listJobLogsOutputSchema>["logs"][number]
+
+export const getJobLogInputSchema = z.object({
+  runId: z.uuid(),
+  logId: z.uuid(),
+})
+
+export const getJobLogOutputSchema = z.object({
+  log: listJobLogsOutputSchema.shape.logs.element.nullable(),
+})
