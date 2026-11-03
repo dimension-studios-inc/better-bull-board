@@ -2,8 +2,9 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export function proxy(request: NextRequest) {
   const response = NextResponse.next()
-  // Inject the current pathname in the headers
+  // Inject the current pathname and query in the headers
   response.headers.set("x-pathname", request.nextUrl.pathname)
+  response.headers.set("x-search", request.nextUrl.search)
 
   return response
 }

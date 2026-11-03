@@ -9,13 +9,15 @@ import { getAuthenticatedUser } from "~/lib/auth/server"
 interface AuthGuardProps {
   children: React.ReactNode
   pathname: string
+  search: string
 }
 
-export async function AuthGuard({ children, pathname }: AuthGuardProps) {
+export async function AuthGuard({ children, pathname, search }: AuthGuardProps) {
   const user = await getAuthenticatedUser()
 
   if (!user && pathname !== "/login") {
-    redirect(`/login?next=${encodeURIComponent(pathname)}`)
+    // Keep the query so deep links (`/runs/<id>?log=<id>`) survive the login
+    redirect(`/login?next=${encodeURIComponent(`${pathname}${search}`)}`)
   }
 
   if (pathname === "/login" || pathname === "/mcp/authorize") {

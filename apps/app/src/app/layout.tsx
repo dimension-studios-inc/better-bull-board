@@ -34,7 +34,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const pathname = (await headers()).get("x-pathname") as string
+  const requestHeaders = await headers()
+  const pathname = requestHeaders.get("x-pathname") as string
+  const search = requestHeaders.get("x-search") ?? ""
 
   return (
     <html
@@ -51,7 +53,9 @@ export default async function RootLayout({
         >
           <NuqsAdapter>
             <Providers WEBSOCKET_URL={env.WEBSOCKET_URL}>
-              <AuthGuard pathname={pathname}>{children}</AuthGuard>
+              <AuthGuard pathname={pathname} search={search}>
+                {children}
+              </AuthGuard>
             </Providers>
             <Toaster />
           </NuqsAdapter>
