@@ -1,6 +1,5 @@
 "use client"
 
-import type { JobLogEntry } from "@better-bull-board/core/job-schemas"
 import type { jobRunsTable } from "@better-bull-board/db"
 import { Button } from "@better-bull-board/ui/components/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
@@ -14,8 +13,16 @@ import { formatUtcDateTime } from "~/lib/utils/date"
 
 import { LogLevelBadge, LogLevelIcon } from "./log-level"
 
+interface LogEntry {
+  id: string
+  jobRunId: string
+  level: string
+  message: string
+  ts: number
+}
+
 interface LogDetailsDrawerProps {
-  log: JobLogEntry
+  log: LogEntry
   run: typeof jobRunsTable.$inferSelect
   onBack: () => void
 }
