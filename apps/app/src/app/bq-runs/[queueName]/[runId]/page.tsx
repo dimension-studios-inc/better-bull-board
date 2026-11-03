@@ -2,6 +2,7 @@ import { jobRunsTable } from "@better-bull-board/db"
 import { db } from "@better-bull-board/db/server"
 import { and, eq } from "drizzle-orm"
 import { isRedirectError } from "next/dist/client/components/redirect-error"
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 interface BqRunPageProps {
@@ -13,6 +14,8 @@ interface BqRunPageProps {
 
 export default async function BqRunPage({ params }: BqRunPageProps) {
   const { queueName, runId } = await params
+  // Forward the query to the run page
+  const search = (await headers()).get("x-search") ?? ""
 
   try {
     // Decode URL parameters in case they contain special characters
@@ -28,7 +31,7 @@ export default async function BqRunPage({ params }: BqRunPageProps) {
 
     if (jobRun) {
       // Redirect to the runs page with the database ID
-      redirect(`/runs/${jobRun.id}`)
+      redirect(`/runs/${jobRun.id}${search}`)
     } else {
       // Job not found, redirect to home with error toast
       redirect("/?error=run-not-found")
