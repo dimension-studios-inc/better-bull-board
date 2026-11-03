@@ -8,7 +8,7 @@ import type { JobLogSyncEventInput, JobLogSyncLevel } from "./log-events"
 const ansiRegex = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g
 
 export function decolorize(input: string): string {
-  return input.replace(ansiRegex, "")
+  return input.replaceAll(ansiRegex, "")
 }
 
 let lastTs = 0
