@@ -1,5 +1,5 @@
 #* ---- Base stage ----
-FROM node:24.22.0-alpine AS base
+FROM node:24.22.1-alpine AS base
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
