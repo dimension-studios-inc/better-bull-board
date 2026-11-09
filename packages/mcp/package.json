@@ -32,9 +32,9 @@
   "dependencies": {
     "@better-bull-board/client": "workspace:*",
     "@better-bull-board/core": "workspace:*",
-    "@modelcontextprotocol/sdk": "1.32.1",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "@t3-oss/env-core": "0.13.11",
-    "bullmq": "6.3.17",
+    "bullmq": "6.4.2",
     "ioredis": "6.0.0",
     "zod": "4.6.7"
   },
