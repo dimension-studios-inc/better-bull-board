@@ -3,8 +3,7 @@
 import type { JobLogEntry } from "@better-bull-board/core/job-schemas"
 import type { jobRunsTable } from "@better-bull-board/db"
 import { Button } from "@better-bull-board/ui/components/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@better-bull-board/ui/components/card"
-import { ScrollArea } from "@better-bull-board/ui/components/scroll-area"
+import { DrawerTitle } from "@better-bull-board/ui/components/drawer"
 import { Separator } from "@better-bull-board/ui/components/separator"
 import { cn } from "cn"
 import { AlertCircle, ArrowLeft, CalendarClock, Clock } from "lucide-react"
@@ -12,6 +11,7 @@ import { AlertCircle, ArrowLeft, CalendarClock, Clock } from "lucide-react"
 import { smartFormatDuration } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
 
+import { DetailsDrawerBody, DetailsDrawerHeader } from "./details-drawer"
 import { LogLevelBadge, LogLevelIcon } from "./log-level"
 
 interface LogDetailsDrawerProps {
@@ -42,6 +42,23 @@ const DetailItem = ({
   </div>
 )
 
+/** Also shown while the log loads or when it can't be found, so the way back to the run stays */
+export function LogDetailsDrawerHeader({ level, onBack }: { level?: string; onBack: () => void }) {
+  return (
+    <DetailsDrawerHeader>
+      <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to the run">
+        <ArrowLeft className="h-4 w-4" />
+      </Button>
+      <DrawerTitle className="flex-1">
+        <span className="flex items-center gap-2">
+          {level && <LogLevelIcon level={level} />}
+          Log Details
+        </span>
+      </DrawerTitle>
+    </DetailsDrawerHeader>
+  )
+}
+
 export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
   const logDate = new Date(log.ts)
   const scheduledTime = (run.enqueuedAt?.getTime() ?? run.createdAt.getTime()) + run.delayMs
@@ -49,67 +66,53 @@ export function LogDetailsDrawer({ log, run, onBack }: LogDetailsDrawerProps) {
   const relativeTime = Math.max(0, log.ts - baseTime)
 
   return (
-    <Card className="overflow-hidden lg:h-(--run-panel-height-lg)">
-      <CardHeader>
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to the run">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <CardTitle>
-            <span className="flex items-center gap-2">
-              <LogLevelIcon level={log.level} />
-              Log Details
-            </span>
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="overflow-hidden lg:h-full">
-        <ScrollArea className="lg:h-full [&>[data-slot=scroll-area-viewport]>div]:block!">
-          <div className="space-y-6">
-            {/* Log Level */}
-            <div>
-              <h3 className="mb-3 text-sm font-medium">Level</h3>
-              <LogLevelBadge level={log.level} />
-            </div>
+    <>
+      <LogDetailsDrawerHeader level={log.level} onBack={onBack} />
+      <DetailsDrawerBody>
+        <div className="space-y-6">
+          {/* Log Level */}
+          <div>
+            <h3 className="mb-3 text-sm font-medium">Level</h3>
+            <LogLevelBadge level={log.level} />
+          </div>
 
-            <Separator />
+          <Separator />
 
-            {/* Basic Info */}
-            <div>
-              <h3 className="mb-3 text-sm font-medium">Basic Information</h3>
-              <div className="space-y-3">
-                <DetailItem
-                  icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
-                  label="Timestamp"
-                  value={formatUtcDateTime(logDate, { milliseconds: true })}
-                />
-                <DetailItem
-                  icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-                  label="Relative Time"
-                  value={`${formatRelativeTime(relativeTime)} after start`}
-                />
-                <DetailItem
-                  icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
-                  label="Log ID"
-                  value={<span className="font-mono text-xs break-all">{log.id}</span>}
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Message */}
-            <div>
-              <h3 className="mb-3 text-sm font-medium">Message</h3>
-              <div className="rounded border bg-muted/30 p-2">
-                <pre className="font-mono text-xs wrap-break-word whitespace-pre-wrap">
-                  {log.message}
-                </pre>
-              </div>
+          {/* Basic Info */}
+          <div>
+            <h3 className="mb-3 text-sm font-medium">Basic Information</h3>
+            <div className="space-y-3">
+              <DetailItem
+                icon={<CalendarClock className="h-4 w-4 text-muted-foreground" />}
+                label="Timestamp"
+                value={formatUtcDateTime(logDate, { milliseconds: true })}
+              />
+              <DetailItem
+                icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+                label="Relative Time"
+                value={`${formatRelativeTime(relativeTime)} after start`}
+              />
+              <DetailItem
+                icon={<AlertCircle className="h-4 w-4 text-muted-foreground" />}
+                label="Log ID"
+                value={<span className="font-mono text-xs break-all">{log.id}</span>}
+              />
             </div>
           </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+
+          <Separator />
+
+          {/* Message */}
+          <div>
+            <h3 className="mb-3 text-sm font-medium">Message</h3>
+            <div className="rounded border bg-muted/30 p-2">
+              <pre className="font-mono text-xs wrap-break-word whitespace-pre-wrap">
+                {log.message}
+              </pre>
+            </div>
+          </div>
+        </div>
+      </DetailsDrawerBody>
+    </>
   )
 }
