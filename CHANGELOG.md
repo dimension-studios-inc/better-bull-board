@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.6.0...v1.7.0) (2026-11-13)
+
+
+### Features
+
+* **app:** open the run details from a run summary bar ([#441](https://github.com/dimension-studios-inc/better-bull-board/issues/441)) ([ed7470b](https://github.com/dimension-studios-inc/better-bull-board/commit/ed7470be282bcea4be9ac8c5c719496d3244f2c9))
+
 ## [1.6.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.5.0...v1.6.0) (2026-11-13)
 
 
