@@ -2,11 +2,10 @@
 
 import type { JobLogEntry } from "@better-bull-board/core/job-schemas"
 import type { jobRunsTable } from "@better-bull-board/db"
-import { Button } from "@better-bull-board/ui/components/button"
 import { DrawerTitle } from "@better-bull-board/ui/components/drawer"
 import { Separator } from "@better-bull-board/ui/components/separator"
 import { cn } from "cn"
-import { AlertCircle, ArrowLeft, CalendarClock, Clock } from "lucide-react"
+import { AlertCircle, CalendarClock, ChevronRight, Clock } from "lucide-react"
 
 import { smartFormatDuration } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
@@ -46,9 +45,15 @@ const DetailItem = ({
 export function LogDetailsDrawerHeader({ level, onBack }: { level?: string; onBack: () => void }) {
   return (
     <DetailsDrawerHeader>
-      <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to the run">
-        <ArrowLeft className="h-4 w-4" />
-      </Button>
+      {/* A breadcrumb like the page's: the run is where the log comes from */}
+      <button
+        type="button"
+        className="rounded-sm text-base text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+        onClick={onBack}
+      >
+        Run
+      </button>
+      <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
       <DrawerTitle className="flex-1">
         <span className="flex items-center gap-2">
           {level && <LogLevelIcon level={level} />}

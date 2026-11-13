@@ -22,6 +22,8 @@ interface LogsWaterfallProps {
   run: typeof jobRunsTable.$inferSelect
   /** When the data was last fetched, which ends the timeline of a run still in progress */
   now: number
+  /** The log the details drawer shows, highlighted in the list */
+  shownLogId: string | null
   onLogClick: (log: JobLogEntry) => void
   hasMore: boolean
   onLoadMore: () => void
@@ -49,6 +51,7 @@ export function LogsWaterfall({
   error,
   run,
   now,
+  shownLogId,
   onLogClick,
   hasMore,
   onLoadMore,
@@ -124,6 +127,7 @@ export function LogsWaterfall({
           {sortedLogs.map((log) => {
             const relativeTime = log.ts - startTime
             const position = totalDuration > 0 ? (relativeTime / totalDuration) * 100 : 0
+            const isShown = log.id === shownLogId
 
             return (
               <div
@@ -136,9 +140,11 @@ export function LogsWaterfall({
                     "hover:bg-destructive/5": log.level.toLowerCase() === "error",
                     "hover:bg-warning/5": log.level.toLowerCase() === "warn",
                   },
+                  isShown && "bg-muted",
                 )}
                 // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- the row holds block content and a tooltip trigger button, which a <button> cannot contain
                 role="button"
+                aria-pressed={isShown}
                 tabIndex={0}
                 onClick={() => onLogClick(log)}
                 onKeyDown={(event) => {
