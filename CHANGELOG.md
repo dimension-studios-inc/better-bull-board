@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.6.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.5.0...v1.6.0) (2026-11-13)
+
+
+### Features
+
+* **app:** show run and log details in a drawer ([#440](https://github.com/dimension-studios-inc/better-bull-board/issues/440)) ([3a55044](https://github.com/dimension-studios-inc/better-bull-board/commit/3a550447e58cb3cdb84a3b3b4e5441d8062046b4))
+
+
+### Bug fixes
+
+* **deps:** update dependencies ([#434](https://github.com/dimension-studios-inc/better-bull-board/issues/434)) ([6787845](https://github.com/dimension-studios-inc/better-bull-board/commit/678784523d4672d6422643925f61470c7b34ceaa))
+* **deps:** update dependency @tanstack/react-query to v5.105.0 ([#439](https://github.com/dimension-studios-inc/better-bull-board/issues/439)) ([2f4b9d8](https://github.com/dimension-studios-inc/better-bull-board/commit/2f4b9d83c377a50ffde2a84f7be5e54e37ff4099))
+* **deps:** update node.js to v24.22.1 ([#435](https://github.com/dimension-studios-inc/better-bull-board/issues/435)) ([e5a56d6](https://github.com/dimension-studios-inc/better-bull-board/commit/e5a56d6e9e6ff4f530f1a742fdb15f1ce665f3b2))
+
 ## [1.5.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.4.0...v1.5.0) (2026-11-03)
 
 
