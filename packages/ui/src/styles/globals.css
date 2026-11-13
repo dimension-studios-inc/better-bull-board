@@ -138,9 +138,9 @@
 }
 
 :root {
-  /* The run page's log waterfall, below its details toggle */
+  /* The run page's log waterfall, below its run summary */
   --run-panel-height: 60dvh;
-  --run-panel-height-lg: calc(100vh - 14.25rem);
+  --run-panel-height-lg: calc(100vh - 15rem);
 }
 
 @layer base {

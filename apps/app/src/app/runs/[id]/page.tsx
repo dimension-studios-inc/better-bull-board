@@ -1,13 +1,12 @@
 "use client"
 
 import { Alert, AlertDescription } from "@better-bull-board/ui/components/alert"
-import { Button } from "@better-bull-board/ui/components/button"
 import { Drawer, DrawerContent } from "@better-bull-board/ui/components/drawer"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
 import { useIsMobile } from "@better-bull-board/ui/hooks/use-mobile"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
-import { AlertCircle, PanelRightClose, PanelRightOpen } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 import { useParams } from "next/navigation"
 import { parseAsString, useQueryState } from "nuqs"
 import { useState } from "react"
@@ -20,12 +19,13 @@ import { apiFetch } from "~/lib/utils/client"
 import { LogDetailsSelection } from "./_components/log-details-selection"
 import { LogsWaterfall } from "./_components/logs-waterfall"
 import { RunDetailsDrawer } from "./_components/run-details-drawer"
+import { RunSummaryBar } from "./_components/run-summary-bar"
 
 export default function RunViewPage() {
   const params = useParams()
   const runId = params.id as string
   const [selectedLogId, setSelectedLogId] = useQueryState("log", parseAsString)
-  // Open on arrival, then closable at any time: the toggle or picking a log brings it back
+  // Open on arrival, then closable at any time: the toggle, the run or a log brings it back
   const [isDetailsOpen, setIsDetailsOpen] = useState(true)
   const isMobile = useIsMobile()
 
@@ -99,34 +99,35 @@ export default function RunViewPage() {
     startedAt: run.job.startedAt ? new Date(run.job.startedAt) : null,
     finishedAt: run.job.finishedAt ? new Date(run.job.finishedAt) : null,
   }
+  const isRunShown = isDetailsOpen && !selectedLogId
+
   return (
     <PageContainer>
       {/* The desktop drawer doesn't block the page: keep the logs clear of it */}
       <div className={cn("flex flex-col gap-2", isDetailsOpen && !isMobile && "lg:pr-96")}>
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            aria-expanded={isDetailsOpen}
-            onClick={() => setIsDetailsOpen((open) => !open)}
-          >
-            {isDetailsOpen ? (
-              <PanelRightClose data-icon="inline-start" />
-            ) : (
-              <PanelRightOpen data-icon="inline-start" />
-            )}
-            {isDetailsOpen ? "Hide details" : "Show details"}
-          </Button>
-        </div>
+        {/* Picking what the drawer already shows closes it, like the toggle.
+            The margin lines it up with the logs, which keep clear of their scrollbar */}
+        <RunSummaryBar
+          className="mr-4"
+          run={job}
+          isRunShown={isRunShown}
+          isDetailsOpen={isDetailsOpen}
+          onRunClick={() => {
+            void setSelectedLogId(null)
+            setIsDetailsOpen(!isRunShown)
+          }}
+          onToggleDetails={() => setIsDetailsOpen((open) => !open)}
+        />
         <LogsWaterfall
           logs={logsData}
           isLoading={isLoadingLogs}
           error={logsError}
           run={job}
           now={Math.max(runUpdatedAt, logsUpdatedAt)}
+          shownLogId={isDetailsOpen ? selectedLogId : null}
           onLogClick={(log) => {
             void setSelectedLogId(log.id)
-            setIsDetailsOpen(true)
+            setIsDetailsOpen(!(isDetailsOpen && selectedLogId === log.id))
           }}
           hasMore={hasNextPage}
           onLoadMore={() => void fetchNextPage()}
