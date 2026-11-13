@@ -138,9 +138,9 @@
 }
 
 :root {
-  /* The run page's log waterfall and details panels */
+  /* The run page's log waterfall, below its details toggle */
   --run-panel-height: 60dvh;
-  --run-panel-height-lg: calc(100vh - 12rem);
+  --run-panel-height-lg: calc(100vh - 14.25rem);
 }
 
 @layer base {
@@ -149,6 +149,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Drawer overlay is absolutely positioned on iOS Safari and must cover the scrolled page */
+    position: relative;
   }
   html {
     @apply font-sans;

@@ -4,17 +4,11 @@ import type { jobRunsTable } from "@better-bull-board/db"
 import { Badge } from "@better-bull-board/ui/components/badge"
 import { Button } from "@better-bull-board/ui/components/button"
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@better-bull-board/ui/components/card"
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@better-bull-board/ui/components/collapsible"
+import { DrawerTitle } from "@better-bull-board/ui/components/drawer"
 import { ScrollArea, ScrollBar } from "@better-bull-board/ui/components/scroll-area"
 import { Separator } from "@better-bull-board/ui/components/separator"
 import { cn } from "cn"
@@ -39,6 +33,7 @@ import { smartFormatDuration } from "~/lib/utils/client"
 import { formatUtcDateTime } from "~/lib/utils/date"
 
 import { CopyRunPromptButton } from "./copy-run-prompt-button"
+import { DetailsDrawerBody, DetailsDrawerHeader } from "./details-drawer"
 
 type TRun = typeof jobRunsTable.$inferSelect
 
@@ -70,12 +65,14 @@ const JsonCollapsible = ({
   title,
   data,
   icon,
+  defaultOpen = false,
 }: {
   title: string
   data: unknown
   icon: React.ReactNode
+  defaultOpen?: boolean
 }) => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(defaultOpen)
   const [formattedData, setFormattedData] = useState<string>("")
 
   useEffect(() => {
@@ -289,58 +286,56 @@ const RunError = ({ run }: { run: TRun }) => {
 
 export function RunDetailsDrawer({ run }: RunDetailsDrawerProps) {
   return (
-    <Card className="lg:h-(--run-panel-height-lg)">
-      <CardHeader>
-        <CardTitle>
+    <>
+      <DetailsDrawerHeader>
+        <DrawerTitle className="flex-1">
           <span className="flex items-center gap-2">
             <RunStatusIcon status={run.status} className="size-4" />
             Run Details
           </span>
-        </CardTitle>
-        <CardAction>
-          <CopyRunPromptButton run={run} />
-        </CardAction>
-      </CardHeader>
-      <CardContent className="overflow-hidden lg:h-full">
-        <ScrollArea className="lg:h-full [&>[data-slot=scroll-area-viewport]>div]:block!">
-          <div className="space-y-6">
-            {/* Status */}
-            <div>
-              <h3 className="mb-3 text-sm font-medium">Status</h3>
-              <RunStatusBadge status={run.status} />
-            </div>
-
-            <Separator />
-            <RunBasicInfo run={run} />
-            <Separator />
-            <RunTiming run={run} />
-            <RunExecution run={run} />
-            <RunTags tags={run.tags} />
-            <RunError run={run} />
-            <Separator />
-
-            {/* Data & Result */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Payloads</h3>
-              <JsonCollapsible
-                title="Input Data"
-                data={run.data}
-                icon={<Database className={ICON_CLASS_NAME} />}
-              />
-              <JsonCollapsible
-                title="Result"
-                data={run.result}
-                icon={<CheckCircle className={ICON_CLASS_NAME} />}
-              />
-              <JsonCollapsible
-                title="Backoff Config"
-                data={run.backoff}
-                icon={<Settings className={ICON_CLASS_NAME} />}
-              />
-            </div>
+        </DrawerTitle>
+        <CopyRunPromptButton run={run} />
+      </DetailsDrawerHeader>
+      <DetailsDrawerBody>
+        <div className="space-y-6">
+          {/* Status */}
+          <div>
+            <h3 className="mb-3 text-sm font-medium">Status</h3>
+            <RunStatusBadge status={run.status} />
           </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+
+          <Separator />
+          <RunBasicInfo run={run} />
+          <Separator />
+          <RunTiming run={run} />
+          <RunExecution run={run} />
+          <RunTags tags={run.tags} />
+          <RunError run={run} />
+          <Separator />
+
+          {/* Data & Result */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium">Payloads</h3>
+            <JsonCollapsible
+              title="Input Data"
+              data={run.data}
+              icon={<Database className={ICON_CLASS_NAME} />}
+              // The payload is what a run is usually opened for
+              defaultOpen
+            />
+            <JsonCollapsible
+              title="Result"
+              data={run.result}
+              icon={<CheckCircle className={ICON_CLASS_NAME} />}
+            />
+            <JsonCollapsible
+              title="Backoff Config"
+              data={run.backoff}
+              icon={<Settings className={ICON_CLASS_NAME} />}
+            />
+          </div>
+        </div>
+      </DetailsDrawerBody>
+    </>
   )
 }

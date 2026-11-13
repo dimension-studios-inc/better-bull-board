@@ -1,12 +1,16 @@
 "use client"
 
 import { Alert, AlertDescription } from "@better-bull-board/ui/components/alert"
+import { Button } from "@better-bull-board/ui/components/button"
+import { Drawer, DrawerContent } from "@better-bull-board/ui/components/drawer"
 import { Skeleton } from "@better-bull-board/ui/components/skeleton"
+import { useIsMobile } from "@better-bull-board/ui/hooks/use-mobile"
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
-import { AlertCircle } from "lucide-react"
+import { cn } from "cn"
+import { AlertCircle, PanelRightClose, PanelRightOpen } from "lucide-react"
 import { useParams } from "next/navigation"
 import { parseAsString, useQueryState } from "nuqs"
-import { useEffect, useRef } from "react"
+import { useState } from "react"
 
 import { getJobByIdApiRoute } from "~/app/api/jobs/[id]/schemas"
 import { getJobLogsApiRoute } from "~/app/api/jobs/logs/schemas"
@@ -21,7 +25,9 @@ export default function RunViewPage() {
   const params = useParams()
   const runId = params.id as string
   const [selectedLogId, setSelectedLogId] = useQueryState("log", parseAsString)
-  const detailsRef = useRef<HTMLDivElement>(null)
+  // Open on arrival, then closable at any time: the toggle or picking a log brings it back
+  const [isDetailsOpen, setIsDetailsOpen] = useState(true)
+  const isMobile = useIsMobile()
 
   const {
     data: run,
@@ -37,13 +43,6 @@ export default function RunViewPage() {
     }),
     enabled: !!runId,
   })
-
-  // On stacked (mobile) layouts the details panel sits below the logs, so bring it into view
-  useEffect(() => {
-    if (!isLoadingRun && selectedLogId && window.matchMedia("(max-width: 1023px)").matches) {
-      detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-    }
-  }, [isLoadingRun, selectedLogId])
 
   const {
     data: logsDataPages,
@@ -75,14 +74,7 @@ export default function RunViewPage() {
   if (isLoadingRun) {
     return (
       <PageContainer>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-          <div className="lg:col-span-3">
-            <Skeleton className="h-96 w-full" />
-          </div>
-          <div className="lg:col-span-1">
-            <Skeleton className="h-96 w-full" />
-          </div>
-        </div>
+        <Skeleton className="h-96 w-full" />
       </PageContainer>
     )
   }
@@ -109,20 +101,47 @@ export default function RunViewPage() {
   }
   return (
     <PageContainer>
-      <div className="flex flex-col gap-4 lg:flex-row lg:gap-2">
-        <div className="min-w-0 flex-1">
-          <LogsWaterfall
-            logs={logsData}
-            isLoading={isLoadingLogs}
-            error={logsError}
-            run={job}
-            now={Math.max(runUpdatedAt, logsUpdatedAt)}
-            onLogClick={(log) => void setSelectedLogId(log.id)}
-            hasMore={hasNextPage}
-            onLoadMore={() => void fetchNextPage()}
-          />
+      {/* The desktop drawer doesn't block the page: keep the logs clear of it */}
+      <div className={cn("flex flex-col gap-2", isDetailsOpen && !isMobile && "lg:pr-96")}>
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            aria-expanded={isDetailsOpen}
+            onClick={() => setIsDetailsOpen((open) => !open)}
+          >
+            {isDetailsOpen ? (
+              <PanelRightClose data-icon="inline-start" />
+            ) : (
+              <PanelRightOpen data-icon="inline-start" />
+            )}
+            {isDetailsOpen ? "Hide details" : "Show details"}
+          </Button>
         </div>
-        <div ref={detailsRef} className="w-full scroll-mt-4 lg:w-96 lg:shrink-0">
+        <LogsWaterfall
+          logs={logsData}
+          isLoading={isLoadingLogs}
+          error={logsError}
+          run={job}
+          now={Math.max(runUpdatedAt, logsUpdatedAt)}
+          onLogClick={(log) => {
+            void setSelectedLogId(log.id)
+            setIsDetailsOpen(true)
+          }}
+          hasMore={hasNextPage}
+          onLoadMore={() => void fetchNextPage()}
+        />
+      </div>
+      {/* A bottom sheet over the logs on mobile, a side panel next to them on desktop */}
+      <Drawer
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        swipeDirection={isMobile ? "down" : "right"}
+        modal={isMobile}
+        disablePointerDismissal={!isMobile}
+        showSwipeHandle={isMobile}
+      >
+        <DrawerContent>
           {selectedLogId ? (
             <LogDetailsSelection
               logId={selectedLogId}
@@ -135,8 +154,8 @@ export default function RunViewPage() {
           ) : (
             <RunDetailsDrawer run={job} />
           )}
-        </div>
-      </div>
+        </DrawerContent>
+      </Drawer>
     </PageContainer>
   )
 }
