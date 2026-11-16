@@ -48,9 +48,9 @@
   },
   "devDependencies": {
     "@better-bull-board/typescript-config": "workspace:*",
-    "@types/node": "26.6.5",
+    "@types/node": "26.6.6",
     "@types/pg": "8.23.1",
-    "tsdown": "0.23.2",
+    "tsdown": "0.23.4",
     "typescript": "7.0.2"
   }
 }
