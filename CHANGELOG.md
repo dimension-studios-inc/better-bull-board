@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.1](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.7.0...v1.7.1) (2026-11-18)
+
+
+### Bug fixes
+
+* **deps:** update dependencies ([#445](https://github.com/dimension-studios-inc/better-bull-board/issues/445)) ([c602e7d](https://github.com/dimension-studios-inc/better-bull-board/commit/c602e7d47cf098cfbd656c2aa1c037569fa7b607))
+* **deps:** update dependency next to v16.4.5 [security] ([#451](https://github.com/dimension-studios-inc/better-bull-board/issues/451)) ([9f34608](https://github.com/dimension-studios-inc/better-bull-board/commit/9f34608aa83d7db6e6ee96b04380276d2af9a4a2))
+* **ingest:** delete expired job runs in batches ([#452](https://github.com/dimension-studios-inc/better-bull-board/issues/452)) ([21b338d](https://github.com/dimension-studios-inc/better-bull-board/commit/21b338d19f953db950592cb7be1499fe98d45ee6))
+
 ## [1.7.0](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.6.0...v1.7.0) (2026-11-13)
 
 
