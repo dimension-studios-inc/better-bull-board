@@ -16,6 +16,9 @@ export const runBackgroundTask = <T>(task: () => Promise<T>): Promise<T | undefi
   return promise
 }
 
+/** Lets a long tick stop between batches once ingest is shutting down. */
+export const isStoppingBackgroundTasks = () => stopped
+
 /** Starts no new tick and waits for the running ones to settle. */
 export const stopBackgroundTasks = async () => {
   stopped = true
