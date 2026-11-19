@@ -57,6 +57,9 @@ export const jobRunsTable = pgTable(
       sql`EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000`,
     ),
   },
+  // These indexes outweigh the table itself and are all maintained on every insert and retention
+  // delete. The keyset indexes below also serve queries on their leading columns (status,
+  // queue + created_at, …), so don't add an index that is a prefix of one of them.
   (t) => [
     uniqueIndex("ux_job_runs_queue_jobid_enqueuedat").on(t.queue, t.jobId, t.enqueuedAt), // Job ids can overlap across queues.
     index("ix_job_runs_created_at_job_id_id").on(t.createdAt, t.jobId, t.id),
@@ -76,20 +79,12 @@ export const jobRunsTable = pgTable(
       t.jobId,
       t.id,
     ),
-    index("ix_job_runs_queue_created_at").on(t.queue, t.createdAt),
-    index("ix_job_runs_created_at").on(t.createdAt),
     index("ix_job_runs_job").on(t.jobId),
-    index("ix_job_runs_status_created_at").on(t.status, t.createdAt),
-    index("ix_job_runs_status").on(t.status),
     // Latest runs of a scheduler, for the schedulers page
     index("ix_job_runs_repeat_key_created_at")
       .on(t.repeatJobKey, t.createdAt)
       .where(sql`${t.repeatJobKey} IS NOT NULL`),
     index("ix_job_runs_tags_gin").using("gin", t.tags),
-    index("ix_job_runs_tags_text_trgm")
-      .using("gin", sql`(public.job_runs_tags_search_text(${t.tags})) gin_trgm_ops`)
-      .where(sql`cardinality(${t.tags}) > 0`),
-    index("ix_job_runs_data_gin").using("gin", t.data),
   ],
 )
 
@@ -117,8 +112,8 @@ export const jobLogsTable = pgTable(
     logSeq: integer("log_seq").notNull().default(0),
   },
   (t) => [
+    // Also serves (job_run_id, ts) lookups and the cascade from job_runs.
     uniqueIndex("ux_job_logs_run_ts_seq").on(t.jobRunId, t.ts, t.logSeq),
-    index("ix_job_logs_job_run_ts").on(t.jobRunId, t.ts),
     index("ix_job_logs_ts_brin").using("brin", t.ts), // cheap time-range scans
   ],
 )

@@ -162,6 +162,13 @@
       "when": 1777047400000,
       "tag": "0022_mcp_api_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1777047500000,
+      "tag": "0023_drop_unused_job_indexes",
+      "breakpoints": true
     }
   ]
 }
