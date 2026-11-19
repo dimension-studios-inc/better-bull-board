@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.2](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.7.1...v1.7.2) (2026-11-19)
+
+
+### Bug fixes
+
+* **k8s:** read the Postgres user from the env in the probes ([#453](https://github.com/dimension-studios-inc/better-bull-board/issues/453)) ([d36770b](https://github.com/dimension-studios-inc/better-bull-board/commit/d36770bc4d0bd2b43b858a677e85e88af796aade))
+
+
+### Performance
+
+* **db:** drop unused and redundant job indexes ([#455](https://github.com/dimension-studios-inc/better-bull-board/issues/455)) ([a834373](https://github.com/dimension-studios-inc/better-bull-board/commit/a8343739fad23ed07bc665b5fddaa87602f8a29c))
+
 ## [1.7.1](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.7.0...v1.7.1) (2026-11-18)
 
 
