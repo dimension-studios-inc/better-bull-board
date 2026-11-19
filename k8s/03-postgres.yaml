@@ -47,22 +47,18 @@ spec:
             # Parallel queries use /dev/shm, limited to 64Mi by default in Kubernetes
             - name: dshm
               mountPath: /dev/shm
+          # Kubernetes expands $(VAR) in command/args but not in probes, so a shell reads the env instead:
+          # a literal "$(POSTGRES_USER)" role still answers ready but logs a FATAL on every probe.
           livenessProbe:
             exec:
-              command:
-                - pg_isready
-                - -U
-                - $(POSTGRES_USER)
+              command: ["sh", "-c", 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 6
           readinessProbe:
             exec:
-              command:
-                - pg_isready
-                - -U
-                - $(POSTGRES_USER)
+              command: ["sh", "-c", 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 5
