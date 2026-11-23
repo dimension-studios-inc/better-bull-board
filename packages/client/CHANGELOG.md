@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/dimension-studios-inc/better-bull-board/compare/client-v0.2.3...client-v0.2.4) (2026-11-23)
+
+
+### Bug fixes
+
+* **deps:** update dependencies ([#458](https://github.com/dimension-studios-inc/better-bull-board/issues/458)) ([279cf79](https://github.com/dimension-studios-inc/better-bull-board/commit/279cf79b159b0fd28b021acc5bc61fde940ce89f))
+
 ## [0.2.3](https://github.com/dimension-studios-inc/better-bull-board/compare/client-v0.2.2...client-v0.2.3) (2026-11-18)
 
 
