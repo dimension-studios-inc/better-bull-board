@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.3](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.7.2...v1.7.3) (2026-11-23)
+
+
+### Bug fixes
+
+* **deps:** update dependencies ([#458](https://github.com/dimension-studios-inc/better-bull-board/issues/458)) ([279cf79](https://github.com/dimension-studios-inc/better-bull-board/commit/279cf79b159b0fd28b021acc5bc61fde940ce89f))
+* **deps:** update dependency motion to v14.11.1 ([#463](https://github.com/dimension-studios-inc/better-bull-board/issues/463)) ([fd2d166](https://github.com/dimension-studios-inc/better-bull-board/commit/fd2d166fa60517483818ffe33419aa1a18b1d891))
+* **deps:** update node.js to v24.22.2 ([#459](https://github.com/dimension-studios-inc/better-bull-board/issues/459)) ([9ee2faa](https://github.com/dimension-studios-inc/better-bull-board/commit/9ee2faaad703aaec2fd5a40ec9f05ab0d570b009))
+
 ## [1.7.2](https://github.com/dimension-studios-inc/better-bull-board/compare/v1.7.1...v1.7.2) (2026-11-19)
 
 
